@@ -133,8 +133,8 @@ python tools/deploy.py "frontend-html box in wordpress astra/dashboard.js" "fron
 > 4. **Check Status**: `python tools/deploy_safe.py --status` (shows Git branch, recent commits, uncommitted diffs, and API health).
 
 ### C. GitHub Repository & SSH Configuration
-- **Repository URL (SSH)**: `git@github.com:3bdyna/dent2025.git`
-- **Web Link**: `https://github.com/3bdyna/dent2025`
+- **Repository URL (SSH)**: `git@github.com:3bdyna/dent2025.com.git`
+- **Web Link**: `https://github.com/3bdyna/dent2025.com`
 - **Default Branch**: `main`
 - **SSH Key Location**: `~/.ssh/id_ed25519`
 - **Protected Secrets**: `deploy_config.json`, `dent2025_passwords.json`, `txt stuff to save/passwords.txt`, and runtime JSON storage directories are strictly excluded via `.gitignore` and must never be committed.
