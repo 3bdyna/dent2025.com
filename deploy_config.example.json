@@ -1,0 +1,7 @@
+{
+  "host": "ftp.yourserver.com",
+  "username": "your_ftp_username",
+  "password": "your_ftp_password",
+  "remote_dir": "/public_html",
+  "health_passkey": "your_master_passkey_here"
+}

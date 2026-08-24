@@ -1,0 +1,952 @@
+<style>
+    /* Banner Styles */
+    .gpa-banner {
+        background: #1e1e1e;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 14px 20px;
+        border-radius: 14px;
+        color: #f8fafc;
+        font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        direction: rtl;
+        transition: all 0.25s ease;
+        max-width: 100%;
+        margin: 10px 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+    .gpa-banner:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.25);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        transform: translateY(-2px);
+    }
+    .gpa-banner-text {
+        flex: 1;
+    }
+    .gpa-banner-text h3 {
+        margin: 0;
+        font-size: 1.05rem;
+        color: #f8fafc;
+    }
+    .gpa-banner-text p {
+        margin: 3px 0 0 0;
+        font-size: 0.82rem;
+        color: #9ca3af;
+    }
+    .gpa-banner-arrow {
+        color: #f8fafc;
+        font-size: 1.1rem;
+        font-weight: bold;
+        background: rgba(255, 255, 255, 0.06);
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+    .gpa-banner:hover .gpa-banner-arrow {
+        background: rgba(255, 255, 255, 0.15);
+        transform: scale(1.05);
+    }
+
+    /* Modal Styles - Hidden with display:none by default to prevent mobile viewport shrink glitch */
+    .gpa-modal-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: rgba(0, 0, 0, 0.82) !important;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        z-index: 999999 !important;
+        display: none !important;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        padding: 12px;
+        box-sizing: border-box;
+        margin: 0 !important;
+    }
+    .gpa-modal-overlay.active {
+        display: flex !important;
+        opacity: 1;
+    }
+    .gpa-modal-content {
+        background: #18181b;
+        color: #f8fafc;
+        font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
+        padding: 22px;
+        border-radius: 18px;
+        direction: rtl;
+        width: 100%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+        transform: translateY(20px);
+        transition: transform 0.25s ease;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-sizing: border-box;
+    }
+    .gpa-modal-overlay.active .gpa-modal-content {
+        transform: translateY(0);
+    }
+
+    /* Close Button */
+    .gpa-close-btn {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #e2e8f0;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        font-size: 1.3rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.2s ease;
+        line-height: 1;
+    }
+    .gpa-close-btn:hover {
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+    }
+
+    /* Internal Cards */
+    .gpa-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 14px;
+        border-radius: 14px;
+        margin-bottom: 14px;
+        box-sizing: border-box;
+    }
+    .gpa-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        gap: 8px;
+    }
+    .gpa-card-title {
+        margin: 0;
+        font-size: 0.92rem;
+        color: #e2e8f0;
+        font-weight: 600;
+    }
+
+    /* Subject Table Rows */
+    .gpa-subject-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .gpa-subject-row:last-child {
+        border-bottom: none;
+    }
+    .gpa-subject-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .gpa-subject-name {
+        margin: 0 0 2px 0;
+        font-size: 0.86rem;
+        color: #f8fafc;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .gpa-hours-input {
+        width: 48px;
+        min-width: 44px;
+        text-align: center;
+        padding: 6px 2px;
+        font-size: 0.85rem;
+        height: 36px;
+        flex-shrink: 0;
+    }
+    .gpa-hours-input.missing-warning {
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+    }
+    .gpa-grade-select, .gpa-marks-input {
+        width: 74px;
+        min-width: 68px;
+        text-align: center;
+        padding: 6px 2px;
+        font-size: 0.85rem;
+        height: 36px;
+        flex-shrink: 0;
+    }
+
+    .gpa-btn-add {
+        width: 100%;
+        margin-top: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px dashed rgba(255, 255, 255, 0.2);
+        color: #e2e8f0;
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: inherit;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 40px;
+    }
+    .gpa-btn-add:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.35);
+    }
+
+    select, input {
+        background: rgba(0, 0, 0, 0.4);
+        color: #f8fafc;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        font-family: inherit;
+        box-sizing: border-box;
+        outline: none;
+        transition: all 0.2s ease;
+    }
+    select:focus, input:focus {
+        border-color: rgba(255, 255, 255, 0.35);
+        background: rgba(0, 0, 0, 0.6);
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+    }
+
+    .results-box {
+        background: rgba(255, 255, 255, 0.04);
+        color: #f8fafc;
+        padding: 14px;
+        border-radius: 14px;
+        text-align: center;
+        margin-top: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-sizing: border-box;
+    }
+    .results-box h3 {
+        margin: 0 0 10px 0;
+        font-size: 0.95rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 8px;
+        color: #cbd5e1;
+    }
+
+    .gpa-toggle-pill {
+        display: inline-flex;
+        background: rgba(0, 0, 0, 0.4);
+        padding: 2px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    .gpa-toggle-btn {
+        background: transparent;
+        border: none;
+        color: #9ca3af;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.2s ease;
+    }
+    .gpa-toggle-btn.active {
+        background: rgba(255, 255, 255, 0.16);
+        color: #f8fafc;
+        font-weight: 600;
+    }
+
+    /* Webkit scrollbar */
+    .gpa-modal-content::-webkit-scrollbar { width: 4px; }
+    .gpa-modal-content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+    }
+
+    /* Phone Optimization & Viewport Fixes */
+    @media (max-width: 600px) {
+        .gpa-modal-overlay {
+            padding: 8px;
+        }
+        .gpa-modal-content {
+            padding: 16px 12px;
+            max-height: 92vh;
+            border-radius: 16px;
+        }
+        .gpa-card {
+            padding: 12px 10px;
+            margin-bottom: 10px;
+        }
+        .gpa-subject-row {
+            gap: 6px;
+            padding: 6px 0;
+        }
+        .gpa-subject-name {
+            font-size: 0.82rem;
+        }
+        .gpa-grade-select, .gpa-marks-input {
+            width: 68px;
+            font-size: 16px !important; /* 16px prevents iOS Safari auto-zoom recalculation */
+            padding: 4px;
+            height: 34px;
+        }
+        .gpa-hours-input {
+            width: 44px;
+            font-size: 16px !important; /* 16px prevents iOS Safari auto-zoom recalculation */
+            padding: 4px 2px;
+            height: 34px;
+        }
+        .gpa-card-title {
+            font-size: 0.88rem;
+        }
+        .results-box {
+            padding: 12px;
+        }
+        select, input {
+            font-size: 16px !important; /* Prevents mobile browser scale shifts */
+        }
+    }
+</style>
+
+<!-- Banner Trigger -->
+<div class="gpa-banner" onclick="openGPAModal()">
+    <div class="gpa-banner-text">
+        <h3>حاسبة المعدل التراكمي والفصلي</h3>
+        <p>احسب التقدير المتوقع ومعدل الهدف بالتفصيل</p>
+    </div>
+    <div class="gpa-banner-arrow">←</div>
+</div>
+
+<!-- Modal Overlay -->
+<div class="gpa-modal-overlay" id="gpaModal" onclick="closeModalOnBgClick(event)">
+    <div class="gpa-modal-content">
+        <button type="button" class="gpa-close-btn" onclick="closeGPAModal()">×</button>
+        
+        <h2 style="text-align: center; margin-top: 0; margin-bottom: 4px; font-size: 1.25rem;">حاسبة المعدل الأكاديمي</h2>
+        <p id="gpa-modal-subtitle" style="text-align: center; margin-top: 0; margin-bottom: 14px; font-size: 0.82rem; color: #9ca3af;"></p>
+        
+        <!-- Previous GPA Card -->
+        <div class="gpa-card">
+            <h3 class="gpa-card-title" style="margin-bottom: 8px; font-size: 0.88rem; color: #9ca3af;">المعدل التراكمي السابق (اختياري)</h3>
+            <div style="display: flex; gap: 8px;">
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 0.75rem; margin-bottom: 4px; color: #9ca3af;">الساعات السابقة</label>
+                    <input type="number" id="prev-hours" min="0" oninput="calculateGPA(true)" style="width: 100%; padding: 8px; height: 36px;" placeholder="مثال: 35">
+                </div>
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 0.75rem; margin-bottom: 4px; color: #9ca3af;">المعدل السابق (من 5.0)</label>
+                    <input type="number" id="prev-gpa" min="0" max="5" step="0.01" oninput="calculateGPA(true)" style="width: 100%; padding: 8px; height: 36px;" placeholder="مثال: 4.50">
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Term Subjects Card -->
+        <div class="gpa-card">
+            <div class="gpa-card-header">
+                <h3 id="current-term-hours-text" class="gpa-card-title">مواد الفصل الحالي</h3>
+                <div class="gpa-toggle-pill">
+                    <button type="button" id="gpa-mode-letter" class="gpa-toggle-btn active" onclick="setGradeMode('letter')">تقدير</button>
+                    <button type="button" id="gpa-mode-marks" class="gpa-toggle-btn" onclick="setGradeMode('marks')">درجة /100</button>
+                </div>
+            </div>
+            
+            <div id="subjects-list"></div>
+
+            <div style="display: flex; gap: 8px; margin-top: 10px;">
+                <button type="button" class="gpa-btn-add" style="flex: 2; margin-top: 0;" onclick="addCustomSubject()">
+                    + إضافة مادة
+                </button>
+                <button type="button" class="gpa-btn-add" style="flex: 1; margin-top: 0; background: rgba(239,68,68,0.06); border-color: rgba(239,68,68,0.2); color: #f87171;" onclick="clearGpaGrades()" title="تفريغ التقديرات والدرجات المدخلة">
+                    تفريغ الدرجات
+                </button>
+            </div>
+        </div>
+
+        <!-- Target GPA Calculator Card -->
+        <div class="gpa-card">
+            <h3 class="gpa-card-title" style="font-size: 0.88rem; color: #f8fafc;">حاسبة هدف المعدل</h3>
+            <p style="margin: 4px 0 10px 0; font-size: 0.76rem; color: #9ca3af; line-height: 1.4;">
+                أدخل المعدل التراكمي الذي تطمح للوصول إليه لمعرفة المعدل الفصلي والتقدير المطلوب في المواد الحالية.
+            </p>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 0.8rem; color: #9ca3af; white-space: nowrap;">المعدل المستهدف:</label>
+                <input type="number" id="target-gpa" min="0" max="5" step="0.01" placeholder="مثال: 4.75" oninput="calculateGPA(true)" style="flex: 1; padding: 6px 10px; height: 36px;">
+            </div>
+            <div id="target-gpa-result" style="margin-top: 10px; font-size: 0.82rem; color: #cbd5e1; text-align: center; line-height: 1.4;"></div>
+        </div>
+
+        <!-- Results Summary Box -->
+        <div class="results-box">
+            <h3>النتائج المتوقعة</h3>
+            <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 10px;">
+                <div>
+                    <span style="display: block; font-size: 0.8rem; color: #9ca3af; margin-bottom: 4px;">المعدل الفصلي</span>
+                    <strong id="semester-gpa" style="font-size: 1.5rem; color: #f8fafc;">0.00</strong>
+                </div>
+                <div style="width: 1px; height: 36px; background: rgba(255,255,255,0.12);"></div>
+                <div>
+                    <span style="display: block; font-size: 0.8rem; color: #9ca3af; margin-bottom: 4px;">المعدل التراكمي</span>
+                    <strong id="cumulative-gpa" style="font-size: 1.5rem; color: #f8fafc;">0.00</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Global State for GPA Calculator
+    let dentGpaSubjects = [];
+    let dentGpaSelection = null;
+    let dentGpaGradeMode = 'letter'; // 'letter' or 'marks'
+
+    function parseLocalNum(val) {
+        if (val === null || val === undefined) return 0;
+        const s = String(val).replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[^\d.-]/g, '');
+        const num = parseFloat(s);
+        return isNaN(num) ? 0 : num;
+    }
+
+    const dentGradePoints5 = {
+        "": 0,
+        "A+": 5.0,
+        "A": 4.75,
+        "B+": 4.5,
+        "B": 4.0,
+        "C+": 3.5,
+        "C": 3.0,
+        "D+": 2.5,
+        "D": 2.0,
+        "F": 0.0
+    };
+
+    function marksToGrade(marks) {
+        const val = parseLocalNum(marks);
+        if (val <= 0 && String(marks).trim() === '') return "";
+        if (val >= 95) return "A+";
+        if (val >= 90) return "A";
+        if (val >= 85) return "B+";
+        if (val >= 80) return "B";
+        if (val >= 75) return "C+";
+        if (val >= 70) return "C";
+        if (val >= 65) return "D+";
+        if (val >= 60) return "D";
+        return "F";
+    }
+
+    // Modal Control
+    function openGPAModal() {
+        const modal = document.getElementById('gpaModal');
+        if (modal) {
+            if (modal.parentNode !== document.body) {
+                document.body.appendChild(modal);
+            }
+            modal.style.setProperty('display', 'flex', 'important');
+            // Trigger reflow before adding active for smooth opacity transition
+            void modal.offsetWidth;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            initDentGpaCalculator();
+        }
+    }
+
+    function closeGPAModal() {
+        const modal = document.getElementById('gpaModal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            setTimeout(function() {
+                if (!modal.classList.contains('active')) {
+                    modal.style.setProperty('display', 'none', 'important');
+                }
+            }, 250);
+        }
+    }
+
+    function closeModalOnBgClick(e) {
+        if (e.target.id === 'gpaModal') {
+            closeGPAModal();
+        }
+    }
+
+    function initDentGpaCalculator() {
+        const rawSel = localStorage.getItem('dent2025_selection');
+        if (rawSel) {
+            try {
+                dentGpaSelection = JSON.parse(rawSel);
+            } catch (e) {
+                dentGpaSelection = null;
+            }
+        } else {
+            dentGpaSelection = null;
+        }
+
+        updateGpaHeaderTitle();
+        loadDentGpaSubjects();
+    }
+
+    function updateGpaHeaderTitle() {
+        const titleEl = document.getElementById('gpa-modal-subtitle');
+        if (!titleEl) return;
+
+        if (dentGpaSelection) {
+            let specText = dentGpaSelection.specialty === 'dentistry' ? 'طب الأسنان' : (dentGpaSelection.specialty === 'medicine' ? 'الطب البشري' : 'التحضيري');
+            let semText = `السنة ${dentGpaSelection.year} - الفصل ${dentGpaSelection.semester}`;
+            if (dentGpaSelection.specialty === 'pre-med') {
+                semText = `التحضيري - الفصل ${dentGpaSelection.semester}`;
+            }
+            titleEl.innerText = `${specText} (${semText})`;
+        } else {
+            titleEl.innerText = 'حاسبة المعدل الأكاديمي';
+        }
+    }
+
+    function getStorageKey() {
+        if (dentGpaSelection) {
+            return `dent2025_gpa_${dentGpaSelection.specialty}_y${dentGpaSelection.year}_s${dentGpaSelection.semester}`;
+        }
+        return 'dent2025_simple_gpa';
+    }
+
+    function loadDentGpaSubjects() {
+        let apiSubjects = [];
+
+        if (dentGpaSelection) {
+            const cacheKey = `dent2025_dashboard_data_${dentGpaSelection.specialty}_${dentGpaSelection.year}_${dentGpaSelection.semester}`;
+            const cached = sessionStorage.getItem(cacheKey);
+            if (cached) {
+                try {
+                    const parsed = JSON.parse(cached);
+                    if (parsed.subjects) {
+                        apiSubjects = parsed.subjects;
+                    }
+                } catch(e){}
+            }
+        }
+
+        // If no cached subjects, attempt fetch from API
+        if (dentGpaSelection) {
+            if (apiSubjects.length === 0) {
+                const apiBase = (window.location.pathname === '/dev' || window.location.pathname.startsWith('/dev/')) ? '/dev' : '';
+                fetch(`${apiBase}/dent2025_api.php?action=data&specialty=${dentGpaSelection.specialty}&year=${dentGpaSelection.year}&semester=${dentGpaSelection.semester}`)
+                    .then(res => res.json())
+                    .then(resData => {
+                        if (resData.success) {
+                            if (resData.data) {
+                                if (resData.data.subjects) {
+                                    apiSubjects = resData.data.subjects;
+                                    buildSubjectsList(apiSubjects);
+                                }
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        buildSubjectsList([]);
+                    });
+                return;
+            }
+        }
+
+        buildSubjectsList(apiSubjects);
+    }
+
+    function buildSubjectsList(apiSubjects) {
+        dentGpaSubjects = [];
+
+        // Check local storage for saved state
+        const storageKey = getStorageKey();
+        const savedRaw = localStorage.getItem(storageKey);
+        let savedState = null;
+        if (savedRaw) {
+            try { savedState = JSON.parse(savedRaw); } catch(e){}
+        }
+
+        // Check if old default subjects need fallback if no selection and no API
+        if (apiSubjects.length === 0) {
+            if (!dentGpaSelection) {
+                apiSubjects = [
+                    { id: "od", name: "تشخيص الفم", hours: 2 },
+                    { id: "gp", name: "علم الأمراض العام", hours: 3 },
+                    { id: "abm", name: "مواد طب الأسنان المتقدمة", hours: 2 },
+                    { id: "omi", name: "الأحياء الدقيقة", hours: 3 },
+                    { id: "dph", name: "الصحة العامة", hours: 1 }
+                ];
+            }
+        }
+
+        // Map API subjects to local state
+        apiSubjects.forEach((sub, idx) => {
+            let parsedHours = 0;
+            if (typeof sub.hours === 'string') {
+                const tMatch = sub.hours.match(/(\d+)\s*نظري/);
+                const pMatch = sub.hours.match(/(\d+)\s*عملي/);
+                let th = tMatch ? parseFloat(tMatch[1]) : 0;
+                let pr = pMatch ? parseFloat(pMatch[1]) : 0;
+                if (th > 0 || pr > 0) {
+                    parsedHours = th + pr;
+                } else {
+                    parsedHours = parseFloat(sub.hours) || 0;
+                }
+            } else {
+                parsedHours = parseFloat(sub.hours) || 0;
+            }
+
+            let isMissing = (isNaN(parsedHours) || parsedHours <= 0);
+            if (isMissing) parsedHours = 0;
+
+            let restoredHours = parsedHours;
+            let restoredGrade = "";
+            let restoredMarks = "";
+
+            if (savedState) {
+                if (savedState.grades) {
+                    const savedItem = savedState.grades[sub.id || idx];
+                    if (savedItem) {
+                        if (savedItem.grade !== undefined) restoredGrade = savedItem.grade;
+                        if (savedItem.marks !== undefined) restoredMarks = savedItem.marks;
+                        if (savedItem.hours !== undefined) {
+                            const sh = parseFloat(savedItem.hours);
+                            if (!isNaN(sh)) {
+                                if (sh > 0) restoredHours = sh;
+                            }
+                        }
+                    }
+                }
+            }
+
+            dentGpaSubjects.push({
+                id: sub.id || `sub_${idx}`,
+                name: sub.name || sub.nameAr || `مادة ${idx + 1}`,
+                hours: restoredHours,
+                isMissingHours: isMissing,
+                isCustom: false,
+                grade: restoredGrade,
+                marks: restoredMarks
+            });
+        });
+
+        // Restore custom subjects if saved
+        if (savedState) {
+            if (savedState.customSubjects) {
+                if (Array.isArray(savedState.customSubjects)) {
+                    savedState.customSubjects.forEach(cSub => {
+                        dentGpaSubjects.push({
+                            id: cSub.id || `custom_${Date.now()}_${Math.random()}`,
+                            name: cSub.name || 'مادة إضافية',
+                            hours: parseFloat(cSub.hours) || 2,
+                            isMissingHours: false,
+                            isCustom: true,
+                            grade: cSub.grade || '',
+                            marks: cSub.marks || ''
+                        });
+                    });
+                }
+            }
+
+            if (savedState.prevHours) {
+                const phInput = document.getElementById('prev-hours');
+                if (phInput) phInput.value = savedState.prevHours;
+            }
+            if (savedState.prevGpa) {
+                const pgInput = document.getElementById('prev-gpa');
+                if (pgInput) pgInput.value = savedState.prevGpa;
+            }
+            if (savedState.targetGpa) {
+                const tgInput = document.getElementById('target-gpa');
+                if (tgInput) tgInput.value = savedState.targetGpa;
+            }
+        }
+
+        renderSubjectsTable();
+        calculateGPA(false);
+    }
+
+    function renderSubjectsTable() {
+        const container = document.getElementById('subjects-list');
+        if (!container) return;
+
+        if (dentGpaSubjects.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; color: #9ca3af; padding: 18px; font-size: 0.85rem;">
+                    لا توجد مواد مسجلة لهذا الفصل حتى الآن.<br>
+                    يمكنك إضافة مواد يدوياً باستخدام الزر أدناه.
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        dentGpaSubjects.forEach((sub, idx) => {
+            let hasWarning = false;
+            if (sub.isMissingHours) {
+                if (sub.hours <= 0) {
+                    hasWarning = true;
+                }
+            }
+            const warningBadge = hasWarning ? `<span style="color: #9ca3af; font-size: 0.68rem; display: block;">تحديد الساعات</span>` : '';
+            const hoursClass = hasWarning ? 'gpa-hours-input missing-warning' : 'gpa-hours-input';
+
+            let gradeInputHtml = '';
+            if (dentGpaGradeMode === 'letter') {
+                gradeInputHtml = `
+                    <select class="gpa-grade-select" onchange="updateSubjectGrade(${idx}, this.value)">
+                        <option value="" ${sub.grade === '' ? 'selected' : ''}>--</option>
+                        <option value="A+" ${sub.grade === 'A+' ? 'selected' : ''}>A+</option>
+                        <option value="A" ${sub.grade === 'A' ? 'selected' : ''}>A</option>
+                        <option value="B+" ${sub.grade === 'B+' ? 'selected' : ''}>B+</option>
+                        <option value="B" ${sub.grade === 'B' ? 'selected' : ''}>B</option>
+                        <option value="C+" ${sub.grade === 'C+' ? 'selected' : ''}>C+</option>
+                        <option value="C" ${sub.grade === 'C' ? 'selected' : ''}>C</option>
+                        <option value="D+" ${sub.grade === 'D+' ? 'selected' : ''}>D+</option>
+                        <option value="D" ${sub.grade === 'D' ? 'selected' : ''}>D</option>
+                        <option value="F" ${sub.grade === 'F' ? 'selected' : ''}>F</option>
+                    </select>
+                `;
+            } else {
+                gradeInputHtml = `
+                    <input type="number" class="gpa-marks-input" min="0" max="100" value="${sub.marks !== undefined ? sub.marks : ''}" placeholder="/100" oninput="updateSubjectMarks(${idx}, this.value)">
+                `;
+            }
+
+            const deleteBtn = `<button type="button" onclick="removeSubjectRow(${idx})" title="حذف المادة" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #9ca3af; border-radius: 6px; width: 26px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; padding: 0;">×</button>`;
+
+            const safeSubName = String(sub.name || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+            html += `
+                <div class="gpa-subject-row">
+                    <div class="gpa-subject-info">
+                        ${sub.isCustom ? `<input type="text" value="${safeSubName}" onchange="updateSubjectName(${idx}, this.value)" style="width: 100%; font-size: 0.82rem; padding: 4px 6px; height: 32px;" placeholder="اسم المادة">` : `<h4 class="gpa-subject-name" title="${safeSubName}">${safeSubName}</h4>`}
+                        ${warningBadge}
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                        <input type="number" min="1" max="12" class="${hoursClass}" value="${sub.hours > 0 ? sub.hours : ''}" placeholder="ساعات" oninput="updateSubjectHours(${idx}, this.value)" title="عدد الساعات المعتمدة">
+                        <span style="font-size: 0.72rem; color: #9ca3af;">س</span>
+                    </div>
+                    <div>
+                        ${gradeInputHtml}
+                    </div>
+                    ${deleteBtn}
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function setGradeMode(mode) {
+        dentGpaGradeMode = mode;
+        const btnLetter = document.getElementById('gpa-mode-letter');
+        const btnMarks = document.getElementById('gpa-mode-marks');
+        if (btnLetter) {
+            if (mode === 'letter') {
+                btnLetter.classList.add('active');
+            } else {
+                btnLetter.classList.remove('active');
+            }
+        }
+        if (btnMarks) {
+            if (mode === 'marks') {
+                btnMarks.classList.add('active');
+            } else {
+                btnMarks.classList.remove('active');
+            }
+        }
+        renderSubjectsTable();
+    }
+
+    function updateSubjectHours(index, val) {
+        const parsed = parseLocalNum(val);
+        dentGpaSubjects[index].hours = parsed;
+        calculateGPA(true);
+    }
+
+    function updateSubjectGrade(index, val) {
+        dentGpaSubjects[index].grade = val;
+        calculateGPA(true);
+    }
+
+    function updateSubjectMarks(index, val) {
+        dentGpaSubjects[index].marks = val;
+        dentGpaSubjects[index].grade = marksToGrade(val);
+        calculateGPA(true);
+    }
+
+    function updateSubjectName(index, val) {
+        dentGpaSubjects[index].name = val || 'مادة جديدة';
+        saveState();
+    }
+
+    function addCustomSubject() {
+        dentGpaSubjects.push({
+            id: `custom_${Date.now()}`,
+            name: 'مادة جديدة',
+            hours: 2,
+            isMissingHours: false,
+            isCustom: true,
+            grade: '',
+            marks: ''
+        });
+        renderSubjectsTable();
+        calculateGPA(true);
+    }
+
+    function removeSubjectRow(index) {
+        dentGpaSubjects.splice(index, 1);
+        renderSubjectsTable();
+        calculateGPA(true);
+    }
+
+    function clearGpaGrades() {
+        dentGpaSubjects.forEach(sub => {
+            sub.grade = '';
+            sub.marks = '';
+        });
+        renderSubjectsTable();
+        calculateGPA(true);
+    }
+
+    function calculateGPA(save = false) {
+        let semesterPoints = 0;
+        let semesterCredits = 0;
+
+        dentGpaSubjects.forEach(sub => {
+            const hrs = parseLocalNum(sub.hours);
+            const pts = dentGradePoints5[sub.grade] !== undefined ? dentGradePoints5[sub.grade] : 0;
+            if (hrs > 0) {
+                if (sub.grade) {
+                    semesterPoints += (pts * hrs);
+                    semesterCredits += hrs;
+                }
+            }
+        });
+
+        // Compute Semester Total Hours (all listed courses with assigned hours)
+        let totalCurrentTermHours = 0;
+        dentGpaSubjects.forEach(sub => {
+            const h = parseLocalNum(sub.hours);
+            if (h > 0) totalCurrentTermHours += h;
+        });
+
+        const currentTermHeader = document.getElementById('current-term-hours-text');
+        if (currentTermHeader) {
+            currentTermHeader.innerText = `مواد الفصل الحالي (${totalCurrentTermHours} ساعة)`;
+        }
+
+        const semesterGPA = semesterCredits > 0 ? (semesterPoints / semesterCredits) : 0;
+        const semGpaEl = document.getElementById('semester-gpa');
+        if (semGpaEl) semGpaEl.innerText = semesterGPA.toFixed(2);
+
+        const prevHoursEl = document.getElementById('prev-hours');
+        const prevGpaEl = document.getElementById('prev-gpa');
+        const prevHours = prevHoursEl ? parseLocalNum(prevHoursEl.value) : 0;
+        const prevGPA = prevGpaEl ? parseLocalNum(prevGpaEl.value) : 0;
+
+        let cumulativeGPA = 0;
+        let totalCreditsAll = prevHours + semesterCredits;
+
+        if (prevHours > 0 || semesterCredits > 0) {
+            const totalPoints = (prevHours * prevGPA) + semesterPoints;
+            if (totalCreditsAll > 0) {
+                cumulativeGPA = totalPoints / totalCreditsAll;
+            }
+            const cumGpaEl = document.getElementById('cumulative-gpa');
+            if (cumGpaEl) cumGpaEl.innerText = cumulativeGPA.toFixed(2);
+        } else {
+            const cumGpaEl = document.getElementById('cumulative-gpa');
+            if (cumGpaEl) cumGpaEl.innerText = "0.00";
+        }
+
+        calculateTargetGpaEstimate(prevHours, prevGPA, totalCurrentTermHours, cumulativeGPA);
+
+        if (save) saveState();
+    }
+
+    function calculateTargetGpaEstimate(prevHours, prevGPA, termHours, currentCumGpa) {
+        const targetInput = document.getElementById('target-gpa');
+        const resultEl = document.getElementById('target-gpa-result');
+        if (!targetInput) return;
+        if (!resultEl) return;
+
+        const targetGpa = parseLocalNum(targetInput.value);
+        if (isNaN(targetGpa) || targetGpa <= 0) {
+            resultEl.innerHTML = '';
+            return;
+        }
+
+        if (termHours <= 0) {
+            resultEl.innerHTML = '<span style="color: #9ca3af;">الرجاء تحديد ساعات المواد للفصل الحالي أولاً.</span>';
+            return;
+        }
+
+        const totalHours = prevHours + termHours;
+        const reqSemGPA = (targetGpa * totalHours - (prevHours * prevGPA)) / termHours;
+
+        if (reqSemGPA > 5.0) {
+            resultEl.innerHTML = `<span style="color: #ef4444;">تحتاج معدل فصلي <strong>${reqSemGPA.toFixed(2)}</strong> (أعلى من 5.0 - غير ممكن في فصل واحد).</span>`;
+        } else if (reqSemGPA <= 0) {
+            resultEl.innerHTML = `<span style="color: #e2e8f0;">هدف المكتسب محقق بالكامل بفضل معدلك السابق!</span>`;
+        } else {
+            let letterHint = "A+";
+            if (reqSemGPA <= 2.0) letterHint = "D";
+            else if (reqSemGPA <= 2.5) letterHint = "D+";
+            else if (reqSemGPA <= 3.0) letterHint = "C";
+            else if (reqSemGPA <= 3.5) letterHint = "C+";
+            else if (reqSemGPA <= 4.0) letterHint = "B";
+            else if (reqSemGPA <= 4.5) letterHint = "B+";
+            else if (reqSemGPA <= 4.75) letterHint = "A";
+
+            resultEl.innerHTML = `تحتاج إلى معدل فصلي <strong style="color: #f8fafc; font-size: 1.05rem;">${reqSemGPA.toFixed(2)}</strong> (متوسط تقدير <strong>${letterHint}</strong>) لتحقيق هدفك.`;
+        }
+    }
+
+    function saveState() {
+        const prevHoursEl = document.getElementById('prev-hours');
+        const prevGpaEl = document.getElementById('prev-gpa');
+        const targetGpaEl = document.getElementById('target-gpa');
+
+        const state = {
+            prevHours: prevHoursEl ? prevHoursEl.value : '',
+            prevGpa: prevGpaEl ? prevGpaEl.value : '',
+            targetGpa: targetGpaEl ? targetGpaEl.value : '',
+            grades: {},
+            customSubjects: []
+        };
+
+        dentGpaSubjects.forEach(sub => {
+            if (sub.isCustom) {
+                state.customSubjects.push(sub);
+            } else {
+                state.grades[sub.id] = {
+                    grade: sub.grade,
+                    marks: sub.marks,
+                    hours: sub.hours
+                };
+            }
+        });
+
+        const storageKey = getStorageKey();
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(state));
+        } catch(e){}
+    }
+</script>

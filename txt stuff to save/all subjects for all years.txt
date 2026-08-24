@@ -1,0 +1,130 @@
+Category 1: Pre-Med (First Year)
+First Semester
+English for Health Specialties │ اللغة الإنجليزية للتخصصات الصحية
+Arabic Writing │ التحرير العربي
+Islamic Culture 1 │ ثقافة إسلامية 1
+Second Semester
+Biology for Health Specialties │ الأحياء للتخصصات الصحية
+Physics for Health Specialties │ الفيزياء للتخصصات الصحية
+Chemistry for Health Specialties │ الكيمياء للتخصصات الصحية
+English for Academic Purposes │ اللغة الإنجليزية للأغراض الأكاديمية
+
+
+Category 2: Medicine
+Second Year - First Semester
+Islamic Culture 2 │ ثقافة إسلامية 2
+Introduction to Basic Medical Sciences 1 │ مقدمة إلى العلوم الطبية الأساسية 1
+Introduction to Basic Medical Sciences 2 │ مقدمة إلى العلوم الطبية الأساسية 2
+Medical Professionalism and Ethics 1 │ المهنية والأخلاقيات الطبية 1
+Second Year - Second Semester
+Musculoskeletal System │ الجهاز العضلي الهيكلي
+Hematopoietic, Lymphatic, and Immune System │ الجهاز الدموي والليمفاوي والمناعي
+Community Health │ صحة المجتمع
+Third Year - First Semester
+Cardiorespiratory System │ الجهاز القلبي والرئوي
+Central Nervous System and Special Senses │ الجهاز العصبي المركزي والحواس الخمس
+Gastrointestinal System │ الجهاز الهضمي
+Third Year - Second Semester
+Renal and Reproductive System │ الجهاز التناسلي والبولي
+Endocrine, Nutrition, and Metabolism System │ جهاز الغدد الصماء والتغذية والأيض
+Exercise Physiology │ الفسيولوجيا الرياضية
+Immunohistochemistry │ الكيمياء النسيجية المناعية
+Developments in Anatomical Skills │ تطورات المهارات التشريحية
+Basic Laboratory Skills │ مهارات المختبر الأساسية
+Cellular Pathology │ الباثولوجيا الخلوية
+Fourth Year - First Semester
+Medical Professionalism and Ethics 2 │ المهنية والأخلاقيات الطبية 2
+Research Methodology in Health Sciences │ منهج البحث في العلوم الصحية
+Forensic Medicine and Toxicology │ الطب الشرعي والسموم
+Fourth Year - Second Semester
+Preventive Medicine │ الطب الوقائي
+Internal Medicine 1 │ الأمراض الباطنية 1
+Surgery 1 │ الجراحة 1
+Fifth Year - First Semester
+Orthopedic Surgery and Traumatology │ جراحة العظام والاصابات
+Radiology │ الأشعة
+Otorhinolaryngology (Ear, Nose, and Throat - ENT) │ الأذن والأنف والحنجرة
+Fifth Year - Second Semester
+Ophthalmology │ العيون
+Obstetrics and Gynecology (OB-GYN) │ النساء والتوليد
+Pediatrics │ الأطفال
+Psychiatry │ الطب النفسي
+Sixth Year - First Semester
+Internal Medicine 2 │ الأمراض الباطنية 2
+Dermatology │ الجلدية
+Surgery 2 │ الجراحة 2
+Sixth Year - Second Semester
+Emergency Medicine and Critical Care │ طب الطوارئ والعناية الحرجة
+Family Medicine │ طب الأسرة
+Wound Care │ عناية الجروح
+Minimally Invasive Surgery │ الجراحة طفيفة التوغل
+Sports Medicine │ الطب الرياضي
+Communication and Leadership Skills │ مهارات الاتصال والقيادة
+Medical Consultations and Health │ الاستشارات الطبية والصحة
+Category 3: Dentistry
+Second Year - First Semester
+Islamic Culture 2 │ ثقافة إسلامية 2
+Biochemistry │ الكيمياء الحيوية
+Human Physiology │ وظائف الأعضاء البشرية
+Introduction to Human Anatomy │ مقدمة في علم التشريح البشري
+Dental Anatomy and Occlusion │ تشريح وإطباق الأسنان
+General Histology and Embryology │ علم الأنسجة العام وعلم الأجنة
+Introduction to Dentistry │ مقدمة في طب الأسنان
+Second Year - Second Semester
+Oral Histology and Biology │ أنسجة وأحياء الفم
+Dental Materials │ مواد طب الأسنان
+Introduction to Health Professional Ethics │ مقدمة لأخلاقيات المهن الصحية
+Biochemistry 2 │ علم الكيمياء الحيوية 2
+Head and Neck Anatomy │ علم تشريح الرأس والرقبة
+Human Physiology 2 │ وظائف الأعضاء البشرية 2
+Third Year - First Semester
+Oral and Maxillofacial Radiology │ أشعة الفم والوجه والفكين
+Oral Diagnosis │ تشخيص الفم
+Pre-clinical Restorative Dentistry │ إصاح الأسنان ما قبل السريري
+Advanced Dental Biomaterials │ مواد طب الأسنان الحيوية المتقدمة
+Dental Public Health │ الصحة العامة للأسنان
+Pre-clinical Prosthodontics │ الاستعاضة ما قبل السريرية
+General Pathology │ علم الأمراض العام
+Oral Microbiology and Immunology │ علم الأحياء الدقيقة والمناعة الفموي
+Pharmacology │ علم الأدوية
+Third Year - Second Semester
+Local Anesthesia and Extraction │ التخدير وخلع الاسنان
+Oral Pathology 1 │ امراض الفم 1
+General Medicine │ الطب العام
+Dental Informatics │ المعلوماتية في طب الأسنان
+Fourth Year - First Semester
+Biostatistics Basics │ اساسيات الإحصاء الحيوي
+Clinical Oral and Maxillofacial Surgery │ جراحة الفم والوجه والفكين السريرية
+Oral Pathology 2 │ امراض الفم 2
+Clinical Restorative Dentistry │ إصاح الأسنان السريري
+Pre-clinical Endodontics │ علاج لب وجذور الأسنان قبل السريري
+Periodontics and Prevention │ اللثة والوقاية
+Pre-clinical Fixed Prosthodontics │ التركيبات الثابتة قبل السريرية
+Pre-clinical Removable Prosthodontics │ الاستعاضة المتحركة قبل السريرية
+General Surgery │ الجراحة العامة
+Fourth Year - Second Semester
+Oral Medicine 1 │ طب الفم 1
+Clinical Oral and Maxillofacial Radiology │ علم أشعة الفم والوجه والفكين السريري
+Pre-clinical Pediatric Dentistry │ طب أسنان الأطفال قبل السريري
+Fifth Year - First Semester
+Advanced Oral Medicine and Orofacial Pain │ طب وآلام الفم والوجه والوجه المتقدمة
+Advanced Oral and Maxillofacial Surgery │ جراحة الفم والوجه والفكين المتقدمة
+Advanced Restorative Dentistry │ إصاح الأسنان المتقدمة
+Advanced Endodontics │ علاج لب وجذور الأسنان المتقدمة
+Advanced Periodontics │ علاج اللثة المتقدمة
+Clinical Pediatric Dentistry │ طب أسنان الأطفال السريري
+Pre-clinical Orthodontics │ تقويم الأسنان قبل السريري
+Clinical Fixed Prosthodontics │ التركيبات الثابتة السريرية
+Fifth Year - Second Semester
+Evidence-Based Dentistry │ طب الأسنان المبني على البراهين
+Advanced Prosthodontics │ الاستعاضة المتقدمة
+Sixth Year - First Semester
+Community Outreach Program │ برنامج التوعية المجتمعية
+Advanced Pediatric Dentistry │ طب أسنان الأطفال المتقدم
+Clinical Orthodontics │ تقويم الأسنان السريري
+Comprehensive Clinical Dentistry │ طب الأسنان السريري الشامل
+Practice Management and Economics in Dentistry │ الإدارة والاقتصاد في طب الأسنان
+Sixth Year - Second Semester
+Special Needs Dentistry and Anesthesia │ طب الأسنان لذوي الاحتياجات الخاصة والتخدير
+Dental Implantology │ علم زراعة الأسنان
+Advanced Dentistry │ طب الأسنان المتقدم

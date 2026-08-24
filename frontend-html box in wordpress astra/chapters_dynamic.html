@@ -1,0 +1,213 @@
+<!-- chapters_dynamic.html -->
+<!-- Copy this HTML and CSS into your Astra HTML block where the chapters used to be -->
+
+<style>
+/* Scoped styles for the custom chapters block */
+.dent-chapters-wrapper {
+    display: flex; flex-direction: column; gap: 15px; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
+    margin: 20px 0; direction: rtl;
+}
+.dent-chapter-details {
+    background: #1e1e1e; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
+    overflow: hidden; transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+.dent-chapter-details[open] { border-color: rgba(255,255,255,0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.dent-chapter-summary {
+    padding: 16px 20px; font-size: 1.05rem; font-weight: 600; color: #f8fafc; cursor: pointer;
+    list-style: none; display: flex; justify-content: space-between; align-items: center;
+    background: transparent; transition: background 0.3s ease;
+}
+.dent-chapter-summary::-webkit-details-marker { display: none; }
+.dent-chapter-summary:hover { background: rgba(255, 255, 255, 0.03); }
+.dent-chapter-summary::after { content: '+'; font-size: 1.5rem; font-weight: 400; color: #9ca3af; transition: transform 0.3s ease; }
+.dent-chapter-details[open] .dent-chapter-summary::after { content: '−'; transform: rotate(180deg); color: #f8fafc; }
+
+.dent-chapter-info-box {
+    display: flex; flex-direction: column; gap: 8px; background: rgba(0, 0, 0, 0.2);
+    padding: 12px 18px; border-top: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.85rem;
+    line-height: 1.6;
+}
+.dent-info-item { display: block; line-height: 1.6; }
+.dent-info-label { color: #9ca3af; font-weight: 600; margin-inline-end: 6px; display: inline; }
+.dent-info-value { color: #f8fafc; font-weight: 400; display: inline; word-break: normal; }
+
+.dent-chapter-iframe-container { 
+    padding: 0; 
+    border-top: 1px solid rgba(255, 255, 255, 0.05); 
+    background: #000000; 
+    position: relative;
+}
+.dent-chapter-iframe-container iframe { 
+    width: 100%; 
+    height: 380px; 
+    border: 0; 
+    background: #ffffff; 
+    filter: invert(0.92) hue-rotate(180deg) brightness(1.05) contrast(0.95); 
+    display: block; 
+    transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dent-chapter-iframe-container.is-expanded iframe {
+    height: 650px;
+}
+
+@media (max-width: 768px) {
+    .dent-chapter-iframe-container iframe { height: 310px; }
+    .dent-chapter-iframe-container.is-expanded iframe { height: 520px; }
+}
+
+/* Tab Switcher & Content Panels */
+.dent-tab-switcher {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    background: rgba(0, 0, 0, 0.3) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 6px;
+    gap: 6px;
+}
+.dent-tab-btn {
+    flex: 1 1 50% !important;
+    width: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 9px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: #94a3b8;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    text-align: center;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+}
+.dent-tab-btn:hover {
+    color: #f8fafc;
+    background: rgba(255, 255, 255, 0.04);
+}
+.dent-tab-btn.active {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+.dent-tab-panel {
+    display: none;
+}
+.dent-tab-panel.active {
+    display: block;
+}
+.dent-tab-footer {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 10px 14px !important;
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+}
+.dent-drive-action-btn {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #f8fafc;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+}
+.dent-drive-action-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+.dent-expand-toggle-btn {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.25);
+    color: #93c5fd;
+}
+.dent-expand-toggle-btn:hover {
+    background: rgba(59, 130, 246, 0.22);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #bfdbfe;
+}
+.dent-add-link-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+.dent-add-link-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+/* Section Header & Footer */
+.dent-section-header {
+    text-align: center; direction: rtl; margin-bottom: 20px; padding: 0 10px;
+    font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
+}
+.dent-section-title {
+    font-size: 1.5rem; font-weight: 700; margin: 0 0 6px 0;
+    background: linear-gradient(90deg, #e2e8f0, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.dent-section-subtitle {
+    font-size: 0.9rem; color: #64748b; margin: 0; font-weight: 400;
+}
+.dent-section-footer {
+    text-align: center; direction: rtl; padding: 15px 10px; margin-top: 15px;
+    font-size: 0.85rem; color: #4a5568; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
+    border-top: 1px dashed rgba(255,255,255,0.05);
+}
+
+@media (max-width: 600px) {
+    .dent-chapter-summary {
+        padding: 12px 14px;
+        font-size: 0.92rem;
+    }
+    .dent-chapter-summary a {
+        font-size: 0.75rem !important;
+        padding: 3px 8px !important;
+    }
+    .dent-tab-btn {
+        font-size: 0.76rem !important;
+        padding: 8px 4px !important;
+    }
+    .dent-tab-footer {
+        flex-direction: row !important;
+        gap: 6px !important;
+        padding: 8px 10px !important;
+    }
+    .dent-tab-footer .dent-drive-action-btn {
+        flex: 1 1 45% !important;
+        justify-content: center !important;
+        font-size: 0.74rem !important;
+        padding: 7px 6px !important;
+    }
+}
+</style>
+
+<!-- This container will be populated by dashboard.js -->
+<div id="dynamic-chapters-container" style="opacity:0; transition: opacity 0.3s ease;"></div>
+
+<!-- Automatically load dashboard.js for chapters rendering -->
+<script src="/frontend_components/dashboard.js"></script>

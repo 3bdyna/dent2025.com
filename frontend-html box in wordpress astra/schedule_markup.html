@@ -1,0 +1,259 @@
+<style>
+    /* =========================================================
+       DESIGN/CSS LAYER
+       Separated from logic to allow easy swapping of designs
+       ========================================================= */
+    :root {
+        /* Less saturated, darker colors that fit the premium theme */
+        --bg-color: #121212;
+        --card-bg: #1e1e1e;
+        --border-color: rgba(255, 255, 255, 0.05);
+        --text-primary: #f8fafc;
+        --text-secondary: #9ca3af;
+        
+        /* Event Type Colors (Muted) */
+        --color-start: #4b7a58;    /* Muted Green */
+        --color-payment: #8c773a;  /* Muted Gold */
+        --color-holiday: #456385;  /* Muted Blue */
+        --color-exam: #8c4545;     /* Muted Red */
+        --color-other: #5e5e5e;    /* Muted Gray */
+    }
+
+    .dent-schedule-container {
+        font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-primary);
+        padding: 20px;
+        border-radius: 16px;
+        direction: rtl;
+        max-width: 600px;
+        margin: 0 auto;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .dent-schedule-title {
+        text-align: center;
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+        color: var(--text-primary);
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 10px;
+    }
+
+    .timeline-month {
+        margin-bottom: 20px;
+    }
+
+    .month-header {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+    }
+
+    .month-header::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border-color);
+        margin-right: 15px;
+    }
+
+    .timeline-events {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        position: relative;
+        padding-right: 20px;
+        border-right: 2px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .event-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        padding: 12px;
+        border-radius: 10px;
+        position: relative;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .event-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    /* The little dot on the timeline line */
+    .event-card::before {
+        content: '';
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: var(--event-color);
+        right: -26px;
+        top: 17px;
+        box-shadow: 0 0 8px var(--event-color);
+    }
+    
+    /* Countdown Badge */
+    .event-badge {
+        position: absolute;
+        left: 15px;
+        top: 15px;
+        background: rgba(255, 255, 255, 0.08);
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+    }
+    .event-badge.today {
+        background: var(--color-start);
+        color: white;
+    }
+    .event-badge.future {
+        background: rgba(255,255,255, 0.15);
+        color: white;
+    }
+
+    .event-date {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .event-hijri {
+        opacity: 0.7;
+    }
+
+    .event-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--event-color);
+    }
+
+    /* Empty state */
+    .schedule-loading, .schedule-error {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-secondary);
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 6px;
+        margin-bottom: 15px;
+    }
+    
+    .stat-card {
+        background: #151515;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 8px 4px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transition: transform 0.2s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    .stat-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        margin-bottom: 2px;
+        color: var(--text-primary);
+    }
+    .stat-subtitle {
+        font-size: 0.55rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: 4px;
+        letter-spacing: 0.5px;
+    }
+    .stat-value {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    .stat-subvalue {
+        font-size: 0.65rem;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+    
+    /* Specific Colors for Stats */
+    #stat-exam .stat-value { color: var(--color-exam); }
+
+    /* Mobile adjustments */
+    @media (max-width: 600px) {
+        .dent-schedule-container {
+            padding: 12px;
+            border-radius: 12px;
+        }
+        .event-card {
+            padding: 10px;
+        }
+        .stats-bar {
+            grid-template-columns: 1fr 1fr;
+        }
+        .event-date {
+            margin-bottom: 4px;
+        }
+        .event-title {
+            font-size: 0.9rem;
+        }
+        .event-badge {
+            position: relative;
+            left: 0;
+            top: 0;
+            display: inline-block;
+            margin-top: 8px;
+            width: max-content;
+        }
+    }
+</style>
+
+<!-- HTML STRUCTURE -->
+<div class="dent-schedule-container" id="dent-schedule-app">
+    <h2 class="dent-schedule-title">التقويم الدراسي</h2>
+    
+    <div class="stats-bar" id="schedule-stats" style="display: none;">
+        <div class="stat-card" id="stat-exam">
+            <span class="stat-title">أقرب اختبار</span>
+            <span class="stat-subtitle">CLOSEST EXAM</span>
+            <span class="stat-value" id="val-exam">لا يوجد / None</span>
+            <span class="stat-subvalue">حتى الآن</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-title">الأيام المتبقية للترم</span>
+            <span class="stat-subtitle">DAYS LEFT</span>
+            <span class="stat-value" id="val-days">0</span>
+            <span class="stat-subvalue">in semester / في الترم</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-title">الإجازة القادمة</span>
+            <span class="stat-subtitle">NEXT VACATION</span>
+            <span class="stat-value" id="val-vacation">انتهت / Passed</span>
+            <span class="stat-subvalue" id="val-vacation-name"></span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-title" id="val-status-title">حالة الدراسة</span>
+            <span class="stat-subtitle" id="val-status-subtitle">STATUS</span>
+            <span class="stat-value" id="val-status">انتهى الترم</span>
+        </div>
+    </div>
+
+    <div id="schedule-content">
+        <div class="schedule-loading">جاري تحميل التقويم...</div>
+    </div>
+</div>

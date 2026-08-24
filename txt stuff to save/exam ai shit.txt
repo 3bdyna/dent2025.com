@@ -1,0 +1,106 @@
+<details class="wp-block-details is-layout-flow wp-block-details-is-layout-flow"><summary>Biochemistry</summary>
+    <iframe src="https://docs.google.com/spreadsheets/d/184ggxIaoBu42wHgSm4SvXhJfWviZRbSYaRVteehWW4M/htmlembed?widget=false&amp;headers=false&amp;chrome=false" style="width: 100%; height: 250px; border: 0; background: #ffffff; filter: invert(0.92) hue-rotate(180deg) brightness(1.05) contrast(0.95); display: block; border-radius: 0 0 12px 12px;" frameborder="0"></iframe>
+</details>
+
+<details class="wp-block-details is-layout-flow wp-block-details-is-layout-flow"><summary>Physiology</summary>
+    <iframe src="https://docs.google.com/spreadsheets/d/1k_4Ojr2I7zIJ-eHvZT1ytv-aPBx4egV6JuEQg7Pz9rQ/htmlembed?widget=false&amp;headers=false&amp;chrome=false" style="width: 100%; height: 250px; border: 0; background: #ffffff; filter: invert(0.92) hue-rotate(180deg) brightness(1.05) contrast(0.95); display: block; border-radius: 0 0 12px 12px;" frameborder="0"></iframe>
+</details>
+
+<details class="wp-block-details is-layout-flow wp-block-details-is-layout-flow"><summary>Dental Materials</summary>
+    <iframe src="https://docs.google.com/spreadsheets/d/1M_PbphiY5AToW7yytXvQ5J17bohdWez-U3sSbzr-GSs/htmlembed?widget=false&amp;headers=false&amp;chrome=false" style="width: 100%; height: 250px; border: 0; background: #ffffff; filter: invert(0.92) hue-rotate(180deg) brightness(1.05) contrast(0.95); display: block; border-radius: 0 0 12px 12px;" frameborder="0"></iframe>
+</details>
+
+<details class="wp-block-details is-layout-flow wp-block-details-is-layout-flow"><summary>Dental Anatomy</summary>
+    <iframe src="https://docs.google.com/spreadsheets/d/1GuX3h4sj5qVa9U3d7FmbJj5is7_WNfKh_X_lWueCrto/htmlembed?widget=false&amp;headers=false&amp;chrome=false" style="width: 100%; height: 250px; border: 0; background: #ffffff; filter: invert(0.92) hue-rotate(180deg) brightness(1.05) contrast(0.95); display: block; border-radius: 0 0 12px 12px;" frameborder="0"></iframe>
+</details>
+
+<details class="wp-block-details is-layout-flow wp-block-details-is-layout-flow"><summary>Head and Neck</summary>
+    <iframe src="https://docs.google.com/spreadsheets/d/1pKH7BbQU1SyCP9dyQdsDvARUQfyKFkjd34zUn8w7ryY/htmlembed?widget=false&amp;headers=false&amp;chrome=false" style="width: 100%; height: 250px; border: 0; background: #ffffff; filter: invert(0.92) hue-rotate(180deg) brightness(1.05) contrast(0.95); display: block; border-radius: 0 0 12px 12px;" frameborder="0"></iframe>
+</details>
+
+<details class="wp-block-details is-layout-flow wp-block-details-is-layout-flow"><summary>Ethics</summary>
+    <iframe src="https://docs.google.com/spreadsheets/d/1l_HxHhr8jScd7SJqyHcwLxkoAYP53Qcsf7UMFEC171Q/htmlembed?widget=false&amp;headers=false&amp;chrome=false" style="width: 100%; height: 250px; border: 0; background: #ffffff; filter: invert(0.92) hue-rotate(180deg) brightness(1.05) contrast(0.95); display: block; border-radius: 0 0 12px 12px;" frameborder="0"></iframe>
+</details>
+
+<details class="wp-block-details is-layout-flow wp-block-details-is-layout-flow"><summary>Oral Histology</summary>
+    <iframe src="https://docs.google.com/spreadsheets/d/17nBiu-DSjHqO5ny_fmr3j0z8USYZ2kkyGxsBpIqoxkc/htmlembed?widget=false&amp;headers=false&amp;chrome=false" style="width: 100%; height: 250px; border: 0; background: #ffffff; filter: invert(0.92) hue-rotate(180deg) brightness(1.05) contrast(0.95); display: block; border-radius: 0 0 12px 12px;" frameborder="0"></iframe>
+</details>
+
+
+
+
+
+<div class="quiz-loader-container">
+    <!-- The Animated Spinner & Text -->
+    <div class="quiz-loading-state">
+        <div class="quiz-spinner"></div>
+        <p>جاري التحميل ...</p>
+    </div>
+
+    <!-- The Iframe -->
+    <iframe src="https://script.google.com/macros/s/AKfycbzDnZ1MfhMuw83g4yjEa9-nXyYXGCFqyStl1deSGXxjzztOSKp0VWvUKQqVcptwybpJ/exec" width="100%" height="850" style="border: none; position: relative; z-index: 2; background: transparent;" title="Dental Quiz Generator" allowtransparency="true">
+    </iframe>
+</div>
+
+<style>
+/* 1. The Container */
+.quiz-loader-container {
+    position: relative;
+    width: 100%;
+    height: 850px;
+    background-color: #1a1d27; /* Slightly lighter than the body so it's visible */
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* 2. The Loading Content (Centered behind the iframe) */
+.quiz-loading-state {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    /* Pulsing skeleton effect */
+    animation: pulseBg 2s infinite ease-in-out;
+}
+
+.quiz-loading-state p {
+    color: #cbd5e1;
+    margin-top: 15px;
+    font-family: sans-serif;
+    font-size: 1.1rem;
+}
+
+/* 3. The Spinner (Matches your blue gradient buttons) */
+.quiz-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(0, 103, 255, 0.1);
+    border-left-color: #0067FF;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Animations */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulseBg {
+    0%, 100% { background-color: #1a1d27; }
+    50% { background-color: #242936; }
+}
+
+/* Smooth fade-in for the iframe content */
+iframe {
+    animation: fadeInContent 1s ease forwards;
+}
+@keyframes fadeInContent {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+</style>

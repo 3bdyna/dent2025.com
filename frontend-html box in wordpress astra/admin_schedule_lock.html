@@ -1,0 +1,176 @@
+<style>
+    /* Container with 0 height so it takes NO space on the page */
+    .dent-schedule-controls-wrapper {
+        position: relative;
+        height: 0;
+        width: 100%;
+        display: block;
+        z-index: 999999;
+    }
+
+    /* The tiny invisible lock */
+    .dent-schedule-secret-lock {
+        position: absolute;
+        top: -15px; /* Above the schedule */
+        right: -15px; /* Top right corner */
+        cursor: pointer; 
+        opacity: 0.15; /* Almost invisible */
+        transition: all 0.3s ease; 
+        width: 32px; height: 32px;
+        display: flex; align-items: center; justify-content: center;
+        background: transparent;
+        border-radius: 50%;
+    }
+    .dent-schedule-secret-lock:hover { 
+        opacity: 0.8; 
+        transform: scale(1.1); 
+    }
+</style>
+
+<div class="dent-schedule-controls-wrapper">
+    <div class="dent-schedule-secret-lock" onclick="promptScheduleAdminLogin()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+    </div>
+</div>
+
+<script>
+    function promptScheduleAdminLogin() {
+        if (sessionStorage.getItem('dent2025_schedule_admin_pass')) {
+            activateScheduleAdminMode();
+            return;
+        }
+
+        const pass = prompt("Enter Schedule Admin Password:");
+        if (!pass) return;
+
+        // Verify password against the shared RBAC engine via check_auth
+        const apiBase = window.location.pathname.startsWith('/dev') ? '/dev' : '';
+        let sel = {};
+        try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
+        fetch(apiBase + '/dent2025_api.php?action=check_auth', {
+            method: 'POST',
+            body: JSON.stringify({ password: pass, specialty: sel.specialty, year: sel.year, semester: sel.semester })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                sessionStorage.setItem('dent2025_schedule_admin_pass', pass);
+                const perms = (res.data && res.data.permissions) ? res.data.permissions : {};
+                sessionStorage.setItem('dent2025_permissions', JSON.stringify(perms));
+                activateScheduleAdminMode();
+            } else {
+                alert("كلمة المرور غير صحيحة. (Incorrect Password)");
+            }
+        }).catch(err => {
+            console.error(err);
+            alert("Network error while logging in.");
+        });
+    }
+
+    function activateScheduleAdminMode() {
+        let lock = document.querySelector('.dent-schedule-secret-lock');
+        if(lock) { lock.style.display = 'none'; }
+        
+        if (typeof ScheduleApp !== 'undefined') {
+            ScheduleApp.showAddModal = function() {
+                let modal = document.createElement('div');
+                modal.id = 'dent-admin-modal';
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 9999999; display: flex; justify-content: center; align-items: center; direction: rtl; font-family: \'Outfit\', \'Noto Kufi Arabic\', sans-serif; padding: 16px; box-sizing: border-box;';
+                modal.innerHTML = `
+                    <style>
+                        #dent-admin-modal input[type="date"] {
+                            -webkit-appearance: none !important;
+                            appearance: none !important;
+                            color-scheme: dark !important;
+                            color: #ffffff !important;
+                            background-color: #121212 !important;
+                            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+                            border-radius: 10px !important;
+                            height: 44px !important;
+                            min-height: 44px !important;
+                            padding: 0 8px !important;
+                            font-size: 0.82rem !important;
+                            font-family: inherit !important;
+                            box-sizing: border-box !important;
+                            direction: rtl !important;
+                            text-align: right !important;
+                        }
+                        #dent-admin-modal input[type="date"]::-webkit-date-and-time-value {
+                            text-align: right !important;
+                            min-height: 44px !important;
+                            line-height: 44px !important;
+                            margin: 0 !important;
+                            color: #ffffff !important;
+                        }
+                        #dent-admin-modal input[type="date"]::-webkit-calendar-picker-indicator {
+                            filter: invert(1) !important;
+                            opacity: 0.75 !important;
+                            cursor: pointer !important;
+                        }
+                    </style>
+                    <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 24px; width: 100%; max-width: 440px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: #fff; box-sizing: border-box;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; gap: 8px;">
+                            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #f8fafc; flex: 1;">إضافة حدث جديد للتقويم</h3>
+                            <button type="button" onclick="document.getElementById('dent-admin-modal').remove()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; flex-shrink:0; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">×</button>
+                        </div>
+                        
+                        <div style="margin-bottom: 14px;">
+                            <label style="font-size:0.8rem; color:#a1a1aa; font-weight:600; display:block; margin-bottom:5px;">عنوان الحدث</label>
+                            <input type="text" id="ev-title" placeholder="عنوان الحدث (مثال: بداية الاختبارات)" style="width: 100%; height: 44px; padding: 0 14px; background: #121212; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 0.9rem; font-family: inherit; box-sizing: border-box; outline: none; transition: all 0.2s;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)';">
+                        </div>
+                        
+                        <div style="margin-bottom: 14px;">
+                            <label style="font-size:0.8rem; color:#a1a1aa; font-weight:600; display:block; margin-bottom:5px;">نوع الحدث</label>
+                            <select id="ev-type" style="width: 100%; height: 44px; padding: 0 14px; background: #121212; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 0.9rem; font-family: inherit; box-sizing: border-box; outline: none; transition: all 0.2s; color-scheme: dark;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)';">
+                                <option value="start">بداية دراسة (Start)</option>
+                                <option value="holiday">إجازة (Holiday)</option>
+                                <option value="exam">اختبار (Exam)</option>
+                                <option value="payment">مكافأة (Payment)</option>
+                                <option value="other">أخرى (Other)</option>
+                            </select>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-bottom: 14px; width: 100%;">
+                            <div style="flex:1; min-width: 0;">
+                                <label style="font-size:0.78rem; color:#a1a1aa; font-weight:600; display:block; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">تاريخ البداية (ميلادي)</label>
+                                <input type="date" id="ev-date" style="width: 100%;" onchange="ScheduleApp.updateHijriPreview()" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)';">
+                            </div>
+                            <div style="flex:1; min-width: 0;">
+                                <label style="font-size:0.78rem; color:#a1a1aa; font-weight:600; display:block; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">تاريخ النهاية (اختياري)</label>
+                                <input type="date" id="ev-end" style="width: 100%;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)';">
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="font-size:0.78rem; color:#a1a1aa; font-weight:600; display:block; margin-bottom:5px;">التاريخ الهجري (يُحسب تلقائياً)</label>
+                            <div id="ev-hijri-preview" style="width: 100%; height: 44px; display: flex; align-items: center; padding: 0 14px; background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.25); border-radius: 10px; color: #c4b5fd; font-size: 0.9rem; font-family: inherit; box-sizing: border-box;">—</div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" onclick="ScheduleApp.submitAddEvent()" style="flex: 2; height: 44px; background: #3f3f46; color: #ffffff; border: 1px solid #52525b; border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.92rem; transition: all 0.2s; display:flex; align-items:center; justify-content:center;" onmouseover="this.style.background='#52525b';" onmouseout="this.style.background='#3f3f46';">حفظ الحدث</button>
+                            <button type="button" onclick="document.getElementById('dent-admin-modal').remove()" style="flex: 1; height: 44px; background: #27272a; border: 1px solid rgba(255,255,255,0.1); color: #a1a1aa; border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 500; font-size: 0.88rem; transition: all 0.2s; display:flex; align-items:center; justify-content:center;" onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.color='#fff';" onmouseout="this.style.background='#27272a'; this.style.color='#a1a1aa';">إلغاء</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            };
+
+            if (typeof ScheduleApp.enableAdminMode === 'function') {
+                ScheduleApp.enableAdminMode(sessionStorage.getItem('dent2025_schedule_admin_pass'));
+            }
+        }
+    }
+    
+    // Auto-check on load in case they refreshed
+    document.addEventListener("DOMContentLoaded", () => {
+        if (sessionStorage.getItem('dent2025_schedule_admin_pass')) {
+            // Wait a split second for ScheduleApp to init
+            setTimeout(() => {
+                activateScheduleAdminMode();
+            }, 500);
+        }
+    });
+</script>

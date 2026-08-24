@@ -1,0 +1,1770 @@
+<style>
+/* Fonts (Outfit + Noto Kufi Arabic) are self-hosted and loaded globally via /frontend_components/fonts/fonts.css */
+
+/* Dent2025 AI Exam Portal - Unified Site Design System */
+.dent-quiz-container { max-width: 850px; margin: 20px auto; padding: 0 10px; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif; color: #e2e8f0; direction: rtl; }
+.dent-quiz-card { background: #1e1e1e; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 25px; }
+.dent-quiz-header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 15px; font-weight: 700; font-size: 1.35rem; background: linear-gradient(90deg, #e2e8f0, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+/* Main Mode Tabs - Identical to Site Tab Switcher */
+.dent-tab-switcher { display: flex; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 6px; gap: 6px; margin-bottom: 22px; }
+.dent-tab-btn { flex: 1; padding: 10px 16px; background: transparent; border: 1px solid transparent; border-radius: 8px; color: #94a3b8; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; user-select: none; }
+.dent-tab-btn:hover { color: #f8fafc; background: rgba(255, 255, 255, 0.04); }
+.dent-tab-btn.active { color: #ffffff; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.12); }
+
+.dent-quiz-form-group { margin-bottom: 18px; }
+.dent-quiz-label { display: block; font-weight: 500; margin-bottom: 8px; color: #9ca3af; font-size: 0.85rem; }
+.dent-quiz-input { width: 100% !important; height: 44px !important; min-height: 44px !important; max-height: none !important; padding: 0 14px !important; line-height: 42px !important; background: #121212 !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: 10px !important; box-sizing: border-box !important; color: #fff !important; transition: all 0.2s !important; font-family: inherit !important; font-size: 0.9rem !important; vertical-align: middle !important; margin: 0 !important; }
+select.dent-quiz-input { appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important; background-repeat: no-repeat !important; background-position: left 18px center !important; background-size: 16px 16px !important; padding-top: 0 !important; padding-bottom: 0 !important; padding-left: 42px !important; padding-right: 16px !important; height: 44px !important; line-height: 42px !important; cursor: pointer !important; }
+select.dent-quiz-input option { background-color: #18181b !important; color: #f8fafc !important; padding: 10px !important; }
+textarea.dent-quiz-input { height: auto !important; min-height: 70px !important; padding: 10px 14px !important; line-height: 1.5 !important; }
+.dent-quiz-input:focus { border-color: rgba(255, 255, 255, 0.35) !important; outline: none !important; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05) !important; }
+
+/* Sub-Segmented Control (Folder Switching) */
+.dent-sub-tabs { display: flex; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 4px; gap: 4px; margin-bottom: 12px; }
+.dent-sub-tab-btn { flex: 1; padding: 8px 12px; background: transparent; border: 1px solid transparent; border-radius: 6px; color: #94a3b8; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; text-align: center; }
+.dent-sub-tab-btn:hover { background: rgba(255, 255, 255, 0.04); color: #e2e8f0; }
+.dent-sub-tab-btn.active { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.12); color: #ffffff; font-weight: 600; }
+
+/* Difficulty Selector */
+.dent-difficulty-group { display: flex; gap: 8px; margin-top: 4px; }
+.dent-diff-btn { flex: 1; padding: 9px 10px; background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: #94a3b8; font-size: 0.83rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; }
+.dent-diff-btn:hover { background: rgba(255, 255, 255, 0.05); color: #cbd5e1; }
+.dent-diff-btn.active { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); color: #ffffff; font-weight: 600; }
+.dent-diff-btn.active[data-diff="easy"] { border-color: rgba(34, 197, 94, 0.35); color: #a7f3d0; }
+.dent-diff-btn.active[data-diff="medium"] { border-color: rgba(59, 130, 246, 0.35); color: #bfdbfe; }
+.dent-diff-btn.active[data-diff="hard"] { border-color: rgba(239, 68, 68, 0.35); color: #fecaca; }
+
+/* Upload Dropzone */
+.dent-upload-zone { border: 1px dashed rgba(255, 255, 255, 0.15); background: rgba(0, 0, 0, 0.25); border-radius: 8px; padding: 18px 14px; text-align: center; cursor: pointer; transition: all 0.2s ease; position: relative; }
+.dent-upload-zone:hover, .dent-upload-zone.dragover { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.03); }
+.dent-upload-title { font-weight: 600; font-size: 0.88rem; color: #e2e8f0; margin-bottom: 3px; }
+.dent-upload-sub { font-size: 0.75rem; color: #64748b; }
+.dent-uploaded-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.dent-file-chip { display: flex; align-items: center; gap: 6px; background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; color: #cbd5e1; max-width: 100%; word-break: break-all; }
+.dent-chip-remove { cursor: pointer; color: #94a3b8; font-weight: bold; font-size: 0.9rem; line-height: 1; padding: 0 2px; }
+.dent-chip-remove:hover { color: #f87171; }
+
+/* Checkbox Grid */
+.dent-quiz-checkbox-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; background: transparent; padding: 0; border: none; }
+.dent-quiz-checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 0.84rem; cursor: pointer; color: #cbd5e1; background: #121212; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.2s; user-select: none; }
+.dent-quiz-checkbox-label:hover { border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.03); }
+.dent-quiz-checkbox-label input { width: 15px; height: 15px; accent-color: #94a3b8; cursor: pointer; }
+
+/* Standard Site Buttons */
+.dent-quiz-btn { width: 100%; padding: 12px; background: #27272a; color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; font-size: 0.95rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
+.dent-quiz-btn:hover { background: #3f3f46; border-color: rgba(255, 255, 255, 0.25); }
+.dent-quiz-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.dent-btn-secondary { background: rgba(255, 255, 255, 0.05); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.1); }
+.dent-btn-secondary:hover { background: rgba(255, 255, 255, 0.1); color: #ffffff; }
+
+/* Loader */
+.dent-quiz-loader { display: none; text-align: center; margin-top: 20px; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); }
+.dent-quiz-spinner { border: 3px solid rgba(255,255,255,0.08); border-top: 3px solid #cbd5e1; border-radius: 50%; width: 30px; height: 30px; animation: dent-spin 0.9s linear infinite; margin: 0 auto 10px; }
+@keyframes dent-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Player Area */
+.dent-player-area { display: none; }
+.dent-player-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.dent-player-controls button { flex: 1; min-width: 140px; padding: 9px 12px; font-size: 0.85rem; }
+
+.dent-q-block { background: rgba(0, 0, 0, 0.2); padding: 20px; border-radius: 10px; margin-bottom: 18px; border: 1px solid rgba(255,255,255,0.06); }
+.dent-q-text { font-size: 1rem; font-weight: 600; margin-bottom: 14px; color: #f8fafc; line-height: 1.6; }
+.dent-q-badge-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.dent-q-tag { font-size: 0.74rem; padding: 2px 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.06); }
+
+.dent-opt-list { display: flex; flex-direction: column; gap: 8px; }
+.dent-opt-item { display: flex; align-items: center; padding: 10px 14px; background: #121212; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 0.92rem; color: #cbd5e1; }
+.dent-opt-item:hover { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.15); }
+.dent-opt-item input[type="radio"] { margin-left: 10px; width: 15px; height: 15px; accent-color: #94a3b8; cursor: pointer; } 
+.dent-opt-item.selected { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.06); color: #fff; }
+
+/* Feedback Styles */
+.dent-opt-item.correct { border-color: rgba(34, 197, 94, 0.35) !important; background: rgba(34, 197, 94, 0.04) !important; color: #a7f3d0 !important; font-weight: 500; }
+.dent-opt-item.wrong { border-color: rgba(239, 68, 68, 0.3) !important; background: rgba(239, 68, 68, 0.03) !important; color: #fca5a5 !important; }
+.dent-explanation-box { display: none; margin-top: 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 12px; font-size: 0.86rem; color: #cbd5e1; line-height: 1.5; }
+
+.dent-score-board { text-align: center; font-size: 1.1rem; font-weight: 600; color: #f8fafc; margin-bottom: 22px; display: none; padding: 18px; background: rgba(255, 255, 255, 0.02); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.06); }
+
+/* Minimal Navigator Bar */
+.dent-nav-bar { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 18px; padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06); justify-content: center; align-items: center; }
+.dent-nav-pill { width: 11px; height: 11px; min-width: 11px; padding: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.15); cursor: pointer; transition: all 0.2s; position: relative; }
+.dent-nav-pill:hover { background: rgba(255, 255, 255, 0.3); border-color: rgba(255, 255, 255, 0.35); }
+.dent-nav-pill.answered { background: #475569 !important; border-color: #64748b !important; }
+.dent-nav-pill.correct { background: rgba(34, 197, 94, 0.4) !important; border-color: rgba(34, 197, 94, 0.5) !important; }
+.dent-nav-pill.wrong { background: rgba(239, 68, 68, 0.4) !important; border-color: rgba(239, 68, 68, 0.5) !important; }
+.dent-nav-pill.active-focused { background: #f8fafc !important; border-color: #ffffff !important; box-shadow: 0 0 6px rgba(255, 255, 255, 0.5); transform: scale(1.25); }
+.dent-q-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+
+/* Saved Exams Bank Section */
+.dent-bank-header { font-size: 1.1rem; font-weight: 700; color: #f8fafc; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+.dent-bank-filters { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.dent-bank-filters select, .dent-bank-filters input { flex: 1; min-width: 150px; }
+
+.dent-bank-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.dent-bank-card { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s, border-color 0.2s; }
+.dent-bank-card:hover { border-color: rgba(255, 255, 255, 0.18); transform: translateY(-2px); }
+.dent-bank-title { font-weight: 700; font-size: 0.95rem; color: #f8fafc; margin-bottom: 5px; line-height: 1.4; }
+.dent-bank-sub { font-size: 0.78rem; color: #94a3b8; margin-bottom: 6px; font-weight: 500; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.dent-bank-tag { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
+.dent-tag-pastexam { background: rgba(245, 158, 11, 0.1); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.2); }
+.dent-tag-ai { background: rgba(59, 130, 246, 0.1); color: #bfdbfe; border: 1px solid rgba(59, 130, 246, 0.2); }
+.dent-tag-diff-easy { background: rgba(34, 197, 94, 0.08); color: #a7f3d0; }
+.dent-tag-diff-med { background: rgba(59, 130, 246, 0.08); color: #bfdbfe; }
+.dent-tag-diff-hard { background: rgba(239, 68, 68, 0.08); color: #fecaca; }
+.dent-q-converted-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.28); color: #fde047; font-size: 0.72rem; font-weight: 600; border-radius: 4px; }
+
+.dent-bank-meta { display: flex; align-items: center; justify-content: space-between; font-size: 0.76rem; color: #64748b; margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.04); }
+.dent-bank-actions { display: flex; gap: 6px; margin-top: 10px; }
+.dent-bank-actions button { padding: 7px 11px; font-size: 0.82rem; border-radius: 6px; }
+
+details.dent-chapters-details[open] summary .dent-arrow { transform: rotate(180deg); }
+details.dent-chapters-details summary::-webkit-details-marker { display: none; }
+details.dent-chapters-details summary { list-style: none; }
+
+/* Scrollbars */
+.dent-chapters-details div::-webkit-scrollbar, #dq-chapters-container::-webkit-scrollbar, #dq-target-chaps-container::-webkit-scrollbar, #dq-pastexam-drive-container::-webkit-scrollbar {
+    width: 4px;
+}
+.dent-chapters-details div::-webkit-scrollbar-track, #dq-chapters-container::-webkit-scrollbar-track, #dq-target-chaps-container::-webkit-scrollbar-track, #dq-pastexam-drive-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+.dent-chapters-details div::-webkit-scrollbar-thumb, #dq-chapters-container::-webkit-scrollbar-thumb, #dq-target-chaps-container::-webkit-scrollbar-thumb, #dq-pastexam-drive-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+.dent-chapters-details div, #dq-chapters-container, #dq-target-chaps-container, #dq-pastexam-drive-container {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 600px) {
+    .dent-quiz-card { padding: 16px; }
+    .dent-quiz-checkbox-group { grid-template-columns: 1fr; }
+    .dent-bank-filters { flex-direction: column; }
+    .dent-tab-switcher { flex-direction: column; }
+}
+</style>
+
+<div class="dent-quiz-container">
+    <!-- Generator Section -->
+    <div class="dent-quiz-card" id="dent-generator-view">
+        <div class="dent-quiz-header">منصة الاختبارات بالذكاء الاصطناعي</div>
+
+        <!-- Main Mode Tabs -->
+        <div class="dent-tab-switcher">
+            <button type="button" class="dent-tab-btn active" id="dq-tab-ai" data-mode="ai_generation">
+                <span>توليد أسئلة من المحاضرات والمصادر</span>
+            </button>
+            <button type="button" class="dent-tab-btn" id="dq-tab-pastexam" data-mode="past_exam_filter">
+                <span>تصفية وتجميع أسئلة السنوات السابقة</span>
+            </button>
+        </div>
+        
+        <!-- Subject Selector -->
+        <div class="dent-quiz-form-group">
+            <label class="dent-quiz-label">المادة الدراسية:</label>
+            <select id="dq-subject" class="dent-quiz-input">
+                <option value="">جاري تحميل المواد...</option>
+            </select>
+        </div>
+
+        <!-- ================= MODE 1: FRESH AI GENERATION ================= -->
+        <div id="dq-panel-ai">
+            <!-- Google Drive Source Type Switcher (Chapters vs Materials - selections preserved) -->
+            <div class="dent-quiz-form-group">
+                <label class="dent-quiz-label">ملفات Google Drive المحددة:</label>
+                <div class="dent-sub-tabs" id="dq-folder-tabs">
+                    <button type="button" class="dent-sub-tab-btn active" data-folder="chapters">المحاضرات</button>
+                    <button type="button" class="dent-sub-tab-btn" data-folder="materials">الملازم والمصادر</button>
+                </div>
+
+                <!-- Google Drive Files Container with Persistent Selection State -->
+                <div style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; flex-wrap: wrap;">
+                        <span id="dq-selection-summary" style="font-size: 0.84rem; color: #94a3b8;">لم يتم تحديد أي ملفات بعد</span>
+                        <div style="display: flex; gap: 6px;">
+                            <button type="button" id="dq-select-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 5px 10px; font-size: 0.78rem;" disabled>تحديد المعروض</button>
+                            <button type="button" id="dq-clear-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 5px 10px; font-size: 0.78rem;" disabled>إلغاء التحديد</button>
+                        </div>
+                    </div>
+                    <div id="dq-chapters-container" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-left: 3px;">
+                        <div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 12px;">اختر المادة أولاً لتحميل الملفات...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Optional Device File Upload (PDF / Slides) -->
+            <div class="dent-quiz-form-group">
+                <label class="dent-quiz-label">أو ارفع ملفات من جهازك (اختياري - PDF / شرائح):</label>
+                <div class="dent-upload-zone" id="dq-ai-dropzone">
+                    <div class="dent-upload-title">اسحب وأفلت الملفات هنا، أو انقر للاختيار</div>
+                    <div class="dent-upload-sub">يدعم ملفات PDF، صور السلايدات، ومستندات المذاكرة</div>
+                    <input type="file" id="dq-ai-file-input" multiple accept=".pdf,image/*,.docx,.pptx" style="display: none;">
+                </div>
+                <div class="dent-uploaded-chips" id="dq-ai-uploaded-chips"></div>
+            </div>
+
+            <!-- Difficulty Selector -->
+            <div class="dent-quiz-form-group">
+                <label class="dent-quiz-label">مستوى الصعوبة الأكاديمية:</label>
+                <div class="dent-difficulty-group">
+                    <button type="button" class="dent-diff-btn" data-diff="easy">سهل (مفاهيم وتعريفات)</button>
+                    <button type="button" class="dent-diff-btn active" data-diff="medium">متوسط (مستوى الامتحانات)</button>
+                    <button type="button" class="dent-diff-btn" data-diff="hard">صعب (تفاصيل دقيقة واستنتاجات)</button>
+                </div>
+            </div>
+
+            <div class="dent-quiz-form-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <div style="flex: 2; min-width: 160px;">
+                    <label class="dent-quiz-label">عنوان الاختبار:</label>
+                    <input type="text" id="dq-quiz-name" class="dent-quiz-input" placeholder="مثال: اختبار الفاينل - شابتر 1">
+                </div>
+                <div style="flex: 1; min-width: 85px;">
+                    <label class="dent-quiz-label">عدد الأسئلة:</label>
+                    <input type="number" id="dq-num-qs" class="dent-quiz-input" value="10" min="1" max="100" placeholder="10 إلى 100">
+                </div>
+                <div style="flex: 1.2; min-width: 120px;">
+                    <label class="dent-quiz-label">الصفحات / الوحدة (اختياري):</label>
+                    <input type="text" id="dq-page-range" class="dent-quiz-input" placeholder="مثال: 35-55 أو Unit 3">
+                </div>
+            </div>
+
+            <div class="dent-quiz-form-group">
+                <label class="dent-quiz-label">توجيهات مخصصة (اختياري):</label>
+                <input type="text" id="dq-focus" class="dent-quiz-input" placeholder="مثال: ركز على أسئلة القواعد والمفاهيم الأساسية">
+            </div>
+
+            <div class="dent-quiz-form-group" style="margin-bottom: 6px;">
+                <label class="dent-quiz-label">أنواع الأسئلة:</label>
+                <div class="dent-quiz-checkbox-group">
+                    <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-mcq" checked> خيارات متعددة (MCQ)</label>
+                    <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-except" checked> أسئلة الاستثناء (Except)</label>
+                    <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-cases"> حالات سريرية (Cases)</label>
+                    <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-statements"> العبارتين (Statements)</label>
+                    <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-tf"> صح أم خطأ (True/False)</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= MODE 2: PAST EXAMS SMART FILTER ================= -->
+        <div id="dq-panel-pastexam" style="display: none;">
+            <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.83rem; color: #cbd5e1; line-height: 1.5;">
+                <strong>التصفية الذكية:</strong> حدد الشابترات المستهدفة التي تذاكرها، ثم اختر ملف الاختبار السابق من Google Drive أو ارفعه من جهازك. سيقوم الذكاء الاصطناعي بفرز واستخراج الأسئلة التابعة للشابترات المحددة فقط.
+            </div>
+
+            <!-- Target Chapters Selection -->
+            <div class="dent-quiz-form-group">
+                <label class="dent-quiz-label">1. حدد الشابترات المستهدفة (التي تريد استخراج أسئلتها فقط):</label>
+                <div style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px;">
+                    <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                        <button type="button" id="dq-target-select-all" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 5px 9px; font-size: 0.78rem; flex: 1;">تحديد الكل</button>
+                        <button type="button" id="dq-target-deselect-all" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 5px 9px; font-size: 0.78rem; flex: 1;">إلغاء التحديد</button>
+                    </div>
+                    <div id="dq-target-chaps-container" style="max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px;">
+                        <div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 8px;">اختر المادة أولاً لعرض الشابترات...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Past Exam Source Selector (Google Drive vs Device Upload) -->
+            <div class="dent-quiz-form-group">
+                <label class="dent-quiz-label">2. ملف / صور الاختبار السابق (تجميعات، فاينل، ميدتيرم):</label>
+                <div class="dent-sub-tabs" id="dq-pastexam-source-tabs">
+                    <button type="button" class="dent-sub-tab-btn active" data-source="drive">اختيار من Google Drive</button>
+                    <button type="button" class="dent-sub-tab-btn" data-source="upload">رفع ملفات من الجهاز</button>
+                </div>
+
+                <!-- Google Drive Selection View for Past Exam -->
+                <div id="dq-pastexam-drive-view" style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 6px;">
+                        <span style="font-size: 0.78rem; color: #94a3b8;">حدد ملف الاختبار السابق:</span>
+                        <div style="display: flex; gap: 4px;">
+                            <button type="button" class="dent-sub-tab-btn active dent-pastexam-folder-btn" data-folder="materials" style="padding: 3px 8px; font-size: 0.75rem;">الملازم</button>
+                            <button type="button" class="dent-sub-tab-btn dent-pastexam-folder-btn" data-folder="chapters" style="padding: 3px 8px; font-size: 0.75rem;">المحاضرات</button>
+                        </div>
+                    </div>
+                    <div id="dq-pastexam-drive-container" style="max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px;">
+                        <div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 8px;">اختر المادة أولاً لعرض الملفات...</div>
+                    </div>
+                </div>
+
+                <!-- Device Upload View for Past Exam -->
+                <div id="dq-pastexam-upload-view" style="display: none;">
+                    <div class="dent-upload-zone" id="dq-pastexam-dropzone">
+                        <div class="dent-upload-title">اسحب صور الأسئلة أو ملف الـ PDF هنا</div>
+                        <div class="dent-upload-sub">يدعم تصوير الكاميرا، لقطات الشاشة، وملفات PDF</div>
+                        <input type="file" id="dq-pastexam-file-input" multiple accept="image/*,.pdf" style="display: none;">
+                    </div>
+                    <div class="dent-uploaded-chips" id="dq-pastexam-uploaded-chips"></div>
+                </div>
+            </div>
+
+            <div class="dent-quiz-form-group" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 6px;">
+                <div style="flex: 2; min-width: 180px;">
+                    <label class="dent-quiz-label">عنوان بنك الأسئلة المصفّى:</label>
+                    <input type="text" id="dq-pastexam-quiz-name" class="dent-quiz-input" placeholder="مثال: تجميعات فاينل 2024 - شابتر 1 و 2">
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <label class="dent-quiz-label">الحد الأقصى للأسئلة:</label>
+                    <input type="number" id="dq-pastexam-num-qs" class="dent-quiz-input" value="200" min="1" max="200" placeholder="200 (تلقائي)">
+                </div>
+            </div>
+            <div style="font-size: 0.78rem; color: #94a3b8; margin-bottom: 14px; line-height: 1.5;">
+                يستخرج الذكاء الاصطناعي كافة الأسئلة التابعة للشابترات المحددة حتى نهايتها دون توقف. أي أسئلة مقالية أو فراغات يتم تحويلها تلقائياً إلى خيارات مع وضع علامة (*) في بدايتها.
+            </div>
+        </div>
+
+        <button id="dq-generate-btn" class="dent-quiz-btn">إنشاء وتجهيز الاختبار</button>
+
+        <div class="dent-quiz-loader" id="dq-loader">
+            <div class="dent-quiz-spinner"></div>
+            <div id="dq-progress-bar-container" style="width: 100%; max-width: 300px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; margin: 12px auto 14px; overflow: hidden;">
+                <div id="dq-progress-bar" style="width: 15%; height: 100%; background: #cbd5e1; border-radius: 2px; transition: width 0.4s ease;"></div>
+            </div>
+            <div id="dq-status-text" style="font-weight: 600; color: #e2e8f0; font-size: 0.9rem; line-height: 1.6;">جاري التحضير...</div>
+        </div>
+    </div>
+
+    <!-- Saved Exams Bank Section -->
+    <div class="dent-quiz-card" id="dent-bank-view">
+        <div class="dent-bank-header">
+            <span>بنك الاختبارات المحفوظة</span>
+            <span id="dent-bank-count" style="font-size: 0.82rem; color: #64748b; font-weight: normal;">(جاري التحميل...)</span>
+        </div>
+
+        <div class="dent-bank-filters">
+            <select id="dent-bank-subject-filter" class="dent-quiz-input">
+                <option value="">جميع المواد الدراسية</option>
+            </select>
+            <select id="dent-bank-type-filter" class="dent-quiz-input" style="max-width: 170px;">
+                <option value="">جميع الأنواع</option>
+                <option value="past_exam_filter">تجميعات سنوات سابقة</option>
+                <option value="ai_generation">توليد ذكاء اصطناعي</option>
+            </select>
+            <input type="text" id="dent-bank-search" class="dent-quiz-input" placeholder="بحث باسم الاختبار أو المحاضرة...">
+        </div>
+
+        <div id="dent-bank-list" class="dent-bank-grid">
+            <div style="text-align: center; color: #64748b; grid-column: 1/-1; padding: 20px;">جاري تحميل بنك الأسئلة...</div>
+        </div>
+    </div>
+
+    <!-- Player Section -->
+    <div class="dent-quiz-card dent-player-area" id="dent-player-view">
+        <div class="dent-player-controls">
+            <button id="dp-back-btn" class="dent-quiz-btn dent-btn-secondary">العودة للقائمة</button>
+            <button id="dp-reveal-all-btn" class="dent-quiz-btn dent-btn-secondary">إظهار توضيح الإجابات</button>
+        </div>
+
+        <div class="dent-player-modes-row" style="display: flex; gap: 10px; margin-bottom: 18px; text-align: right;">
+            <div style="flex: 1;">
+                <label class="dent-quiz-label" style="margin-bottom: 5px;">طريقة العرض:</label>
+                <select id="dp-view-mode" class="dent-quiz-input" style="height: 36px !important; min-height: 36px !important; line-height: 34px !important; font-size: 0.8rem !important; padding: 0 10px !important; vertical-align: middle;">
+                    <option value="list">عرض جميع الأسئلة</option>
+                    <option value="focused">سؤال تلو الآخر (تركيز)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="dent-quiz-header" id="dp-title">عنوان الاختبار</div>
+        <div id="dp-meta-sub" style="text-align: center; font-size: 0.82rem; color: #64748b; margin-bottom: 18px;"></div>
+        
+        <!-- Minimal Question Navigator Bar -->
+        <div class="dent-nav-bar" id="dp-navigator" style="display: none;"></div>
+
+        <div class="dent-score-board" id="dp-score"></div>
+        
+        <div id="dp-questions-container"></div>
+
+        <div id="dp-focused-nav" style="display: none; justify-content: space-between; gap: 10px; margin-top: 15px; margin-bottom: 10px;">
+            <button id="dp-prev-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 9px; font-size: 0.86rem; flex: 1;">السؤال السابق</button>
+            <button id="dp-next-btn" class="dent-quiz-btn" style="margin-top: 0; padding: 9px; font-size: 0.86rem; flex: 1;">السؤال التالي</button>
+        </div>
+        
+        <button id="dp-submit-btn" class="dent-quiz-btn" style="margin-top: 18px;">حساب النتيجة النهائية وتصحيح الاختبار</button>
+    </div>
+</div>
+
+<script>
+(() => {
+    const APP_DEV_PREFIX = window.location.pathname.startsWith('/dev') ? '/dev' : '';
+    let QUIZ_API_BASE = APP_DEV_PREFIX + '/backend';
+    
+    function escapeHtml(str) {
+        if (str == null) return '';
+        return String(str).replace(/[&<>"']/g, m => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+        })[m]);
+    }
+    
+    let generatedQuestions = [];
+    let currentSubjectsData = [];
+    let allSavedQuizzes = [];
+    let activeQuizId = null;
+    let currentFocusedIndex = 0;
+    let currentViewMode = 'list';
+
+    let currentCreationMode = 'ai_generation';
+    let currentDifficulty = 'medium';
+    
+    // Persistent file caches per subject
+    let activeFolderTab = 'chapters'; // 'chapters' | 'materials'
+    let subjectChaptersFiles = [];
+    let subjectMaterialsFiles = [];
+    
+    // Unified persistent Drive file selection: Map(id -> {id, name, driveLink, folder})
+    let selectedDriveFilesMap = new Map();
+
+    let currentPastExamSource = 'drive'; // 'drive' | 'upload'
+    let currentPastExamDriveFolder = 'materials'; // 'materials' | 'chapters'
+    let pastExamDriveFilesMap = new Map();
+
+    let aiUploadedFiles = [];
+    let pastExamUploadedFiles = [];
+
+    function checkUrlDirectQuiz() {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const directQuizId = urlParams.get('quiz_id') || urlParams.get('quiz') || urlParams.get('test_id');
+            if (directQuizId) {
+                playSavedQuiz(directQuizId);
+            }
+        } catch (e) {}
+    }
+
+    function initQuizApp() {
+        loadSubjects();
+        loadSavedQuizzesBank().then(() => {
+            checkUrlDirectQuiz();
+        });
+        setupModeSwitcher();
+        setupFolderTabs();
+        setupPastExamSourceTabs();
+        setupFileUploaders();
+        setupDifficultySelector();
+        
+        // Listeners
+        document.getElementById('dq-subject').addEventListener('change', () => {
+            selectedDriveFilesMap.clear();
+            pastExamDriveFilesMap.clear();
+            loadFilesForSubject();
+        });
+        document.getElementById('dq-generate-btn').addEventListener('click', startQuizGeneration);
+        document.getElementById('dp-submit-btn').addEventListener('click', submitQuiz);
+        document.getElementById('dp-back-btn').addEventListener('click', exitPlayer);
+        document.getElementById('dp-reveal-all-btn').addEventListener('click', toggleRevealAllAnswers);
+        
+        document.getElementById('dent-bank-subject-filter').addEventListener('change', renderBankGrid);
+        document.getElementById('dent-bank-type-filter').addEventListener('change', renderBankGrid);
+        document.getElementById('dent-bank-search').addEventListener('input', renderBankGrid);
+
+        // View mode listener
+        const viewSelect = document.getElementById('dp-view-mode');
+        if (viewSelect) {
+            viewSelect.addEventListener('change', () => {
+                currentViewMode = viewSelect.value;
+                updateViewDisplay();
+            });
+        }
+
+        const prevBtn = document.getElementById('dp-prev-btn');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (currentFocusedIndex > 0) {
+                    currentFocusedIndex--;
+                    updateViewDisplay();
+                }
+            });
+        }
+
+        const nextBtn = document.getElementById('dp-next-btn');
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                if (currentFocusedIndex < generatedQuestions.length - 1) {
+                    currentFocusedIndex++;
+                    updateViewDisplay();
+                }
+            });
+        }
+
+        // Select / Clear all buttons for currently displayed tab list
+        document.getElementById('dq-select-all-btn').addEventListener('click', () => {
+            const currentList = (activeFolderTab === 'chapters') ? subjectChaptersFiles : subjectMaterialsFiles;
+            currentList.forEach(f => {
+                selectedDriveFilesMap.set(f.id, {
+                    id: f.id,
+                    name: f.name,
+                    driveLink: f.id,
+                    folder: activeFolderTab
+                });
+            });
+            renderDriveFilesList();
+            updateSelectionSummary();
+        });
+
+        document.getElementById('dq-clear-all-btn').addEventListener('click', () => {
+            selectedDriveFilesMap.clear();
+            renderDriveFilesList();
+            updateSelectionSummary();
+        });
+
+        // Target chapters select all / deselect all
+        document.getElementById('dq-target-select-all').addEventListener('click', () => {
+            document.querySelectorAll('.dq-target-chap-checkbox').forEach(cb => cb.checked = true);
+        });
+        document.getElementById('dq-target-deselect-all').addEventListener('click', () => {
+            document.querySelectorAll('.dq-target-chap-checkbox').forEach(cb => cb.checked = false);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initQuizApp);
+    } else {
+        initQuizApp();
+    }
+
+    function setupModeSwitcher() {
+        const tabAi = document.getElementById('dq-tab-ai');
+        const tabPast = document.getElementById('dq-tab-pastexam');
+        const panelAi = document.getElementById('dq-panel-ai');
+        const panelPast = document.getElementById('dq-panel-pastexam');
+        const genBtn = document.getElementById('dq-generate-btn');
+
+        tabAi.addEventListener('click', () => {
+            currentCreationMode = 'ai_generation';
+            tabAi.classList.add('active');
+            tabPast.classList.remove('active');
+            panelAi.style.display = 'block';
+            panelPast.style.display = 'none';
+            genBtn.innerText = 'إنشاء وتجهيز الاختبار';
+        });
+
+        tabPast.addEventListener('click', () => {
+            currentCreationMode = 'past_exam_filter';
+            tabPast.classList.add('active');
+            tabAi.classList.remove('active');
+            panelPast.style.display = 'block';
+            panelAi.style.display = 'none';
+            genBtn.innerText = 'استخراج وتصفية الأسئلة السابقة';
+        });
+    }
+
+    function setupFolderTabs() {
+        const tabs = document.querySelectorAll('#dq-folder-tabs .dent-sub-tab-btn');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                activeFolderTab = tab.dataset.folder || 'chapters';
+                renderDriveFilesList();
+            });
+        });
+    }
+
+    function setupPastExamSourceTabs() {
+        const tabs = document.querySelectorAll('#dq-pastexam-source-tabs .dent-sub-tab-btn');
+        const driveView = document.getElementById('dq-pastexam-drive-view');
+        const uploadView = document.getElementById('dq-pastexam-upload-view');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentPastExamSource = tab.dataset.source || 'drive';
+                if (currentPastExamSource === 'drive') {
+                    driveView.style.display = 'block';
+                    uploadView.style.display = 'none';
+                } else {
+                    driveView.style.display = 'none';
+                    uploadView.style.display = 'block';
+                }
+            });
+        });
+
+        const folderBtns = document.querySelectorAll('.dent-pastexam-folder-btn');
+        folderBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                folderBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentPastExamDriveFolder = btn.dataset.folder || 'materials';
+                loadPastExamDriveFiles();
+            });
+        });
+    }
+
+    function setupDifficultySelector() {
+        const diffBtns = document.querySelectorAll('.dent-diff-btn');
+        diffBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                diffBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentDifficulty = btn.dataset.diff || 'medium';
+            });
+        });
+    }
+
+    function setupFileUploaders() {
+        const aiDropzone = document.getElementById('dq-ai-dropzone');
+        const aiFileInput = document.getElementById('dq-ai-file-input');
+        aiDropzone.addEventListener('click', () => aiFileInput.click());
+        aiFileInput.addEventListener('change', (e) => handleFilesSelected(e.target.files, 'ai'));
+
+        aiDropzone.addEventListener('dragover', (e) => { e.preventDefault(); aiDropzone.classList.add('dragover'); });
+        aiDropzone.addEventListener('dragleave', () => aiDropzone.classList.remove('dragover'));
+        aiDropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            aiDropzone.classList.remove('dragover');
+            if (e.dataTransfer.files) handleFilesSelected(e.dataTransfer.files, 'ai');
+        });
+
+        const pastDropzone = document.getElementById('dq-pastexam-dropzone');
+        const pastFileInput = document.getElementById('dq-pastexam-file-input');
+        pastDropzone.addEventListener('click', () => pastFileInput.click());
+        pastFileInput.addEventListener('change', (e) => handleFilesSelected(e.target.files, 'pastexam'));
+
+        pastDropzone.addEventListener('dragover', (e) => { e.preventDefault(); pastDropzone.classList.add('dragover'); });
+        pastDropzone.addEventListener('dragleave', () => pastDropzone.classList.remove('dragover'));
+        pastDropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            pastDropzone.classList.remove('dragover');
+            if (e.dataTransfer.files) handleFilesSelected(e.dataTransfer.files, 'pastexam');
+        });
+    }
+
+    async function handleFilesSelected(filesList, target) {
+        if (!filesList || filesList.length === 0) return;
+        const targetArray = (target === 'ai') ? aiUploadedFiles : pastExamUploadedFiles;
+
+        for (let i = 0; i < filesList.length; i++) {
+            const file = filesList[i];
+            if (file.size > 150 * 1024 * 1024) {
+                alert(`الملف ${file.name} كبير جداً (أكبر من 150 ميجابايت).`);
+                continue;
+            }
+
+            try {
+                const base64Data = await readFileAsOptimizedBase64(file);
+                targetArray.push({
+                    name: file.name,
+                    type: file.type || 'application/octet-stream',
+                    size: file.size,
+                    data: base64Data
+                });
+            } catch (err) {
+                console.error("Error reading file:", err);
+            }
+        }
+
+        renderUploadedChips(target);
+    }
+
+    function readFileAsOptimizedBase64(file) {
+        return new Promise((resolve, reject) => {
+            const isImage = file.type.startsWith('image/');
+            const reader = new FileReader();
+
+            if (isImage) {
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const maxDimension = 1600;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxDimension || height > maxDimension) {
+                            if (width > height) {
+                                height = Math.round((height * maxDimension) / width);
+                                width = maxDimension;
+                            } else {
+                                width = Math.round((width * maxDimension) / height);
+                                height = maxDimension;
+                            }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const optimizedB64 = canvas.toDataURL('image/jpeg', 0.85);
+                        resolve(optimizedB64);
+                    };
+                    img.onerror = () => resolve(e.target.result);
+                    img.src = e.target.result;
+                };
+            } else {
+                reader.onload = (e) => resolve(e.target.result);
+            }
+
+            reader.onerror = (err) => reject(err);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function renderUploadedChips(target) {
+        const container = (target === 'ai') ? document.getElementById('dq-ai-uploaded-chips') : document.getElementById('dq-pastexam-uploaded-chips');
+        const list = (target === 'ai') ? aiUploadedFiles : pastExamUploadedFiles;
+
+        container.innerHTML = '';
+        list.forEach((f, idx) => {
+            const chip = document.createElement('div');
+            chip.className = 'dent-file-chip';
+            chip.innerHTML = `
+                <span>${f.name}</span>
+                <span class="dent-chip-remove" title="حذف الملف">✕</span>
+            `;
+            chip.querySelector('.dent-chip-remove').addEventListener('click', (e) => {
+                e.stopPropagation();
+                list.splice(idx, 1);
+                renderUploadedChips(target);
+            });
+            container.appendChild(chip);
+        });
+    }
+
+    async function loadSubjects() {
+        const select = document.getElementById('dq-subject');
+        const filterSelect = document.getElementById('dent-bank-subject-filter');
+
+        try {
+            let sel = localStorage.getItem('dent2025_selection');
+            if (!sel) throw new Error("No selection found.");
+            sel = JSON.parse(sel);
+            
+            let subjects = [];
+            
+            try {
+                const url = `${QUIZ_API_BASE}/api_data.php?action=data` + String.fromCharCode(38) + `specialty=${sel.specialty}` + String.fromCharCode(38) + `year=${sel.year}` + String.fromCharCode(38) + `semester=${sel.semester}`;
+                const res = await fetch(url);
+                const json = await res.json();
+                if (json.success && json.data && json.data.subjects && json.data.subjects.length > 0) {
+                    subjects = json.data.subjects;
+                }
+            } catch(e) {}
+
+            if (subjects.length === 0) {
+                try {
+                    const fallbackUrl = `${APP_DEV_PREFIX}/dent2025_api.php?action=data` + String.fromCharCode(38) + `specialty=${sel.specialty}` + String.fromCharCode(38) + `year=${sel.year}` + String.fromCharCode(38) + `semester=${sel.semester}`;
+                    const fbRes = await fetch(fallbackUrl);
+                    const fbJson = await fbRes.json();
+                    if (fbJson.success && fbJson.data && fbJson.data.subjects) {
+                        subjects = fbJson.data.subjects;
+                    }
+                } catch(e) {}
+            }
+            
+            if (subjects.length > 0) {
+                currentSubjectsData = subjects;
+                select.innerHTML = '<option value="">-- اختر المادة --</option>';
+                filterSelect.innerHTML = '<option value="">جميع المواد الدراسية</option>';
+                
+                currentSubjectsData.forEach(sub => {
+                    const safeId = escapeHtml(sub.id);
+                    const safeName = escapeHtml(sub.name);
+                    select.innerHTML += `<option value="${safeId}">${safeName}</option>`;
+                    filterSelect.innerHTML += `<option value="${safeId}">${safeName}</option>`;
+                });
+            } else {
+                select.innerHTML = '<option value="">لا توجد مواد متاحة حالياً</option>';
+            }
+        } catch (err) {
+            select.innerHTML = `<option value="">خطأ في التحميل</option>`;
+        }
+    }
+
+    async function fetchDriveFilesByFolderId(folderId) {
+        if (!folderId) return [];
+        const cacheKey = 'dent2025_drive_ch_' + folderId;
+        try {
+            const cached = sessionStorage.getItem(cacheKey);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            }
+        } catch (e) {}
+
+        try {
+            let res = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?action=list_chapters` + String.fromCharCode(38) + `folder_id=${folderId}`);
+            const data = await res.json();
+            let driveFiles = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+            const mapped = driveFiles.map(f => ({
+                id: f.id.startsWith('http') ? f.id : `https://drive.google.com/file/d/${f.id}/view`,
+                name: f.name
+            }));
+            if (mapped.length > 0) {
+                try { sessionStorage.setItem(cacheKey, JSON.stringify(mapped)); } catch (e) {}
+            }
+            return mapped;
+        } catch (err) {
+            console.error("Drive fetch error for folder:", folderId, err);
+            return [];
+        }
+    }
+
+    async function loadFilesForSubject() {
+        const subjectId = document.getElementById('dq-subject').value;
+        const chapContainer = document.getElementById('dq-chapters-container');
+        const targetContainer = document.getElementById('dq-target-chaps-container');
+        const selectAllBtn = document.getElementById('dq-select-all-btn');
+        const clearAllBtn = document.getElementById('dq-clear-all-btn');
+        
+        if (!subjectId) {
+            chapContainer.innerHTML = '<div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 12px;">اختر المادة أولاً...</div>';
+            targetContainer.innerHTML = '<div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 8px;">اختر المادة أولاً لعرض الشابترات...</div>';
+            selectAllBtn.disabled = true;
+            clearAllBtn.disabled = true;
+            updateSelectionSummary();
+            return;
+        }
+
+        const subject = currentSubjectsData.find(s => s.id == subjectId);
+        if (!subject) return;
+
+        chapContainer.innerHTML = '<div style="color: #94a3b8; font-size: 0.85rem; text-align: center; padding: 12px;">جاري تحميل ملفات المادة من Google Drive...</div>';
+        targetContainer.innerHTML = '<div style="color: #94a3b8; font-size: 0.85rem; text-align: center; padding: 8px;">جاري تحميل الشابترات المستهدفة...</div>';
+        selectAllBtn.disabled = true;
+        clearAllBtn.disabled = true;
+
+        subjectChaptersFiles = [];
+        subjectMaterialsFiles = [];
+
+        // Parallel fetch for both chapters and materials
+        const [chaps, mats] = await Promise.all([
+            subject.chapters_folder_id ? fetchDriveFilesByFolderId(subject.chapters_folder_id) : Promise.resolve([]),
+            subject.materials_folder_id ? fetchDriveFilesByFolderId(subject.materials_folder_id) : Promise.resolve([])
+        ]);
+
+        subjectChaptersFiles = chaps;
+        subjectMaterialsFiles = mats;
+
+        // Render target chapters for Past Exam filter (using Chapters files)
+        if (subjectChaptersFiles.length > 0) {
+            targetContainer.innerHTML = '';
+            subjectChaptersFiles.forEach((opt) => {
+                const item = document.createElement('label');
+                item.className = 'dent-quiz-checkbox-label';
+                item.style.cssText = 'display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 10px; background: #18181b; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer; color: #cbd5e1; font-size: 0.82rem; box-sizing: border-box; margin: 0;';
+                item.innerHTML = `
+                    <input type="checkbox" class="dq-target-chap-checkbox" value="${opt.name.replace(/"/g, '&quot;')}" checked>
+                    <span style="line-height: 1.4; word-break: break-word;">${opt.name}</span>
+                `;
+                targetContainer.appendChild(item);
+            });
+        } else {
+            targetContainer.innerHTML = '<div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 8px;">لا توجد محاضرات معرفة لهذه المادة</div>';
+        }
+
+        renderDriveFilesList();
+        loadPastExamDriveFiles();
+    }
+
+    function renderDriveFilesList() {
+        const chapContainer = document.getElementById('dq-chapters-container');
+        const selectAllBtn = document.getElementById('dq-select-all-btn');
+        const clearAllBtn = document.getElementById('dq-clear-all-btn');
+        
+        const filesToDisplay = (activeFolderTab === 'chapters') ? subjectChaptersFiles : subjectMaterialsFiles;
+
+        if (filesToDisplay.length > 0) {
+            chapContainer.innerHTML = '';
+            filesToDisplay.forEach((opt) => {
+                const isChecked = selectedDriveFilesMap.has(opt.id);
+                const item = document.createElement('label');
+                item.className = 'dent-quiz-checkbox-label';
+                item.style.cssText = 'display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; background: #18181b; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; cursor: pointer; color: #cbd5e1; font-size: 0.85rem; transition: 0.2s; box-sizing: border-box; margin: 0;';
+                item.innerHTML = `
+                    <input type="checkbox" class="dq-chap-checkbox" value="${opt.id.replace(/"/g, '&quot;')}" data-name="${opt.name.replace(/"/g, '&quot;')}" ${isChecked ? 'checked' : ''}>
+                    <span style="line-height: 1.4; word-break: break-word; font-weight: 500;">${opt.name}</span>
+                `;
+                
+                item.querySelector('input').addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        selectedDriveFilesMap.set(opt.id, {
+                            id: opt.id,
+                            name: opt.name,
+                            driveLink: opt.id,
+                            folder: activeFolderTab
+                        });
+                    } else {
+                        selectedDriveFilesMap.delete(opt.id);
+                    }
+                    updateSelectionSummary();
+                });
+
+                chapContainer.appendChild(item);
+            });
+
+            selectAllBtn.disabled = false;
+            clearAllBtn.disabled = false;
+        } else {
+            chapContainer.innerHTML = `<div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 12px;">لا توجد ملفات متوفرة في قسم ${activeFolderTab === 'chapters' ? 'المحاضرات' : 'الملازم'}</div>`;
+            selectAllBtn.disabled = true;
+            clearAllBtn.disabled = (selectedDriveFilesMap.size === 0);
+        }
+
+        updateSelectionSummary();
+    }
+
+    function updateSelectionSummary() {
+        const summary = document.getElementById('dq-selection-summary');
+        const clearAllBtn = document.getElementById('dq-clear-all-btn');
+        const count = selectedDriveFilesMap.size;
+
+        if (count === 0) {
+            summary.innerHTML = '<span style="color: #64748b;">لم يتم تحديد أي ملفات</span>';
+            if (clearAllBtn) clearAllBtn.disabled = true;
+        } else {
+            let chapsCount = 0;
+            let matsCount = 0;
+            selectedDriveFilesMap.forEach(f => {
+                if (f.folder === 'chapters') chapsCount++;
+                else matsCount++;
+            });
+
+            let detailsText = '';
+            if (chapsCount > 0 && matsCount > 0) {
+                detailsText = ` (${chapsCount} من المحاضرات + ${matsCount} من الملازم)`;
+            }
+
+            summary.innerHTML = `<span style="color: #a7f3d0; font-weight: 600;">تم تحديد ${count} ملف${detailsText}</span>`;
+            if (clearAllBtn) clearAllBtn.disabled = false;
+        }
+    }
+
+    async function loadPastExamDriveFiles() {
+        const subjectId = document.getElementById('dq-subject').value;
+        const container = document.getElementById('dq-pastexam-drive-container');
+        if (!subjectId) {
+            container.innerHTML = '<div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 8px;">اختر المادة أولاً لعرض الملفات...</div>';
+            return;
+        }
+
+        const files = (currentPastExamDriveFolder === 'materials') ? subjectMaterialsFiles : subjectChaptersFiles;
+        if (files.length > 0) {
+            container.innerHTML = '';
+            files.forEach(opt => {
+                const isChecked = pastExamDriveFilesMap.has(opt.id);
+                const item = document.createElement('label');
+                item.className = 'dent-quiz-checkbox-label';
+                item.style.cssText = 'display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 10px; background: #18181b; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer; color: #cbd5e1; font-size: 0.82rem; box-sizing: border-box; margin: 0;';
+                item.innerHTML = `
+                    <input type="checkbox" class="dq-pastexam-drive-checkbox" value="${opt.id.replace(/"/g, '&quot;')}" data-name="${opt.name.replace(/"/g, '&quot;')}" ${isChecked ? 'checked' : ''}>
+                    <span style="line-height: 1.4; word-break: break-word;">${opt.name}</span>
+                `;
+                item.querySelector('input').addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        pastExamDriveFilesMap.set(opt.id, {
+                            id: opt.id,
+                            name: opt.name,
+                            driveLink: opt.id
+                        });
+                    } else {
+                        pastExamDriveFilesMap.delete(opt.id);
+                    }
+                });
+                container.appendChild(item);
+            });
+        } else {
+            container.innerHTML = `<div style="color: #64748b; font-size: 0.82rem; text-align: center; padding: 8px;">لا توجد ملفات متوفرة في قسم ${currentPastExamDriveFolder === 'materials' ? 'الملازم' : 'المحاضرات'}</div>`;
+        }
+    }
+
+    async function startQuizGeneration() {
+        const subjectId = document.getElementById('dq-subject').value;
+        if (!subjectId) {
+            alert("يرجى اختيار المادة الدراسية.");
+            return;
+        }
+
+        const subject = currentSubjectsData.find(s => s.id == subjectId);
+        const subjectName = subject ? subject.name : 'مادة دراسية';
+
+        let selection = {};
+        try {
+            selection = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        } catch (e) {}
+
+        let payload = {
+            mode: currentCreationMode,
+            subjectId: subjectId,
+            specialty: selection.specialty || '',
+            year: (selection.year !== undefined && selection.year !== null && selection.year !== '') ? selection.year : null,
+            semester: (selection.semester !== undefined && selection.semester !== null && selection.semester !== '') ? selection.semester : null,
+            subjectName: subjectName,
+            difficulty: currentDifficulty,
+            password: sessionStorage.getItem('dent2025_admin_pass') || ''
+        };
+
+        let quizName = '';
+        let combinedChapterName = '';
+
+        if (currentCreationMode === 'past_exam_filter') {
+            // === MODE 2: PAST EXAM FILTER PAYLOAD ===
+            const checkedTargets = Array.from(document.querySelectorAll('.dq-target-chap-checkbox:checked')).map(cb => cb.value);
+            if (checkedTargets.length === 0) {
+                alert("يرجى تحديد شابتر مستهدف واحد على الأقل للبحث عن أسئلته.");
+                return;
+            }
+
+            let pastExamDriveFiles = [];
+            if (currentPastExamSource === 'drive') {
+                pastExamDriveFiles = Array.from(pastExamDriveFilesMap.values());
+                if (pastExamDriveFiles.length === 0) {
+                    alert("يرجى تحديد ملف الاختبار السابق من قائمة Google Drive.");
+                    return;
+                }
+            } else {
+                if (pastExamUploadedFiles.length === 0) {
+                    alert("يرجى رفع صور أو ملفات أوراق الاختبار السابق في منطقة الرفع.");
+                    return;
+                }
+            }
+
+            quizName = document.getElementById('dq-pastexam-quiz-name').value.trim() || `تجميعات (${checkedTargets[0]}...)`;
+            let numQs = parseInt(document.getElementById('dq-pastexam-num-qs').value, 10) || 200;
+            if (numQs > 200) numQs = 200;
+
+            combinedChapterName = checkedTargets.length === 1 ? checkedTargets[0] : `تصفية (${checkedTargets.length} شابترات مستهدفة)`;
+
+            payload.quizName = quizName;
+            payload.chapterName = combinedChapterName;
+            payload.typesSummary = 'تجميعات سنوات سابقة';
+            payload.targetChapters = checkedTargets;
+            payload.selectedChapters = pastExamDriveFiles;
+            payload.uploadedFiles = pastExamUploadedFiles;
+            payload.numQuestions = numQs;
+
+        } else {
+            // === MODE 1: FRESH AI GENERATION PAYLOAD ===
+            const selectedChapters = Array.from(selectedDriveFilesMap.values());
+            if (selectedChapters.length === 0 && aiUploadedFiles.length === 0) {
+                alert("يرجى تحديد ملف واحد على الأقل من المحاضرات أو الملازم، أو رفع ملف من الجهاز.");
+                return;
+            }
+
+            quizName = document.getElementById('dq-quiz-name').value.trim();
+            if (!quizName) {
+                alert("يرجى كتابة اسم للاختبار.");
+                return;
+            }
+
+            let numQs = parseInt(document.getElementById('dq-num-qs').value, 10) || 10;
+            if (numQs > 100) numQs = 100;
+            if (numQs <= 0) numQs = 10;
+
+            if (selectedChapters.length === 1) {
+                combinedChapterName = selectedChapters[0].name;
+            } else if (selectedChapters.length <= 3) {
+                combinedChapterName = selectedChapters.map(c => c.name).join(' + ');
+            } else if (selectedChapters.length > 3) {
+                combinedChapterName = `متعدد (${selectedChapters.length} ملفات: ${selectedChapters[0].name}...)`;
+            } else {
+                combinedChapterName = `ملفات مرفوعة (${aiUploadedFiles.length})`;
+            }
+
+            let qTypes = [];
+            if (document.getElementById('dq-type-mcq').checked) qTypes.push('mcq');
+            if (document.getElementById('dq-type-tf').checked) qTypes.push('truefalse');
+
+            let typesSummary = [];
+            if (document.getElementById('dq-type-mcq').checked) typesSummary.push('خيارات');
+            if (document.getElementById('dq-type-except').checked) typesSummary.push('استثناء');
+            if (document.getElementById('dq-type-cases').checked) typesSummary.push('حالات');
+            if (document.getElementById('dq-type-tf').checked) typesSummary.push('صح/خطأ');
+
+            payload.quizName = quizName;
+            payload.chapterName = combinedChapterName;
+            payload.typesSummary = typesSummary.join(' • ') || 'خيارات متعددة';
+            payload.selectedChapters = selectedChapters;
+            payload.uploadedFiles = aiUploadedFiles;
+            payload.numQuestions = numQs;
+            payload.pageRange = document.getElementById('dq-page-range') ? document.getElementById('dq-page-range').value.trim() : '';
+            payload.focusArea = document.getElementById('dq-focus') ? document.getElementById('dq-focus').value.trim() : '';
+            payload.options = {
+                except: document.getElementById('dq-type-except').checked,
+                statements: document.getElementById('dq-type-statements').checked,
+                cases: document.getElementById('dq-type-cases').checked,
+                questionTypes: qTypes.join(',')
+            };
+        }
+
+        const btn = document.getElementById('dq-generate-btn');
+        const loader = document.getElementById('dq-loader');
+        const status = document.getElementById('dq-status-text');
+        const progressBar = document.getElementById('dq-progress-bar');
+
+        btn.style.display = 'none';
+        loader.style.display = 'block';
+        if (progressBar) progressBar.style.width = '15%';
+        status.innerHTML = "جاري رفع ومعالجة الملفات...<br><small style='color:#94a3b8; font-size:0.8rem;'>معالجة ذكية وسريعة بـ Gemini Flash</small>";
+
+        try {
+            const startRes = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?action=start_job`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const startData = await startRes.json();
+            
+            if (!startData.success || !startData.data || !startData.data.jobId) {
+                throw new Error(startData.message || "تعذر بدء التوليد في الخلفية.");
+            }
+
+            const jobId = startData.data.jobId;
+            let pollAttempts = 0;
+            if (window.dentActiveQuizPoll) clearInterval(window.dentActiveQuizPoll);
+
+            // Poll status while page remains open (max 240 attempts = ~10 mins)
+            const pollInterval = setInterval(async () => {
+                pollAttempts++;
+                if (pollAttempts > 240) {
+                    clearInterval(pollInterval);
+                    window.dentActiveQuizPoll = null;
+                    status.innerHTML = `<span style="color: #f87171;">استغرق التوليد وقتاً طويلاً. تم إيقاف المراقبة، وسيظهر الاختبار في البنك فور اكتماله.</span>`;
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                        btn.style.display = 'block';
+                    }, 4000);
+                    return;
+                }
+
+                try {
+                    const checkRes = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?action=check_job&job_id=${encodeURIComponent(jobId)}`);
+                    const checkJson = await checkRes.json();
+
+                    if (checkJson.success && checkJson.data) {
+                        const job = checkJson.data;
+                        if (job.progress_pct && progressBar) {
+                            progressBar.style.width = Math.max(15, Math.min(100, job.progress_pct)) + '%';
+                        }
+                        if (job.message) {
+                            status.innerHTML = `${job.message}<br><small style='color:#94a3b8; font-size:0.8rem;'>يمكنك إغلاق الصفحة بأي وقت، وسيحفظ الاختبار فور انتهائه في البنك.</small>`;
+                        }
+
+                        if (job.status === 'completed') {
+                            clearInterval(pollInterval);
+                            window.dentActiveQuizPoll = null;
+                            if (progressBar) progressBar.style.width = '100%';
+                            status.innerHTML = `<span style="color: #34d399; font-weight: bold;">تم تجهيز الاختبار بنجاح! جاري فتح شاشة الحل...</span>`;
+                            
+                            setTimeout(() => {
+                                loader.style.display = 'none';
+                                btn.style.display = 'block';
+                                loadSavedQuizzesBank();
+                                if (job.quiz_data && job.quiz_data.questions) {
+                                    openPlayer(quizName, subjectName + ' — ' + combinedChapterName, job.quiz_data.questions, job.quiz_data);
+                                }
+                            }, 700);
+                        } else if (job.status === 'failed') {
+                            clearInterval(pollInterval);
+                            window.dentActiveQuizPoll = null;
+                            status.innerHTML = `<span style="color: #f87171;">${job.message || 'حدث خطأ أثناء التوليد'}</span>`;
+                            setTimeout(() => {
+                                loader.style.display = 'none';
+                                btn.style.display = 'block';
+                            }, 4000);
+                        }
+                    }
+                } catch (pollErr) {
+                    console.warn("Poll check error:", pollErr);
+                }
+            }, 2500);
+            window.dentActiveQuizPoll = pollInterval;
+
+        } catch (err) {
+            console.error(err);
+            status.innerHTML = `<span style="color: #f87171;">حدث خطأ: ${err.message}</span>`;
+            setTimeout(() => {
+                loader.style.display = 'none';
+                btn.style.display = 'block';
+            }, 4000);
+        }
+    }
+
+    function formatArabicQuestionsCount(num) {
+        const count = parseInt(num, 10) || 0;
+        if (count === 1) return 'سؤال واحد';
+        if (count === 2) return 'سؤالان';
+        const lastTwo = count % 100;
+        if (lastTwo >= 3 && lastTwo <= 10) return `${count} أسئلة`;
+        if (lastTwo >= 11 && lastTwo <= 99) return `${count} سؤالاً`;
+        return `${count} سؤال`;
+    }
+
+    function formatArabicQuizzesCount(num) {
+        const count = parseInt(num, 10) || 0;
+        if (count === 0) return '(لا توجد اختبارات محفوظة)';
+        if (count === 1) return '(اختبار واحد متوفر)';
+        if (count === 2) return '(اختباران متوفران)';
+        const lastTwo = count % 100;
+        if (lastTwo >= 3 && lastTwo <= 10) return `(${count} اختبارات متوفرة)`;
+        if (lastTwo >= 11 && lastTwo <= 99) return `(${count} اختباراً متوفراً)`;
+        return `(${count} اختبار متوفر)`;
+    }
+
+    // --- SAVED EXAMS BANK LOGIC ---
+    async function loadSavedQuizzesBank() {
+        const countSpan = document.getElementById('dent-bank-count');
+        try {
+            let selection = {};
+            try {
+                selection = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+            } catch (e) {}
+
+            let params = new URLSearchParams({ action: 'list_quizzes' });
+            if (selection.specialty) params.append('specialty', selection.specialty);
+            if (selection.year !== undefined && selection.year !== null && selection.year !== '') params.append('year', selection.year);
+            if (selection.semester !== undefined && selection.semester !== null && selection.semester !== '') params.append('semester', selection.semester);
+
+            const res = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?${params.toString()}`);
+            const json = await res.json();
+
+            if (json.success && Array.isArray(json.data)) {
+                allSavedQuizzes = json.data;
+                countSpan.innerText = formatArabicQuizzesCount(allSavedQuizzes.length);
+                renderBankGrid();
+            } else {
+                countSpan.innerText = '(لا توجد اختبارات محفوظة)';
+            }
+        } catch (err) {
+            countSpan.innerText = '(خطأ في الاتصال)';
+        }
+    }
+
+    function renderBankGrid() {
+        const grid = document.getElementById('dent-bank-list');
+        const subjectFilter = document.getElementById('dent-bank-subject-filter').value;
+        const typeFilter = document.getElementById('dent-bank-type-filter').value;
+        const searchQuery = document.getElementById('dent-bank-search').value.toLowerCase().trim();
+
+        let filtered = allSavedQuizzes.filter(q => {
+            if (subjectFilter && q.subject_id != subjectFilter) return false;
+            if (typeFilter && (q.creation_mode || 'ai_generation') !== typeFilter) return false;
+
+            if (searchQuery) {
+                let nameOk = q.quiz_name ? q.quiz_name.toLowerCase().includes(searchQuery) : false;
+                let chapOk = q.chapter_name ? q.chapter_name.toLowerCase().includes(searchQuery) : false;
+                let subOk = q.subject_name ? q.subject_name.toLowerCase().includes(searchQuery) : false;
+                if (!nameOk && !chapOk && !subOk) return false;
+            }
+            return true;
+        });
+
+        if (filtered.length === 0) {
+            grid.innerHTML = '<div style="text-align: center; color: #64748b; grid-column: 1/-1; padding: 25px; background: rgba(0,0,0,0.15); border-radius: 8px;">لا توجد اختبارات متطابقة مع البحث حالياً.</div>';
+            return;
+        }
+
+        grid.innerHTML = '';
+        filtered.forEach(q => {
+            let rawChap = q.chapter_name ? q.chapter_name.replace(/^[📌📁\s\-\-]+/, '').trim() : '';
+            if (!rawChap || rawChap === 'عام' || rawChap === 'المحاضرة العامة' || rawChap === 'شابتر متكامل') {
+                rawChap = 'ملف المحاضرة';
+            }
+
+            let chapList = rawChap.split(/[,•+\n|]/).map(s => s.trim()).filter(Boolean);
+            if (chapList.length === 0) chapList = ['ملف المحاضرة'];
+
+            let labelText = chapList.length === 1 ? '(شابتر واحد)' : `(${chapList.length} شابترات)`;
+            let chaptersDropdownHTML = `
+                <details class="dent-chapters-details" style="margin-top: 8px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; overflow: hidden;" onclick="event.stopPropagation()">
+                    <summary style="padding: 7px 10px; font-size: 0.8rem; font-weight: 500; color: #cbd5e1; cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; background: rgba(255, 255, 255, 0.02); transition: background 0.2s;">
+                        <span><span style="color: #64748b; font-weight: 500;">المحتوى:</span> ${labelText}</span>
+                        <span class="dent-arrow" style="font-size: 0.68rem; color: #94a3b8; transition: transform 0.25s ease;">▼</span>
+                    </summary>
+                    <div style="padding: 8px 10px; display: flex; flex-direction: column; gap: 5px; border-top: 1px solid rgba(255, 255, 255, 0.06); max-height: 160px; overflow-y: auto; background: rgba(0, 0, 0, 0.2);">
+                        ${chapList.map(c => `
+                            <div style="font-size: 0.78rem; color: #94a3b8; line-height: 1.4; word-break: break-word; padding-bottom: 4px; border-bottom: 1px dashed rgba(255, 255, 255, 0.05); display: flex; align-items: flex-start; gap: 6px;">
+                                <span style="color: #64748b; font-size: 0.8rem; flex-shrink: 0;">•</span>
+                                <span>${c}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </details>
+            `;
+
+            const isPastExam = (q.creation_mode === 'past_exam_filter');
+            const typeBadge = isPastExam 
+                ? `<span class="dent-bank-tag dent-tag-pastexam">تجميعات سنوات</span>`
+                : `<span class="dent-bank-tag dent-tag-ai">ذكاء اصطناعي</span>`;
+
+            let diffBadge = '';
+            if (q.difficulty === 'easy') diffBadge = `<span class="dent-bank-tag dent-tag-diff-easy">سهل</span>`;
+            else if (q.difficulty === 'hard') diffBadge = `<span class="dent-bank-tag dent-tag-diff-hard">صعب</span>`;
+            else if (q.difficulty === 'medium') diffBadge = `<span class="dent-bank-tag dent-tag-diff-med">متوسط</span>`;
+
+            const card = document.createElement('div');
+            card.className = 'dent-bank-card';
+            card.innerHTML = `
+                <div>
+                    <div class="dent-bank-title">${escapeHtml(q.quiz_name)}</div>
+                    <div class="dent-bank-sub">
+                        <span>${escapeHtml(q.subject_name || 'مادة دراسية')}</span>
+                        ${typeBadge}
+                        ${diffBadge}
+                    </div>
+                    ${chaptersDropdownHTML}
+                </div>
+                <div>
+                    <div class="dent-bank-meta">
+                        <span>${formatArabicQuestionsCount(q.num_questions)}</span>
+                        <span>${escapeHtml(q.types_summary || 'متعدد')}</span>
+                    </div>
+                    <div class="dent-bank-actions">
+                        <button class="dent-quiz-btn start-btn" style="margin-top:0; padding:7px 12px; font-size:0.82rem;">ابدأ الاختبار</button>
+                        <button class="dent-quiz-btn dent-btn-secondary share-btn" style="margin-top:0; padding:7px 9px; font-size:0.82rem;">مشاركة الرابط</button>
+                    </div>
+                </div>
+            `;
+
+            card.querySelector('.start-btn').addEventListener('click', () => playSavedQuiz(q.id));
+            card.querySelector('.share-btn').addEventListener('click', () => {
+                const link = window.location.origin + window.location.pathname + '?quiz_id=' + q.id;
+                navigator.clipboard.writeText(link);
+                alert("تم نسخ رابط الاختبار المباشر للحافظة!");
+            });
+
+            // Admin Quick Delete Button
+            if (sessionStorage.getItem('dent2025_admin_pass')) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'dent-quiz-btn dent-btn-secondary';
+                deleteBtn.style.cssText = 'margin-top:0; padding:7px 9px; font-size:0.82rem; color:#f87171; border-color:rgba(239,68,68,0.25);';
+                deleteBtn.innerText = 'حذف';
+                deleteBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (confirm(`هل أنت متأكد من حذف الاختبار "${q.quiz_name}"؟`)) {
+                        await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?action=delete_quiz`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: q.id, password: sessionStorage.getItem('dent2025_admin_pass') || '' })
+                        });
+                        loadSavedQuizzesBank();
+                    }
+                });
+                card.querySelector('.dent-bank-actions').appendChild(deleteBtn);
+            }
+
+            grid.appendChild(card);
+        });
+    }
+
+    async function playSavedQuiz(quizId) {
+        try {
+            const res = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?action=get` + String.fromCharCode(38) + `id=${quizId}`);
+            const json = await res.json();
+            
+            if (json.success && json.data) {
+                const qData = json.data;
+                activeQuizId = quizId;
+                openPlayer(qData.quiz_name, (qData.subject_name || '') + ' — ' + (qData.chapter_name || ''), qData.questions, qData);
+            } else {
+                alert("تعذر تحميل الاختبار.");
+            }
+        } catch (err) {
+            alert("خطأ أثناء الاتصال بالخادم.");
+        }
+    }
+
+    function scrollToQuizContainer() {
+        const container = document.querySelector('.dent-quiz-container');
+        if (container) {
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    // --- PLAYER LOGIC ---
+    function openPlayer(title, metaSub, questions, metaObj = {}) {
+        generatedQuestions = questions;
+        
+        let chapList = [];
+        if (metaSub.includes(' — ')) {
+            const rawChap = metaSub.split(' — ')[1] || '';
+            const cleanChap = rawChap.replace(/[\u{1F300}-\u{1F6FF}]|[\u{1F900}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
+            chapList = cleanChap.split(/[+•,|\n]/).map(s => s.trim()).filter(Boolean);
+        }
+        if (chapList.length === 0) {
+            chapList = ['المحاضرة العامة'];
+        }
+
+        document.getElementById('dent-generator-view').style.display = 'none';
+        document.getElementById('dent-bank-view').style.display = 'none';
+        
+        const playerView = document.getElementById('dent-player-view');
+        document.getElementById('dp-title').innerText = title;
+        document.getElementById('dp-meta-sub').innerText = metaSub;
+        document.getElementById('dp-score').style.display = 'none';
+
+        const viewSelect = document.getElementById('dp-view-mode');
+        if (viewSelect) viewSelect.value = currentViewMode;
+
+        const navBar = document.getElementById('dp-navigator');
+        if (navBar) {
+            navBar.innerHTML = '';
+            navBar.style.display = 'flex';
+            questions.forEach((_, idx) => {
+                const pill = document.createElement('button');
+                pill.className = 'dent-nav-pill';
+                pill.title = `السؤال ${idx + 1}`;
+                pill.dataset.idx = idx;
+                pill.addEventListener('click', () => {
+                    if (currentViewMode === 'focused') {
+                        currentFocusedIndex = idx;
+                        updateViewDisplay();
+                    } else {
+                        const targetBlock = document.querySelector(`.dent-q-block[data-index="${idx}"]`);
+                        if (targetBlock) {
+                            targetBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                });
+                navBar.appendChild(pill);
+            });
+        }
+
+        const container = document.getElementById('dp-questions-container');
+        container.innerHTML = '';
+
+        questions.forEach((q, index) => {
+            const assignedCh = q.assignedChapter || chapList[index % chapList.length] || 'عام';
+            q.assignedChapter = assignedCh;
+
+            const qBlock = document.createElement('div');
+            qBlock.className = 'dent-q-block';
+            qBlock.dataset.index = index;
+
+            const isConverted = (typeof q.question === 'string' && q.question.trim().startsWith('*'));
+            const convertedBadge = isConverted ? `<span class="dent-q-converted-badge" title="تم تحويل هذا السؤال من سؤال مقالي أو فراغات إلى اختيار من متعدد">* سؤال محوّل لخيارات</span>` : '';
+
+            const tagRow = document.createElement('div');
+            tagRow.className = 'dent-q-badge-row';
+            tagRow.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;';
+            tagRow.innerHTML = `
+                <span class="dent-q-tag">${escapeHtml(assignedCh)}</span>
+                ${convertedBadge}
+            `;
+            qBlock.appendChild(tagRow);
+
+            const headerRow = document.createElement('div');
+            headerRow.className = 'dent-q-header-row';
+
+            const qTitle = document.createElement('div');
+            qTitle.className = 'dent-q-text';
+            qTitle.style.marginBottom = '0';
+            qTitle.innerText = `${index + 1}. ${q.question}`;
+
+            headerRow.appendChild(qTitle);
+            qBlock.appendChild(headerRow);
+
+            const optList = document.createElement('div');
+            optList.className = 'dent-opt-list';
+            
+            let opts = ["صحيح", "خاطئ"];
+            if (q.options && q.options.length > 0) {
+                opts = q.options;
+            }
+            
+            opts.forEach(opt => {
+                const optItem = document.createElement('label');
+                optItem.className = 'dent-opt-item';
+                optItem.innerHTML = `
+                    <input type="radio" name="q_${index}" value="${escapeHtml(opt)}">
+                    <span>${escapeHtml(opt)}</span>
+                `;
+                
+                // Helper to check answer match accurately without false substring positives
+                function checkQuizMatch(userOpt, correctOpt, optsList) {
+                    if (!userOpt || !correctOpt) return false;
+                    const u = userOpt.toString().trim().toLowerCase();
+                    const c = correctOpt.toString().trim().toLowerCase();
+                    if (u === c) return true;
+
+                    const cleanPrefix = s => s.replace(/^[a-z0-9\u0621-\u064A][\.\)\:\-\s]+/i, '').trim().toLowerCase();
+                    const uClean = cleanPrefix(u);
+                    const cClean = cleanPrefix(c);
+                    if (uClean && cClean && uClean === cClean) return true;
+
+                    // Latin letter mapping (A, B, C, D, E, F)
+                    if (/^[a-z]$/i.test(c)) {
+                        const targetLetter = c.toUpperCase();
+                        const uPrefixMatch = u.match(/^([a-z])[\.\)\:\-\s]/i);
+                        if (uPrefixMatch && uPrefixMatch[1].toUpperCase() === targetLetter) return true;
+                        if (Array.isArray(optsList)) {
+                            const userIdx = optsList.findIndex(o => o.toString().trim().toLowerCase() === u);
+                            const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+                            if (userIdx !== -1 && letters[userIdx] === targetLetter) return true;
+                        }
+                    }
+
+                    // Arabic letter mapping (أ, ب, ج, د, هـ, و) with Hamza normalization
+                    const normAr = s => s.replace(/[إأآ]/g, 'ا');
+                    const cNorm = normAr(c);
+                    const arLetters = ['ا', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح'];
+                    const arLetterIdx = arLetters.indexOf(cNorm);
+                    if (arLetterIdx !== -1) {
+                        const uPrefixMatch = normAr(u).match(/^([\u0621-\u064A])[\.\)\:\-\s]/);
+                        if (uPrefixMatch && uPrefixMatch[1] === arLetters[arLetterIdx]) return true;
+                        if (Array.isArray(optsList)) {
+                            const userIdx = optsList.findIndex(o => o.toString().trim().toLowerCase() === u);
+                            if (userIdx !== -1 && userIdx === arLetterIdx) return true;
+                        }
+                    }
+
+                    return false;
+                }
+
+                // Instant Feedback on click
+                optItem.querySelector('input').addEventListener('change', () => {
+                    const siblings = optList.querySelectorAll('.dent-opt-item');
+                    siblings.forEach(s => s.classList.remove('selected'));
+                    optItem.classList.add('selected');
+
+                    const correctAns = (q.correctAnswer || '').toString().trim();
+                    const userVal = opt.trim();
+                    const isMatch = checkQuizMatch(userVal, correctAns, opts);
+
+                    if (isMatch) {
+                        optItem.classList.add('correct');
+                    } else {
+                        optItem.classList.add('wrong');
+                        siblings.forEach(s => {
+                            const val = s.querySelector('span').innerText.trim();
+                            if (checkQuizMatch(val, correctAns, opts)) {
+                                s.classList.add('correct');
+                            }
+                        });
+                    }
+
+                    if (navBar) {
+                        const pill = navBar.querySelector(`.dent-nav-pill[data-idx="${index}"]`);
+                        if (pill) {
+                            pill.classList.remove('answered');
+                            if (isMatch) pill.classList.add('correct');
+                            else pill.classList.add('wrong');
+                        }
+                    }
+                    
+                    const expBox = qBlock.querySelector('.dent-explanation-box');
+                    if (expBox) expBox.style.display = 'block';
+
+                    const totalQuestions = generatedQuestions.length;
+                    const answeredQuestions = document.querySelectorAll('.dent-q-block input[type="radio"]:checked').length;
+                    if (answeredQuestions === totalQuestions) {
+                        setTimeout(() => submitQuiz(), 600);
+                    }
+                });
+
+                optList.appendChild(optItem);
+            });
+            
+            qBlock.appendChild(optList);
+
+            const expBox = document.createElement('div');
+            expBox.className = 'dent-explanation-box';
+            expBox.innerHTML = '<strong>توضيح الإجابة:</strong> ' + escapeHtml(q.explanation || ('الإجابة الصحيحة هي: ' + (q.correctAnswer || '')));
+            qBlock.appendChild(expBox);
+
+            container.appendChild(qBlock);
+        });
+
+        currentFocusedIndex = 0;
+        updateViewDisplay();
+
+        const submitBtn = document.getElementById('dp-submit-btn');
+        if (submitBtn) submitBtn.style.display = 'block';
+
+        playerView.style.display = 'block';
+        scrollToQuizContainer();
+    }
+
+    function toggleRevealAllAnswers() {
+        const expBoxes = document.querySelectorAll('.dent-explanation-box');
+        expBoxes.forEach(box => {
+            box.style.display = (box.style.display === 'block') ? 'none' : 'block';
+        });
+    }
+
+    function submitQuiz() {
+        let score = 0;
+        const qBlocks = document.querySelectorAll('.dent-q-block');
+        const missedQuestions = [];
+        const breakdown = {};
+
+        function checkQuizMatchSubmit(userOpt, correctOpt, optsList) {
+            if (!userOpt || !correctOpt) return false;
+            const u = userOpt.toString().trim().toLowerCase();
+            const c = correctOpt.toString().trim().toLowerCase();
+            if (u === c) return true;
+
+            const cleanPrefix = s => s.replace(/^[a-z0-9\u0621-\u064A][\.\)\:\-\s]+/i, '').trim().toLowerCase();
+            const uClean = cleanPrefix(u);
+            const cClean = cleanPrefix(c);
+            if (uClean && cClean && uClean === cClean) return true;
+
+            // Latin letter mapping (A, B, C, D, E, F)
+            if (/^[a-z]$/i.test(c)) {
+                const targetLetter = c.toUpperCase();
+                const uPrefixMatch = u.match(/^([a-z])[\.\)\:\-\s]/i);
+                if (uPrefixMatch && uPrefixMatch[1].toUpperCase() === targetLetter) return true;
+                if (Array.isArray(optsList)) {
+                    const userIdx = optsList.findIndex(o => o.toString().trim().toLowerCase() === u);
+                    const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+                    if (userIdx !== -1 && letters[userIdx] === targetLetter) return true;
+                }
+            }
+
+            // Arabic letter mapping (أ, ب, ج, د, هـ, و) with Hamza normalization
+            const normAr = s => s.replace(/[إأآ]/g, 'ا');
+            const cNorm = normAr(c);
+            const arLetters = ['ا', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح'];
+            const arLetterIdx = arLetters.indexOf(cNorm);
+            if (arLetterIdx !== -1) {
+                const uPrefixMatch = normAr(u).match(/^([\u0621-\u064A])[\.\)\:\-\s]/);
+                if (uPrefixMatch && uPrefixMatch[1] === arLetters[arLetterIdx]) return true;
+                if (Array.isArray(optsList)) {
+                    const userIdx = optsList.findIndex(o => o.toString().trim().toLowerCase() === u);
+                    if (userIdx !== -1 && userIdx === arLetterIdx) return true;
+                }
+            }
+
+            return false;
+        }
+
+        qBlocks.forEach((block, index) => {
+            const qData = generatedQuestions[index];
+            const correctAns = (qData.correctAnswer || '').toString().trim();
+            const selectedRadio = block.querySelector(`input[name="q_${index}"]:checked`);
+            const assignedCh = qData.assignedChapter || 'عام';
+            const opts = qData.options || ["صحيح", "خاطئ"];
+
+            if (!breakdown[assignedCh]) {
+                breakdown[assignedCh] = { correct: 0, total: 0 };
+            }
+            breakdown[assignedCh].total++;
+            
+            block.querySelector('.dent-explanation-box').style.display = 'block';
+
+            let isCorrect = false;
+            if (selectedRadio) {
+                const userVal = selectedRadio.value.trim();
+                const isMatch = checkQuizMatchSubmit(userVal, correctAns, opts);
+                if (isMatch) {
+                    score++;
+                    isCorrect = true;
+                    breakdown[assignedCh].correct++;
+                }
+            }
+
+            if (!isCorrect) {
+                missedQuestions.push(qData);
+            }
+        });
+
+        const totalQs = generatedQuestions.length;
+        const pct = Math.round((score / totalQs) * 100);
+        let badge = 'نتيجة ممتازة!';
+        if (pct < 60) badge = 'تحتاج لمراجعة إضافية للمادة';
+        else if (pct < 85) badge = 'نتيجة جيدة جداً!';
+
+        let retryBtnHTML = '';
+        if (missedQuestions.length > 0) {
+            retryBtnHTML = `<button id="dp-retry-missed-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 12px; width: auto; display: inline-block; padding: 8px 16px; font-size: 0.84rem; border-color: rgba(245, 158, 11, 0.3); color: #fcd34d;">إعادة الأسئلة الخاطئة فقط (${missedQuestions.length} أسئلة)</button>`;
+        }
+
+        let breakdownHTML = '';
+        const chKeys = Object.keys(breakdown);
+        if (chKeys.length > 1) {
+            breakdownHTML = `<div style="font-size:0.82rem; color:#94a3b8; margin-top:10px; border-top:1px dashed rgba(255,255,255,0.06); padding-top:8px; text-align:right;">`;
+            breakdownHTML += `<div style="font-weight:600; margin-bottom:5px; color:#cbd5e1;">مستوى أدائك حسب المحاضرة:</div>`;
+            chKeys.forEach(ch => {
+                const item = breakdown[ch];
+                const pctCh = item.total > 0 ? Math.round((item.correct / item.total) * 100) : 0;
+                let colorCh = '#a7f3d0';
+                if (pctCh < 60) colorCh = '#fca5a5';
+                else if (pctCh < 85) colorCh = '#fcd34d';
+                
+                breakdownHTML += `<div style="margin-bottom:3px;">• <span style="color:#cbd5e1;">${ch}:</span> <span style="color:${colorCh}; font-weight:600;">${item.correct}/${item.total} (${pctCh}%)</span></div>`;
+            });
+            breakdownHTML += `</div>`;
+        }
+
+        const scoreBoard = document.getElementById('dp-score');
+        scoreBoard.innerHTML = `
+            <div>درجتك النهائية: ${score} من ${totalQs} (${pct}%)</div>
+            <div style="font-size:0.86rem; color:#cbd5e1; margin-top:6px;">
+                <span style="color:#a7f3d0;">إجابات صحيحة: ${score}</span> • 
+                <span style="color:#fca5a5;">إجابات خاطئة: ${missedQuestions.length}</span>
+            </div>
+            <div style="font-size:0.84rem; color:#94a3b8; margin-top:4px;">${badge}</div>
+            ${breakdownHTML}
+            ${retryBtnHTML}
+        `;
+        scoreBoard.style.display = 'block';
+
+        if (missedQuestions.length > 0) {
+            const retryBtn = document.getElementById('dp-retry-missed-btn');
+            if (retryBtn) {
+                retryBtn.addEventListener('click', () => {
+                    const currentTitle = document.getElementById('dp-title').innerText;
+                    const currentMeta = document.getElementById('dp-meta-sub').innerText;
+                    openPlayer(`${currentTitle} (مراجعة الأخطاء)`, currentMeta, missedQuestions);
+                });
+            }
+        }
+        
+        document.getElementById('dp-submit-btn').style.display = 'none';
+        scrollToQuizContainer();
+    }
+
+    function exitPlayer() {
+        document.getElementById('dent-player-view').style.display = 'none';
+        document.getElementById('dent-generator-view').style.display = 'block';
+        document.getElementById('dent-bank-view').style.display = 'block';
+        scrollToQuizContainer();
+    }
+
+    function updateViewDisplay() {
+        const qBlocks = document.querySelectorAll('.dent-q-block');
+        const navBar = document.getElementById('dp-navigator');
+        const focusedNav = document.getElementById('dp-focused-nav');
+        
+        if (currentViewMode === 'focused') {
+            if (focusedNav) focusedNav.style.display = 'flex';
+            qBlocks.forEach((block, idx) => {
+                block.style.display = (idx === currentFocusedIndex) ? 'block' : 'none';
+            });
+            
+            if (navBar) {
+                navBar.querySelectorAll('.dent-nav-pill').forEach(pill => {
+                    pill.classList.remove('active-focused');
+                });
+                const activePill = navBar.querySelector(`.dent-nav-pill[data-idx="${currentFocusedIndex}"]`);
+                if (activePill) activePill.classList.add('active-focused');
+            }
+            
+            const prevBtn = document.getElementById('dp-prev-btn');
+            const nextBtn = document.getElementById('dp-next-btn');
+            
+            if (prevBtn) prevBtn.disabled = (currentFocusedIndex === 0);
+            if (nextBtn) {
+                if (currentFocusedIndex === generatedQuestions.length - 1) {
+                    nextBtn.innerText = 'نهاية الأسئلة';
+                    nextBtn.disabled = true;
+                } else {
+                    nextBtn.innerText = 'السؤال التالي';
+                    nextBtn.disabled = false;
+                }
+            }
+        } else {
+            if (focusedNav) focusedNav.style.display = 'none';
+            qBlocks.forEach(block => block.style.display = 'block');
+            if (navBar) {
+                navBar.querySelectorAll('.dent-nav-pill').forEach(pill => {
+                    pill.classList.remove('active-focused');
+                });
+            }
+        }
+    }
+})();
+</script>

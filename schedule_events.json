@@ -1,0 +1,72 @@
+[
+    {
+        "id": "evt_study_start",
+        "date": "2026-08-23",
+        "hijri": "1448\/03\/10",
+        "title": "بداية الدراسة في الفصل الدراسي الأول",
+        "type": "start"
+    },
+    {
+        "id": "evt_pay_aug",
+        "date": "2026-08-27",
+        "hijri": "1448\/03\/14",
+        "title": "مكافأة شهر أغسطس",
+        "type": "payment"
+    },
+    {
+        "id": "evt_hol_national",
+        "date": "2026-09-23",
+        "hijri": "1448\/04\/11",
+        "title": "إجازة اليوم الوطني",
+        "type": "holiday"
+    },
+    {
+        "id": "evt_pay_sep",
+        "date": "2026-09-27",
+        "hijri": "1448\/04\/15",
+        "title": "مكافأة شهر سبتمبر",
+        "type": "payment"
+    },
+    {
+        "id": "evt_pay_oct",
+        "date": "2026-10-27",
+        "hijri": "1448\/05\/16",
+        "title": "مكافأة شهر أكتوبر",
+        "type": "payment"
+    },
+    {
+        "id": "evt_hol_fall",
+        "date": "2026-11-20",
+        "hijri": "1448\/06\/10",
+        "title": "إجازة منتصف الفصل الدراسي الأول",
+        "type": "holiday"
+    },
+    {
+        "id": "evt_pay_nov",
+        "date": "2026-11-26",
+        "hijri": "1448\/06\/16",
+        "title": "مكافأة شهر نوفمبر",
+        "type": "payment"
+    },
+    {
+        "id": "evt_exam_final",
+        "date": "2026-12-20",
+        "hijri": "1448\/07\/11",
+        "title": "الاختبارات النهائية للفصل الدراسي الأول",
+        "type": "exam"
+    },
+    {
+        "id": "evt_pay_dec",
+        "date": "2026-12-27",
+        "hijri": "1448\/07\/18",
+        "title": "مكافأة شهر ديسمبر",
+        "type": "payment"
+    },
+    {
+        "id": "evt_hol_midyear",
+        "date": "2027-01-08",
+        "hijri": "1448\/07\/30",
+        "title": "إجازة منتصف العام الدراسي",
+        "type": "holiday"
+    }
+]

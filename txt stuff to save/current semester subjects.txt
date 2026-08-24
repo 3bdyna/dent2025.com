@@ -1,0 +1,47 @@
+=== SUBJECT DETAILS TEMPLATE ===
+Please fill in the missing information (Doctors, Marks Distribution) for each subject.
+
+1. Oral and Maxillofacial Radiology / أشعة الفم والوجه والفكين
+   - Hours: 1 Theory, 3 Practical | 4 Credits
+   - Doctors: [Add Doctor Names Here]
+   - Marks Distribution: [Add Marks Here]
+
+2. Preclinical Operative Dentistry / طب الأسنان التحفظي
+   - Hours: 1 Theory, 6 Practical | 6 Credits
+   - Doctors: [Add Doctor Names Here]
+   - Marks Distribution: [Add Marks Here]
+
+3. Preclinical Removable Prosthodontics / الاستعاضة المتحركة
+   - Hours: 1 Theory, 3 Practical | 4 Credits
+   - Doctors: [Add Doctor Names Here]
+   - Marks Distribution: [Add Marks Here]
+
+4. Pharmacology / الأدوية
+   - Hours: 4 Theory | 4 Credits
+   - Doctors: [Add Doctor Names Here]
+   - Marks Distribution: [Add Marks Here]
+
+5. Oral Diagnosis / تشخيص الفم
+   - Hours: 1 Theory, 3 Practical | 2 Credits
+   - Doctors: [Add Doctor Names Here]
+   - Marks Distribution: [Add Marks Here]
+
+6. General Pathology / علم الأمراض العام
+   - Hours: 2 Theory, 3 Practical | 3 Credits
+   - Doctors: [Add Doctor Names Here]
+   - Marks Distribution: [Add Marks Here]
+
+7. Advanced Biomaterials / مواد طب الأسنان المتقدمة
+   - Hours: 1 Theory, 2 Practical | 2 Credits
+   - Doctors: [Add Doctor Names Here]
+   - Marks Distribution: [Add Marks Here]
+
+8. Oral Microbiology & Immunology / الأحياء الدقيقة والمناعة
+   - Hours: 2 Theory, 3 Practical | 3 Credits
+   - Doctors: [Add Doctor Names Here]
+   - Marks Distribution: Quiz 10% | Req 10% | Assign 10% | Mid Prac 10% | Mid Written 20% | Final Prac 10% | Final Written 30%
+
+9. Dental Public Health / الصحة العامة لطب الأسنان
+   - Hours: 1 Theory | 1 Credit
+   - Doctors: [Add Doctor Names Here]
+   - Marks Distribution: Midterm 40% | Assignment 15% | Professionalism 5% | Final 40%

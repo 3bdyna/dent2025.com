@@ -1,0 +1,350 @@
+<!-- admin_controls.html -->
+<style>
+    /* Container to hold the controls without taking up ANY vertical space on the page */
+    .dent-admin-controls-wrapper {
+        position: relative;
+        height: 0;
+        width: 100%;
+        overflow: visible;
+        z-index: 999999;
+    }
+
+    /* The tiny invisible lock */
+    .dent-secret-lock {
+        position: absolute;
+        bottom: 20px; /* Hovers just above the chat box */
+        right: 15px;
+        cursor: pointer; 
+        opacity: 0.1; /* Almost invisible */
+        transition: all 0.3s ease; 
+        width: 32px; height: 32px;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255, 255, 255, 0.05); border-radius: 12px;
+        backdrop-filter: blur(4px);
+    }
+    .dent-secret-lock:hover { opacity: 0.8; background: rgba(255, 255, 255, 0.1); transform: scale(1.1); }
+
+    @keyframes adminFadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dent-admin-inline {
+        /* Normal block placed directly under chapters/materials */
+        margin: 20px auto; 
+        background: #1e1e1e;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 18px 22px; width: 100%; max-width: 850px; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
+        direction: rtl; color: #f8fafc; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        animation: adminFadeIn 0.4s ease forwards;
+        box-sizing: border-box;
+    }
+    
+    .dent-admin-header { display: flex; justify-content: space-between; align-items: center; }
+    .dent-admin-actions { display: flex; gap: 10px; }
+    
+    .dent-admin-input {
+        background: rgba(0, 0, 0, 0.3); color-scheme: dark; border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #f8fafc; padding: 10px 14px; border-radius: 8px;
+        width: 100%; height: 42px; font-family: inherit; font-size: 0.92rem;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+    }
+    .dent-admin-input:focus {
+        outline: none; border-color: #888; background: rgba(0, 0, 0, 0.5); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+    }
+    .dent-admin-input::placeholder { color: #6b7280; }
+    
+    .dent-admin-btn {
+        background: #27272a; color: #fff; border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 10px 18px; border-radius: 8px; font-size: 0.9rem;
+        cursor: pointer; font-weight: 500; font-family: inherit; transition: all 0.2s ease;
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        box-sizing: border-box; text-align: center;
+    }
+    .dent-admin-btn:hover { background: #444; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .dent-admin-btn:active { transform: translateY(0); }
+    
+    .dent-admin-btn.secondary { background: rgba(255, 255, 255, 0.05); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); }
+    .dent-admin-btn.secondary:hover { background: rgba(255, 255, 255, 0.1); box-shadow: none; }
+    
+    .dent-admin-btn.danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+    .dent-admin-btn.danger:hover { background: rgba(239, 68, 68, 0.2); box-shadow: none; }
+    
+    .hidden { display: none !important; }
+    
+    .dent-add-form { display: flex; flex-direction: column; gap: 12px; text-align: right; margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; }
+    .dent-add-form label { font-size: 0.8rem; color: #9ca3af; font-weight: 500; margin-bottom: 4px; display: block; }
+    .dent-form-row { display: flex; gap: 12px; align-items: flex-end; }
+    .dent-form-col { flex: 1; }
+    
+    @media (max-width: 768px) {
+        .dent-form-row { flex-wrap: wrap; gap: 10px; }
+        .dent-form-col { flex: 1 1 100% !important; }
+        .dent-admin-inline { padding: 16px 14px; margin: 20px auto; width: 95%; }
+        .dent-admin-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+        .dent-admin-actions { width: 100%; justify-content: space-between; }
+        .dent-admin-btn { padding: 10px 12px; font-size: 0.85rem; flex: 1; }
+    }
+</style>
+
+<!-- Wrapper so it aligns nicely where you paste it -->
+<div class="dent-admin-controls-wrapper">
+    <div class="dent-secret-lock" onclick="promptAdminLogin()" title="Admin Login">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #9ca3af;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+    </div>
+</div>
+
+<div class="dent-admin-inline hidden" id="dent-admin-panel" style="display: none;">
+    <div class="dent-admin-header">
+        <h3 style="margin:0; color:#f8fafc; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
+            لوحة الإدارة 
+            <span style="font-size:0.75rem; padding: 3px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.1); color:#e2e8f0; border: 1px solid rgba(255, 255, 255, 0.1); font-weight: 500;">Edit Mode</span>
+        </h3>
+        <div class="dent-admin-actions">
+            <!-- Sync button removed to prevent accidental deletion -->
+            <button class="dent-admin-btn danger" onclick="logoutAdmin()">خروج</button>
+        </div>
+    </div>
+    
+    <div class="dent-add-form">
+        <!-- Row 1: Subject Name, Marks Distribution -->
+        <div class="dent-form-row">
+            <div class="dent-form-col" style="flex: 2.5;">
+                <label>اسم المادة (Required)</label>
+                <input type="text" id="add-sub-name" class="dent-admin-input" placeholder="أدخل اسم المادة...">
+            </div>
+            <div class="dent-form-col" style="flex: 2.5;">
+                <label>توزيع الدرجات (Optional)</label>
+                <input type="text" id="add-sub-marks" class="dent-admin-input" placeholder="مثال: 40 ميد، 60 فاينل">
+            </div>
+        </div>
+        
+        <!-- Row 2: Theory Hours, Practical Hours, Submit Button -->
+        <div class="dent-form-row">
+            <div class="dent-form-col" style="flex: 1;">
+                <label>ساعات النظري (Theory)</label>
+                <input type="number" id="add-sub-th" class="dent-admin-input" min="0" value="0">
+            </div>
+            <div class="dent-form-col" style="flex: 1;">
+                <label>ساعات العملي (Practical)</label>
+                <input type="number" id="add-sub-pr" class="dent-admin-input" min="0" value="0">
+            </div>
+            <div class="dent-form-col" style="flex: 2.2; display: flex; flex-direction: column; justify-content: flex-end;">
+                <button class="dent-admin-btn" id="btn-submit-sub" onclick="submitNewSubject()" style="height: 42px; width: 100%; padding: 0 16px; font-size: 0.9rem; white-space: nowrap;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    إضافة المادة وإنشاء مجلدات درايف
+                </button>
+            </div>
+        </div>
+        <div style="font-size: 0.73rem; color: #94a3b8; margin-top: -4px;">
+            💡 (إذا كانت المادة نظرية فقط بدون معمل، أدخل الساعات كاملة في النظري والعملي 0)
+        </div>
+    </div>
+</div>
+
+<script>
+    const DENT_API_BASE = window.location.pathname.startsWith('/dev') ? '/dev' : '';
+
+    function repositionAdminPanel() {
+        const panel = document.getElementById('dent-admin-panel');
+        if (!panel) return;
+        
+        const matContainer = document.getElementById('dynamic-materials-container');
+        const chapContainer = document.getElementById('dynamic-chapters-container');
+        const chapWrapper = document.querySelector('.dent-chapters-wrapper');
+        
+        const target = matContainer || chapContainer || chapWrapper;
+        if (target) {
+            if (target.parentNode) {
+                if (panel.previousElementSibling !== target) {
+                    target.parentNode.insertBefore(panel, target.nextSibling);
+                }
+            }
+        }
+    }
+
+    function promptAdminLogin() {
+        if (sessionStorage.getItem('dent2025_admin_pass')) {
+            activateAdminMode();
+            return;
+        }
+
+        const pass = prompt("Enter Admin Password:");
+        if (!pass) return;
+
+        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        if (!sel.specialty) return alert("الرجاء اختيار التخصص أولاً من الصفحة الرئيسية.");
+        
+        fetch(DENT_API_BASE + '/dent2025_api.php?action=check_auth', {
+            method: 'POST',
+            body: JSON.stringify({ password: pass, specialty: sel.specialty, year: sel.year, semester: sel.semester })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                sessionStorage.setItem('dent2025_admin_pass', pass);
+                const perms = (res.data && res.data.permissions) ? res.data.permissions : {};
+                sessionStorage.setItem('dent2025_permissions', JSON.stringify(perms));
+                activateAdminMode();
+            } else {
+                alert("كلمة المرور غير صحيحة. (Incorrect Password)");
+            }
+        })
+        .catch(err => {
+            console.error('Login error:', err);
+            alert("حدث خطأ في الاتصال بالخادم أثناء التحقق من كلمة المرور.");
+        });
+    }
+
+    function dentIsMaster() {
+        let perms = {};
+        try { perms = JSON.parse(sessionStorage.getItem('dent2025_permissions') || '{}'); } catch(e) {}
+        return !!perms.edit_core_subject || !!perms.delete_subject || !!perms.manage_passwords;
+    }
+
+    function activateAdminMode() {
+        let lock = document.querySelector('.dent-secret-lock');
+        if(lock) { lock.classList.add('hidden'); lock.style.display = 'none'; }
+        
+        let panel = document.getElementById('dent-admin-panel');
+        if(panel) { 
+            panel.classList.remove('hidden'); 
+            panel.style.display = 'block'; 
+            repositionAdminPanel();
+        }
+        
+        const isMaster = dentIsMaster();
+        const addForm = document.querySelector('.dent-add-form');
+        if (addForm) {
+            addForm.style.display = isMaster ? 'flex' : 'none';
+        }
+        
+        if (typeof renderChapters === 'function') {
+            loadDashboardData(); 
+        }
+    }
+
+    function logoutAdmin() {
+        sessionStorage.removeItem('dent2025_admin_pass');
+        sessionStorage.removeItem('dent2025_permissions');
+        let lock = document.querySelector('.dent-secret-lock');
+        if(lock) { lock.classList.remove('hidden'); lock.style.display = 'flex'; }
+        
+        let panel = document.getElementById('dent-admin-panel');
+        if(panel) { panel.classList.add('hidden'); panel.style.display = 'none'; }
+        
+        if (typeof renderChapters === 'function') {
+            loadDashboardData(); 
+        }
+    }
+
+    function submitNewSubject() {
+        if (!dentIsMaster()) {
+            return alert("صلاحية غير كافية: إضافة المواد الجديدة متاح للحساب الماستر فقط.");
+        }
+        const pass = sessionStorage.getItem('dent2025_admin_pass');
+        if (!pass) return alert("الرجاء تسجيل الدخول أولاً.");
+        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        const name = document.getElementById('add-sub-name').value;
+        
+        if (!name) return alert("الرجاء إدخال اسم المادة.");
+        
+        const btn = document.getElementById('btn-submit-sub');
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="4.93" x2="19.07" y2="7.76"></line></svg> جاري الإنشاء...`;
+        btn.disabled = true;
+        
+        const th = parseInt(document.getElementById('add-sub-th').value) || 0;
+        const pr = parseInt(document.getElementById('add-sub-pr').value) || 0;
+        let hrsString = "";
+        if (th > 0) {
+            if (pr > 0) {
+                hrsString = `${th} نظري، ${pr} عملي`;
+            } else {
+                hrsString = `${th} نظري`;
+            }
+        } else if (pr > 0) {
+            hrsString = `${pr} عملي`;
+        }
+        
+        const data = {
+            password: pass,
+            specialty: sel.specialty, year: sel.year, semester: sel.semester,
+            name: name,
+            doctor: '',
+            hours: hrsString,
+            marks: document.getElementById('add-sub-marks').value
+        };
+
+        fetch(DENT_API_BASE + '/dent2025_api.php?action=add', {
+            method: 'POST', body: JSON.stringify(data)
+        }).then(r=>r.json()).then(res => {
+            btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> إضافة المادة وإنشاء مجلدات درايف`;
+            btn.disabled = false;
+            if (res.success) {
+                alert("تم الإضافة بنجاح!");
+                document.getElementById('add-sub-name').value = '';
+                document.getElementById('add-sub-th').value = '0';
+                document.getElementById('add-sub-pr').value = '0';
+                document.getElementById('add-sub-marks').value = '';
+                loadDashboardData(); // Refresh UI
+            } else {
+                alert("خطأ: " + res.message);
+            }
+        }).catch(e => {
+            alert("حدث خطأ في الاتصال.");
+            btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> إضافة المادة وإنشاء مجلدات درايف`;
+            btn.disabled = false;
+        });
+    }
+
+    function forceSyncDrive() {
+        const pass = sessionStorage.getItem('dent2025_admin_pass');
+        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        
+        if (!pass) return alert("Please login first");
+
+        const btn = document.getElementById('btn-force-sync');
+        const oldText = btn.innerHTML;
+        btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="4.93" x2="19.07" y2="7.76"></line></svg> جاري المزامنة...`;
+        btn.disabled = true;
+
+        fetch(DENT_API_BASE + '/dent2025_api.php?action=sync_drive', {
+            method: 'POST',
+            body: JSON.stringify({ password: pass, specialty: sel.specialty, year: sel.year, semester: sel.semester })
+        })
+        .then(r => r.json())
+        .then(res => {
+            btn.innerHTML = oldText;
+            btn.disabled = false;
+            if (res.success) {
+                alert(res.message);
+                if (typeof loadDashboardData === 'function') loadDashboardData();
+            } else {
+                alert("Error: " + res.message);
+            }
+        }).catch(err => {
+            btn.innerHTML = oldText;
+            btn.disabled = false;
+            alert("Connection error");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!document.getElementById('dent-admin-spin-style')) {
+            const style = document.createElement('style');
+            style.id = 'dent-admin-spin-style';
+            style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
+            document.head.appendChild(style);
+        }
+        repositionAdminPanel();
+        setTimeout(repositionAdminPanel, 400);
+        setTimeout(repositionAdminPanel, 1200);
+
+        if (sessionStorage.getItem('dent2025_admin_pass')) {
+            activateAdminMode();
+        }
+    });
+</script>
+

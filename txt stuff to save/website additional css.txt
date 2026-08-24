@@ -1,0 +1,615 @@
+/* =========================================
+   1. GLOBAL DARK MODE BACKGROUND & TEXT
+========================================= */
+html, body, .ast-plain-container, .site-content, #page {
+    background-color: #121212 !important; 
+    background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px) !important;
+    background-size: 20px 20px !important;
+    color: #e2e8f0 !important; 
+}
+
+/* Nuclear override: force light text on ALL content elements regardless of block type or inline styles */
+.entry-content,
+.entry-content *,
+.page-content,
+.page-content *,
+#content .entry-content * {
+    color: #e2e8f0 !important;
+}
+/* Preserve distinct link colors */
+.entry-content a:not(.wp-block-button__link) {
+    color: #60a5fa !important;
+}
+.entry-content a:not(.wp-block-button__link):hover {
+    color: #93bbfc !important;
+}
+
+html, body {
+    /* Fix for Chrome Mobile (iOS/Android) bottom toolbar blank space */
+    min-height: 100vh !important;
+    min-height: -webkit-fill-available !important;
+    min-height: 100dvh !important;
+    margin: 0;
+    padding: 0;
+    background-color: #121212 !important;
+}
+
+:root {
+    background-color: #121212 !important;
+}
+
+h1, h2, h3, h4, h5, h6, .site-title a, .entry-title, .wp-block-heading {
+    color: #ffffff !important;
+}
+
+pre.wp-block-preformatted {
+    background-color: #1e1e1e !important;
+    color: #e2e8f0 !important;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* =========================================
+   2. HEADER & NAVIGATION DARK MODE (NUCLEAR OVERRIDE)
+========================================= */
+header#masthead, 
+.ast-main-header-wrap,
+.ast-primary-header-bar,
+.main-header-bar,
+.ast-mobile-header-wrap,
+.ast-mobile-header-content,
+#ast-mobile-popup,
+.ast-mobile-popup-drawer.active .ast-mobile-popup-inner,
+.ast-builder-menu-mobile .main-navigation,
+.ast-builder-menu-1 .main-header-menu .sub-menu {
+    background-color: #1e1e1e !important;
+    background-image: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.main-header-menu a, .site-title a,
+.ast-builder-menu-1 .main-header-menu .menu-item > .menu-link,
+.ast-builder-menu-1 .main-navigation .main-header-menu .menu-item > .menu-link,
+.ast-builder-menu-mobile .main-navigation .menu-item > .menu-link,
+#ast-mobile-popup a {
+    color: #f8fafc !important;
+}
+
+.main-header-menu a:hover,
+.ast-builder-menu-1 .main-header-menu .menu-item:hover > .menu-link,
+.ast-builder-menu-mobile .main-navigation .menu-item:hover > .menu-link,
+#ast-mobile-popup a:hover {
+    color: #9ca3af !important; 
+}
+
+.ast-mobile-menu-trigger-minimal svg,
+.ast-button-wrap .menu-toggle {
+    fill: #ffffff !important;
+    color: #ffffff !important;
+}
+
+/* =========================================
+   3. FIX INVISIBLE TEXT IN INPUTS & DROPDOWNS
+========================================= */
+input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="search"], input, select, textarea {
+    background-color: #1e1e1e !important;
+    color: #f8fafc !important; /* Forces white text so it's not invisible */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+input:focus, select:focus, textarea:focus {
+    border-color: #888 !important;
+    outline: none !important;
+}
+
+/* =========================================
+   3. SUBJECT ACCORDIONS (Floating Dark Cards)
+========================================= */
+details.wp-block-details {
+    background: #1e1e1e !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    margin-bottom: 25px !important;
+    transition: all 0.3s ease;
+}
+details.wp-block-details:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+details.wp-block-details summary {
+    background: transparent !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    color: #f8fafc !important;
+    padding: 20px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    cursor: pointer;
+}
+details.wp-block-details[open] summary {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+details.wp-block-details div {
+    border-top: none !important;
+    padding: 20px !important;
+}
+
+/* =========================================
+   4. BOUNCY SLATE BUTTONS
+========================================= */
+.wp-block-button__link {
+    border-radius: 12px !important;
+    background: #333333 !important; 
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important; 
+    transition: all 0.2s ease !important;
+    font-weight: bold !important;
+}
+.wp-block-button__link:hover {
+    background: #444444 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4) !important; 
+}
+
+/* =========================================
+   5. SPAM COMMENT HIDER
+========================================= */
+.comments-area, #comments, .comment-respond { 
+    display: none !important; 
+}
+
+/* =========================================
+   7. SOFTEN BRIGHT MEME IMAGES
+========================================= */
+figure.wp-block-image img {
+    filter: brightness(0.85); 
+    border-radius: 16px; 
+    transition: filter 0.3s ease;
+}
+figure.wp-block-image img:hover {
+    filter: brightness(1); 
+}
+
+/* =========================================
+   8. FIX THE MOBILE / DROPDOWN MENU (NUCLEAR)
+========================================= */
+
+/* --- Mobile Popup Drawer: every wrapper layer --- */
+#ast-mobile-popup,
+#ast-mobile-popup *,
+.ast-mobile-popup-drawer,
+.ast-mobile-popup-drawer.active,
+.ast-mobile-popup-drawer .ast-mobile-popup-inner,
+.ast-mobile-popup-drawer.active .ast-mobile-popup-inner,
+.ast-mobile-popup-content,
+.ast-mobile-popup-drawer .ast-mobile-popup-content,
+.ast-mobile-header-wrap,
+.ast-mobile-header-wrap .ast-mobile-header-content,
+.ast-mobile-header-content,
+.ast-builder-menu-mobile .main-navigation,
+.ast-builder-menu-mobile .main-navigation ul,
+.ast-builder-menu-mobile .main-navigation ul li,
+.ast-hf-mobile-menu,
+.ast-hf-mobile-menu .main-navigation {
+    background-color: #1e1e1e !important;
+    background: #1e1e1e !important;
+    background-image: none !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* --- Mobile Popup Header (logo + close button area) --- */
+.ast-mobile-popup-header,
+.ast-mobile-popup-drawer .ast-mobile-popup-header {
+    background-color: #1e1e1e !important;
+    background: #1e1e1e !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* --- Close button --- */
+.menu-toggle-close,
+.ast-mobile-popup-drawer .menu-toggle-close,
+.ast-mobile-popup-close,
+.ast-mobile-popup-drawer button.menu-toggle-close {
+    color: #f8fafc !important;
+    fill: #f8fafc !important;
+}
+
+/* --- All menu links in mobile drawer --- */
+.ast-builder-menu-mobile .main-navigation .menu-item .menu-link,
+.ast-builder-menu-mobile .main-navigation .menu-item > .menu-link,
+.ast-mobile-popup-drawer .menu-item .menu-link,
+.ast-mobile-popup-drawer .menu-item > a,
+#ast-mobile-popup .menu-item .menu-link,
+#ast-mobile-popup .menu-item > a,
+#ast-mobile-popup a,
+.ast-mobile-popup-content a,
+.ast-mobile-popup-content .menu-link {
+    color: #cbd5e1 !important;
+    background: transparent !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* --- Hover state for mobile menu links --- */
+.ast-builder-menu-mobile .main-navigation .menu-item .menu-link:hover,
+.ast-mobile-popup-drawer .menu-item .menu-link:hover,
+#ast-mobile-popup .menu-item .menu-link:hover,
+#ast-mobile-popup a:hover {
+    background-color: rgba(255,255,255,0.05) !important;
+    color: #f8fafc !important;
+}
+
+/* --- Desktop sub-menu dropdown --- */
+.sub-menu,
+.main-header-menu .sub-menu,
+.ast-builder-menu-1 .main-header-menu .sub-menu,
+.ast-desktop-header-content .sub-menu,
+.sub-menu li,
+.sub-menu .menu-item {
+    background-color: #1e1e1e !important;
+    background: #1e1e1e !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.sub-menu .menu-item .menu-link,
+.sub-menu .menu-item > a,
+.sub-menu a {
+    color: #cbd5e1 !important;
+}
+.sub-menu .menu-item .menu-link:hover,
+.sub-menu .menu-item > a:hover {
+    background-color: rgba(255,255,255,0.05) !important;
+    color: #f8fafc !important;
+}
+
+/* =========================================
+   9. HIDE THE SCROLL-TO-TOP ARROW
+========================================= */
+#ast-scroll-top, .ast-scroll-top {
+    display: none !important;
+}
+
+/* =========================================
+   10. CLASSES SCHEDULE WIDGET
+========================================= */
+.dent-classes-widget {
+    background: #1e1e1e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 15px;
+.ast-button-wrap .menu-toggle {
+    fill: #ffffff !important;
+    color: #ffffff !important;
+}
+
+/* =========================================
+   3. FIX INVISIBLE TEXT IN INPUTS & DROPDOWNS
+========================================= */
+input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="search"], input, select, textarea {
+    background-color: #1e1e1e !important;
+    color: #f8fafc !important; /* Forces white text so it's not invisible */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-sizing: border-box !important;
+}
+select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: left 18px center !important;
+    background-size: 16px 16px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding-left: 42px !important;
+    padding-right: 14px !important;
+    line-height: 42px !important;
+}
+input:focus, select:focus, textarea:focus {
+    border-color: #888 !important;
+    outline: none !important;
+}
+
+/* =========================================
+   3. SUBJECT ACCORDIONS (Floating Dark Cards)
+========================================= */
+details.wp-block-details {
+    background: #1e1e1e !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    margin-bottom: 25px !important;
+    transition: all 0.3s ease;
+}
+details.wp-block-details:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+details.wp-block-details summary {
+    background: transparent !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    color: #f8fafc !important;
+    padding: 20px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    cursor: pointer;
+}
+details.wp-block-details[open] summary {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+details.wp-block-details div {
+    border-top: none !important;
+    padding: 20px !important;
+}
+
+/* =========================================
+   4. BOUNCY SLATE BUTTONS
+========================================= */
+.wp-block-button__link {
+    border-radius: 12px !important;
+    background: #333333 !important; 
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important; 
+    transition: all 0.2s ease !important;
+    font-weight: bold !important;
+}
+.wp-block-button__link:hover {
+    background: #444444 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4) !important; 
+}
+
+/* =========================================
+   5. SPAM COMMENT HIDER
+========================================= */
+.comments-area, #comments, .comment-respond { 
+    display: none !important; 
+}
+
+/* =========================================
+   7. SOFTEN BRIGHT MEME IMAGES
+========================================= */
+figure.wp-block-image img {
+    filter: brightness(0.85); 
+    border-radius: 16px; 
+    transition: filter 0.3s ease;
+}
+figure.wp-block-image img:hover {
+    filter: brightness(1); 
+}
+
+/* =========================================
+   8. FIX THE MOBILE / DROPDOWN MENU (NUCLEAR)
+========================================= */
+
+/* --- Mobile Popup Drawer: every wrapper layer --- */
+#ast-mobile-popup,
+#ast-mobile-popup *,
+.ast-mobile-popup-drawer,
+.ast-mobile-popup-drawer.active,
+.ast-mobile-popup-drawer .ast-mobile-popup-inner,
+.ast-mobile-popup-drawer.active .ast-mobile-popup-inner,
+.ast-mobile-popup-content,
+.ast-mobile-popup-drawer .ast-mobile-popup-content,
+.ast-mobile-header-wrap,
+.ast-mobile-header-wrap .ast-mobile-header-content,
+.ast-mobile-header-content,
+.ast-builder-menu-mobile .main-navigation,
+.ast-builder-menu-mobile .main-navigation ul,
+.ast-builder-menu-mobile .main-navigation ul li,
+.ast-hf-mobile-menu,
+.ast-hf-mobile-menu .main-navigation {
+    background-color: #1e1e1e !important;
+    background: #1e1e1e !important;
+    background-image: none !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* --- Mobile Popup Header (logo + close button area) --- */
+.ast-mobile-popup-header,
+.ast-mobile-popup-drawer .ast-mobile-popup-header {
+    background-color: #1e1e1e !important;
+    background: #1e1e1e !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* --- Close button --- */
+.menu-toggle-close,
+.ast-mobile-popup-drawer .menu-toggle-close,
+.ast-mobile-popup-close,
+.ast-mobile-popup-drawer button.menu-toggle-close {
+    color: #f8fafc !important;
+    fill: #f8fafc !important;
+}
+
+/* --- All menu links in mobile drawer --- */
+.ast-builder-menu-mobile .main-navigation .menu-item .menu-link,
+.ast-builder-menu-mobile .main-navigation .menu-item > .menu-link,
+.ast-mobile-popup-drawer .menu-item .menu-link,
+.ast-mobile-popup-drawer .menu-item > a,
+#ast-mobile-popup .menu-item .menu-link,
+#ast-mobile-popup .menu-item > a,
+#ast-mobile-popup a,
+.ast-mobile-popup-content a,
+.ast-mobile-popup-content .menu-link {
+    color: #cbd5e1 !important;
+    background: transparent !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* --- Hover state for mobile menu links --- */
+.ast-builder-menu-mobile .main-navigation .menu-item .menu-link:hover,
+.ast-mobile-popup-drawer .menu-item .menu-link:hover,
+#ast-mobile-popup .menu-item .menu-link:hover,
+#ast-mobile-popup a:hover {
+    background-color: rgba(255,255,255,0.05) !important;
+    color: #f8fafc !important;
+}
+
+/* --- Desktop sub-menu dropdown --- */
+.sub-menu,
+.main-header-menu .sub-menu,
+.ast-builder-menu-1 .main-header-menu .sub-menu,
+.ast-desktop-header-content .sub-menu,
+.sub-menu li,
+.sub-menu .menu-item {
+    background-color: #1e1e1e !important;
+    background: #1e1e1e !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.sub-menu .menu-item .menu-link,
+.sub-menu .menu-item > a,
+.sub-menu a {
+    color: #cbd5e1 !important;
+}
+.sub-menu .menu-item .menu-link:hover,
+.sub-menu .menu-item > a:hover {
+    background-color: rgba(255,255,255,0.05) !important;
+    color: #f8fafc !important;
+}
+
+/* =========================================
+   9. HIDE THE SCROLL-TO-TOP ARROW
+========================================= */
+#ast-scroll-top, .ast-scroll-top {
+    display: none !important;
+}
+
+/* =========================================
+   10. CLASSES SCHEDULE WIDGET
+========================================= */
+.dent-classes-widget {
+    background: #1e1e1e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.dent-classes-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.dent-classes-title { font-size: 1.1rem; font-weight: 700; margin: 0; color: #ffffff; }
+
+.dent-classes-group-select {
+    background: rgba(0,0,0,0.3); color: #e2e8f0;
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;
+    padding: 4px 8px; font-family: inherit; font-size: 0.8rem; outline: none;
+    cursor: pointer; transition: all 0.2s ease;
+}
+.dent-classes-group-select:hover { border-color: rgba(255,255,255,0.3); }
+
+.dent-classes-day-title { font-size: 0.9rem; color: #cbd5e1; margin-bottom: 8px; font-weight: 600; }
+
+.dent-class-card {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    transition: all 0.2s ease;
+}
+.dent-class-card.active-now {
+    background: #2a2c30;
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.dent-class-time { font-size: 0.8rem; color: #9ca3af; white-space: nowrap; font-family: 'Outfit', sans-serif; direction: ltr; font-weight: 600; }
+.dent-class-info { flex-grow: 1; padding: 0 10px; }
+.dent-class-subject { font-size: 0.9rem; font-weight: 700; color: #f8fafc; margin: 0 0 4px 0; }
+.dent-class-type { font-size: 0.7rem; color: #cbd5e1; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; display: inline-block; }
+
+.dent-admin-btn-small {
+    background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.2); color: #cbd5e1;
+    padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; margin-left: 10px;
+}
+.dent-admin-btn-small:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+.dent-classes-btn {
+    background: #333333 !important; color: #ffffff !important; border: 1px solid rgba(255,255,255,0.1) !important;
+    padding: 10px 12px !important; border-radius: 8px !important; font-size: 0.85rem !important; font-weight: 600 !important;
+    cursor: pointer !important; transition: all 0.2s ease !important; width: 100% !important; margin-top: 10px !important;
+    display: block !important; text-align: center !important; font-family: inherit !important;
+}
+.dent-classes-btn:hover { background: #444444 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important; color: #ffffff !important; }
+
+@media (max-width: 480px) {
+    .dent-class-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    .dent-class-info { padding: 0; }
+    .dent-class-time { font-size: 0.75rem; }
+}
+
+/* =========================================
+   11. MODALS
+========================================= */
+.dent-modal-overlay {
+    position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    background: rgba(10, 10, 15, 0.8) !important; backdrop-filter: blur(8px) !important;
+    display: none; align-items: center !important; justify-content: center !important; z-index: 999999 !important;
+}
+.dent-modal {
+    background: #1e1e1e !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 16px !important;
+    width: 90% !important; max-width: 550px !important; padding: 30px !important; max-height: 85vh !important; overflow-y: auto !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
+}
+.dent-modal-header { display: flex !important; justify-content: space-between !important; align-items: center !important; margin-bottom: 25px !important; }
+.dent-modal-close { background: rgba(255,255,255,0.05) !important; border: none !important; color: #9ca3af !important; width: 32px !important; height: 32px !important; border-radius: 50% !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 1.2rem !important; cursor: pointer !important; transition: all 0.2s !important; }
+.dent-modal-close:hover { background: rgba(239, 68, 68, 0.2) !important; color: #ef4444 !important; }
+
+/* =========================================
+   12. LANDING / WELCOME PAGE STYLES
+========================================= */
+.dent-landing-wrapper * { box-sizing: border-box; }
+.dent-landing-wrapper {
+    min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif; direction: rtl; background: transparent; color: #fff;
+    padding: 20px;
+}
+.dent-landing-card {
+    background: #1e1e1e !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 24px !important; padding: 3rem !important;
+    width: 100% !important; max-width: 600px !important; box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
+    backdrop-filter: blur(20px) !important; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important; overflow: hidden !important; text-align: center !important;
+}
+.dent-landing-title { font-size: 2.4rem !important; font-weight: 700 !important; margin-bottom: 0.5rem !important; background: linear-gradient(90deg, #fff, #9ca3af) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; }
+.dent-landing-subtitle { color: #9ca3af !important; font-size: 1.1rem !important; margin-bottom: 2.5rem !important; }
+.dent-step-container { display: none; animation: slideIn 0.4s ease forwards; width: 100%; }
+.dent-step-container.active { display: block !important; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+.dent-grid { display: grid !important; gap: 12px !important; width: 100% !important; }
+.dent-grid-2 { grid-template-columns: 1fr 1fr !important; }
+.dent-btn-choice {
+    background: rgba(0, 0, 0, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; color: #e2e8f0 !important;
+    padding: 20px !important; border-radius: 14px !important; font-size: 1.2rem !important; font-weight: 600 !important; font-family: inherit !important;
+    cursor: pointer !important; transition: all 0.2s ease !important; display: flex !important; flex-direction: column !important; align-items: center !important; gap: 8px !important; width: 100% !important;
+}
+.dent-btn-choice span.en { font-size: 0.9rem !important; color: #9ca3af !important; font-weight: 400 !important; }
+.dent-btn-choice:hover { background: rgba(255, 255, 255, 0.05) !important; border-color: rgba(255, 255, 255, 0.2) !important; transform: translateY(-2px) !important; box-shadow: 0 10px 20px rgba(0,0,0,0.3) !important; }
+.dent-btn-choice:active { transform: translateY(0) !important; }
+.dent-btn-back {
+    background: transparent !important; border: none !important; color: #9ca3af !important; font-size: 1rem !important; cursor: pointer !important;
+    margin-top: 2rem !important; font-family: inherit !important; display: flex !important; align-items: center !important; justify-content: center !important; gap: 6px !important; transition: color 0.2s !important; width: 100% !important;
+}
+.dent-btn-back:hover { color: #f8fafc !important; }
+@media (max-width: 600px) {
+    .dent-landing-card { padding: 1.5rem !important; border-radius: 16px !important; }
+    .dent-landing-title { font-size: 1.8rem !important; }
+    .dent-landing-subtitle { font-size: 0.95rem !important; margin-bottom: 1.5rem !important; }
+    .dent-btn-choice { padding: 15px !important; font-size: 1.1rem !important; }
+    .dent-grid-2 { grid-template-columns: 1fr !important; }
+}

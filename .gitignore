@@ -1,0 +1,53 @@
+# ===================================================================
+# DENT2025 - GIT IGNORE CONFIGURATION
+# Protects secrets, API keys, runtime caches, and legacy backups
+# ===================================================================
+
+# 1. Credentials, Passwords & Sensitive Configs (CRITICAL)
+deploy_config.json
+dent2025_passwords.json
+passwords.txt
+txt stuff to save/passwords.txt
+.env*
+wp-config.php
+backend/gemini_keys_data/
+*.pem
+*.key
+*.cert
+
+# 2. Runtime Dynamic Data & Server-side JSON Databases
+announcements_data/
+dent2025_analytics_data/
+dent2025_study_data/
+history_data/
+quizzes_data/
+cache_catalog.json
+premed-scan.json
+
+# 3. Legacy Local Snapshots & Zip Backups
+.deploy_backups/
+*.zip
+*.tar
+*.gz
+
+# 4. WordPress Dynamic Uploads & OS Artifacts
+wp-content/uploads/
+*.msi
+*.exe
+*.dll
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# 5. Python & Toolchain Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# 6. IDEs & Agent Temporary Files
+.agents/
+.vscode/
+.idea/
+*.swp
+*.swo

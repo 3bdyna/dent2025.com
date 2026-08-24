@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dent2025 | AI SafeDeploy & Snapshot Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Cairo', 'Outfit', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#0284c7',
+              600: '#0369a1',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0b0f19;
+      color: #f3f4f6;
+    }
+    .glass-card {
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card:hover {
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 font-sans">
+  
+  <!-- Header -->
+  <div class="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4 border-b border-gray-800 pb-6">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 text-2xl shadow-lg shadow-sky-500/10">
+        🛡️
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-white tracking-wide">Dent2025 AI SafeDeploy Portal</h1>
+        <p class="text-sm text-gray-400">لوحة التحكم الفورية لحماية التحديثات، اللقطات المنظومة، وتنسيق النسخ الاحتياطية</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <button onclick="fetchDashboardData()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 border border-sky-500/20 rounded-xl text-sm font-semibold transition-all flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        تحديث البيانات
+      </button>
+      <a href="admin_dashboard.html" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-sm font-semibold transition-all shadow-md">
+        العودة للوحة الأدمن Main
+      </a>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto space-y-8">
+
+    <!-- URGENT ALERT BANNER (Dynamically populated if error detected) -->
+    <div id="urgent-alert-banner" class="hidden p-6 rounded-2xl bg-rose-950/80 border-2 border-rose-500/80 text-rose-100 shadow-2xl shadow-rose-950/50 backdrop-blur-xl animate-pulse">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex items-start gap-4">
+          <div class="p-3 bg-rose-500/20 text-rose-400 rounded-xl text-3xl">⚠️</div>
+          <div>
+            <h2 class="text-xl font-bold text-white mb-1">تنبيه عاجل: تم اكتشاف مشكلة في النظام أو فحص الصحة!</h2>
+            <p id="alert-summary" class="text-rose-200 text-sm mb-3">قد تسبب التحديث الأخير في بطء أو خطأ بالخادم. يمكنك إجراء استعادة فورية بضغطة زر.</p>
+            <div id="alert-diagnostics-box" class="p-3 bg-black/50 rounded-lg text-xs font-mono text-rose-300 max-h-32 overflow-y-auto mb-4 border border-rose-900">
+              <!-- Failure diagnostics trace inserted here -->
+            </div>
+          </div>
+        </div>
+        <button id="alert-rollback-btn" onclick="confirmRollbackCurrent()" class="px-5 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg hover:shadow-rose-600/30 whitespace-nowrap">
+          ⚡ تنفيذ استعادة فورية 1-Click Rollback
+        </button>
+      </div>
+    </div>
+
+    <!-- Live System Health Status Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="glass-card p-5 rounded-2xl flex items-center justify-between">
+        <div>
+          <p class="text-xs text-gray-400 font-medium">WordPress API</p>
+          <h3 id="health-wp-api" class="text-lg font-bold text-emerald-400 mt-1">جاري الفحص...</h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">🌐</div>
+      </div>
+
+      <div class="glass-card p-5 rounded-2xl flex items-center justify-between">
+        <div>
+          <p class="text-xs text-gray-400 font-medium">Announcements API</p>
+          <h3 id="health-ann-api" class="text-lg font-bold text-emerald-400 mt-1">جاري الفحص...</h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">📢</div>
+      </div>
+
+      <div class="glass-card p-5 rounded-2xl flex items-center justify-between">
+        <div>
+          <p class="text-xs text-gray-400 font-medium">Schedule API</p>
+          <h3 id="health-sch-api" class="text-lg font-bold text-emerald-400 mt-1">جاري الفحص...</h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">📅</div>
+      </div>
+
+      <div class="glass-card p-5 rounded-2xl flex items-center justify-between">
+        <div>
+          <p class="text-xs text-gray-400 font-medium">Google Drive Backup</p>
+          <h3 class="text-lg font-bold text-sky-400 mt-1">مفعل تلقائياً</h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center text-xl">☁️</div>
+      </div>
+    </div>
+
+    <!-- Timeline of Deployments & Snapshots -->
+    <div class="glass-card rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>📜</span> سجل التحديثات واللقطات (Deployments & Snapshots)
+          </h2>
+          <p class="text-xs text-gray-400 mt-0.5">يعرض جميع التغييرات، ملاحظات الذكاء الاصطناعي، وروابط النسخ الاحتياطية بـ Google Drive</p>
+        </div>
+      </div>
+
+      <!-- Deployments Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-right text-sm text-gray-300">
+          <thead class="bg-slate-900/80 text-gray-400 uppercase text-xs">
+            <tr>
+              <th class="py-3.5 px-4 rounded-r-xl">التاريخ والوقت</th>
+              <th class="py-3.5 px-4">ملاحظة التحديث (AI Note)</th>
+              <th class="py-3.5 px-4">الملفات المعدلة</th>
+              <th class="py-3.5 px-4">الحالة</th>
+              <th class="py-3.5 px-4">نسخة Drive</th>
+              <th class="py-3.5 px-4 rounded-l-xl text-center">الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="deployments-tbody" class="divide-y divide-gray-800/60">
+            <tr>
+              <td colspan="6" class="text-center py-8 text-gray-500">جاري تحميل سجلات التحديث واللقطات...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    async function fetchDashboardData() {
+      try {
+        const res = await fetch('history_api.php?action=get_deployments');
+        const data = await res.json();
+        
+        if (data.success) {
+          renderDeployments(data.data || []);
+        } else {
+          document.getElementById('deployments-tbody').innerHTML = `<tr><td colspan="6" class="text-center py-6 text-rose-400">فشل تحميل البيانات: ${data.message || 'خطأ غير معروف'}</td></tr>`;
+        }
+      } catch (e) {
+        document.getElementById('deployments-tbody').innerHTML = `<tr><td colspan="6" class="text-center py-6 text-rose-400">خطأ في الاتصال بالخادم</td></tr>`;
+      }
+      
+      checkSystemHealth();
+    }
+
+    function renderDeployments(records) {
+      const tbody = document.getElementById('deployments-tbody');
+      const alertBanner = document.getElementById('urgent-alert-banner');
+      
+      if (!records || records.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-500">لا يوجد تحديثات مسجلة بعد.</td></tr>`;
+        alertBanner.classList.add('hidden');
+        return;
+      }
+
+      let hasAlert = false;
+      let alertDiag = '';
+      let latestSnapId = '';
+
+      const rowsHtml = records.map(rec => {
+        const isAlert = rec.status === 'ALERT_REQUIRES_ATTENTION';
+        if (isAlert && !hasAlert) {
+          hasAlert = true;
+          latestSnapId = rec.snapshot_id;
+          alertDiag = JSON.stringify(rec.probe_diagnostics || [], null, 2);
+        }
+
+        const dateStr = rec.created_at ? new Date(rec.created_at).toLocaleString('ar-SA') : '—';
+        const filesStr = (rec.files_changed || []).map(f => `<span class="inline-block bg-slate-800 text-sky-300 px-2 py-0.5 rounded text-xs border border-sky-900/50 m-0.5">${f}</span>`).join(' ');
+        
+        let statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">سليم (SUCCESS)</span>`;
+        if (isAlert) {
+          statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40">تنبيه خطأ (ALERT)</span>`;
+        }
+
+        const driveBtn = rec.gdrive_url 
+          ? `<a href="${rec.gdrive_url}" target="_blank" class="text-sky-400 hover:text-sky-300 underline font-medium text-xs">عرض بـ Drive ☁️</a>`
+          : `<span class="text-gray-600 text-xs">محلي فقط</span>`;
+
+        return `
+          <tr class="hover:bg-slate-900/40 transition-colors">
+            <td class="py-4 px-4 font-mono text-xs text-gray-400">${dateStr}<br><span class="text-gray-600">${rec.snapshot_id || ''}</span></td>
+            <td class="py-4 px-4 font-medium text-gray-200">${rec.ai_note || 'بدون ملاحظة'}</td>
+            <td class="py-4 px-4 max-w-xs overflow-x-auto">${filesStr}</td>
+            <td class="py-4 px-4">${statusBadge}</td>
+            <td class="py-4 px-4">${driveBtn}</td>
+            <td class="py-4 px-4 text-center">
+              <button onclick="confirmRollback('${rec.snapshot_id}')" class="px-3 py-1.5 bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800/60 rounded-lg text-xs font-semibold transition-all">
+                استعادة (Rollback)
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.innerHTML = rowsHtml;
+
+      if (hasAlert) {
+        alertBanner.classList.remove('hidden');
+        document.getElementById('alert-diagnostics-box').textContent = alertDiag;
+        document.getElementById('alert-rollback-btn').onclick = () => confirmRollback(latestSnapId);
+      } else {
+        alertBanner.classList.add('hidden');
+      }
+    }
+
+    async function checkSystemHealth() {
+      const apis = [
+        { id: 'health-wp-api', url: 'dent2025_api.php?action=data&specialty=dentistry&year=1&semester=1' },
+        { id: 'health-ann-api', url: 'announcements_api.php?action=get&specialty=dentistry&year=1&semester=1' },
+        { id: 'health-sch-api', url: 'schedule_backend.php' }
+      ];
+
+      for (const api of apis) {
+        const el = document.getElementById(api.id);
+        try {
+          const res = await fetch(api.url);
+          if (res.ok) {
+            el.textContent = 'شغال بنجاح (200 OK)';
+            el.className = 'text-lg font-bold text-emerald-400 mt-1';
+          } else {
+            el.textContent = `خطأ (${res.status})`;
+            el.className = 'text-lg font-bold text-rose-400 mt-1';
+          }
+        } catch (e) {
+          el.textContent = 'تعذر الاتصال';
+          el.className = 'text-lg font-bold text-rose-400 mt-1';
+        }
+      }
+    }
+
+    function confirmRollback(snapId) {
+      if (!snapId) return;
+      if (confirm(`هل أنت تأكد من استعادة حالة النظام إلى اللقطة (${snapId})؟`)) {
+        alert(`لتأكيد الاستعادة في البيئة المستضافة، قم بتشغيل الأمر:\n\npython tools\deploy_safe.py --rollback ${snapId}`);
+      }
+    }
+
+    window.onload = fetchDashboardData;
+  </script>
+</body>
+</html>

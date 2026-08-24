@@ -1,0 +1,202 @@
+{
+  "English Academic Progress R&W │ التقدم الأكاديمي في اللغة الإنجليزية القراءة والكتابة": {
+    "id": "113",
+    "specialty": "pre-med",
+    "year": 0,
+    "semester": 1,
+    "links": [
+      {
+        "id": "20",
+        "subject_id": "113",
+        "url": "https://drive.google.com/drive/folders/1vwrxaxKm1Sdwn2eNF9RaCOq8LScHSoAX",
+        "title": "أرشيف بنوك وتدريبات AP4 الموسع (Past Tests & Practice All)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:38"
+      },
+      {
+        "id": "19",
+        "subject_id": "113",
+        "url": "https://drive.google.com/drive/folders/10MJJNgpD3LAuThGgokmZ_r4kw-w59aTs",
+        "title": "أرشيف تدريبات واختبارات الاستماع المكثفة (Listening Practice & Tests)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:37"
+      },
+      {
+        "id": "18",
+        "subject_id": "113",
+        "url": "https://drive.google.com/drive/folders/15IOJmKQiO8xFFeSPNg2tTuvNZwlm3R-B",
+        "title": "أرشيف صوتيات وتراكات الاستماع للوحدات (Unit Audios 1-8)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:36"
+      }
+    ]
+  },
+  "Arabic Writing │ التحرير العربي": {
+    "id": "114",
+    "specialty": "pre-med",
+    "year": 0,
+    "semester": 1,
+    "links": [
+      {
+        "id": "22",
+        "subject_id": "114",
+        "url": "https://drive.google.com/drive/folders/1DdiK1Z2h5mmUEU94g57DnixQHlwRAAe-",
+        "title": "أرشيف تجميعات واختبارات التحرير العربي السابقة (Past Exams Archive)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:39"
+      },
+      {
+        "id": "21",
+        "subject_id": "114",
+        "url": "https://drive.google.com/drive/folders/13UxT_volK4e04zatZzEXahwGaiJLU10M",
+        "title": "أرشيف بنك الأسئلة والتدريبات الإضافية الشامل (Additional Question Bank)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:38"
+      }
+    ]
+  },
+  "Islamic Culture 1 │ ثقافة إسلامية 1": {
+    "id": "115",
+    "specialty": "pre-med",
+    "year": 0,
+    "semester": 1,
+    "links": [
+      {
+        "id": "23",
+        "subject_id": "115",
+        "url": "https://drive.google.com/drive/folders/1WgLZPGzkItVZ9lPoycNE1Uvj6Ua9dbUz",
+        "title": "أرشيف بنك أسئلة واختبارات سلم 101 الموسع (Past Exams & Test Bank)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:40"
+      },
+      {
+        "id": "24",
+        "subject_id": "115",
+        "url": "https://drive.google.com/drive/folders/13qZXS7vZZhTS_Vzkdig3ZhFC5_JUaLY2",
+        "title": "تجميعات واختبارات الدفع السابقة لثقافة إسلامية 1 (Batches Archive)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:40"
+      }
+    ]
+  },
+  "Biology for Health Specialties │ الأحياء للتخصصات الصحية": {
+    "id": "116",
+    "specialty": "pre-med",
+    "year": 0,
+    "semester": 2,
+    "links": [
+      {
+        "id": "29",
+        "subject_id": "116",
+        "url": "https://drive.google.com/drive/folders/18Fp03boQ6-JXt4YI5Qc3RloeXfTrkQ53",
+        "title": "أرشيف تجميعات واختبارات الأحياء السابقة (Past Exams & Batches)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:44"
+      },
+      {
+        "id": "28",
+        "subject_id": "116",
+        "url": "https://drive.google.com/drive/folders/1LLBisNA5eOOYonXjM-AHblVRaowMvUZE",
+        "title": "أرشيف معمل وتجارب الأحياء العملي الإضافي (Lab Reports & Practical Archive)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:43"
+      },
+      {
+        "id": "27",
+        "subject_id": "116",
+        "url": "https://drive.google.com/drive/folders/1bI-S5Wi_szGoEYwxtVv_rJ8kUZ_ncn04",
+        "title": "أرشيف بنك أسئلة الأحياء النظري الموسع (Comprehensive MCQs Bank)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:42"
+      }
+    ]
+  },
+  "Physics for Health Specialties │ الفيزياء للتخصصات الصحية": {
+    "id": "117",
+    "specialty": "pre-med",
+    "year": 0,
+    "semester": 2,
+    "links": [
+      {
+        "id": "32",
+        "subject_id": "117",
+        "url": "https://drive.google.com/drive/folders/1HoPYPpST4o8Uti8219lPTelunvPOI90e",
+        "title": "أرشيف بنوك وتدريبات الفيزياء للأعوام السابقة (Past Physics Test Banks)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:46"
+      },
+      {
+        "id": "31",
+        "subject_id": "117",
+        "url": "https://drive.google.com/drive/folders/1sO13iKmYV9hjohsg9n_VeFTAJEDAXR47",
+        "title": "أرشيف مسائل وتدريبات د. عرفة ود. حيدر المصورة (Haider & Arafa Problem Sets)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:45"
+      },
+      {
+        "id": "30",
+        "subject_id": "117",
+        "url": "https://drive.google.com/drive/folders/1wqdlc17UhqBQ1uzgllWAru3z54Z39EHl",
+        "title": "أرشيف تقارير وتجارب معمل الفيزياء العملي (Physics Lab Reports & Manuals)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:44"
+      }
+    ]
+  },
+  "Chemistry for Health Specialties │ الكيمياء للتخصصات الصحية": {
+    "id": "118",
+    "specialty": "pre-med",
+    "year": 0,
+    "semester": 2,
+    "links": [
+      {
+        "id": "35",
+        "subject_id": "118",
+        "url": "https://drive.google.com/drive/folders/1KNezDCxGf0eBe05Xvs1lL3XVZHBGTu-b",
+        "title": "أرشيف بنك أسئلة ومسائل الكيمياء المحلولة الموسع (Solved Questions Bank)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:48"
+      },
+      {
+        "id": "34",
+        "subject_id": "118",
+        "url": "https://drive.google.com/drive/folders/1YyVKrgUMCHTKiRjmMFHG88pH3fNzmfdW",
+        "title": "معرض صور وتجميعات اختبارات ومسائل الكيمياء (Exams Photo Gallery Archive)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:47"
+      },
+      {
+        "id": "33",
+        "subject_id": "118",
+        "url": "https://drive.google.com/drive/folders/1UeKuHZYGieyUvWMAX1p68a-sFWVwQDHy",
+        "title": "أرشيف تقارير وتجارب معمل الكيمياء العملي (Chemistry Lab Reports & Manuals)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:46"
+      }
+    ]
+  },
+  "Academic Writing for Health Professions │ اللغة الإنجليزية الكتابة الأكاديمية للمهن الصحية": {
+    "id": "119",
+    "specialty": "pre-med",
+    "year": 0,
+    "semester": 2,
+    "links": [
+      {
+        "id": "26",
+        "subject_id": "119",
+        "url": "https://drive.google.com/drive/folders/19U1FwBwFTBYWKCqDNZLy0m0Rn3cETYka",
+        "title": "أرشيف تدريبات وكويزات الرايتنق الإضافية (Writing Quizzes & Mock Practice)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:42"
+      },
+      {
+        "id": "25",
+        "subject_id": "119",
+        "url": "https://drive.google.com/drive/folders/1C72w3NJtKnuwTTUVRx9S_vpSVbzMo3Ls",
+        "title": "أرشيف واجبات وتكليفات الرايتنق السابقة (Past Assignments Archive)",
+        "type": "drive",
+        "created_at": "2026-08-14 10:06:41"
+      }
+    ]
+  }
+}

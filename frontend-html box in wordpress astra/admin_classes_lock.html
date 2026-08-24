@@ -1,0 +1,91 @@
+<style>
+    /* Container with 0 height so it takes NO space on the page */
+    .dent-admin-controls-wrapper {
+        position: relative;
+        height: 0;
+        width: 100%;
+        display: block;
+        z-index: 999999;
+    }
+
+    /* The tiny invisible lock */
+    .dent-secret-lock {
+        position: absolute;
+        top: 5px; /* lower */
+        right: -25px; /* further to the right */
+        cursor: pointer; 
+        opacity: 0.15; /* Almost invisible */
+        transition: all 0.3s ease; 
+        width: 32px; height: 32px;
+        display: flex; align-items: center; justify-content: center;
+        background: transparent;
+        border-radius: 50%;
+    }
+    .dent-secret-lock:hover { 
+        opacity: 0.8; 
+        transform: scale(1.1); 
+    }
+</style>
+
+<div class="dent-admin-controls-wrapper">
+    <div class="dent-secret-lock" onclick="promptClassesAdminLogin()">
+        <!-- Transparent White SVG Lock instead of the yellow emoji -->
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+    </div>
+</div>
+
+<script>
+    function promptClassesAdminLogin() {
+        if (sessionStorage.getItem('dent2025_admin_pass')) {
+            activateClassesAdminMode();
+            return;
+        }
+
+        const pass = prompt("Enter Admin Password:");
+        if (!pass) return;
+
+        // Verify password with the server
+        const apiBase = window.location.pathname.startsWith('/dev') ? '/dev' : '';
+        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        fetch(apiBase + '/dent2025_api.php?action=check_auth', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                password: pass, 
+                specialty: sel.specialty || 'dentistry', 
+                year: (sel.year !== undefined && sel.year !== null) ? sel.year : 2, 
+                semester: sel.semester || 1 
+            })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                sessionStorage.setItem('dent2025_admin_pass', pass);
+                const perms = (res.data && res.data.permissions) ? res.data.permissions : {};
+                sessionStorage.setItem('dent2025_permissions', JSON.stringify(perms));
+                activateClassesAdminMode();
+            } else {
+                alert("كلمة المرور غير صحيحة. (Incorrect Password)");
+            }
+        }).catch(err => {
+            console.error(err);
+            alert("Network error while logging in.");
+        });
+    }
+
+    function activateClassesAdminMode() {
+        let lock = document.querySelector('.dent-secret-lock');
+        if(lock) { lock.style.display = 'none'; }
+        
+        // Refresh the widget to show the gear icon
+        if (typeof renderClassesWidget === 'function') {
+            renderClassesWidget();
+        }
+    }
+</script>
+
+<!-- Automatically load dashboard.js for Lectures Timetable Page -->
+<script src="/frontend_components/dashboard.js"></script>
+
