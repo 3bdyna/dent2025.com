@@ -34,8 +34,12 @@ function ai_exam_read_passkey() {
     return '';
 }
 
-$AI_MASTER_ACTIONS = ['test_keys', 'gemini_status', 'add_gemini_key', 'edit_gemini_key', 'delete_gemini_key', 'get_gemini_keys', 'save_cache_settings', 'clear_cache'];
-$AI_AUTH_ACTIONS = ['delete_quiz', 'rename_quiz', 'save', 'get_cache_stats', 'prewarm_cache', 'check_prewarm_job', 'get_prewarm_subjects', 'prewarm_subject', 'scan_cache_catalog', 'prewarm_single_file'];
+$AI_MASTER_ACTIONS = [
+    'test_keys', 'gemini_status', 'add_gemini_key', 'edit_gemini_key', 'delete_gemini_key', 
+    'get_gemini_keys', 'save_cache_settings', 'clear_cache', 'get_cache_stats',
+    'prewarm_cache', 'check_prewarm_job', 'get_prewarm_subjects', 'prewarm_subject', 
+    'scan_cache_catalog', 'prewarm_single_file'
+];
 
 if (in_array($action, $AI_MASTER_ACTIONS, true)) {
     $ai_pass = ai_exam_read_passkey();
@@ -45,7 +49,23 @@ if (in_array($action, $AI_MASTER_ACTIONS, true)) {
         echo json_encode(['success' => false, 'message' => 'Unauthorized: manage_passwords permission required.']);
         exit;
     }
-} elseif (in_array($action, $AI_AUTH_ACTIONS, true)) {
+} elseif ($action === 'delete_quiz') {
+    $ai_pass = ai_exam_read_passkey();
+    if (!dent2025_check_rbac_permission($ai_pass, 'delete_subject') && !dent2025_check_rbac_permission($ai_pass, 'manage_passwords')) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Unauthorized: delete_subject or admin permission required.']);
+        exit;
+    }
+} elseif ($action === 'rename_quiz') {
+    $ai_pass = ai_exam_read_passkey();
+    if (!dent2025_check_rbac_permission($ai_pass, 'edit_core_subject') && !dent2025_check_rbac_permission($ai_pass, 'manage_passwords')) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Unauthorized: edit_core_subject or admin permission required.']);
+        exit;
+    }
+} elseif ($action === 'save') {
     $ai_pass = ai_exam_read_passkey();
     $ai_info = !empty($ai_pass) ? dent2025_get_passkey_info($ai_pass) : null;
     if (!$ai_info) {
@@ -679,7 +699,7 @@ function uploadPdfToGeminiFileApi($filePath, $apiKey, $displayName = 'Textbook D
     curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
     curl_setopt($ch, CURLOPT_HEADER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
@@ -731,7 +751,7 @@ function uploadPdfToGeminiFileApi($filePath, $apiKey, $displayName = 'Textbook D
         curl_setopt($ch, CURLOPT_POSTFIELDS, $chunk);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $chunkHeaders);
         curl_setopt($ch, CURLOPT_TIMEOUT, 120);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         $chunkResp = curl_exec($ch);
         curl_close($ch);
 
@@ -759,7 +779,7 @@ function uploadPdfToGeminiFileApi($filePath, $apiKey, $displayName = 'Textbook D
         $chkCh = curl_init("https://generativelanguage.googleapis.com/v1beta/" . $fileName . "?key=" . $apiKey);
         curl_setopt($chkCh, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($chkCh, CURLOPT_TIMEOUT, 15);
-        curl_setopt($chkCh, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($chkCh, CURLOPT_SSL_VERIFYPEER, true);
         $chkResp = curl_exec($chkCh);
         curl_close($chkCh);
         if ($chkResp) {
@@ -793,7 +813,7 @@ function deleteGeminiFile($fileNameOrUri, $apiKey) {
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     @curl_exec($ch);
     @curl_close($ch);
 }
@@ -807,6 +827,11 @@ function performDirectUploadedFileExtraction($fileItem) {
     $fileName = $fileItem['name'] ?? 'uploaded_file';
     $fileType = $fileItem['type'] ?? '';
     $rawBase64 = $fileItem['data'];
+
+    // Max 25MB base64 string upload limit guard
+    if (strlen($rawBase64) > 25 * 1024 * 1024) {
+        return ['success' => false, 'message' => "حجم الملف يتجاوز الحد المسموح (20MB): $fileName"];
+    }
 
     // Strip data URI prefix if present
     if (preg_match('/^data:([^;]+);base64,/', $rawBase64, $m)) {
@@ -2187,8 +2212,8 @@ function postGeminiRequest($url, $payload, $timeout = 15) {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         $response = curl_exec($ch);
@@ -2483,6 +2508,10 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $targetChapters = $data['targetChapters'] ?? [];
     $quizName = $data['quizName'] ?? ($isPastExamFilter ? 'تجميعات السنوات السابقة' : 'اختبار تجريبي');
     $difficulty = $data['difficulty'] ?? 'medium';
+
+    if (is_array($uploadedFiles) && count($uploadedFiles) > 10) {
+        sendResponse(false, "لا يمكن رفع أكثر من 10 ملفات في المرة الواحدة.");
+    }
 
     $specialty = $data['specialty'] ?? '';
     $year = (isset($data['year']) && $data['year'] !== '' && $data['year'] !== null) ? intval($data['year']) : null;

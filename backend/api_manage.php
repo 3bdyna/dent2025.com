@@ -89,6 +89,11 @@ if ($action === 'manage_passwords' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // 3. Add Subject
+$DB_ACTIONS = ['add', 'edit', 'delete', 'link_drive', 'add_link', 'delete_link', 'bulk_add_links', 'get_links'];
+if (in_array($action, $DB_ACTIONS, true) && !$pdo) {
+    sendResponse(false, "Database connection unavailable.");
+}
+
 if ($action === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $pass = $data['password'] ?? '';
     $spec = $data['specialty'] ?? '';

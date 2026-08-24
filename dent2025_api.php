@@ -354,12 +354,16 @@ if ($action === 'study_change_pin') {
 
     // Check if new PIN already has logs; if so, merge them without duplicating
     if (isset($data[$new_pin]) && !empty($data[$new_pin]['logs'])) {
-        $existing_ids = array_column($data[$new_pin]['logs'], 'id');
-        foreach ($existing_record['logs'] as $log) {
-            if (!in_array($log['id'], $existing_ids)) {
-                $data[$new_pin]['logs'][] = $log;
-            }
+        $logMap = [];
+        foreach ($data[$new_pin]['logs'] as $el) {
+            $key = !empty($el['id']) ? $el['id'] : (($el['dateStr'] ?? '') . '_' . ($el['subject'] ?? '') . '_' . ($el['durationSeconds'] ?? ''));
+            $logMap[$key] = $el;
         }
+        foreach ($existing_record['logs'] as $il) {
+            $key = !empty($il['id']) ? $il['id'] : (($il['dateStr'] ?? '') . '_' . ($il['subject'] ?? '') . '_' . ($il['durationSeconds'] ?? ''));
+            $logMap[$key] = $il;
+        }
+        $data[$new_pin]['logs'] = array_values($logMap);
         $data[$new_pin]['last_synced'] = time();
     } else {
         $data[$new_pin] = [

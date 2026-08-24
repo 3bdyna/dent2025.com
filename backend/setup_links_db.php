@@ -9,6 +9,11 @@ if (!dent2025_check_rbac_permission($pass, 'manage_passwords')) {
     die("Unauthorized: Admin passkey required.");
 }
 
+if (!$pdo) {
+    http_response_code(500);
+    die("Database connection unavailable.");
+}
+
 try {
     $sql = "CREATE TABLE IF NOT EXISTS subject_links (
         id INT AUTO_INCREMENT PRIMARY KEY,

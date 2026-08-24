@@ -1140,7 +1140,7 @@ details.dent-chapters-details summary { list-style: none; }
                             progressBar.style.width = Math.max(15, Math.min(100, job.progress_pct)) + '%';
                         }
                         if (job.message) {
-                            status.innerHTML = `${job.message}<br><small style='color:#94a3b8; font-size:0.8rem;'>يمكنك إغلاق الصفحة بأي وقت، وسيحفظ الاختبار فور انتهائه في البنك.</small>`;
+                            status.innerHTML = `${escapeHtml(job.message)}<br><small style='color:#94a3b8; font-size:0.8rem;'>يمكنك إغلاق الصفحة بأي وقت، وسيحفظ الاختبار فور انتهائه في البنك.</small>`;
                         }
 
                         if (job.status === 'completed') {

@@ -4,17 +4,19 @@
 require_once __DIR__ . '/dent2025_rbac.php';
 require_once __DIR__ . '/history_helpers.php';
 
-header('Content-Type: application/json');
+if (!headers_sent()) {
+    header('Content-Type: application/json');
 
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if (in_array($origin, ['https://dent2025.com', 'https://www.dent2025.com'], true) || (strpos($origin, 'localhost') !== false)) {
-    header("Access-Control-Allow-Origin: $origin");
-} else {
-    header('Access-Control-Allow-Origin: https://dent2025.com');
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if (in_array($origin, ['https://dent2025.com', 'https://www.dent2025.com'], true) || (strpos($origin, 'localhost') !== false)) {
+        header("Access-Control-Allow-Origin: $origin");
+    } else {
+        header('Access-Control-Allow-Origin: https://dent2025.com');
+    }
+
+    header('Access-Control-Allow-Methods: GET, POST, DELETE');
+    header('Access-Control-Allow-Headers: Content-Type');
 }
-
-header('Access-Control-Allow-Methods: GET, POST, DELETE');
-header('Access-Control-Allow-Headers: Content-Type');
 
 $dataDir = __DIR__ . '/announcements_data';
 if (!file_exists($dataDir)) {
@@ -28,7 +30,31 @@ function dent_announcement_specialty($s) {
     return in_array($s, $valid, true) ? $s : '';
 }
 
-$method = $_SERVER['REQUEST_METHOD'];
+// Server-side HTML sanitizer for rich text announcements (strips dangerous tags & scripts)
+function dent2025_sanitize_announcements_html($html) {
+    if (empty($html) || !is_string($html)) return '';
+    // Strip full script and style blocks including their contents
+    $clean = preg_replace('#<script\b[^>]*>(.*?)</script>#is', '', $html);
+    $clean = preg_replace('#<style\b[^>]*>(.*?)</style>#is', '', $clean);
+    $allowed_tags = '<b><strong><i><em><u><p><br><ul><ol><li><span><font><div><a><h1><h2><h3><h4><h5><h6><blockquote><hr>';
+    $clean = strip_tags($clean, $allowed_tags);
+    $clean = preg_replace('/href\s*=\s*["\']\s*(javascript|vbscript|data):/i', 'href="#blocked_', $clean);
+    $clean = preg_replace('/\s*on[a-z]+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $clean);
+    $clean = preg_replace_callback('/style\s*=\s*(["\'])(.*?)\1/i', function($m) {
+        $style = $m[2];
+        if (preg_match('/(expression|behavior|javascript|url\s*\(|vbscript)/i', $style)) {
+            return '';
+        }
+        return 'style=' . $m[1] . htmlspecialchars($style, ENT_QUOTES, 'UTF-8') . $m[1];
+    }, $clean);
+    return trim($clean);
+}
+
+if (php_sapi_name() === 'cli' && basename(__FILE__) !== basename($_SERVER['PHP_SELF'] ?? '')) {
+    return;
+}
+
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 // 1. GET: Send all announcements for a specific class (or all if requested)
 if ($method === 'GET') {
@@ -162,7 +188,7 @@ if ($method === 'POST') {
         }
 
         $createBackup();
-        $content = $input['content'] ?? '';
+        $content = dent2025_sanitize_announcements_html($input['content'] ?? '');
         foreach ($contexts as $ctx) {
             $s = dent_announcement_specialty($ctx['specialty'] ?? '');
             if ($s === '') continue;
@@ -207,7 +233,7 @@ if ($method === 'POST') {
 
         $createBackup();
         $filename = "{$dataDir}/announcements_{$specialty}_{$year}_{$semester}.json";
-        $content = $input['content'] ?? '';
+        $content = dent2025_sanitize_announcements_html($input['content'] ?? '');
         $data = ['content' => $content, 'last_updated' => time()];
         file_put_contents($filename, json_encode($data), LOCK_EX);
         $pass_info = function_exists('dent2025_get_passkey_info') ? dent2025_get_passkey_info($password) : null;
