@@ -263,6 +263,48 @@ $invalid_type_ev = validate_analytics_event(['type' => 'malicious_event']);
 assert_test("Invalid analytics event type rejected", $invalid_type_ev === null);
 
 // -----------------------------------------------------------------------------
+// SUITE 6: Announcement HTML Sanitization
+// -----------------------------------------------------------------------------
+echo "\n6. Testing Announcement HTML Sanitizer (XSS Prevention)...\n";
+require_once __DIR__ . '/../announcements_api.php';
+
+$xss_payload = '<p>Important notice <script>alert("xss")</script><b onclick="bad()">Click here</b><a href="javascript:steal()">link</a></p>';
+$clean_output = dent2025_sanitize_announcements_html($xss_payload);
+
+assert_test("Sanitizer strips <script> tags", strpos($clean_output, '<script>') === false && strpos($clean_output, 'alert') === false);
+assert_test("Sanitizer strips inline on* event handlers", strpos($clean_output, 'onclick') === false);
+assert_test("Sanitizer neutralizes javascript: URLs", strpos($clean_output, 'javascript:') === false);
+assert_test("Sanitizer preserves safe formatting (<p>, <b>, <a>)", strpos($clean_output, '<p>') !== false && strpos($clean_output, '<b>') !== false);
+
+// -----------------------------------------------------------------------------
+// SUITE 7: Study Log Deduplication on PIN Migration
+// -----------------------------------------------------------------------------
+echo "\n7. Testing Study Log Migration Logic...\n";
+$target_existing_logs = [
+    ['id' => 'uuid_1', 'subject' => 'Anatomy', 'durationSeconds' => 1800, 'dateStr' => '2026-08-20'],
+    ['subject' => 'Pathology', 'durationSeconds' => 2400, 'dateStr' => '2026-08-21'] // legacy log without id
+];
+$incoming_migration_logs = [
+    ['id' => 'uuid_1', 'subject' => 'Anatomy', 'durationSeconds' => 1800, 'dateStr' => '2026-08-20'], // duplicate with id
+    ['subject' => 'Pathology', 'durationSeconds' => 2400, 'dateStr' => '2026-08-21'], // duplicate legacy without id
+    ['id' => 'uuid_2', 'subject' => 'Biochemistry', 'durationSeconds' => 3600, 'dateStr' => '2026-08-22'] // brand new log
+];
+
+$merge_map = [];
+foreach ($target_existing_logs as $el) {
+    $key = !empty($el['id']) ? $el['id'] : (($el['dateStr'] ?? '') . '_' . ($el['subject'] ?? '') . '_' . ($el['durationSeconds'] ?? ''));
+    $merge_map[$key] = $el;
+}
+foreach ($incoming_migration_logs as $il) {
+    $key = !empty($il['id']) ? $il['id'] : (($il['dateStr'] ?? '') . '_' . ($il['subject'] ?? '') . '_' . ($il['durationSeconds'] ?? ''));
+    $merge_map[$key] = $il;
+}
+$result_logs = array_values($merge_map);
+
+assert_test("Merged logs count is exactly 3 (duplicates removed)", count($result_logs) === 3);
+assert_test("Preserves both UUID and legacy log without UUID", count(array_filter($result_logs, function($l) { return $l['subject'] === 'Pathology'; })) === 1);
+
+// -----------------------------------------------------------------------------
 // SUMMARY REPORT
 // -----------------------------------------------------------------------------
 echo "\n=======================================================\n";

@@ -81,7 +81,8 @@ def stage_and_commit_git(files, note):
     commit_msg = f"[SafeDeploy] {note}"
     ok, stdout, stderr = run_git_cmd(['git', 'commit', '-m', commit_msg])
     if not ok:
-        print(f"[GIT WARNING] Commit notice: {stderr or stdout}")
+        print(f"[GIT ERROR] Commit failed: {stderr or stdout}")
+        return False, ""
     
     ok_hash, commit_hash, _ = run_git_cmd(['git', 'rev-parse', '--short', 'HEAD'])
     print(f"[GIT COMMIT] Created commit {commit_hash}: {note}")
@@ -224,6 +225,9 @@ def run_safe_deployment(files, note, dry_run=False):
     t2 = time.time()
     print("\n[Stage 2/4] Git Version Control & Cloud Sync...", flush=True)
     commit_ok, commit_ref = stage_and_commit_git(ordered_files, note)
+    if not commit_ok:
+        print("[ERROR] Git versioning failed. Aborting deployment for safety.")
+        sys.exit(1)
     push_to_github()
     print(f"Git stage completed ({time.time() - t2:.2f}s).")
 

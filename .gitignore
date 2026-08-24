@@ -21,6 +21,9 @@ dent2025_analytics_data/
 dent2025_study_data/
 history_data/
 quizzes_data/
+quiz_jobs/
+dent2025_classes.json
+announcements_backup.json
 cache_catalog.json
 premed-scan.json
 
