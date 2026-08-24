@@ -1,0 +1,11 @@
+# Dent2025 Blackboard Auto-Sync Bot (Local Edition) - never commit secrets or state
+config/.env
+storage_state.json
+storage_state.json.tmp
+state/
+temp_downloads/
+bot.log*
+__pycache__/
+*.pyc
+2fa_challenge.png
+debug_dumps/
