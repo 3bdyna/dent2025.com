@@ -24,7 +24,12 @@ Welcome to **Dent2025 (Medical & Dental Academic Portal)**! This file provides e
 my website dent2025/
 ├── AGENTS.md                                   # Master Agent Guidelines & Architecture Reference (this file)
 ├── DEPLOYMENT_GUIDE.md                         # Complete FTP deployment documentation
-├── deploy_config.json                          # FTP credentials & server host configuration
+├── README.md                                   # Project Overview & Architecture Guide
+├── LICENSE                                     # MIT License
+├── deploy_config.example.json                  # Template FTP configuration
+├── dent2025_passwords.example.json             # Template RBAC passkeys
+├── deploy_config.json                          # FTP credentials (gitignored)
+├── dent2025_passwords.json                     # ⭐ RBAC passkey store (gitignored)
 ├── dent2025-loader.php                         # WordPress Component Loader plugin (shortcode [dent_component])
 ├── purge_cache.php                             # Standalone cache purge diagnostic script
 ├── logo of main page.webp                      # Main Portal Logo asset
@@ -32,23 +37,24 @@ my website dent2025/
 ├── announcements_api.php                       # Announcements & Class Tasks Backend API (file-based JSON)
 ├── schedule_backend.php                        # Timeline Schedule Events API (file-based JSON)
 ├── history_api.php                             # Study timer log & deployment audit history API
-├── auto_relink.php                             # Google Drive folder-ID batch linker tool (HTML UI)
 ├── history_helpers.php                         # Shared audit-log / snapshot helper used by multiple APIs
 ├── dent2025_rbac.php                           # ⭐ Shared RBAC permission engine (ALL backends use this)
-├── dent2025_passwords.json                     # ⭐ RBAC passkey store (masters + per-context leaders, ~28 entries)
 ├── admin_app.js                                # Admin Dashboard standalone client-side logic
 ├── admin_dashboard.html                        # Standalone Admin Dashboard HTML page
+├── admin_analytics.js                          # Admin Analytics client-side engine
+├── analytics_api.php                           # Analytics aggregation and ingestion API
+├── analytics_dashboard.html                    # Standalone Analytics visual dashboard
+├── analytics_dashboard.js                      # Analytics visual dashboard script
 ├── deploy_dashboard.html                       # SafeDeploy visual dashboard
 ├── schedule_events.json                        # Global timeline schedule events data
-├── gas_backup_script.gs                        # Google Apps Script backup helper (GSheet/Drive)
-├── bg_remover.py                               # Local background-removal helper (NOT deployed)
 ├── tools/                                      # Local deployment toolchain (NOT deployed to server)
 │   ├── _toolkit.py                             # Shared bootstrap: PROJECT_ROOT + tools/ sys.path helper
 │   ├── deploy.py                               # Base FTP uploader / rollback engine
 │   ├── deploy_guard.py                         # Pre-flight validation (syntax, forbidden files, note)
 │   ├── deploy_order.py                         # Deployment priority ordering
 │   ├── deploy_health.py                        # Post-deploy API health probe
-│   └── deploy_safe.py                          # Full Git-integrated SafeDeploy pipeline CLI
+│   ├── deploy_safe.py                          # Full Git-integrated SafeDeploy pipeline CLI
+│   └── test_system_logic.php                   # Comprehensive offline test suite
 ├── backend/                                    # Standalone PDO Backend Module (RBAC-auth via dent2025_rbac.php)
 │   ├── db_connect.php                          # PDO Database Connection, CORS headers, sendResponse()
 │   ├── api_data.php                            # Public data retrieval API (subjects + links)
@@ -73,20 +79,14 @@ my website dent2025/
 │   ├── admin_classes_lock.html                 # Class schedule lock trigger & group management modal
 │   ├── schedule_markup.html                    # Academic calendar timeline container template & stats cards
 │   ├── schedule_script.js                      # Academic calendar timeline engine (~30 KB)
+│   ├── analytics_tracker.js                    # Client-side analytics tracker
+│   ├── fonts/                                  # Self-hosted web fonts
 │   └── dashboard.js                            # Core Student Dashboard JS engine (~71 KB)
-├── txt stuff to save/                          # Backup text & query references (NOT deployed)
-│   ├── current semester subjects.txt           # Current semester subject list
-│   ├── dates.txt                               # Date references
-│   ├── exam ai shit.txt                        # Exam-related AI notes
-│   ├── all subjects for all years.txt          # Full subject list reference
-│   ├── passwords.txt                           # Local password scratchpad
-│   └── website additional css.txt              # Extra CSS notes
-├── announcements_data/                         # AUTO-CREATED at runtime by announcements_api.php
-│   ├── announcements_{spec}_{year}_{sem}.json  # Per-class announcement content
-│   └── announcements_backup.json               # Undo snapshot taken before write operations
-├── history_data/                               # Runtime audit/deployment history (local + server)
-├── .deploy_backups/                            # Snapshot folders + ZIPs + snapshot_meta.json
-└── .agents/                                    # Agent tooling scratch (NOT deployed)
+├── announcements_data/                         # AUTO-CREATED at runtime by announcements_api.php (gitignored)
+├── dent2025_analytics_data/                    # AUTO-CREATED at runtime by analytics_api.php (gitignored)
+├── dent2025_study_data/                        # AUTO-CREATED at runtime by dent2025_api.php (gitignored)
+├── quizzes_data/                               # AUTO-CREATED at runtime by api_ai_exam.php (gitignored)
+└── history_data/                               # Runtime audit/deployment history (local + server, gitignored)
 ```
 
 > **NOTE**: The old `dev/` directory was **removed** (snapshot `snap_20260805_210759_remove_legacy_dev_path_delete_`). All backend files now live at the **project root**, and `dev/backend/*` → `backend/*`. Deploy routing in `tools/deploy.py` reflects this (root-relative → same dir on server).
