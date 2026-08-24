@@ -54,3 +54,6 @@ __pycache__/
 .idea/
 *.swp
 *.swo
+
+# 7. Local Bots & Tools
+bot/
