@@ -387,7 +387,7 @@
     }
 
     /* --------------------------------------------------
-       4. COMPACT SUBJECT CARD
+       4. COMPACT SUBJECT CARD & YEARLY TAGS
        -------------------------------------------------- */
     .dent-absence-card {
         background: rgba(255, 255, 255, 0.025);
@@ -423,11 +423,40 @@
     .dent-absence-sub-meta {
         font-size: 0.70rem;
         color: #94a3b8;
-        margin-top: 2px;
+        margin-top: 3px;
         display: flex;
         align-items: center;
         gap: 6px;
         flex-wrap: wrap;
+    }
+
+    /* Yearly vs Semester Type Tag */
+    .dent-absence-type-tag {
+        font-size: 0.68rem;
+        padding: 1px 6px;
+        border-radius: 4px;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.15s;
+        font-weight: 500;
+    }
+    .dent-absence-type-tag.yearly {
+        background: rgba(59, 130, 246, 0.14);
+        color: #93c5fd;
+        border: 1px solid rgba(59, 130, 246, 0.28);
+    }
+    .dent-absence-type-tag.yearly:hover {
+        background: rgba(59, 130, 246, 0.25);
+        color: #ffffff;
+    }
+    .dent-absence-type-tag.semester {
+        background: rgba(255, 255, 255, 0.05);
+        color: #94a3b8;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .dent-absence-type-tag.semester:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #e2e8f0;
     }
 
     /* Controls & Stepper */
@@ -705,6 +734,37 @@
             .filter(t => t.length > 2 && !['and', 'the', 'for', 'with', 'pre', 'clinical', 'general', 'advanced', 'department', 'course', 'مقرر', 'مادة', 'طب', 'عام', 'متقدم'].includes(t));
     }
 
+    // Auto-detect yearly / extended courses based on Jazan University curricula
+    function isAutoYearlySubject(subName, specialty, year) {
+        if (!subName) return false;
+        if (specialty === 'pre-med' || parseInt(year) === 0) return false;
+
+        const yearlyKeywords = [
+            'prostho', 'استعاضة', 'استعاضه', 'تركيبات',
+            'restorative', 'operative', 'تحفظي', 'حشوات',
+            'radiology', 'أشعة', 'اشعه',
+            'pathology', 'أمراض', 'امراض', 'باثولوجي',
+            'microbiology', 'أحياء دقيقة', 'احياء دقيقة', 'ميكروبيولوجي',
+            'immunology', 'مناعة', 'مناعه',
+            'pharmacology', 'أدوية', 'ادوية', 'فارماكولوجي',
+            'diagnosis', 'تشخيص',
+            'periodont', 'لثة', 'لثه',
+            'orthodont', 'تقويم',
+            'pediatric', 'pedodont', 'أطفال', 'اطفال',
+            'surgery', 'جراحة', 'جراحه',
+            'endodont', 'عصب', 'جذور',
+            'biomaterial', 'مواد الأسنان', 'مواد الاسنان',
+            'anatomy', 'تشريح',
+            'physiology', 'وظائف الأعضاء', 'وظائف الاعضاء',
+            'biochemistry', 'كيمياء حيوية', 'كيمياء حيويه',
+            'oral biology', 'أحياء الفم', 'احياء الفم',
+            'medicine', 'clerkship', 'باطنة', 'باطنه', 'نساء وتوليد'
+        ];
+
+        const clean = normAr(subName);
+        return yearlyKeywords.some(kw => clean.includes(normAr(kw)));
+    }
+
     // Smart Multi-Tier Subject Matcher
     function isSubjectMatch(cSub, sName) {
         if (!cSub || !sName) return false;
@@ -845,9 +905,10 @@
         let itemsHtml = '';
         loggedItems.forEach(item => {
             const subName = String(item.sub.name || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+            const typeLabel = item.sub.isYearly ? 'سنوي' : 'فصلي';
             itemsHtml += `
                 <div class="dent-fb-chip">
-                    <span class="dent-fb-chip-name" title="${subName}">${subName}</span>
+                    <span class="dent-fb-chip-name" title="${subName}">${subName} (${typeLabel})</span>
                     <span class="dent-fb-chip-badge">غياب: ${item.sub.absences}</span>
                 </div>
             `;
@@ -941,12 +1002,13 @@
             let targetSub = dentAbsenceSubjects.find(s => isSubjectMatch(classSub, s.name));
 
             if (!targetSub) {
-                // If subject not found, automatically register it so student doesn't lose absence
+                const autoYearly = dentAbsenceSelection ? isAutoYearlySubject(classSub, dentAbsenceSelection.specialty, dentAbsenceSelection.year) : false;
                 targetSub = {
                     id: `auto_${Date.now()}_${Math.floor(Math.random()*1000)}`,
                     name: classSub,
                     weeklySessions: 2,
                     absences: 1,
+                    isYearly: autoYearly,
                     isCustom: true
                 };
                 dentAbsenceSubjects.push(targetSub);
@@ -984,6 +1046,13 @@
             return `dent2025_absence_${dentAbsenceSelection.specialty}_y${dentAbsenceSelection.year}_s${dentAbsenceSelection.semester}`;
         }
         return 'dent2025_absence_general';
+    }
+
+    function getYearlySyncStorageKey() {
+        if (dentAbsenceSelection && dentAbsenceSelection.specialty) {
+            return `dent2025_absence_${dentAbsenceSelection.specialty}_y${dentAbsenceSelection.year}_yearly_sync`;
+        }
+        return 'dent2025_absence_yearly_sync';
     }
 
     function initAbsenceEngine() {
@@ -1060,6 +1129,14 @@
             if (raw) savedState = JSON.parse(raw);
         } catch(e){}
 
+        // Load shared yearly sync data
+        const yearlySyncKey = getYearlySyncStorageKey();
+        let yearlySyncData = {};
+        try {
+            const rawYearly = localStorage.getItem(yearlySyncKey);
+            if (rawYearly) yearlySyncData = JSON.parse(rawYearly);
+        } catch(e){}
+
         if (savedState && savedState.weeks) {
             dentAbsenceWeeks = parseInt(savedState.weeks) || 17;
             const selEl = document.getElementById('dent-sem-weeks');
@@ -1108,11 +1185,24 @@
                 weeklySessions = parsedHours > 0 ? parsedHours : 2;
             }
 
+            // Detect if yearly course automatically
+            let isYearly = false;
+            if (dentAbsenceSelection) {
+                isYearly = isAutoYearlySubject(sub.name, dentAbsenceSelection.specialty, dentAbsenceSelection.year);
+            }
+
             let savedAbsence = 0;
             if (savedState && savedState.subjects && savedState.subjects[sub.id || idx]) {
                 const s = savedState.subjects[sub.id || idx];
                 if (s.absences !== undefined) savedAbsence = parseInt(s.absences) || 0;
                 if (s.weeklySessions !== undefined) weeklySessions = parseInt(s.weeklySessions) || weeklySessions;
+                if (s.isYearly !== undefined) isYearly = s.isYearly;
+            }
+
+            // Sync with yearly shared records if applicable
+            const normKey = normAr(sub.name);
+            if (isYearly && yearlySyncData && yearlySyncData[normKey] !== undefined) {
+                savedAbsence = Math.max(savedAbsence, parseInt(yearlySyncData[normKey]) || 0);
             }
 
             dentAbsenceSubjects.push({
@@ -1120,17 +1210,27 @@
                 name: sub.name || `مادة ${idx + 1}`,
                 weeklySessions: weeklySessions,
                 absences: savedAbsence,
+                isYearly: isYearly,
                 isCustom: false
             });
         });
 
         if (savedState && Array.isArray(savedState.customSubjects)) {
             savedState.customSubjects.forEach(cSub => {
+                let isYearly = cSub.isYearly !== undefined ? cSub.isYearly : (dentAbsenceSelection ? isAutoYearlySubject(cSub.name, dentAbsenceSelection.specialty, dentAbsenceSelection.year) : false);
+                let savedAbsence = parseInt(cSub.absences) || 0;
+
+                const normKey = normAr(cSub.name);
+                if (isYearly && yearlySyncData && yearlySyncData[normKey] !== undefined) {
+                    savedAbsence = Math.max(savedAbsence, parseInt(yearlySyncData[normKey]) || 0);
+                }
+
                 dentAbsenceSubjects.push({
                     id: cSub.id || `custom_${Date.now()}_${Math.random()}`,
                     name: cSub.name || 'مادة إضافية',
                     weeklySessions: parseInt(cSub.weeklySessions) || 2,
-                    absences: parseInt(cSub.absences) || 0,
+                    absences: savedAbsence,
+                    isYearly: isYearly,
                     isCustom: true
                 });
             });
@@ -1155,7 +1255,9 @@
 
         let html = '';
         dentAbsenceSubjects.forEach((sub, idx) => {
-            const totalSessions = Math.max(1, (sub.weeklySessions || 1) * dentAbsenceWeeks);
+            // If yearly subject, multiply semester weeks by 2 (e.g. 17 * 2 = 34 weeks)
+            const subjectWeeks = sub.isYearly ? (dentAbsenceWeeks * 2) : dentAbsenceWeeks;
+            const totalSessions = Math.max(1, (sub.weeklySessions || 1) * subjectWeeks);
             const absences = Math.max(0, sub.absences || 0);
             const percentage = ((absences / totalSessions) * 100);
             const dnThresholdCount = Math.floor(totalSessions * 0.25);
@@ -1194,6 +1296,9 @@
                                 <span>
                                     <input type="number" min="1" max="15" value="${sub.weeklySessions}" onchange="updateAbsenceWeeklySessions(${idx}, this.value)" style="width: 26px; background: #18181b; border: 1px solid rgba(255,255,255,0.15); color: #f8fafc; border-radius: 4px; text-align: center; font-size: 0.70rem; padding: 1px;"> حصص/أسبوع
                                 </span>
+                                <span class="dent-absence-type-tag ${sub.isYearly ? 'yearly' : 'semester'}" onclick="toggleSubjectYearly(${idx})" title="انقر لتغيير نوع المقرر (سنوي ${dentAbsenceWeeks*2} أسبوعاً / فصلي ${dentAbsenceWeeks} أسبوعاً)">
+                                    ${sub.isYearly ? `مقرر سنوي (${dentAbsenceWeeks*2} أسبوعاً)` : `مقرر فصلي (${dentAbsenceWeeks} أسبوعاً)`}
+                                </span>
                                 <span>• الإجمالي: ${totalSessions}</span>
                                 <span>• حد الحرمان: ${dnThresholdCount}</span>
                             </div>
@@ -1221,6 +1326,13 @@
         });
 
         container.innerHTML = html;
+    }
+
+    function toggleSubjectYearly(idx) {
+        if (!dentAbsenceSubjects[idx]) return;
+        dentAbsenceSubjects[idx].isYearly = !dentAbsenceSubjects[idx].isYearly;
+        saveAbsenceState();
+        renderAbsenceSubjects();
     }
 
     function stepAbsence(idx, delta) {
@@ -1252,11 +1364,13 @@
     }
 
     function addCustomAbsenceSubject() {
+        const autoYearly = dentAbsenceSelection ? isAutoYearlySubject('مادة إضافية', dentAbsenceSelection.specialty, dentAbsenceSelection.year) : false;
         dentAbsenceSubjects.push({
             id: `custom_${Date.now()}`,
             name: 'مادة إضافية',
             weeklySessions: 2,
             absences: 0,
+            isYearly: autoYearly,
             isCustom: true
         });
         saveAbsenceState();
@@ -1271,11 +1385,19 @@
 
     function saveAbsenceState() {
         const storageKey = getAbsenceStorageKey();
+        const yearlySyncKey = getYearlySyncStorageKey();
+
         const state = {
             weeks: dentAbsenceWeeks,
             subjects: {},
             customSubjects: []
         };
+
+        let yearlySyncData = {};
+        try {
+            const rawYearly = localStorage.getItem(yearlySyncKey);
+            if (rawYearly) yearlySyncData = JSON.parse(rawYearly);
+        } catch(e){}
 
         dentAbsenceSubjects.forEach(sub => {
             if (sub.isCustom) {
@@ -1283,13 +1405,21 @@
             } else {
                 state.subjects[sub.id] = {
                     absences: sub.absences,
-                    weeklySessions: sub.weeklySessions
+                    weeklySessions: sub.weeklySessions,
+                    isYearly: sub.isYearly
                 };
+            }
+
+            // Sync yearly courses
+            if (sub.isYearly) {
+                const normKey = normAr(sub.name);
+                yearlySyncData[normKey] = sub.absences;
             }
         });
 
         try {
             localStorage.setItem(storageKey, JSON.stringify(state));
+            localStorage.setItem(yearlySyncKey, JSON.stringify(yearlySyncData));
         } catch(e){}
     }
 
