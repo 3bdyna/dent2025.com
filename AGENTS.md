@@ -73,6 +73,7 @@ my website dent2025/
 │   ├── quiz_app.html                           # Interactive Quiz application (UI + CSS + JS)
 │   ├── study_timer_banner_widget.html          # Study Timer & Tracker widget + sitewide floating draggable badge
 │   ├── gpa_calculator_elegant.txt              # Saudi 5.0 scale GPA Calculator widget code
+│   ├── absence_calculator.html                 # Jazan University Absence & Denial Calculator widget
 │   ├── admin_controls_main.html                # Main page lock trigger (🔒) & admin logout button
 │   ├── admin_controls.html                     # Main Admin Modal panel (Subject CRUD & Google Drive linker)
 │   ├── admin_schedule_lock.html                # Schedule timeline lock trigger & event management modal
@@ -154,7 +155,7 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 | WordPress Page Name | Page Slug | Required Shortcodes / Markup inside WordPress Block | Auto-Loaded Internal Scripts |
 |---|---|---|---|
 | **1. `landing page`** | `wolcome` | `[dent_component file="landing_page.html"]` | None |
-| **2. `الصفحة الرئيسية — Front Page`** | *(static front)* | `[dent_component file="study_timer_banner_widget.html"]`<br>`[dent_component file="gpa_calculator_elegant.txt"]`<br>`[dent_component file="admin_controls_main.html"]` | `admin_controls_main.html` embeds `<script src="/frontend_components/dashboard.js"></script>` |
+| **2. `الصفحة الرئيسية — Front Page`** | *(static front)* | `[dent_component file="study_timer_banner_widget.html"]`<br>`[dent_component file="gpa_calculator_elegant.txt"]`<br>`[dent_component file="absence_calculator.html"]`<br>`[dent_component file="admin_controls_main.html"]` | `admin_controls_main.html` embeds `<script src="/frontend_components/dashboard.js"></script>` |
 | **3. `التقويم الأكاديمي`** | `التقويم-الأكاديمي` | `[dent_component file="schedule_markup.html"]`<br>`[dent_component file="schedule_script.js"]`<br>`[dent_component file="admin_schedule_lock.html"]` | None |
 | **4. `المقررات والختبارات`** | `المقررات-والاختبارات` | `[dent_component file="chapters_dynamic.html"]`<br>`[dent_component file="quiz_app.html"]`<br>`[dent_component file="admin_controls.html"]` | `chapters_dynamic.html` embeds `<script src="/frontend_components/dashboard.js"></script>` |
 | **5. `جدول المحاضرات`** | `جدول-المحاضرات` | `[dent_component file="admin_classes_lock.html"]`<br>`<div id="dent-classes-target"></div>` | `admin_classes_lock.html` embeds `<script src="/frontend_components/dashboard.js"></script>` |

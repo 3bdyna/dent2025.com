@@ -1,0 +1,950 @@
+<!-- absence_calculator.html (Dent2025 - Jazan University Absence & Denial Calculator) -->
+<style>
+    /* Absence Banner Styles */
+    .dent-absence-banner {
+        background: #1e1e1e;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 14px 20px;
+        border-radius: 14px;
+        color: #f8fafc;
+        font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        direction: rtl;
+        transition: all 0.25s ease;
+        max-width: 100%;
+        margin: 10px 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+    .dent-absence-banner:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.25);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        transform: translateY(-2px);
+    }
+    .dent-absence-banner-text {
+        flex: 1;
+    }
+    .dent-absence-banner-text h3 {
+        margin: 0;
+        font-size: 1.05rem;
+        color: #f8fafc;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .dent-absence-banner-text p {
+        margin: 3px 0 0 0;
+        font-size: 0.82rem;
+        color: #9ca3af;
+    }
+    .dent-absence-banner-badge {
+        font-size: 0.68rem;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 2px 7px;
+        border-radius: 6px;
+        color: #cbd5e1;
+        font-weight: normal;
+    }
+    .dent-absence-banner-arrow {
+        color: #f8fafc;
+        font-size: 1.1rem;
+        font-weight: bold;
+        background: rgba(255, 255, 255, 0.06);
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+    .dent-absence-banner:hover .dent-absence-banner-arrow {
+        background: rgba(255, 255, 255, 0.15);
+        transform: scale(1.05);
+    }
+
+    /* Modal Overlay & Container */
+    .dent-absence-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: rgba(0, 0, 0, 0.82) !important;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        z-index: 999999 !important;
+        display: none !important;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        padding: 12px;
+        box-sizing: border-box;
+        margin: 0 !important;
+    }
+    .dent-absence-overlay.active {
+        display: flex !important;
+        opacity: 1;
+    }
+    .dent-absence-modal {
+        background: #18181b;
+        color: #f8fafc;
+        font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
+        padding: 22px;
+        border-radius: 18px;
+        direction: rtl;
+        width: 100%;
+        max-width: 540px;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+        transform: translateY(20px);
+        transition: transform 0.25s ease;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-sizing: border-box;
+    }
+    .dent-absence-overlay.active .dent-absence-modal {
+        transform: translateY(0);
+    }
+
+    /* Close Button */
+    .dent-absence-close {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #e2e8f0;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        font-size: 1.3rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        line-height: 1;
+    }
+    .dent-absence-close:hover {
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+    }
+
+    /* Header & Policy Info */
+    .dent-absence-header {
+        margin-bottom: 14px;
+    }
+    .dent-absence-title {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #f8fafc;
+    }
+    .dent-absence-subtitle {
+        margin: 3px 0 0 0;
+        font-size: 0.82rem;
+        color: #94a3b8;
+    }
+    .dent-absence-policy-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 10px 14px;
+        margin: 12px 0 14px 0;
+        font-size: 0.78rem;
+        color: #cbd5e1;
+        line-height: 1.5;
+    }
+    .dent-absence-policy-levels {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+    }
+    .dent-absence-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 7px;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 500;
+    }
+    .dent-pill-safe {
+        background: rgba(16, 185, 129, 0.08);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        color: #a7f3d0;
+    }
+    .dent-pill-warn1 {
+        background: rgba(245, 158, 11, 0.08);
+        border: 1px solid rgba(245, 158, 11, 0.25);
+        color: #fde68a;
+    }
+    .dent-pill-warn2 {
+        background: rgba(249, 115, 22, 0.08);
+        border: 1px solid rgba(249, 115, 22, 0.25);
+        color: #fed7aa;
+    }
+    .dent-pill-dn {
+        background: rgba(239, 68, 68, 0.10);
+        border: 1px solid rgba(239, 68, 68, 0.30);
+        color: #fca5a5;
+    }
+
+    /* Mode Navigation Tabs */
+    .dent-absence-tabs {
+        display: flex;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 3px;
+        gap: 4px;
+        margin-bottom: 14px;
+    }
+    .dent-absence-tab {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: #9ca3af;
+        padding: 7px 10px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-family: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .dent-absence-tab.active {
+        background: #27272a;
+        color: #f8fafc;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    /* Settings & Controls Row */
+    .dent-absence-settings {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 10px;
+        padding: 8px 12px;
+        margin-bottom: 12px;
+        font-size: 0.82rem;
+        gap: 8px;
+    }
+    .dent-absence-select, .dent-absence-input {
+        background: #1e1e1e;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #f8fafc;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.82rem;
+        outline: none;
+    }
+    .dent-absence-select:focus, .dent-absence-input:focus {
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Subject Cards & Rows */
+    .dent-absence-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 10px;
+        transition: all 0.2s;
+    }
+    .dent-absence-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    .dent-absence-sub-title {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #f8fafc;
+    }
+    .dent-absence-sub-meta {
+        font-size: 0.72rem;
+        color: #94a3b8;
+        margin-top: 2px;
+    }
+
+    /* Counter Stepper */
+    .dent-absence-stepper {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .dent-step-btn {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        color: #f8fafc;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.15s;
+        user-select: none;
+    }
+    .dent-step-btn:hover {
+        background: rgba(255, 255, 255, 0.18);
+    }
+    .dent-step-btn:active {
+        transform: scale(0.95);
+    }
+    .dent-step-input {
+        width: 44px;
+        height: 30px;
+        text-align: center;
+        background: #1e1e1e;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #f8fafc;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        font-family: inherit;
+        -moz-appearance: textfield;
+    }
+    .dent-step-input::-webkit-outer-spin-button,
+    .dent-step-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Progress & Status Indicators */
+    .dent-absence-progress-bg {
+        width: 100%;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 8px 0 6px 0;
+        position: relative;
+    }
+    .dent-absence-progress-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease, background-color 0.3s ease;
+    }
+    .dent-absence-footer-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.74rem;
+        color: #cbd5e1;
+    }
+
+    /* Quick Calculator Card */
+    .dent-quick-calc-box {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 16px;
+    }
+    .dent-quick-field {
+        margin-bottom: 12px;
+    }
+    .dent-quick-label {
+        display: block;
+        font-size: 0.78rem;
+        color: #94a3b8;
+        margin-bottom: 4px;
+    }
+    .dent-quick-input-full {
+        width: 100%;
+        background: #1e1e1e;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #f8fafc;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.86rem;
+        font-family: inherit;
+        box-sizing: border-box;
+        outline: none;
+    }
+    .dent-quick-input-full:focus {
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    .dent-quick-result {
+        margin-top: 16px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 14px;
+        text-align: center;
+    }
+</style>
+
+<!-- Main Page Banner -->
+<div class="dent-absence-banner" onclick="openAbsenceModal()">
+    <div class="dent-absence-banner-text">
+        <h3>
+            حاسبة الغياب ونسبة الحرمان
+            <span class="dent-absence-banner-badge">جامعة جازان (25% DN)</span>
+        </h3>
+        <p>متابعة نسبة الغياب والإنذارات الأكاديمية والمتبقي قبل الحرمان لمواد الفصل</p>
+    </div>
+    <div class="dent-absence-banner-arrow">⏱️</div>
+</div>
+
+<!-- Modal Dialog -->
+<div class="dent-absence-overlay" id="dentAbsenceModal" onclick="closeAbsenceOnBgClick(event)">
+    <div class="dent-absence-modal">
+        <button type="button" class="dent-absence-close" onclick="closeAbsenceModal()" title="إغلاق">×</button>
+
+        <div class="dent-absence-header">
+            <h2 class="dent-absence-title">حاسبة الغياب ونسبة الحرمان</h2>
+            <div class="dent-absence-subtitle" id="dent-absence-subtitle">جامعة جازان - لائحة الدراسة والاختبارات</div>
+        </div>
+
+        <!-- Jazan University Policy Banner -->
+        <div class="dent-absence-policy-card">
+            <div><strong>📌 اللائحة الأكاديمية بجامعة جازان (المادة 9):</strong> الحد الأقصى للغياب هو <strong>25%</strong>، ويُحرم الطالب من دخول الاختبار النهائي عند بلوغها.</div>
+            <div class="dent-absence-policy-levels">
+                <span class="dent-absence-pill dent-pill-safe">🟢 آمن: أقل من 10%</span>
+                <span class="dent-absence-pill dent-pill-warn1">🟡 إنذار أول: 10%</span>
+                <span class="dent-absence-pill dent-pill-warn2">🟠 إنذار ثاني: 20%</span>
+                <span class="dent-absence-pill dent-pill-dn">🔴 حرمان (DN): 25%</span>
+            </div>
+        </div>
+
+        <!-- Mode Tabs -->
+        <div class="dent-absence-tabs">
+            <button type="button" class="dent-absence-tab active" id="tab-btn-subjects" onclick="switchAbsenceTab('subjects')">سجل مواد الفصل الحالي</button>
+            <button type="button" class="dent-absence-tab" id="tab-btn-quick" onclick="switchAbsenceTab('quick')">حاسبة سريعة لمقرر مخصص</button>
+        </div>
+
+        <!-- Tab 1: Semester Subjects Tracker -->
+        <div id="dent-absence-tab-subjects">
+            <div class="dent-absence-settings">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <label for="dent-sem-weeks">عدد أسابيع الفصل:</label>
+                    <select id="dent-sem-weeks" class="dent-absence-select" onchange="onSemesterWeeksChange(this.value)">
+                        <option value="10">10 أسابيع</option>
+                        <option value="11">11 أسبوع</option>
+                        <option value="12">12 أسبوع</option>
+                        <option value="13">13 أسبوع</option>
+                        <option value="14" selected>14 أسبوع (الافتراضي)</option>
+                        <option value="15">15 أسبوع</option>
+                        <option value="16">16 أسبوع</option>
+                    </select>
+                </div>
+                <div>
+                    <button type="button" onclick="addCustomAbsenceSubject()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 4px 8px; border-radius: 6px; font-size: 0.74rem; cursor: pointer; font-family: inherit;">+ إضافة مادة</button>
+                </div>
+            </div>
+
+            <!-- Subjects Container -->
+            <div id="dent-absence-subjects-container">
+                <div style="text-align: center; color: #9ca3af; padding: 20px; font-size: 0.85rem;">
+                    جاري تحميل مواد الفصل والجدول الدراسي...
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Quick Single-Course Calculator -->
+        <div id="dent-absence-tab-quick" style="display: none;">
+            <div class="dent-quick-calc-box">
+                <div class="dent-quick-field">
+                    <label class="dent-quick-label">اسم المقرر (اختياري)</label>
+                    <input type="text" id="quick-sub-name" class="dent-quick-input-full" placeholder="مثال: علم الأدوية / جراحة الفم" oninput="calculateQuickAbsence()">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" class="dent-quick-field">
+                    <div>
+                        <label class="dent-quick-label">عدد المحاضرات / الساعات أسبوعياً</label>
+                        <input type="number" id="quick-weekly-sessions" class="dent-quick-input-full" min="1" max="15" value="2" oninput="calculateQuickAbsence()">
+                    </div>
+                    <div>
+                        <label class="dent-quick-label">عدد أسابيع الفصل</label>
+                        <input type="number" id="quick-weeks-count" class="dent-quick-input-full" min="1" max="20" value="14" oninput="calculateQuickAbsence()">
+                    </div>
+                </div>
+                <div class="dent-quick-field">
+                    <label class="dent-quick-label">عدد مرات / ساعات الغياب الحالية</label>
+                    <input type="number" id="quick-current-absence" class="dent-quick-input-full" min="0" max="100" value="1" oninput="calculateQuickAbsence()">
+                </div>
+
+                <!-- Result Card -->
+                <div class="dent-quick-result" id="quick-calc-result">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let dentAbsenceSelection = null;
+    let dentAbsenceSubjects = [];
+    let dentAbsenceWeeks = 14;
+    let dentAbsenceClassSchedule = [];
+
+    function openAbsenceModal() {
+        const modal = document.getElementById('dentAbsenceModal');
+        if (modal) {
+            modal.style.setProperty('display', 'flex', 'important');
+            setTimeout(function() {
+                modal.classList.add('active');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+            initAbsenceEngine();
+        }
+    }
+
+    function closeAbsenceModal() {
+        const modal = document.getElementById('dentAbsenceModal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            setTimeout(function() {
+                if (!modal.classList.contains('active')) {
+                    modal.style.setProperty('display', 'none', 'important');
+                }
+            }, 250);
+        }
+    }
+
+    function closeAbsenceOnBgClick(e) {
+        if (e.target.id === 'dentAbsenceModal') {
+            closeAbsenceModal();
+        }
+    }
+
+    function switchAbsenceTab(tab) {
+        const tabSubjects = document.getElementById('dent-absence-tab-subjects');
+        const tabQuick = document.getElementById('dent-absence-tab-quick');
+        const btnSubjects = document.getElementById('tab-btn-subjects');
+        const btnQuick = document.getElementById('tab-btn-quick');
+
+        if (tab === 'subjects') {
+            if (tabSubjects) tabSubjects.style.display = 'block';
+            if (tabQuick) tabQuick.style.display = 'none';
+            if (btnSubjects) btnSubjects.classList.add('active');
+            if (btnQuick) btnQuick.classList.remove('active');
+        } else {
+            if (tabSubjects) tabSubjects.style.display = 'none';
+            if (tabQuick) tabQuick.style.display = 'block';
+            if (btnSubjects) btnSubjects.classList.remove('active');
+            if (btnQuick) btnQuick.classList.add('active');
+            calculateQuickAbsence();
+        }
+    }
+
+    function onSemesterWeeksChange(val) {
+        dentAbsenceWeeks = parseInt(val) || 14;
+        saveAbsenceState();
+        renderAbsenceSubjects();
+    }
+
+    function getAbsenceStorageKey() {
+        if (dentAbsenceSelection && dentAbsenceSelection.specialty) {
+            return `dent2025_absence_${dentAbsenceSelection.specialty}_y${dentAbsenceSelection.year}_s${dentAbsenceSelection.semester}`;
+        }
+        return 'dent2025_absence_general';
+    }
+
+    function initAbsenceEngine() {
+        const rawSel = localStorage.getItem('dent2025_selection');
+        if (rawSel) {
+            try {
+                dentAbsenceSelection = JSON.parse(rawSel);
+            } catch(e) {
+                dentAbsenceSelection = null;
+            }
+        }
+
+        // Update Subtitle
+        const subTitleEl = document.getElementById('dent-absence-subtitle');
+        if (subTitleEl) {
+            if (dentAbsenceSelection && dentAbsenceSelection.specialty) {
+                const specName = dentAbsenceSelection.specialty === 'dentistry' ? 'طب الأسنان' : (dentAbsenceSelection.specialty === 'medicine' ? 'الطب البشري' : 'التحضيري');
+                const yrSem = dentAbsenceSelection.specialty === 'pre-med' ? `الفصل ${dentAbsenceSelection.semester}` : `السنة ${dentAbsenceSelection.year} - الفصل ${dentAbsenceSelection.semester}`;
+                subTitleEl.innerText = `${specName} (${yrSem}) • جامعة جازان`;
+            } else {
+                subTitleEl.innerText = `جامعة جازان - لائحة الدراسة والاختبارات`;
+            }
+        }
+
+        loadAbsenceData();
+    }
+
+    function loadAbsenceData() {
+        const apiBase = (window.location.pathname === '/dev' || window.location.pathname.startsWith('/dev/')) ? '/dev' : '';
+        
+        // 1. Try to load cached schedule/classes
+        let classPromise = Promise.resolve([]);
+        if (dentAbsenceSelection) {
+            classPromise = fetch(`${apiBase}/dent2025_api.php?action=get_classes`)
+                .then(r => r.json())
+                .then(res => (res.success && Array.isArray(res.data)) ? res.data : [])
+                .catch(() => []);
+        }
+
+        // 2. Load subjects data
+        let subjectsPromise = Promise.resolve([]);
+        if (dentAbsenceSelection) {
+            const cacheKey = `dent2025_dashboard_data_${dentAbsenceSelection.specialty}_${dentAbsenceSelection.year}_${dentAbsenceSelection.semester}`;
+            const cached = sessionStorage.getItem(cacheKey);
+            if (cached) {
+                try {
+                    const parsed = JSON.parse(cached);
+                    if (parsed && Array.isArray(parsed.subjects)) {
+                        subjectsPromise = Promise.resolve(parsed.subjects);
+                    }
+                } catch(e){}
+            } else {
+                subjectsPromise = fetch(`${apiBase}/dent2025_api.php?action=data&specialty=${dentAbsenceSelection.specialty}&year=${dentAbsenceSelection.year}&semester=${dentAbsenceSelection.semester}`)
+                    .then(r => r.json())
+                    .then(res => (res.success && res.data && Array.isArray(res.data.subjects)) ? res.data.subjects : [])
+                    .catch(() => []);
+            }
+        }
+
+        Promise.all([subjectsPromise, classPromise]).then(([subjects, classes]) => {
+            dentAbsenceClassSchedule = classes || [];
+            buildAbsenceSubjectsList(subjects || []);
+        });
+    }
+
+    function buildAbsenceSubjectsList(apiSubjects) {
+        dentAbsenceSubjects = [];
+
+        // Check local storage for saved state
+        const storageKey = getAbsenceStorageKey();
+        let savedState = null;
+        try {
+            const raw = localStorage.getItem(storageKey);
+            if (raw) savedState = JSON.parse(raw);
+        } catch(e){}
+
+        if (savedState && savedState.weeks) {
+            dentAbsenceWeeks = parseInt(savedState.weeks) || 14;
+            const selEl = document.getElementById('dent-sem-weeks');
+            if (selEl) selEl.value = String(dentAbsenceWeeks);
+        }
+
+        // User's group from timetable
+        const selectedGroup = localStorage.getItem('dent2025_selected_group') || 'المجموعة A';
+
+        // Filter relevant timetable classes for this student's context
+        const relevantClasses = dentAbsenceClassSchedule.filter(c => {
+            if (!dentAbsenceSelection) return false;
+            const matchSpec = String(c.specialty).toLowerCase() === String(dentAbsenceSelection.specialty).toLowerCase();
+            const matchYear = parseInt(c.year) === parseInt(dentAbsenceSelection.year);
+            const matchSem = parseInt(c.semester) === parseInt(dentAbsenceSelection.semester);
+            const matchGroup = (!c.group_name || c.group_name === 'الدفعة كاملة' || c.group_name === selectedGroup);
+            return matchSpec && matchYear && matchSem && matchGroup;
+        });
+
+        // Fallback default subjects if none from API
+        if (apiSubjects.length === 0 && (!savedState || !savedState.customSubjects || savedState.customSubjects.length === 0)) {
+            if (!dentAbsenceSelection) {
+                apiSubjects = [
+                    { id: "s1", name: "تشخيص الفم (Oral Diagnosis)", hours: 2 },
+                    { id: "s2", name: "علم الأمراض العام (General Pathology)", hours: 3 },
+                    { id: "s3", name: "الأحياء الدقيقة (Microbiology)", hours: 3 }
+                ];
+            }
+        }
+
+        // Map API subjects
+        apiSubjects.forEach((sub, idx) => {
+            // Determine weekly sessions from timetable if found
+            let weeklySessions = 0;
+            const matchedClasses = relevantClasses.filter(c => {
+                return c.subject && (c.subject.includes(sub.name) || sub.name.includes(c.subject));
+            });
+
+            if (matchedClasses.length > 0) {
+                weeklySessions = matchedClasses.length;
+            } else {
+                // Parse from credit hours
+                let parsedHours = 2;
+                if (typeof sub.hours === 'string') {
+                    const tMatch = sub.hours.match(/(\d+)\s*نظري/);
+                    const pMatch = sub.hours.match(/(\d+)\s*عملي/);
+                    const th = tMatch ? parseInt(tMatch[1]) : 0;
+                    const pr = pMatch ? parseInt(pMatch[1]) : 0;
+                    if (th > 0 || pr > 0) parsedHours = th + pr;
+                    else parsedHours = parseInt(sub.hours) || 2;
+                } else {
+                    parsedHours = parseInt(sub.hours) || 2;
+                }
+                weeklySessions = parsedHours > 0 ? parsedHours : 2;
+            }
+
+            // Restore saved absences / custom weekly sessions
+            let savedAbsence = 0;
+            if (savedState && savedState.subjects && savedState.subjects[sub.id || idx]) {
+                const s = savedState.subjects[sub.id || idx];
+                if (s.absences !== undefined) savedAbsence = parseInt(s.absences) || 0;
+                if (s.weeklySessions !== undefined) weeklySessions = parseInt(s.weeklySessions) || weeklySessions;
+            }
+
+            dentAbsenceSubjects.push({
+                id: sub.id || `sub_${idx}`,
+                name: sub.name || `مادة ${idx + 1}`,
+                weeklySessions: weeklySessions,
+                absences: savedAbsence,
+                isCustom: false
+            });
+        });
+
+        // Restore custom added subjects
+        if (savedState && Array.isArray(savedState.customSubjects)) {
+            savedState.customSubjects.forEach(cSub => {
+                dentAbsenceSubjects.push({
+                    id: cSub.id || `custom_${Date.now()}_${Math.random()}`,
+                    name: cSub.name || 'مادة إضافية',
+                    weeklySessions: parseInt(cSub.weeklySessions) || 2,
+                    absences: parseInt(cSub.absences) || 0,
+                    isCustom: true
+                });
+            });
+        }
+
+        renderAbsenceSubjects();
+    }
+
+    function renderAbsenceSubjects() {
+        const container = document.getElementById('dent-absence-subjects-container');
+        if (!container) return;
+
+        if (dentAbsenceSubjects.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; color: #9ca3af; padding: 18px; font-size: 0.85rem;">
+                    لا توجد مواد مسجلة لهذا الفصل حتى الآن.<br>
+                    يمكنك إضافة مادة يدوياً بالضغط على زر "+ إضافة مادة" أعلاه.
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        dentAbsenceSubjects.forEach((sub, idx) => {
+            const totalSessions = Math.max(1, (sub.weeklySessions || 1) * dentAbsenceWeeks);
+            const absences = Math.max(0, sub.absences || 0);
+            const percentage = ((absences / totalSessions) * 100);
+            const dnThresholdCount = Math.floor(totalSessions * 0.25);
+            const warn1Count = Math.ceil(totalSessions * 0.10);
+            const warn2Count = Math.ceil(totalSessions * 0.20);
+
+            // Jazan University Status Determination
+            let statusPill = '';
+            let progressColor = '#10b981'; // Muted Sage
+            let remainingText = '';
+
+            if (percentage >= 25.0) {
+                statusPill = `<span class="dent-absence-pill dent-pill-dn">🔴 حرمان (DN)</span>`;
+                progressColor = '#ef4444'; // Muted Red
+                remainingText = `<span style="color: #fca5a5;">تجاوزت حد الحرمان (${dnThresholdCount} غيابات)!</span>`;
+            } else if (percentage >= 20.0) {
+                statusPill = `<span class="dent-absence-pill dent-pill-warn2">🟠 إنذار ثاني (حرج)</span>`;
+                progressColor = '#f97316'; // Muted Orange
+                const leftForDn = Math.max(0, dnThresholdCount - absences);
+                remainingText = `<span style="color: #fed7aa;">متبقي <strong>${leftForDn}</strong> غياب فقط قبل الحرمان (DN)!</span>`;
+            } else if (percentage >= 10.0) {
+                statusPill = `<span class="dent-absence-pill dent-pill-warn1">🟡 إنذار أول</span>`;
+                progressColor = '#f59e0b'; // Muted Amber
+                const leftForDn = Math.max(0, dnThresholdCount - absences);
+                const leftForW2 = Math.max(0, warn2Count - absences);
+                remainingText = `<span style="color: #fde68a;">متبقي ${leftForW2} للإنذار الثاني • و <strong>${leftForDn}</strong> قبل الحرمان</span>`;
+            } else {
+                statusPill = `<span class="dent-absence-pill dent-pill-safe">🟢 وضع آمن</span>`;
+                progressColor = '#10b981'; // Muted Green
+                const leftForDn = Math.max(0, dnThresholdCount - absences);
+                const leftForW1 = Math.max(0, warn1Count - absences);
+                remainingText = `<span style="color: #94a3b8;">متبقي ${leftForW1} للإنذار الأول • و <strong>${leftForDn}</strong> قبل الحرمان</span>`;
+            }
+
+            const clampedProgress = Math.min(100, percentage);
+            const safeName = String(sub.name || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+
+            const deleteBtn = sub.isCustom ? `<button type="button" onclick="removeAbsenceSubject(${idx})" title="حذف المادة" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #9ca3af; border-radius: 6px; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; padding: 0;">×</button>` : '';
+
+            html += `
+                <div class="dent-absence-card">
+                    <div class="dent-absence-card-header">
+                        <div style="flex: 1; min-width: 0;">
+                            ${sub.isCustom ? `<input type="text" value="${safeName}" onchange="updateAbsenceSubName(${idx}, this.value)" style="width: 100%; font-size: 0.84rem; padding: 3px 6px; background: #1e1e1e; color: #f8fafc; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;" placeholder="اسم المادة">` : `<h4 class="dent-absence-sub-title" title="${safeName}">${safeName}</h4>`}
+                            <div class="dent-absence-sub-meta">
+                                <span title="تعديل الحصص الأسبوعية">
+                                    <input type="number" min="1" max="15" value="${sub.weeklySessions}" onchange="updateAbsenceWeeklySessions(${idx}, this.value)" style="width: 32px; background: #18181b; border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.72rem; padding: 1px;"> حصة/أسبوع
+                                </span>
+                                × ${dentAbsenceWeeks} أسبوع = <strong>${totalSessions}</strong> حصة إجمالية • حد الحرمان: <strong>${dnThresholdCount}</strong> غيابات
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            ${statusPill}
+                            <div class="dent-absence-stepper">
+                                <button type="button" class="dent-step-btn" onclick="stepAbsence(${idx}, -1)">−</button>
+                                <input type="number" class="dent-step-input" min="0" max="${totalSessions}" value="${absences}" onchange="setAbsenceCount(${idx}, this.value)">
+                                <button type="button" class="dent-step-btn" onclick="stepAbsence(${idx}, 1)">+</button>
+                            </div>
+                            ${deleteBtn}
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="dent-absence-progress-bg">
+                        <div class="dent-absence-progress-fill" style="width: ${clampedProgress}%; background-color: ${progressColor};"></div>
+                    </div>
+
+                    <!-- Footer Stats -->
+                    <div class="dent-absence-footer-stats">
+                        <div>الغياب: <strong>${absences}</strong> من ${totalSessions} (<strong>${percentage.toFixed(1)}%</strong>)</div>
+                        <div>${remainingText}</div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function stepAbsence(idx, delta) {
+        if (!dentAbsenceSubjects[idx]) return;
+        const cur = parseInt(dentAbsenceSubjects[idx].absences) || 0;
+        dentAbsenceSubjects[idx].absences = Math.max(0, cur + delta);
+        saveAbsenceState();
+        renderAbsenceSubjects();
+    }
+
+    function setAbsenceCount(idx, val) {
+        if (!dentAbsenceSubjects[idx]) return;
+        dentAbsenceSubjects[idx].absences = Math.max(0, parseInt(val) || 0);
+        saveAbsenceState();
+        renderAbsenceSubjects();
+    }
+
+    function updateAbsenceWeeklySessions(idx, val) {
+        if (!dentAbsenceSubjects[idx]) return;
+        dentAbsenceSubjects[idx].weeklySessions = Math.max(1, parseInt(val) || 1);
+        saveAbsenceState();
+        renderAbsenceSubjects();
+    }
+
+    function updateAbsenceSubName(idx, val) {
+        if (!dentAbsenceSubjects[idx]) return;
+        dentAbsenceSubjects[idx].name = val || 'مادة جديدة';
+        saveAbsenceState();
+    }
+
+    function addCustomAbsenceSubject() {
+        dentAbsenceSubjects.push({
+            id: `custom_${Date.now()}`,
+            name: 'مادة إضافية',
+            weeklySessions: 2,
+            absences: 0,
+            isCustom: true
+        });
+        saveAbsenceState();
+        renderAbsenceSubjects();
+    }
+
+    function removeAbsenceSubject(idx) {
+        dentAbsenceSubjects.splice(idx, 1);
+        saveAbsenceState();
+        renderAbsenceSubjects();
+    }
+
+    function saveAbsenceState() {
+        const storageKey = getAbsenceStorageKey();
+        const state = {
+            weeks: dentAbsenceWeeks,
+            subjects: {},
+            customSubjects: []
+        };
+
+        dentAbsenceSubjects.forEach(sub => {
+            if (sub.isCustom) {
+                state.customSubjects.push(sub);
+            } else {
+                state.subjects[sub.id] = {
+                    absences: sub.absences,
+                    weeklySessions: sub.weeklySessions
+                };
+            }
+        });
+
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(state));
+        } catch(e){}
+    }
+
+    // Quick Single-Course Calculator Engine
+    function calculateQuickAbsence() {
+        const nameInput = document.getElementById('quick-sub-name');
+        const weeklyInput = document.getElementById('quick-weekly-sessions');
+        const weeksInput = document.getElementById('quick-weeks-count');
+        const absenceInput = document.getElementById('quick-current-absence');
+        const resultBox = document.getElementById('quick-calc-result');
+        if (!resultBox) return;
+
+        const weekly = Math.max(1, parseInt(weeklyInput ? weeklyInput.value : 2) || 2);
+        const weeks = Math.max(1, parseInt(weeksInput ? weeksInput.value : 14) || 14);
+        const absences = Math.max(0, parseInt(absenceInput ? absenceInput.value : 0) || 0);
+        const subName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : 'المقرر';
+
+        const totalSessions = weekly * weeks;
+        const percentage = ((absences / totalSessions) * 100);
+        const dnLimit = Math.floor(totalSessions * 0.25);
+        const warn1Limit = Math.ceil(totalSessions * 0.10);
+        const warn2Limit = Math.ceil(totalSessions * 0.20);
+
+        let statusHtml = '';
+        let badgeClass = 'dent-pill-safe';
+        let statusTitle = 'وضع آمن (Safe)';
+
+        if (percentage >= 25.0) {
+            badgeClass = 'dent-pill-dn';
+            statusTitle = 'حرمان رسمي من المقرر (DN - 25%+)';
+        } else if (percentage >= 20.0) {
+            badgeClass = 'dent-pill-warn2';
+            statusTitle = 'إنذار ثاني - منطقة حرجة (20% - 24.9%)';
+        } else if (percentage >= 10.0) {
+            badgeClass = 'dent-pill-warn1';
+            statusTitle = 'إنذار أول (10% - 19.9%)';
+        }
+
+        const leftForDn = Math.max(0, dnLimit - absences);
+        const leftForW1 = Math.max(0, warn1Limit - absences);
+        const leftForW2 = Math.max(0, warn2Limit - absences);
+
+        resultBox.innerHTML = `
+            <div style="margin-bottom: 8px;">
+                <span class="dent-absence-pill ${badgeClass}" style="font-size: 0.85rem; padding: 4px 10px;">${statusTitle}</span>
+            </div>
+            <div style="font-size: 1.25rem; font-weight: 700; color: #f8fafc; margin-bottom: 6px;">
+                نسبة الغياب: ${percentage.toFixed(1)}%
+            </div>
+            <div style="font-size: 0.82rem; color: #cbd5e1; line-height: 1.6;">
+                إجمالي محاضرات <strong>${subName}</strong>: <strong>${totalSessions}</strong> حصة (${weekly} أسبوعياً × ${weeks} أسبوع)<br>
+                حد الحرمان (25%): <strong>${dnLimit}</strong> غيابات • عدد غياباتك الحالية: <strong>${absences}</strong>
+            </div>
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.8rem; color: #94a3b8;">
+                ${percentage >= 25.0 ? `<span style="color: #fca5a5;">لقد بلغت نسبة الحرمان رسمياً وفق لائحة جامعة جازان.</span>` : `متبقي لك <strong>${leftForDn}</strong> غيابات قبل الحرمان (و <strong>${leftForW1}</strong> قبل الإنذار الأول).`}
+            </div>
+        `;
+    }
+</script>
