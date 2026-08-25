@@ -147,7 +147,7 @@
 
     /* Header */
     .dent-absence-header {
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         padding-left: 34px;
     }
     .dent-absence-title {
@@ -160,6 +160,20 @@
         margin: 2px 0 0 0;
         font-size: 0.78rem;
         color: #94a3b8;
+    }
+
+    /* Top Subtle Arabic Disclaimer */
+    .dent-absence-disclaimer-top {
+        font-size: 0.72rem;
+        color: #94a3b8;
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 6px;
+        padding: 5px 10px;
+        margin-bottom: 10px;
+        line-height: 1.4;
+        text-align: center;
+        user-select: none;
     }
 
     /* Perfectly Symmetrical Settings Bar */
@@ -190,7 +204,7 @@
         background: #27272a !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         color: #ffffff !important;
-        padding: 3px 8px;
+        padding: 0 10px !important;
         border-radius: 6px;
         font-family: inherit;
         font-size: 0.78rem;
@@ -198,7 +212,16 @@
         outline: none;
         cursor: pointer;
         height: 28px;
+        line-height: 26px;
+        text-align: center !important;
+        text-align-last: center !important;
         box-sizing: border-box;
+        display: inline-block;
+    }
+    .dent-absence-select option {
+        background: #1e1e1e;
+        color: #ffffff;
+        text-align: center;
     }
     .dent-absence-timeline-badge {
         font-size: 0.74rem;
@@ -407,16 +430,6 @@
         font-family: inherit;
         box-sizing: border-box;
     }
-
-    /* Subtle Arabic Disclaimer */
-    .dent-absence-disclaimer {
-        text-align: center;
-        font-size: 0.70rem;
-        color: #64748b;
-        margin-top: 10px;
-        line-height: 1.4;
-        user-select: none;
-    }
 </style>
 
 <!-- Main Page Banner -->
@@ -436,6 +449,11 @@
         <div class="dent-absence-header">
             <h2 class="dent-absence-title">حاسبة الغياب</h2>
             <div class="dent-absence-subtitle" id="dent-absence-subtitle">مواد الفصل الحالي</div>
+        </div>
+
+        <!-- Top Subtle Arabic Disclaimer (No Emojis) -->
+        <div class="dent-absence-disclaimer-top">
+            ملاحظة: الحسابات تقريبية واسترشادية، وتظل السجلات الرسمية في بوابة النظام الأكاديمي هي المرجع المعتمد.
         </div>
 
         <!-- Symmetrical Settings & Semester Timeline Bar -->
@@ -485,11 +503,6 @@
             </div>
             <div id="quick-calc-result" style="font-size: 0.76rem; color: #cbd5e1; margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.06);"></div>
         </div>
-
-        <!-- Small Arabic Disclaimer (No Emojis) -->
-        <div class="dent-absence-disclaimer">
-            ملاحظة: الحسابات تقريبية واسترشادية، وتظل السجلات الرسمية في بوابة النظام الأكاديمي هي المرجع المعتمد.
-        </div>
     </div>
 </div>
 
@@ -517,7 +530,7 @@
 
         let remainingWeeks = 17;
         if (now < SEMESTER_EXAM_DATE) {
-            const daysToExams = Math.max(0, Math.ceil((SEMESTER_EXAM_DATE - now) / msPerDay));
+            const daysToExams = Math.max(0, Math.ceil((SEMEESTER_EXAM_DATE - now) / msPerDay));
             remainingWeeks = Math.ceil(daysToExams / 7);
         } else {
             remainingWeeks = 0;
