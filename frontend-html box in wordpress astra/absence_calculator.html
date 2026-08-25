@@ -65,7 +65,7 @@
     }
 
     /* --------------------------------------------------
-       2. MODAL OVERLAY & CONTAINER (Body-attached, Centered)
+       2. MODAL OVERLAY & HORIZONTAL COMPACT CONTAINER
        -------------------------------------------------- */
     .dent-absence-overlay {
         position: fixed !important;
@@ -96,14 +96,13 @@
         background: #18181b;
         color: #f8fafc;
         font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
-        padding: 24px;
+        padding: 22px 24px;
         border-radius: 18px;
         direction: rtl;
         width: 100%;
-        max-width: 520px;
+        max-width: 680px; /* Wider, compact horizontal desktop layout */
         max-height: 88vh;
         overflow-y: auto;
-        /* Completely Hide Scrollbars across all browsers */
         scrollbar-width: none !important;
         -ms-overflow-style: none !important;
         position: relative;
@@ -130,10 +129,10 @@
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid rgba(255, 255, 255, 0.15);
         color: #e2e8f0;
-        width: 34px;
-        height: 34px;
+        width: 32px;
+        height: 32px;
         border-radius: 10px;
-        font-size: 1.3rem;
+        font-size: 1.25rem;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -148,8 +147,8 @@
 
     /* Header */
     .dent-absence-header {
-        margin-bottom: 16px;
-        padding-left: 36px; /* Avoid overlapping close button */
+        margin-bottom: 12px;
+        padding-left: 36px;
     }
     .dent-absence-title {
         margin: 0;
@@ -163,45 +162,73 @@
         color: #94a3b8;
     }
 
-    /* Minimal Settings Bar */
+    /* High-Contrast Settings & Timeline Info Bar */
     .dent-absence-settings {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        padding: 8px 14px;
+        margin-bottom: 14px;
+        font-size: 0.84rem;
+        color: #f8fafc; /* Crisp High-Contrast Color */
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .dent-absence-label-bright {
+        color: #f8fafc !important; /* Visible, bright text */
+        font-weight: 600;
+        font-size: 0.84rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .dent-absence-select {
+        background: #27272a !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        color: #ffffff !important;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.84rem;
+        font-weight: 600;
+        outline: none;
+        cursor: pointer;
+    }
+    .dent-absence-timeline-badge {
+        font-size: 0.76rem;
+        color: #e2e8f0;
+        background: rgba(255, 255, 255, 0.06);
+        padding: 3px 8px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Compact Horizontal Subject Row */
+    .dent-absence-card {
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 10px;
-        padding: 8px 12px;
-        margin-bottom: 14px;
-        font-size: 0.82rem;
-        color: #cbd5e1;
-        gap: 8px;
-    }
-    .dent-absence-select {
-        background: #1e1e1e;
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        color: #f8fafc;
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-family: inherit;
-        font-size: 0.82rem;
-        outline: none;
-    }
-
-    /* Clean Subject Card */
-    .dent-absence-card {
-        background: rgba(255, 255, 255, 0.025);
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        border-radius: 12px;
-        padding: 12px 14px;
-        margin-bottom: 10px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
         box-sizing: border-box;
+        transition: background 0.2s;
     }
-    .dent-absence-card-top {
+    .dent-absence-card:hover {
+        background: rgba(255, 255, 255, 0.045);
+        border-color: rgba(255, 255, 255, 0.14);
+    }
+    .dent-absence-row-main {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 12px;
+        gap: 14px;
+    }
+    .dent-absence-sub-col {
+        flex: 1;
+        min-width: 0;
     }
     .dent-absence-sub-name {
         margin: 0;
@@ -214,47 +241,72 @@
     .dent-absence-sub-meta {
         font-size: 0.74rem;
         color: #94a3b8;
-        margin-top: 4px;
-        line-height: 1.4;
+        margin-top: 3px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    /* Right/Left Action Controls */
+    .dent-absence-actions-col {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+    }
+    .dent-absence-stat-pill {
+        text-align: left;
+        font-size: 0.76rem;
+        color: #cbd5e1;
+        white-space: nowrap;
+    }
+    .dent-absence-stat-percent {
+        font-weight: 700;
+        color: #f8fafc;
+        font-size: 0.85rem;
+    }
+    .dent-absence-stat-rem {
+        font-size: 0.72rem;
+        color: #94a3b8;
     }
 
     /* Stepper Controls */
     .dent-absence-stepper {
         display: flex;
         align-items: center;
-        gap: 5px;
-        flex-shrink: 0;
+        gap: 4px;
     }
     .dent-step-btn {
-        background: rgba(255, 255, 255, 0.07);
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.14);
         color: #f8fafc;
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
+        width: 30px;
+        height: 30px;
+        border-radius: 7px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         cursor: pointer;
         transition: all 0.15s;
         user-select: none;
     }
     .dent-step-btn:hover {
-        background: rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.18);
     }
     .dent-step-btn:active {
         transform: scale(0.95);
     }
     .dent-step-input {
-        width: 44px;
-        height: 32px;
+        width: 40px;
+        height: 30px;
         text-align: center;
         background: #1e1e1e;
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         color: #f8fafc;
-        border-radius: 8px;
-        font-size: 0.92rem;
+        border-radius: 7px;
+        font-size: 0.9rem;
         font-weight: 600;
         font-family: inherit;
         -moz-appearance: textfield;
@@ -265,34 +317,20 @@
         margin: 0;
     }
 
-    /* Minimal Progress Bar */
+    /* Minimal Progress Line */
     .dent-absence-progress-bg {
         width: 100%;
-        height: 4px;
+        height: 3px;
         background: rgba(255, 255, 255, 0.06);
-        border-radius: 3px;
+        border-radius: 2px;
         overflow: hidden;
-        margin: 8px 0 6px 0;
+        margin-top: 6px;
     }
     .dent-absence-progress-fill {
         height: 100%;
-        border-radius: 3px;
-        background: rgba(255, 255, 255, 0.35);
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.4);
         transition: width 0.25s ease;
-    }
-
-    /* Status & Stats Footer */
-    .dent-absence-footer-stats {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.75rem;
-        color: #94a3b8;
-        gap: 6px;
-    }
-    .dent-absence-status-text {
-        font-weight: 500;
-        color: #e2e8f0;
     }
 
     /* Collapsible Quick Calc Drawer */
@@ -306,7 +344,7 @@
         font-size: 0.78rem;
         font-family: inherit;
         cursor: pointer;
-        margin-top: 12px;
+        margin-top: 10px;
         transition: all 0.2s;
     }
     .dent-quick-toggle:hover {
@@ -328,7 +366,7 @@
     .dent-quick-label {
         display: block;
         font-size: 0.75rem;
-        color: #94a3b8;
+        color: #f8fafc;
         margin-bottom: 3px;
     }
     .dent-quick-input {
@@ -363,21 +401,25 @@
             <div class="dent-absence-subtitle" id="dent-absence-subtitle">مواد الفصل الحالي</div>
         </div>
 
-        <!-- Minimal Settings Row -->
+        <!-- High-Contrast Settings & Semester Timeline Bar -->
         <div class="dent-absence-settings">
-            <div style="display: flex; align-items: center; gap: 6px;">
-                <label for="dent-sem-weeks">أسابيع الفصل:</label>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label for="dent-sem-weeks" class="dent-absence-label-bright">أسابيع الفصل:</label>
                 <select id="dent-sem-weeks" class="dent-absence-select" onchange="onSemesterWeeksChange(this.value)">
-                    <option value="10">10 أسابيع</option>
-                    <option value="11">11 أسبوع</option>
                     <option value="12">12 أسبوع</option>
-                    <option value="13">13 أسبوع</option>
-                    <option value="14" selected>14 أسبوع</option>
+                    <option value="14">14 أسبوع</option>
                     <option value="15">15 أسبوع</option>
                     <option value="16">16 أسبوع</option>
+                    <option value="17" selected>17 أسبوع (التقويم الأكاديمي)</option>
+                    <option value="18">18 أسبوع</option>
                 </select>
             </div>
-            <button type="button" onclick="addCustomAbsenceSubject()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 4px 8px; border-radius: 6px; font-size: 0.74rem; cursor: pointer; font-family: inherit;">+ إضافة مادة</button>
+            
+            <div id="dent-absence-timeline-info" class="dent-absence-timeline-badge">
+                📅 الأسبوع الحالي: 1 • متبقي 17 أسبوعاً للاختبارات
+            </div>
+
+            <button type="button" onclick="addCustomAbsenceSubject()" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); color: #f8fafc; padding: 4px 10px; border-radius: 6px; font-size: 0.76rem; cursor: pointer; font-family: inherit; font-weight: 600;">+ إضافة مادة</button>
         </div>
 
         <!-- Subjects Container -->
@@ -397,7 +439,7 @@
                 </div>
                 <div>
                     <label class="dent-quick-label">أسابيع الفصل</label>
-                    <input type="number" id="quick-weeks-count" class="dent-quick-input" min="1" max="20" value="14" oninput="calculateQuickAbsence()">
+                    <input type="number" id="quick-weeks-count" class="dent-quick-input" min="1" max="20" value="17" oninput="calculateQuickAbsence()">
                 </div>
             </div>
             <div class="dent-quick-field">
@@ -412,20 +454,48 @@
 <script>
     let dentAbsenceSelection = null;
     let dentAbsenceSubjects = [];
-    let dentAbsenceWeeks = 14;
+    let dentAbsenceWeeks = 17; // Default matching official academic calendar (Aug 23 - Dec 20)
     let dentAbsenceClassSchedule = [];
+
+    // Official semester dates from schedule_events.json
+    const SEMESTER_START_DATE = new Date('2026-08-23T00:00:00');
+    const SEMESTER_EXAM_DATE = new Date('2026-12-20T00:00:00');
+
+    function updateSemesterTimelineInfo() {
+        const infoEl = document.getElementById('dent-absence-timeline-info');
+        if (!infoEl) return;
+
+        const now = new Date();
+        const msPerDay = 24 * 60 * 60 * 1000;
+
+        let curWeek = 1;
+        if (now >= SEMESTER_START_DATE) {
+            const diffDays = Math.floor((now - SEMESTER_START_DATE) / msPerDay);
+            curWeek = Math.max(1, Math.floor(diffDays / 7) + 1);
+        }
+
+        let remainingWeeks = 17;
+        if (now < SEMESTER_EXAM_DATE) {
+            const daysToExams = Math.max(0, Math.ceil((SEMESTER_EXAM_DATE - now) / msPerDay));
+            remainingWeeks = Math.ceil(daysToExams / 7);
+        } else {
+            remainingWeeks = 0;
+        }
+
+        infoEl.innerHTML = `📅 الأسبوع الحالي: <strong>${curWeek}</strong> • متبقي <strong>${remainingWeeks}</strong> أسبوع للاختبارات`;
+    }
 
     function openAbsenceModal() {
         const modal = document.getElementById('dentAbsenceModal');
         if (modal) {
-            // Attach modal to body so it escapes Astra's layout column container
             if (modal.parentNode !== document.body) {
                 document.body.appendChild(modal);
             }
             modal.style.setProperty('display', 'flex', 'important');
-            void modal.offsetWidth; // Force layout recalculation
+            void modal.offsetWidth;
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+            updateSemesterTimelineInfo();
             initAbsenceEngine();
         }
     }
@@ -458,7 +528,7 @@
     }
 
     function onSemesterWeeksChange(val) {
-        dentAbsenceWeeks = parseInt(val) || 14;
+        dentAbsenceWeeks = parseInt(val) || 17;
         saveAbsenceState();
         renderAbsenceSubjects();
     }
@@ -541,7 +611,7 @@
         } catch(e){}
 
         if (savedState && savedState.weeks) {
-            dentAbsenceWeeks = parseInt(savedState.weeks) || 14;
+            dentAbsenceWeeks = parseInt(savedState.weeks) || 17;
             const selEl = document.getElementById('dent-sem-weeks');
             if (selEl) selEl.value = String(dentAbsenceWeeks);
         }
@@ -642,12 +712,12 @@
             const percentage = ((absences / totalSessions) * 100);
             const dnThresholdCount = Math.floor(totalSessions * 0.25);
 
-            let statusLabel = '';
+            let statusLabel = 'آمن';
             let remainingText = '';
 
             if (percentage >= 25.0) {
                 statusLabel = 'حرمان (DN)';
-                remainingText = `تجاوزت الحد (${dnThresholdCount} غيابات)`;
+                remainingText = `تجاوزت الحد (${dnThresholdCount})`;
             } else if (percentage >= 20.0) {
                 statusLabel = 'إنذار ثاني';
                 const leftForDn = Math.max(0, dnThresholdCount - absences);
@@ -665,34 +735,41 @@
             const clampedProgress = Math.min(100, percentage);
             const safeName = String(sub.name || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
 
-            const deleteBtn = sub.isCustom ? `<button type="button" onclick="removeAbsenceSubject(${idx})" title="حذف" style="background: transparent; border: none; color: #9ca3af; cursor: pointer; font-size: 1.1rem; padding: 0 4px;">×</button>` : '';
+            const deleteBtn = sub.isCustom ? `<button type="button" onclick="removeAbsenceSubject(${idx})" title="حذف" style="background: transparent; border: none; color: #9ca3af; cursor: pointer; font-size: 1.1rem; padding: 0 2px;">×</button>` : '';
 
             html += `
                 <div class="dent-absence-card">
-                    <div class="dent-absence-card-top">
-                        <div style="flex: 1; min-width: 0;">
-                            ${sub.isCustom ? `<input type="text" value="${safeName}" onchange="updateAbsenceSubName(${idx}, this.value)" style="width: 100%; font-size: 0.88rem; padding: 2px 6px; background: #1e1e1e; color: #f8fafc; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;" placeholder="اسم المادة">` : `<h4 class="dent-absence-sub-name" title="${safeName}">${safeName}</h4>`}
+                    <div class="dent-absence-row-main">
+                        <!-- Subject & Sessions Info -->
+                        <div class="dent-absence-sub-col">
+                            ${sub.isCustom ? `<input type="text" value="${safeName}" onchange="updateAbsenceSubName(${idx}, this.value)" style="width: 100%; font-size: 0.88rem; padding: 2px 6px; background: #1e1e1e; color: #f8fafc; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px;" placeholder="اسم المادة">` : `<h4 class="dent-absence-sub-name" title="${safeName}">${safeName}</h4>`}
                             <div class="dent-absence-sub-meta">
-                                <input type="number" min="1" max="15" value="${sub.weeklySessions}" onchange="updateAbsenceWeeklySessions(${idx}, this.value)" style="width: 28px; background: #18181b; border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.72rem; padding: 1px;"> حصص/أسبوع • الإجمالي: ${totalSessions} • حد الحرمان: ${dnThresholdCount}
+                                <span>
+                                    <input type="number" min="1" max="15" value="${sub.weeklySessions}" onchange="updateAbsenceWeeklySessions(${idx}, this.value)" style="width: 30px; background: #18181b; border: 1px solid rgba(255,255,255,0.15); color: #f8fafc; border-radius: 4px; text-align: center; font-size: 0.72rem; padding: 1px;"> حصص/أسبوع
+                                </span>
+                                <span>• الإجمالي: <strong>${totalSessions}</strong> حصة</span>
+                                <span>• حد الحرمان: <strong>${dnThresholdCount}</strong> غيابات</span>
                             </div>
                         </div>
-                        <div class="dent-absence-stepper">
-                            <button type="button" class="dent-step-btn" onclick="stepAbsence(${idx}, -1)">−</button>
-                            <input type="number" class="dent-step-input" min="0" max="${totalSessions}" value="${absences}" onchange="setAbsenceCount(${idx}, this.value)">
-                            <button type="button" class="dent-step-btn" onclick="stepAbsence(${idx}, 1)">+</button>
-                            ${deleteBtn}
+
+                        <!-- Absence Status & Stepper (Horizontal Alignment) -->
+                        <div class="dent-absence-actions-col">
+                            <div class="dent-absence-stat-pill">
+                                <div class="dent-absence-stat-percent">${absences}/${totalSessions} (${percentage.toFixed(1)}%) • ${statusLabel}</div>
+                                <div class="dent-absence-stat-rem">${remainingText}</div>
+                            </div>
+                            <div class="dent-absence-stepper">
+                                <button type="button" class="dent-step-btn" onclick="stepAbsence(${idx}, -1)">−</button>
+                                <input type="number" class="dent-step-input" min="0" max="${totalSessions}" value="${absences}" onchange="setAbsenceCount(${idx}, this.value)">
+                                <button type="button" class="dent-step-btn" onclick="stepAbsence(${idx}, 1)">+</button>
+                                ${deleteBtn}
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Minimal Progress Bar -->
+                    <!-- Progress Line -->
                     <div class="dent-absence-progress-bg">
                         <div class="dent-absence-progress-fill" style="width: ${clampedProgress}%;"></div>
-                    </div>
-
-                    <!-- Stats Footer -->
-                    <div class="dent-absence-footer-stats">
-                        <div>الغياب: ${absences}/${totalSessions} (${percentage.toFixed(1)}%) • <span class="dent-absence-status-text">${statusLabel}</span></div>
-                        <div>${remainingText}</div>
                     </div>
                 </div>
             `;
@@ -779,7 +856,7 @@
         if (!resultBox) return;
 
         const weekly = Math.max(1, parseInt(weeklyInput ? weeklyInput.value : 2) || 2);
-        const weeks = Math.max(1, parseInt(weeksInput ? weeksInput.value : 14) || 14);
+        const weeks = Math.max(1, parseInt(weeksInput ? weeksInput.value : 17) || 17);
         const absences = Math.max(0, parseInt(absenceInput ? absenceInput.value : 0) || 0);
 
         const total = weekly * weeks;
