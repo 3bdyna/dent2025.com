@@ -557,7 +557,7 @@
             .replace(/[إأآا]/g, 'ا')
             .replace(/[ة]/g, 'ه')
             .replace(/[يى]/g, 'ي')
-            .replace(/[\s\-_()]/g, '');
+            .replace(/[\s\-_()&/]/g, '');
     }
 
     function isDayEqual(d1, d2) {
@@ -574,11 +574,69 @@
         return cg === sg || cg.includes(sg) || sg.includes(cg);
     }
 
+    function cleanTokens(text) {
+        if (!text) return [];
+        return String(text)
+            .toLowerCase()
+            .replace(/&/g, ' and ')
+            .replace(/[إأآا]/g, 'ا')
+            .replace(/[ة]/g, 'ه')
+            .replace(/[يى]/g, 'ي')
+            .replace(/[^a-z0-9\u0600-\u06FF\s]/g, ' ')
+            .split(/\s+/)
+            .filter(t => t.length > 2 && !['and', 'the', 'for', 'with', 'pre', 'clinical', 'general', 'advanced', 'department', 'course', 'مقرر', 'مادة', 'طب', 'عام', 'متقدم'].includes(t));
+    }
+
+    // Smart Multi-Tier Subject Matcher
     function isSubjectMatch(cSub, sName) {
         if (!cSub || !sName) return false;
-        const c = normAr(cSub);
-        const s = normAr(sName);
-        return c === s || c.includes(s) || s.includes(c);
+        
+        // 1. Normalized direct match
+        const cClean = normAr(cSub.replace(/&/g, ' and '));
+        const sClean = normAr(sName.replace(/&/g, ' and '));
+        if (cClean === sClean || cClean.includes(sClean) || sClean.includes(cClean)) return true;
+
+        // 2. Token overlap
+        const cTokens = cleanTokens(cSub);
+        const sTokens = cleanTokens(sName);
+        for (let ct of cTokens) {
+            for (let st of sTokens) {
+                if (ct === st || (ct.length >= 4 && st.length >= 4 && (ct.includes(st) || st.includes(ct)))) return true;
+            }
+        }
+
+        // 3. Domain dictionary mapping (English <-> Arabic / Key roots)
+        const roots = [
+            ['radio', 'اشعه', 'radiology', 'xray', 'maxillofacial'],
+            ['microbio', 'احياء', 'ميكرو', 'microbiology', 'immunology', 'مناعه'],
+            ['prostho', 'استعاضه', 'تركيبات', 'prosthodontics', 'removable', 'fixed'],
+            ['patho', 'امراض', 'باثولوجي', 'pathology'],
+            ['diagno', 'تشخيص', 'diagnosis'],
+            ['biomat', 'مواد', 'biomaterial', 'biomaterials'],
+            ['resto', 'operat', 'تحفظي', 'حشوات', 'restorative', 'operative'],
+            ['perio', 'لثه', 'periodont', 'periodontology'],
+            ['ortho', 'تقويم', 'orthodont', 'orthodontics'],
+            ['pedo', 'اطفال', 'pediatric', 'pedodontics'],
+            ['endo', 'عصب', 'جذور', 'endodont', 'endodontics'],
+            ['surg', 'جراحه', 'surgery'],
+            ['pharma', 'ادويه', 'فارما', 'pharmacology'],
+            ['anat', 'تشريح', 'anatomy'],
+            ['physio', 'وظائف', 'physiology'],
+            ['histo', 'انسجه', 'histology'],
+            ['biochem', 'كيمياء', 'biochemistry'],
+            ['health', 'صحه', 'publichealth', 'community']
+        ];
+
+        const cFull = (cSub + ' ' + cClean).toLowerCase();
+        const sFull = (sName + ' ' + sClean).toLowerCase();
+
+        for (let group of roots) {
+            const cHas = group.some(r => cFull.includes(r));
+            const sHas = group.some(r => sFull.includes(r));
+            if (cHas && sHas) return true;
+        }
+
+        return false;
     }
 
     function updateSemesterTimelineInfo() {
@@ -689,12 +747,26 @@
         let updatedList = [];
         matchedClasses.forEach(c => {
             const classSub = (c.subject || '').trim();
+            if (!classSub) return;
+
             let targetSub = dentAbsenceSubjects.find(s => isSubjectMatch(classSub, s.name));
 
-            if (targetSub) {
+            if (!targetSub) {
+                // If subject not found, automatically register it so student doesn't lose absence
+                targetSub = {
+                    id: `auto_${Date.now()}_${Math.floor(Math.random()*1000)}`,
+                    name: classSub,
+                    weeklySessions: 2,
+                    absences: 1,
+                    isCustom: true
+                };
+                dentAbsenceSubjects.push(targetSub);
+                updatedList.push(`${targetSub.name} (جديدة: 1)`);
+            } else {
                 targetSub.absences = (parseInt(targetSub.absences) || 0) + 1;
-                if (!updatedList.includes(targetSub.name)) {
-                    updatedList.push(targetSub.name);
+                const label = `${targetSub.name} (أصبح: ${targetSub.absences})`;
+                if (!updatedList.includes(label)) {
+                    updatedList.push(label);
                 }
             }
         });
@@ -703,9 +775,7 @@
         renderAbsenceSubjects();
 
         if (updatedList.length > 0) {
-            showDayFeedback(`تم تسجيل غياب (${matchedClasses.length}) حصص ليوم ${selectedDay} في: ${updatedList.join('، ')}`);
-        } else {
-            showDayFeedback(`تم العثور على حصص ليوم ${selectedDay} (${matchedClasses.map(c=>c.subject).join('، ')}).`);
+            showDayFeedback(`تم تسجيل غياب (${matchedClasses.length}) حصص ليوم ${selectedDay}: ${updatedList.join(' • ')}`);
         }
     }
 
