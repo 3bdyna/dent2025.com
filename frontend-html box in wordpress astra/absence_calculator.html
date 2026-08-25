@@ -170,13 +170,13 @@
         border: 1px solid rgba(255, 255, 255, 0.06);
         border-radius: 6px;
         padding: 5px 10px;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         line-height: 1.4;
         text-align: center;
         user-select: none;
     }
 
-    /* Perfectly Symmetrical Settings Bar */
+    /* Symmetrical Settings Bar */
     .dent-absence-settings {
         display: flex;
         justify-content: space-between;
@@ -185,7 +185,7 @@
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 8px;
         padding: 6px 10px;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         gap: 8px;
         box-sizing: border-box;
     }
@@ -255,6 +255,20 @@
     }
     .dent-absence-btn-add:hover {
         background: rgba(255, 255, 255, 0.14);
+    }
+
+    /* Day Absence Quick-Logger Bar */
+    .dent-absence-day-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 6px 10px;
+        margin-bottom: 8px;
+        gap: 8px;
+        box-sizing: border-box;
     }
 
     /* Sized-Down Compact Subject Card */
@@ -477,6 +491,25 @@
             <button type="button" class="dent-absence-btn-add" onclick="addCustomAbsenceSubject()">+ إضافة مادة</button>
         </div>
 
+        <!-- Quick Day Absence Logger (From Timetable Schedule) -->
+        <div class="dent-absence-day-bar">
+            <div class="dent-absence-setting-group">
+                <label for="dent-day-skip-select" class="dent-absence-label-bright">تسجيل غياب يوم كامل:</label>
+                <select id="dent-day-skip-select" class="dent-absence-select" style="min-width: 105px;">
+                    <option value="">-- اختر اليوم --</option>
+                    <option value="الأحد">الأحد</option>
+                    <option value="الاثنين">الاثنين</option>
+                    <option value="الثلاثاء">الثلاثاء</option>
+                    <option value="الأربعاء">الأربعاء</option>
+                    <option value="الخميس">الخميس</option>
+                </select>
+            </div>
+            <button type="button" class="dent-absence-btn-add" onclick="applyDayAbsence()" style="background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.2);">تسجيل غياب اليوم (+1)</button>
+        </div>
+
+        <!-- Live Day Feedback Alert -->
+        <div id="dent-day-feedback" style="display: none; font-size: 0.74rem; color: #f8fafc; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; padding: 6px 10px; margin-bottom: 8px; text-align: center;"></div>
+
         <!-- Subjects Container -->
         <div id="dent-absence-subjects-container">
             <div style="text-align: center; color: #9ca3af; padding: 16px; font-size: 0.82rem;">
@@ -530,7 +563,7 @@
 
         let remainingWeeks = 17;
         if (now < SEMESTER_EXAM_DATE) {
-            const daysToExams = Math.max(0, Math.ceil((SEMEESTER_EXAM_DATE - now) / msPerDay));
+            const daysToExams = Math.max(0, Math.ceil((SEMESTER_EXAM_DATE - now) / msPerDay));
             remainingWeeks = Math.ceil(daysToExams / 7);
         } else {
             remainingWeeks = 0;
@@ -570,6 +603,67 @@
     function closeAbsenceOnBgClick(e) {
         if (e.target.id === 'dentAbsenceModal') {
             closeAbsenceModal();
+        }
+    }
+
+    function showDayFeedback(text) {
+        const fb = document.getElementById('dent-day-feedback');
+        if (!fb) return;
+        fb.innerHTML = text;
+        fb.style.display = 'block';
+        setTimeout(() => {
+            if (fb) fb.style.display = 'none';
+        }, 6000);
+    }
+
+    function applyDayAbsence() {
+        const selectEl = document.getElementById('dent-day-skip-select');
+        if (!selectEl || !selectEl.value) {
+            showDayFeedback('الرجاء اختيار اليوم أولاً من القائمة.');
+            return;
+        }
+        const selectedDay = selectEl.value.trim();
+        const selectedGroup = localStorage.getItem('dent2025_selected_group') || 'المجموعة A';
+
+        // Filter timetable classes on that day for this student's context
+        const matchedClasses = dentAbsenceClassSchedule.filter(c => {
+            if (!dentAbsenceSelection) return false;
+            const matchSpec = String(c.specialty).toLowerCase() === String(dentAbsenceSelection.specialty).toLowerCase();
+            const matchYear = parseInt(c.year) === parseInt(dentAbsenceSelection.year);
+            const matchSem = parseInt(c.semester) === parseInt(dentAbsenceSelection.semester);
+            const matchGroup = (!c.group_name || c.group_name === 'الدفعة كاملة' || c.group_name === selectedGroup);
+            const matchDay = String(c.day).trim() === selectedDay;
+            return matchSpec && matchYear && matchSem && matchGroup && matchDay;
+        });
+
+        if (matchedClasses.length === 0) {
+            showDayFeedback(`لا توجد محاضرات مسجلة في جدول يوم (${selectedDay}) لمجموعتك (${selectedGroup}).`);
+            return;
+        }
+
+        let updatedList = [];
+        matchedClasses.forEach(c => {
+            const classSub = (c.subject || '').trim().toLowerCase();
+            let targetSub = dentAbsenceSubjects.find(s => {
+                const sName = (s.name || '').trim().toLowerCase();
+                return sName.includes(classSub) || classSub.includes(sName);
+            });
+
+            if (targetSub) {
+                targetSub.absences = (parseInt(targetSub.absences) || 0) + 1;
+                if (!updatedList.includes(targetSub.name)) {
+                    updatedList.push(targetSub.name);
+                }
+            }
+        });
+
+        saveAbsenceState();
+        renderAbsenceSubjects();
+
+        if (updatedList.length > 0) {
+            showDayFeedback(`تم تسجيل غياب (${matchedClasses.length}) حصص ليوم ${selectedDay} في: ${updatedList.join('، ')}`);
+        } else {
+            showDayFeedback(`تم العثور على حصص ليوم ${selectedDay}، ولكن لم يتم العثور على مواد مطابقة في القائمة.`);
         }
     }
 
