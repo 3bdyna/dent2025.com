@@ -191,20 +191,6 @@ if (dent2025_is_frontend_head()) {
         // Remove every Google Fonts <link> (stylesheet, preconnect, dns-prefetch)
         $head = preg_replace('~<link\b[^>]*fonts\.(?:googleapis|gstatic)\.com[^>]*/?>~i', '', $head);
 
-        // Make the Astra theme stylesheet load asynchronously (print/swap + noscript)
-        $head = preg_replace_callback(
-            "~<link\b[^>]*id=['\"]astra-theme-css-css['\"][^>]*/?>~i",
-            function ($matches) {
-                if (preg_match("~href=[\"']([^\"']+)~i", $matches[0], $h)) {
-                    $url = $h[1];
-                    $fallback = "<link rel='stylesheet' id='astra-theme-css-css' href='" . esc_attr($url) . "' media='all'>";
-                    return "<link rel='stylesheet' id='astra-theme-css-css' href='" . esc_attr($url) . "' media='print' onload=\"this.media='all'\"><noscript>" . $fallback . "</noscript>";
-                }
-                return $matches[0];
-            },
-            $head
-        );
-
         // Inject self-hosted fonts INLINE (removes the last render-blocking request)
         // + preload the two fonts that render the LCP card.
         // NOTE: the inlined CSS is served from the page URL, so its relative font
