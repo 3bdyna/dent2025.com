@@ -271,7 +271,124 @@
         box-sizing: border-box;
     }
 
-    /* Sized-Down Compact Subject Card */
+    /* --------------------------------------------------
+       3. CLEAN STRUCTURED FEEDBACK CARD
+       -------------------------------------------------- */
+    .dent-day-feedback-container {
+        display: none;
+        margin-bottom: 8px;
+        animation: dentFadeIn 0.2s ease;
+    }
+    @keyframes dentFadeIn {
+        from { opacity: 0; transform: translateY(-4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .dent-fb-card {
+        background: #1f1f23;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        padding: 8px 12px;
+        text-align: right;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+        box-sizing: border-box;
+    }
+    .dent-fb-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+    .dent-fb-title {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.78rem;
+        color: #f8fafc;
+    }
+    .dent-fb-check {
+        background: #10b981;
+        color: #ffffff;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+    .dent-fb-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .dent-fb-undo-btn {
+        background: rgba(239, 68, 68, 0.12);
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        color: #fca5a5;
+        padding: 2px 8px;
+        border-radius: 5px;
+        font-size: 0.68rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.15s;
+    }
+    .dent-fb-undo-btn:hover {
+        background: rgba(239, 68, 68, 0.24);
+        color: #ffffff;
+    }
+    .dent-fb-close-btn {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 1.1rem;
+        line-height: 1;
+        padding: 0 3px;
+    }
+    .dent-fb-close-btn:hover {
+        color: #ffffff;
+    }
+    .dent-fb-chips-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+    .dent-fb-chip {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.74rem;
+    }
+    .dent-fb-chip-name {
+        color: #e2e8f0;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 80%;
+    }
+    .dent-fb-chip-badge {
+        color: #f8fafc;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 0.68rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* --------------------------------------------------
+       4. COMPACT SUBJECT CARD
+       -------------------------------------------------- */
     .dent-absence-card {
         background: rgba(255, 255, 255, 0.025);
         border: 1px solid rgba(255, 255, 255, 0.07);
@@ -507,8 +624,8 @@
             <button type="button" class="dent-absence-btn-add" onclick="applyDayAbsence()" style="background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.2);">تسجيل غياب اليوم (+1)</button>
         </div>
 
-        <!-- Live Day Feedback Alert -->
-        <div id="dent-day-feedback" style="display: none; font-size: 0.74rem; color: #f8fafc; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; padding: 6px 10px; margin-bottom: 8px; text-align: center;"></div>
+        <!-- Live Structured Day Feedback Card -->
+        <div id="dent-day-feedback" class="dent-day-feedback-container"></div>
 
         <!-- Subjects Container -->
         <div id="dent-absence-subjects-container">
@@ -544,6 +661,7 @@
     let dentAbsenceSubjects = [];
     let dentAbsenceWeeks = 17;
     let dentAbsenceClassSchedule = [];
+    let lastLoggedDayAbsences = null;
 
     const SEMESTER_START_DATE = new Date('2026-08-23T00:00:00');
     const SEMESTER_EXAM_DATE = new Date('2026-12-20T00:00:00');
@@ -697,14 +815,85 @@
         }
     }
 
-    function showDayFeedback(text) {
+    function showDayFeedback(htmlContent) {
         const fb = document.getElementById('dent-day-feedback');
         if (!fb) return;
-        fb.innerHTML = text;
+        fb.innerHTML = `
+            <div class="dent-fb-card">
+                <div class="dent-fb-top" style="margin-bottom:0;">
+                    <div class="dent-fb-title">${htmlContent}</div>
+                    <button type="button" class="dent-fb-close-btn" onclick="hideDayFeedback()">×</button>
+                </div>
+            </div>
+        `;
         fb.style.display = 'block';
-        setTimeout(() => {
-            if (fb) fb.style.display = 'none';
-        }, 7000);
+        clearTimeout(window.dentFbTimer);
+        window.dentFbTimer = setTimeout(() => {
+            hideDayFeedback();
+        }, 8000);
+    }
+
+    function hideDayFeedback() {
+        const fb = document.getElementById('dent-day-feedback');
+        if (fb) fb.style.display = 'none';
+    }
+
+    function renderDayAbsenceSuccessCard(dayName, sessionsCount, loggedItems) {
+        const fb = document.getElementById('dent-day-feedback');
+        if (!fb) return;
+
+        let itemsHtml = '';
+        loggedItems.forEach(item => {
+            const subName = String(item.sub.name || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+            itemsHtml += `
+                <div class="dent-fb-chip">
+                    <span class="dent-fb-chip-name" title="${subName}">${subName}</span>
+                    <span class="dent-fb-chip-badge">غياب: ${item.sub.absences}</span>
+                </div>
+            `;
+        });
+
+        fb.innerHTML = `
+            <div class="dent-fb-card">
+                <div class="dent-fb-top">
+                    <div class="dent-fb-title">
+                        <span class="dent-fb-check">✓</span>
+                        <span>تم تسجيل غياب <strong>(${sessionsCount})</strong> حصص ليوم <strong>${dayName}</strong>:</span>
+                    </div>
+                    <div class="dent-fb-actions">
+                        <button type="button" class="dent-fb-undo-btn" onclick="undoDayAbsence()" title="تراجع عن هذه العملية">تراجع ↺</button>
+                        <button type="button" class="dent-fb-close-btn" onclick="hideDayFeedback()">×</button>
+                    </div>
+                </div>
+                <div class="dent-fb-chips-grid">
+                    ${itemsHtml}
+                </div>
+            </div>
+        `;
+
+        fb.style.display = 'block';
+        clearTimeout(window.dentFbTimer);
+        window.dentFbTimer = setTimeout(() => {
+            hideDayFeedback();
+        }, 10000);
+    }
+
+    function undoDayAbsence() {
+        if (!lastLoggedDayAbsences || lastLoggedDayAbsences.length === 0) return;
+        
+        lastLoggedDayAbsences.forEach(item => {
+            if (item.isNew) {
+                const idx = dentAbsenceSubjects.indexOf(item.sub);
+                if (idx !== -1) dentAbsenceSubjects.splice(idx, 1);
+            } else {
+                item.sub.absences = Math.max(0, (parseInt(item.sub.absences) || 0) - 1);
+            }
+        });
+
+        lastLoggedDayAbsences = null;
+        saveAbsenceState();
+        renderAbsenceSubjects();
+        showDayFeedback('<span style="color: #94a3b8;">تم التراجع عن تسجيل غياب اليوم بنجاح.</span>');
     }
 
     function applyDayAbsence() {
@@ -744,7 +933,7 @@
             return;
         }
 
-        let updatedList = [];
+        lastLoggedDayAbsences = [];
         matchedClasses.forEach(c => {
             const classSub = (c.subject || '').trim();
             if (!classSub) return;
@@ -761,21 +950,18 @@
                     isCustom: true
                 };
                 dentAbsenceSubjects.push(targetSub);
-                updatedList.push(`${targetSub.name} (جديدة: 1)`);
+                lastLoggedDayAbsences.push({ sub: targetSub, isNew: true });
             } else {
                 targetSub.absences = (parseInt(targetSub.absences) || 0) + 1;
-                const label = `${targetSub.name} (أصبح: ${targetSub.absences})`;
-                if (!updatedList.includes(label)) {
-                    updatedList.push(label);
-                }
+                lastLoggedDayAbsences.push({ sub: targetSub, isNew: false });
             }
         });
 
         saveAbsenceState();
         renderAbsenceSubjects();
 
-        if (updatedList.length > 0) {
-            showDayFeedback(`تم تسجيل غياب (${matchedClasses.length}) حصص ليوم ${selectedDay}: ${updatedList.join(' • ')}`);
+        if (lastLoggedDayAbsences.length > 0) {
+            renderDayAbsenceSuccessCard(selectedDay, matchedClasses.length, lastLoggedDayAbsences);
         }
     }
 
