@@ -124,8 +124,8 @@ if ($action === 'data') {
 // --- GET CLASSES ---
 if ($action === 'get_classes') {
     $specialty = sanitize_text_field($_GET['specialty'] ?? '');
-    $year = intval($_GET['year'] ?? 0);
-    $semester = intval($_GET['semester'] ?? 0);
+    $year = isset($_GET['year']) ? intval($_GET['year']) : null;
+    $semester = isset($_GET['semester']) ? intval($_GET['semester']) : null;
     
     $file_path = dirname(__FILE__) . '/dent2025_classes.json';
     $classes = [];
@@ -137,9 +137,17 @@ if ($action === 'get_classes') {
         }
     }
     
+    if (empty($specialty)) {
+        echo json_encode(["success" => true, "data" => $classes]);
+        exit;
+    }
+    
     $filtered = [];
     foreach ($classes as $c) {
-        if ($c['specialty'] == $specialty && $c['year'] == $year && $c['semester'] == $semester) {
+        $matchSpec = strtolower(trim($c['specialty'] ?? '')) === strtolower(trim($specialty));
+        $matchYear = ($year === null || intval($c['year'] ?? 0) === $year);
+        $matchSem = ($semester === null || intval($c['semester'] ?? 0) === $semester);
+        if ($matchSpec && $matchYear && $matchSem) {
             $filtered[] = $c;
         }
     }

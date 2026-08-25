@@ -495,7 +495,7 @@
         <div class="dent-absence-day-bar">
             <div class="dent-absence-setting-group">
                 <label for="dent-day-skip-select" class="dent-absence-label-bright">تسجيل غياب يوم كامل:</label>
-                <select id="dent-day-skip-select" class="dent-absence-select" style="min-width: 105px;">
+                <select id="dent-day-skip-select" class="dent-absence-select" style="min-width: 110px;">
                     <option value="">-- اختر اليوم --</option>
                     <option value="الأحد">الأحد</option>
                     <option value="الاثنين">الاثنين</option>
@@ -547,6 +547,39 @@
 
     const SEMESTER_START_DATE = new Date('2026-08-23T00:00:00');
     const SEMESTER_EXAM_DATE = new Date('2026-12-20T00:00:00');
+
+    // Arabic normalization helper
+    function normAr(str) {
+        if (!str) return '';
+        return String(str)
+            .trim()
+            .toLowerCase()
+            .replace(/[إأآا]/g, 'ا')
+            .replace(/[ة]/g, 'ه')
+            .replace(/[يى]/g, 'ي')
+            .replace(/[\s\-_()]/g, '');
+    }
+
+    function isDayEqual(d1, d2) {
+        const n1 = normAr(d1);
+        const n2 = normAr(d2);
+        return n1 === n2 || n1.includes(n2) || n2.includes(n1);
+    }
+
+    function isGroupEqual(cGroup, studentGroup) {
+        if (!cGroup) return true;
+        const cg = normAr(cGroup);
+        const sg = normAr(studentGroup);
+        if (cg === 'الدفعهكامله' || cg === 'الكل' || cg === 'كلالدفعه' || !sg || sg === 'الدفعهكامله') return true;
+        return cg === sg || cg.includes(sg) || sg.includes(cg);
+    }
+
+    function isSubjectMatch(cSub, sName) {
+        if (!cSub || !sName) return false;
+        const c = normAr(cSub);
+        const s = normAr(sName);
+        return c === s || c.includes(s) || s.includes(c);
+    }
 
     function updateSemesterTimelineInfo() {
         const infoEl = document.getElementById('dent-absence-timeline-info');
@@ -613,7 +646,7 @@
         fb.style.display = 'block';
         setTimeout(() => {
             if (fb) fb.style.display = 'none';
-        }, 6000);
+        }, 7000);
     }
 
     function applyDayAbsence() {
@@ -625,29 +658,38 @@
         const selectedDay = selectEl.value.trim();
         const selectedGroup = localStorage.getItem('dent2025_selected_group') || 'المجموعة A';
 
-        // Filter timetable classes on that day for this student's context
-        const matchedClasses = dentAbsenceClassSchedule.filter(c => {
+        // 1. First attempt: filter timetable classes matching current student context and group
+        let matchedClasses = (dentAbsenceClassSchedule || []).filter(c => {
             if (!dentAbsenceSelection) return false;
-            const matchSpec = String(c.specialty).toLowerCase() === String(dentAbsenceSelection.specialty).toLowerCase();
+            const matchSpec = normAr(c.specialty) === normAr(dentAbsenceSelection.specialty);
             const matchYear = parseInt(c.year) === parseInt(dentAbsenceSelection.year);
             const matchSem = parseInt(c.semester) === parseInt(dentAbsenceSelection.semester);
-            const matchGroup = (!c.group_name || c.group_name === 'الدفعة كاملة' || c.group_name === selectedGroup);
-            const matchDay = String(c.day).trim() === selectedDay;
-            return matchSpec && matchYear && matchSem && matchGroup && matchDay;
+            const matchDay = isDayEqual(c.day, selectedDay);
+            const matchGroup = isGroupEqual(c.group_name, selectedGroup);
+            return matchSpec && matchYear && matchSem && matchDay && matchGroup;
         });
 
+        // 2. Fallback: if no specific group matched, look for any class on that day in this specialty/year/sem
         if (matchedClasses.length === 0) {
-            showDayFeedback(`لا توجد محاضرات مسجلة في جدول يوم (${selectedDay}) لمجموعتك (${selectedGroup}).`);
+            matchedClasses = (dentAbsenceClassSchedule || []).filter(c => {
+                if (!dentAbsenceSelection) return false;
+                const matchSpec = normAr(c.specialty) === normAr(dentAbsenceSelection.specialty);
+                const matchYear = parseInt(c.year) === parseInt(dentAbsenceSelection.year);
+                const matchSem = parseInt(c.semester) === parseInt(dentAbsenceSelection.semester);
+                const matchDay = isDayEqual(c.day, selectedDay);
+                return matchSpec && matchYear && matchSem && matchDay;
+            });
+        }
+
+        if (matchedClasses.length === 0) {
+            showDayFeedback(`لا توجد محاضرات مسجلة في جدول يوم (${selectedDay}) لمجموعتك.`);
             return;
         }
 
         let updatedList = [];
         matchedClasses.forEach(c => {
-            const classSub = (c.subject || '').trim().toLowerCase();
-            let targetSub = dentAbsenceSubjects.find(s => {
-                const sName = (s.name || '').trim().toLowerCase();
-                return sName.includes(classSub) || classSub.includes(sName);
-            });
+            const classSub = (c.subject || '').trim();
+            let targetSub = dentAbsenceSubjects.find(s => isSubjectMatch(classSub, s.name));
 
             if (targetSub) {
                 targetSub.absences = (parseInt(targetSub.absences) || 0) + 1;
@@ -663,7 +705,7 @@
         if (updatedList.length > 0) {
             showDayFeedback(`تم تسجيل غياب (${matchedClasses.length}) حصص ليوم ${selectedDay} في: ${updatedList.join('، ')}`);
         } else {
-            showDayFeedback(`تم العثور على حصص ليوم ${selectedDay}، ولكن لم يتم العثور على مواد مطابقة في القائمة.`);
+            showDayFeedback(`تم العثور على حصص ليوم ${selectedDay} (${matchedClasses.map(c=>c.subject).join('، ')}).`);
         }
     }
 
@@ -716,15 +758,19 @@
         const apiBase = (window.location.pathname === '/dev' || window.location.pathname.startsWith('/dev/')) ? '/dev' : '';
         
         let classPromise = Promise.resolve([]);
-        if (dentAbsenceSelection) {
-            classPromise = fetch(`${apiBase}/dent2025_api.php?action=get_classes`)
+        if (window.currentClassesData && Array.isArray(window.currentClassesData) && window.currentClassesData.length > 0) {
+            classPromise = Promise.resolve(window.currentClassesData);
+        } else if (dentAbsenceSelection) {
+            classPromise = fetch(`${apiBase}/dent2025_api.php?action=get_classes&specialty=${encodeURIComponent(dentAbsenceSelection.specialty)}&year=${dentAbsenceSelection.year}&semester=${dentAbsenceSelection.semester}`)
                 .then(r => r.json())
                 .then(res => (res.success && Array.isArray(res.data)) ? res.data : [])
                 .catch(() => []);
         }
 
         let subjectsPromise = Promise.resolve([]);
-        if (dentAbsenceSelection) {
+        if (window.currentSubjectsData && Array.isArray(window.currentSubjectsData) && window.currentSubjectsData.length > 0) {
+            subjectsPromise = Promise.resolve(window.currentSubjectsData);
+        } else if (dentAbsenceSelection) {
             const cacheKey = `dent2025_dashboard_data_${dentAbsenceSelection.specialty}_${dentAbsenceSelection.year}_${dentAbsenceSelection.semester}`;
             const cached = sessionStorage.getItem(cacheKey);
             if (cached) {
@@ -735,7 +781,7 @@
                     }
                 } catch(e){}
             } else {
-                subjectsPromise = fetch(`${apiBase}/dent2025_api.php?action=data&specialty=${dentAbsenceSelection.specialty}&year=${dentAbsenceSelection.year}&semester=${dentAbsenceSelection.semester}`)
+                subjectsPromise = fetch(`${apiBase}/dent2025_api.php?action=data&specialty=${encodeURIComponent(dentAbsenceSelection.specialty)}&year=${dentAbsenceSelection.year}&semester=${dentAbsenceSelection.semester}`)
                     .then(r => r.json())
                     .then(res => (res.success && res.data && Array.isArray(res.data.subjects)) ? res.data.subjects : [])
                     .catch(() => []);
@@ -743,7 +789,7 @@
         }
 
         Promise.all([subjectsPromise, classPromise]).then(([subjects, classes]) => {
-            dentAbsenceClassSchedule = classes || [];
+            dentAbsenceClassSchedule = (classes && classes.length > 0) ? classes : (window.currentClassesData || []);
             buildAbsenceSubjectsList(subjects || []);
         });
     }
@@ -766,12 +812,12 @@
 
         const selectedGroup = localStorage.getItem('dent2025_selected_group') || 'المجموعة A';
 
-        const relevantClasses = dentAbsenceClassSchedule.filter(c => {
+        const relevantClasses = (dentAbsenceClassSchedule || []).filter(c => {
             if (!dentAbsenceSelection) return false;
-            const matchSpec = String(c.specialty).toLowerCase() === String(dentAbsenceSelection.specialty).toLowerCase();
+            const matchSpec = normAr(c.specialty) === normAr(dentAbsenceSelection.specialty);
             const matchYear = parseInt(c.year) === parseInt(dentAbsenceSelection.year);
             const matchSem = parseInt(c.semester) === parseInt(dentAbsenceSelection.semester);
-            const matchGroup = (!c.group_name || c.group_name === 'الدفعة كاملة' || c.group_name === selectedGroup);
+            const matchGroup = isGroupEqual(c.group_name, selectedGroup);
             return matchSpec && matchYear && matchSem && matchGroup;
         });
 
@@ -787,9 +833,7 @@
 
         apiSubjects.forEach((sub, idx) => {
             let weeklySessions = 0;
-            const matchedClasses = relevantClasses.filter(c => {
-                return c.subject && (c.subject.includes(sub.name) || sub.name.includes(c.subject));
-            });
+            const matchedClasses = relevantClasses.filter(c => isSubjectMatch(c.subject, sub.name));
 
             if (matchedClasses.length > 0) {
                 weeklySessions = matchedClasses.length;
