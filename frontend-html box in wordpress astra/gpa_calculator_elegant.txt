@@ -106,6 +106,13 @@
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
         border: 1px solid rgba(255, 255, 255, 0.12);
         box-sizing: border-box;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+    }
+    .gpa-modal-content::-webkit-scrollbar {
+        display: none !important; /* Chrome, Safari, Opera */
+        width: 0 !important;
+        height: 0 !important;
     }
     .gpa-modal-overlay.active .gpa-modal-content {
         transform: translateY(0);
@@ -178,6 +185,17 @@
         box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
     }
 
+    /* Hide native number spin buttons across all browsers & prevent RTL digit truncation */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+        -webkit-appearance: none !important; 
+        margin: 0 !important; 
+    }
+    input[type=number] {
+        -moz-appearance: textfield !important;
+        appearance: textfield !important;
+    }
+
     /* Toggle Pill (Letter vs Marks) */
     .gpa-toggle-pill {
         display: inline-flex;
@@ -208,7 +226,7 @@
        -------------------------------------------------- */
     .gpa-table-header {
         display: grid;
-        grid-template-columns: 1fr 52px 76px 28px;
+        grid-template-columns: 1fr 56px 78px 28px;
         gap: 8px;
         align-items: center;
         padding: 0 2px 6px 2px;
@@ -229,7 +247,7 @@
     }
     .gpa-subject-row {
         display: grid;
-        grid-template-columns: 1fr 52px 76px 28px;
+        grid-template-columns: 1fr 56px 78px 28px;
         gap: 8px;
         align-items: center;
         padding: 7px 2px;
@@ -267,9 +285,13 @@
     .gpa-hours-input {
         width: 100%;
         text-align: center;
-        padding: 4px 2px;
-        font-size: 0.88rem;
+        padding: 0;
+        margin: 0;
+        font-size: 0.92rem;
+        font-weight: 600;
         height: 34px;
+        line-height: 34px;
+        direction: ltr; /* Keeps digits centered without RTL margin offset */
         box-sizing: border-box;
     }
     .gpa-hours-input.missing-warning {
@@ -286,6 +308,10 @@
         height: 34px;
         box-sizing: border-box;
         cursor: pointer;
+    }
+    .gpa-marks-input {
+        direction: ltr;
+        padding: 0;
     }
     .gpa-grade-select option {
         background: #18181b;
@@ -358,13 +384,6 @@
         color: #cbd5e1;
     }
 
-    /* Webkit Scrollbar */
-    .gpa-modal-content::-webkit-scrollbar { width: 4px; }
-    .gpa-modal-content::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 4px;
-    }
-
     @media (max-width: 480px) {
         .gpa-modal-content {
             padding: 16px 12px;
@@ -372,7 +391,7 @@
             border-radius: 16px;
         }
         .gpa-table-header, .gpa-subject-row {
-            grid-template-columns: 1fr 48px 68px 26px;
+            grid-template-columns: 1fr 50px 70px 26px;
             gap: 6px;
         }
         .gpa-subject-name {
@@ -412,11 +431,11 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                 <div>
                     <label style="display: block; font-size: 0.75rem; margin-bottom: 4px; color: #9ca3af;">الساعات السابقة</label>
-                    <input type="number" id="prev-hours" min="0" oninput="calculateGPA(true)" style="width: 100%; padding: 8px; height: 36px; text-align: center;" placeholder="مثال: 35">
+                    <input type="number" id="prev-hours" min="0" oninput="calculateGPA(true)" style="width: 100%; padding: 8px; height: 36px; text-align: center; direction: ltr;" placeholder="مثال: 35">
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.75rem; margin-bottom: 4px; color: #9ca3af;">المعدل السابق (من 5.0)</label>
-                    <input type="number" id="prev-gpa" min="0" max="5" step="0.01" oninput="calculateGPA(true)" style="width: 100%; padding: 8px; height: 36px; text-align: center;" placeholder="مثال: 4.50">
+                    <input type="number" id="prev-gpa" min="0" max="5" step="0.01" oninput="calculateGPA(true)" style="width: 100%; padding: 8px; height: 36px; text-align: center; direction: ltr;" placeholder="مثال: 4.50">
                 </div>
             </div>
         </div>
@@ -458,7 +477,7 @@
             </p>
             <div style="display: flex; align-items: center; gap: 8px;">
                 <label style="font-size: 0.8rem; color: #9ca3af; white-space: nowrap;">المعدل المستهدف:</label>
-                <input type="number" id="target-gpa" min="0" max="5" step="0.01" placeholder="مثال: 4.75" oninput="calculateGPA(true)" style="flex: 1; padding: 6px 10px; height: 36px; text-align: center;">
+                <input type="number" id="target-gpa" min="0" max="5" step="0.01" placeholder="مثال: 4.75" oninput="calculateGPA(true)" style="flex: 1; padding: 6px 10px; height: 36px; text-align: center; direction: ltr;">
             </div>
             <div id="target-gpa-result" style="margin-top: 10px; font-size: 0.82rem; color: #cbd5e1; text-align: center; line-height: 1.4;"></div>
         </div>
