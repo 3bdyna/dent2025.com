@@ -1,12 +1,14 @@
 <style>
-    /* Banner Styles */
+    /* --------------------------------------------------
+       1. BANNER STYLES (Trigger on Homepage)
+       -------------------------------------------------- */
     .gpa-banner {
         background: #1e1e1e;
         border: 1px solid rgba(255, 255, 255, 0.1);
         padding: 14px 20px;
         border-radius: 14px;
         color: #f8fafc;
-        font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
+        font-family: 'Outfit', 'Noto Kufi Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -15,22 +17,25 @@
         transition: all 0.25s ease;
         max-width: 100%;
         margin: 10px 0;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         box-sizing: border-box;
         overflow: hidden;
+        user-select: none;
     }
     .gpa-banner:hover {
         background: rgba(255, 255, 255, 0.06);
         border-color: rgba(255, 255, 255, 0.25);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         transform: translateY(-2px);
     }
     .gpa-banner-text {
         flex: 1;
+        text-align: right;
     }
     .gpa-banner-text h3 {
         margin: 0;
         font-size: 1.05rem;
+        font-weight: 700;
         color: #f8fafc;
     }
     .gpa-banner-text p {
@@ -50,13 +55,16 @@
         justify-content: center;
         border-radius: 50%;
         transition: all 0.2s ease;
+        flex-shrink: 0;
     }
     .gpa-banner:hover .gpa-banner-arrow {
         background: rgba(255, 255, 255, 0.15);
         transform: scale(1.05);
     }
 
-    /* Modal Styles - Hidden with display:none by default to prevent mobile viewport shrink glitch */
+    /* --------------------------------------------------
+       2. MODAL CONTAINER & OVERLAY
+       -------------------------------------------------- */
     .gpa-modal-overlay {
         position: fixed !important;
         top: 0 !important;
@@ -65,16 +73,16 @@
         bottom: 0 !important;
         width: 100% !important;
         height: 100% !important;
-        background: rgba(0, 0, 0, 0.82) !important;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        background: rgba(0, 0, 0, 0.84) !important;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         z-index: 999999 !important;
         display: none !important;
         justify-content: center;
         align-items: center;
         opacity: 0;
         transition: opacity 0.25s ease;
-        padding: 12px;
+        padding: 16px;
         box-sizing: border-box;
         margin: 0 !important;
     }
@@ -83,21 +91,20 @@
         opacity: 1;
     }
     .gpa-modal-content {
-        background: #18181b;
+        background: #141519;
         color: #f8fafc;
-        font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
-        padding: 22px;
-        border-radius: 18px;
+        font-family: 'Outfit', 'Noto Kufi Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        padding: 24px;
+        border-radius: 20px;
         direction: rtl;
         width: 100%;
-        max-width: 500px;
+        max-width: 580px;
         max-height: 90vh;
         overflow-y: auto;
         position: relative;
-        transform: translateY(20px);
-        transition: transform 0.25s ease;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        transform: translateY(16px);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
         box-sizing: border-box;
     }
     .gpa-modal-overlay.active .gpa-modal-content {
@@ -109,31 +116,56 @@
         position: absolute;
         top: 16px;
         left: 16px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        color: #e2e8f0;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #cbd5e1;
         width: 34px;
         height: 34px;
         border-radius: 10px;
         font-size: 1.3rem;
         cursor: pointer;
         display: flex;
-        justify-content: center;
         align-items: center;
+        justify-content: center;
         transition: all 0.2s ease;
         line-height: 1;
+        padding: 0;
+        z-index: 10;
     }
     .gpa-close-btn:hover {
-        background: rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.15);
         color: #ffffff;
+        transform: scale(1.05);
     }
 
-    /* Internal Cards */
+    /* Modal Titles */
+    .gpa-modal-header {
+        text-align: center;
+        margin-bottom: 18px;
+        padding-top: 4px;
+    }
+    .gpa-modal-title {
+        margin: 0 0 4px 0;
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #f8fafc;
+        letter-spacing: -0.01em;
+    }
+    .gpa-modal-subtitle {
+        margin: 0;
+        font-size: 0.84rem;
+        color: #9ca3af;
+        font-weight: 500;
+    }
+
+    /* --------------------------------------------------
+       3. INTERNAL CARDS & SECTIONS
+       -------------------------------------------------- */
     .gpa-card {
         background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        padding: 14px;
-        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        padding: 16px;
+        border-radius: 16px;
         margin-bottom: 14px;
         box-sizing: border-box;
     }
@@ -141,71 +173,344 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
-        gap: 8px;
+        margin-bottom: 12px;
+        gap: 10px;
+        flex-wrap: wrap;
     }
     .gpa-card-title {
         margin: 0;
-        font-size: 0.92rem;
-        color: #e2e8f0;
+        font-size: 0.95rem;
+        color: #f1f5f9;
         font-weight: 600;
-    }
-
-    /* Subject Table Rows */
-    .gpa-subject-row {
         display: flex;
         align-items: center;
         gap: 6px;
-        padding: 8px 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
-    .gpa-subject-row:last-child {
-        border-bottom: none;
-    }
-    .gpa-subject-info {
-        flex: 1;
-        min-width: 0;
-    }
-    .gpa-subject-name {
-        margin: 0 0 2px 0;
-        font-size: 0.86rem;
-        color: #f8fafc;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .gpa-hours-input {
-        width: 48px;
-        min-width: 44px;
-        text-align: center;
-        padding: 6px 2px;
-        font-size: 0.85rem;
-        height: 36px;
-        flex-shrink: 0;
-    }
-    .gpa-hours-input.missing-warning {
-        border-color: rgba(255, 255, 255, 0.3) !important;
-        background: rgba(255, 255, 255, 0.08) !important;
-    }
-    .gpa-grade-select, .gpa-marks-input {
-        width: 74px;
-        min-width: 68px;
-        text-align: center;
-        padding: 6px 2px;
-        font-size: 0.85rem;
-        height: 36px;
-        flex-shrink: 0;
+    .gpa-hours-badge {
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: #38bdf8;
+        background: rgba(56, 189, 248, 0.1);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        padding: 2px 8px;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
     }
 
-    .gpa-btn-add {
-        width: 100%;
-        margin-top: 10px;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px dashed rgba(255, 255, 255, 0.2);
-        color: #e2e8f0;
-        padding: 10px;
+    /* Input Fields Universal Reset */
+    .gpa-modal-content input, 
+    .gpa-modal-content select {
+        background: rgba(0, 0, 0, 0.4);
+        color: #f8fafc;
+        border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 10px;
-        font-size: 0.85rem;
+        font-family: inherit;
+        box-sizing: border-box;
+        outline: none;
+        transition: all 0.2s ease;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+    .gpa-modal-content input:focus, 
+    .gpa-modal-content select:focus {
+        border-color: rgba(56, 189, 248, 0.6);
+        background: rgba(0, 0, 0, 0.6);
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+
+    /* Previous GPA Inputs Grid */
+    .gpa-prev-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .gpa-field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .gpa-field-label {
+        font-size: 0.76rem;
+        color: #9ca3af;
+        font-weight: 500;
+    }
+    .gpa-field-input {
+        width: 100%;
+        padding: 8px 12px;
+        height: 38px;
+        font-size: 0.88rem;
+        text-align: center;
+        font-weight: 600;
+    }
+
+    /* Toggle Pill (Letter vs Marks) */
+    .gpa-toggle-pill {
+        display: inline-flex;
+        background: rgba(0, 0, 0, 0.45);
+        padding: 3px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        gap: 2px;
+    }
+    .gpa-toggle-btn {
+        background: transparent;
+        border: none;
+        color: #9ca3af;
+        padding: 5px 12px;
+        border-radius: 7px;
+        font-size: 0.76rem;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    .gpa-toggle-btn.active {
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* --------------------------------------------------
+       4. SUBJECT ROWS (Modern Adaptive Card Design)
+       -------------------------------------------------- */
+    #subjects-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 4px;
+    }
+    .gpa-subject-item {
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 12px;
+        padding: 10px 14px;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+    }
+    .gpa-subject-item:hover {
+        background: rgba(255, 255, 255, 0.045);
+        border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Desktop / Default Layout */
+    @media (min-width: 481px) {
+        .gpa-subject-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .gpa-subject-top-row {
+            display: contents;
+        }
+        .gpa-mobile-del-wrapper {
+            display: none;
+        }
+        .gpa-desktop-del-wrapper {
+            display: flex;
+        }
+        .gpa-subject-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .gpa-subject-controls {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    }
+
+    /* Mobile Layout (< 480px) */
+    @media (max-width: 480px) {
+        .gpa-subject-item {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            padding: 12px;
+        }
+        .gpa-subject-top-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+            width: 100%;
+        }
+        .gpa-subject-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .gpa-mobile-del-wrapper {
+            display: flex;
+            flex-shrink: 0;
+        }
+        .gpa-desktop-del-wrapper {
+            display: none;
+        }
+        .gpa-subject-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            width: 100%;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: 8px;
+        }
+        .gpa-hours-wrapper {
+            flex: 1;
+        }
+        .gpa-grade-wrapper {
+            flex: 1;
+        }
+    }
+
+    /* Subject Info & Typography */
+    .gpa-subject-name {
+        margin: 0;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: #f1f5f9;
+        line-height: 1.4;
+        word-break: break-word;
+        direction: auto;
+        unicode-bidi: plaintext;
+        text-align: start;
+    }
+    .gpa-custom-name-input {
+        width: 100%;
+        font-size: 0.84rem;
+        padding: 6px 10px;
+        height: 34px;
+    }
+    .gpa-hours-warning {
+        color: #f59e0b;
+        font-size: 0.7rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-top: 2px;
+    }
+
+    /* Hours Input Container */
+    .gpa-hours-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 2px 8px;
+        height: 36px;
+        box-sizing: border-box;
+        gap: 6px;
+        transition: all 0.2s ease;
+    }
+    .gpa-hours-wrapper:focus-within {
+        border-color: rgba(56, 189, 248, 0.5);
+        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.1);
+    }
+    .gpa-hours-wrapper.missing-warning {
+        border-color: rgba(245, 158, 11, 0.5);
+        background: rgba(245, 158, 11, 0.08);
+    }
+    .gpa-hours-input {
+        width: 32px;
+        background: transparent !important;
+        border: none !important;
+        text-align: center;
+        color: #f8fafc;
+        font-size: 0.9rem;
+        font-weight: 700;
+        padding: 0 !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+    .gpa-hours-label {
+        font-size: 0.72rem;
+        color: #9ca3af;
+        user-select: none;
+        font-weight: 500;
+    }
+
+    /* Grade Select & Marks Input */
+    .gpa-grade-wrapper {
+        position: relative;
+        display: inline-flex;
+    }
+    .gpa-grade-select {
+        background: rgba(0, 0, 0, 0.45) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 8px !important;
+        color: #38bdf8 !important;
+        font-size: 0.88rem !important;
+        font-weight: 700 !important;
+        height: 36px !important;
+        min-width: 72px !important;
+        width: 100% !important;
+        padding: 0 10px !important;
+        text-align: center !important;
+        cursor: pointer;
+        appearance: auto !important;
+        -webkit-appearance: auto !important;
+        -moz-appearance: auto !important;
+    }
+    .gpa-grade-select option {
+        background: #18181b;
+        color: #f8fafc;
+        font-weight: 600;
+    }
+    .gpa-marks-input {
+        background: rgba(0, 0, 0, 0.45) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 8px !important;
+        color: #38bdf8 !important;
+        font-size: 0.88rem !important;
+        font-weight: 700 !important;
+        height: 36px !important;
+        width: 72px !important;
+        padding: 0 6px !important;
+        text-align: center !important;
+    }
+
+    /* Delete Button */
+    .gpa-btn-del {
+        width: 30px;
+        height: 30px;
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #f87171;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1.1rem;
+        transition: all 0.2s ease;
+        padding: 0;
+        line-height: 1;
+        box-sizing: border-box;
+    }
+    .gpa-btn-del:hover {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.4);
+        color: #fca5a5;
+        transform: scale(1.05);
+    }
+
+    /* Action Buttons (Add Subject & Clear) */
+    .gpa-actions-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+    }
+    .gpa-btn-action {
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 0.84rem;
+        font-weight: 600;
         cursor: pointer;
         transition: all 0.2s ease;
         font-family: inherit;
@@ -214,119 +519,167 @@
         justify-content: center;
         gap: 6px;
         min-height: 40px;
+        border: 1px solid transparent;
+        box-sizing: border-box;
+    }
+    .gpa-btn-add {
+        flex: 2;
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.16);
+        color: #e2e8f0;
     }
     .gpa-btn-add:hover {
-        background: rgba(255, 255, 255, 0.08);
-        border-color: rgba(255, 255, 255, 0.35);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: #ffffff;
+    }
+    .gpa-btn-clear {
+        flex: 1;
+        background: rgba(239, 68, 68, 0.06);
+        border-color: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+    }
+    .gpa-btn-clear:hover {
+        background: rgba(239, 68, 68, 0.14);
+        border-color: rgba(239, 68, 68, 0.35);
+        color: #fca5a5;
     }
 
-    select, input {
-        background: rgba(0, 0, 0, 0.4);
-        color: #f8fafc;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 8px;
-        font-family: inherit;
-        box-sizing: border-box;
-        outline: none;
-        transition: all 0.2s ease;
+    /* --------------------------------------------------
+       5. TARGET GPA CALCULATOR CARD
+       -------------------------------------------------- */
+    .gpa-target-input-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
     }
-    select:focus, input:focus {
-        border-color: rgba(255, 255, 255, 0.35);
-        background: rgba(0, 0, 0, 0.6);
-        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
-    }
-
-    .results-box {
-        background: rgba(255, 255, 255, 0.04);
-        color: #f8fafc;
-        padding: 14px;
-        border-radius: 14px;
-        text-align: center;
-        margin-top: 14px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-sizing: border-box;
-    }
-    .results-box h3 {
-        margin: 0 0 10px 0;
-        font-size: 0.95rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        padding-bottom: 8px;
+    .gpa-target-label {
+        font-size: 0.82rem;
         color: #cbd5e1;
+        white-space: nowrap;
+        font-weight: 500;
     }
-
-    .gpa-toggle-pill {
-        display: inline-flex;
-        background: rgba(0, 0, 0, 0.4);
-        padding: 2px;
-        border-radius: 8px;
-        border: 1px solid rgba(255,255,255,0.08);
-    }
-    .gpa-toggle-btn {
-        background: transparent;
-        border: none;
-        color: #9ca3af;
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        cursor: pointer;
-        font-family: inherit;
-        transition: all 0.2s ease;
-    }
-    .gpa-toggle-btn.active {
-        background: rgba(255, 255, 255, 0.16);
-        color: #f8fafc;
+    .gpa-target-input {
+        flex: 1;
+        padding: 8px 12px;
+        height: 38px;
+        font-size: 0.9rem;
         font-weight: 600;
+        text-align: center;
+    }
+    .gpa-target-alert {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 0.82rem;
+        line-height: 1.45;
+        text-align: center;
+        animation: fadeIn 0.25s ease;
+    }
+    .gpa-target-alert.normal {
+        background: rgba(56, 189, 248, 0.08);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        color: #e2e8f0;
+    }
+    .gpa-target-alert.success {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.25);
+        color: #4ade80;
+    }
+    .gpa-target-alert.danger {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        color: #f87171;
+    }
+    .gpa-target-alert.info {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #9ca3af;
     }
 
-    /* Webkit scrollbar */
-    .gpa-modal-content::-webkit-scrollbar { width: 4px; }
+    /* --------------------------------------------------
+       6. RESULTS SUMMARY BOX & STANDINGS
+       -------------------------------------------------- */
+    .results-box {
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 16px;
+        padding: 16px 18px;
+        margin-top: 14px;
+        box-sizing: border-box;
+        text-align: center;
+    }
+    .results-box-title {
+        margin: 0 0 12px 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #cbd5e1;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        padding-bottom: 8px;
+    }
+    .results-grid {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        gap: 12px;
+    }
+    .result-stat-item {
+        flex: 1;
+        text-align: center;
+    }
+    .result-stat-label {
+        display: block;
+        font-size: 0.78rem;
+        color: #9ca3af;
+        margin-bottom: 4px;
+        font-weight: 500;
+    }
+    .result-stat-val {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+    }
+    .result-stat-val.sem {
+        color: #38bdf8;
+    }
+    .result-stat-val.cum {
+        color: #4ade80;
+    }
+    .results-divider {
+        width: 1px;
+        height: 42px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .gpa-standing-wrapper {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        display: flex;
+        justify-content: center;
+    }
+    .gpa-standing-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: 20px;
+        transition: all 0.25s ease;
+    }
+
+    /* Webkit Scrollbar */
+    .gpa-modal-content::-webkit-scrollbar { width: 5px; }
     .gpa-modal-content::-webkit-scrollbar-thumb {
         background: rgba(255, 255, 255, 0.2);
         border-radius: 4px;
     }
 
-    /* Phone Optimization & Viewport Fixes */
-    @media (max-width: 600px) {
-        .gpa-modal-overlay {
-            padding: 8px;
-        }
-        .gpa-modal-content {
-            padding: 16px 12px;
-            max-height: 92vh;
-            border-radius: 16px;
-        }
-        .gpa-card {
-            padding: 12px 10px;
-            margin-bottom: 10px;
-        }
-        .gpa-subject-row {
-            gap: 6px;
-            padding: 6px 0;
-        }
-        .gpa-subject-name {
-            font-size: 0.82rem;
-        }
-        .gpa-grade-select, .gpa-marks-input {
-            width: 68px;
-            font-size: 16px !important; /* 16px prevents iOS Safari auto-zoom recalculation */
-            padding: 4px;
-            height: 34px;
-        }
-        .gpa-hours-input {
-            width: 44px;
-            font-size: 16px !important; /* 16px prevents iOS Safari auto-zoom recalculation */
-            padding: 4px 2px;
-            height: 34px;
-        }
-        .gpa-card-title {
-            font-size: 0.88rem;
-        }
-        .results-box {
-            padding: 12px;
-        }
-        select, input {
-            font-size: 16px !important; /* Prevents mobile browser scale shifts */
-        }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 </style>
 
@@ -342,22 +695,24 @@
 <!-- Modal Overlay -->
 <div class="gpa-modal-overlay" id="gpaModal" onclick="closeModalOnBgClick(event)">
     <div class="gpa-modal-content">
-        <button type="button" class="gpa-close-btn" onclick="closeGPAModal()">×</button>
+        <button type="button" class="gpa-close-btn" onclick="closeGPAModal()" title="إغلاق">×</button>
         
-        <h2 style="text-align: center; margin-top: 0; margin-bottom: 4px; font-size: 1.25rem;">حاسبة المعدل الأكاديمي</h2>
-        <p id="gpa-modal-subtitle" style="text-align: center; margin-top: 0; margin-bottom: 14px; font-size: 0.82rem; color: #9ca3af;"></p>
+        <div class="gpa-modal-header">
+            <h2 class="gpa-modal-title">حاسبة المعدل الأكاديمي</h2>
+            <p id="gpa-modal-subtitle" class="gpa-modal-subtitle"></p>
+        </div>
         
         <!-- Previous GPA Card -->
         <div class="gpa-card">
-            <h3 class="gpa-card-title" style="margin-bottom: 8px; font-size: 0.88rem; color: #9ca3af;">المعدل التراكمي السابق (اختياري)</h3>
-            <div style="display: flex; gap: 8px;">
-                <div style="flex: 1;">
-                    <label style="display: block; font-size: 0.75rem; margin-bottom: 4px; color: #9ca3af;">الساعات السابقة</label>
-                    <input type="number" id="prev-hours" min="0" oninput="calculateGPA(true)" style="width: 100%; padding: 8px; height: 36px;" placeholder="مثال: 35">
+            <h3 class="gpa-card-title" style="color: #cbd5e1; font-size: 0.88rem; margin-bottom: 10px;">المعدل التراكمي السابق (اختياري)</h3>
+            <div class="gpa-prev-grid">
+                <div class="gpa-field-group">
+                    <label class="gpa-field-label" for="prev-hours">الساعات السابقة</label>
+                    <input type="number" id="prev-hours" class="gpa-field-input" min="0" oninput="calculateGPA(true)" placeholder="مثال: 35">
                 </div>
-                <div style="flex: 1;">
-                    <label style="display: block; font-size: 0.75rem; margin-bottom: 4px; color: #9ca3af;">المعدل السابق (من 5.0)</label>
-                    <input type="number" id="prev-gpa" min="0" max="5" step="0.01" oninput="calculateGPA(true)" style="width: 100%; padding: 8px; height: 36px;" placeholder="مثال: 4.50">
+                <div class="gpa-field-group">
+                    <label class="gpa-field-label" for="prev-gpa">المعدل السابق (من 5.0)</label>
+                    <input type="number" id="prev-gpa" class="gpa-field-input" min="0" max="5" step="0.01" oninput="calculateGPA(true)" placeholder="مثال: 4.50">
                 </div>
             </div>
         </div>
@@ -365,20 +720,23 @@
         <!-- Current Term Subjects Card -->
         <div class="gpa-card">
             <div class="gpa-card-header">
-                <h3 id="current-term-hours-text" class="gpa-card-title">مواد الفصل الحالي</h3>
+                <h3 id="current-term-hours-text" class="gpa-card-title">
+                    مواد الفصل الحالي
+                    <span id="current-term-hours-badge" class="gpa-hours-badge">0 ساعة</span>
+                </h3>
                 <div class="gpa-toggle-pill">
                     <button type="button" id="gpa-mode-letter" class="gpa-toggle-btn active" onclick="setGradeMode('letter')">تقدير</button>
-                    <button type="button" id="gpa-mode-marks" class="gpa-toggle-btn" onclick="setGradeMode('marks')">درجة /100</button>
+                    <button type="button" id="gpa-mode-marks" class="gpa-toggle-btn" onclick="setGradeMode('marks')">درجة / 100</button>
                 </div>
             </div>
             
             <div id="subjects-list"></div>
 
-            <div style="display: flex; gap: 8px; margin-top: 10px;">
-                <button type="button" class="gpa-btn-add" style="flex: 2; margin-top: 0;" onclick="addCustomSubject()">
+            <div class="gpa-actions-row">
+                <button type="button" class="gpa-btn-action gpa-btn-add" onclick="addCustomSubject()">
                     + إضافة مادة
                 </button>
-                <button type="button" class="gpa-btn-add" style="flex: 1; margin-top: 0; background: rgba(239,68,68,0.06); border-color: rgba(239,68,68,0.2); color: #f87171;" onclick="clearGpaGrades()" title="تفريغ التقديرات والدرجات المدخلة">
+                <button type="button" class="gpa-btn-action gpa-btn-clear" onclick="clearGpaGrades()" title="تفريغ التقديرات والدرجات المدخلة">
                     تفريغ الدرجات
                 </button>
             </div>
@@ -386,29 +744,34 @@
 
         <!-- Target GPA Calculator Card -->
         <div class="gpa-card">
-            <h3 class="gpa-card-title" style="font-size: 0.88rem; color: #f8fafc;">حاسبة هدف المعدل</h3>
-            <p style="margin: 4px 0 10px 0; font-size: 0.76rem; color: #9ca3af; line-height: 1.4;">
+            <h3 class="gpa-card-title">حاسبة هدف المعدل</h3>
+            <p style="margin: 4px 0 8px 0; font-size: 0.78rem; color: #9ca3af; line-height: 1.4;">
                 أدخل المعدل التراكمي الذي تطمح للوصول إليه لمعرفة المعدل الفصلي والتقدير المطلوب في المواد الحالية.
             </p>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <label style="font-size: 0.8rem; color: #9ca3af; white-space: nowrap;">المعدل المستهدف:</label>
-                <input type="number" id="target-gpa" min="0" max="5" step="0.01" placeholder="مثال: 4.75" oninput="calculateGPA(true)" style="flex: 1; padding: 6px 10px; height: 36px;">
+            <div class="gpa-target-input-row">
+                <label class="gpa-target-label" for="target-gpa">المعدل المستهدف:</label>
+                <input type="number" id="target-gpa" class="gpa-target-input" min="0" max="5" step="0.01" placeholder="مثال: 4.75" oninput="calculateGPA(true)">
             </div>
-            <div id="target-gpa-result" style="margin-top: 10px; font-size: 0.82rem; color: #cbd5e1; text-align: center; line-height: 1.4;"></div>
+            <div id="target-gpa-result" style="display: none;"></div>
         </div>
 
         <!-- Results Summary Box -->
         <div class="results-box">
-            <h3>النتائج المتوقعة</h3>
-            <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 10px;">
-                <div>
-                    <span style="display: block; font-size: 0.8rem; color: #9ca3af; margin-bottom: 4px;">المعدل الفصلي</span>
-                    <strong id="semester-gpa" style="font-size: 1.5rem; color: #f8fafc;">0.00</strong>
+            <h3 class="results-box-title">النتائج المتوقعة</h3>
+            <div class="results-grid">
+                <div class="result-stat-item">
+                    <span class="result-stat-label">المعدل الفصلي</span>
+                    <strong id="semester-gpa" class="result-stat-val sem">0.00</strong>
                 </div>
-                <div style="width: 1px; height: 36px; background: rgba(255,255,255,0.12);"></div>
-                <div>
-                    <span style="display: block; font-size: 0.8rem; color: #9ca3af; margin-bottom: 4px;">المعدل التراكمي</span>
-                    <strong id="cumulative-gpa" style="font-size: 1.5rem; color: #f8fafc;">0.00</strong>
+                <div class="results-divider"></div>
+                <div class="result-stat-item">
+                    <span class="result-stat-label">المعدل التراكمي</span>
+                    <strong id="cumulative-gpa" class="result-stat-val cum">0.00</strong>
+                </div>
+            </div>
+            <div class="gpa-standing-wrapper">
+                <div id="gpa-standing-badge" class="gpa-standing-pill" style="background: rgba(255,255,255,0.05); color: #9ca3af;">
+                    في انتظار إدخال التقديرات
                 </div>
             </div>
         </div>
@@ -455,6 +818,19 @@
         return "F";
     }
 
+    function getAcademicStanding(gpa) {
+        if (gpa >= 4.75) return { text: 'ممتاز مرتفع (A+)', color: '#4ade80', bg: 'rgba(74, 222, 128, 0.12)', border: 'rgba(74, 222, 128, 0.25)' };
+        if (gpa >= 4.50) return { text: 'ممتاز (A)', color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.12)', border: 'rgba(56, 189, 248, 0.25)' };
+        if (gpa >= 4.00) return { text: 'جيد جداً مرتفع (B+)', color: '#818cf8', bg: 'rgba(129, 140, 248, 0.12)', border: 'rgba(129, 140, 248, 0.25)' };
+        if (gpa >= 3.50) return { text: 'جيد جداً (B)', color: '#a78bfa', bg: 'rgba(167, 139, 250, 0.12)', border: 'rgba(167, 139, 250, 0.25)' };
+        if (gpa >= 3.00) return { text: 'جيد مرتفع (C+)', color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.12)', border: 'rgba(251, 191, 36, 0.25)' };
+        if (gpa >= 2.50) return { text: 'جيد (C)', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)', border: 'rgba(245, 158, 11, 0.25)' };
+        if (gpa >= 2.00) return { text: 'مقبول مرتفع (D+)', color: '#fb923c', bg: 'rgba(251, 146, 60, 0.12)', border: 'rgba(251, 146, 60, 0.25)' };
+        if (gpa >= 1.75) return { text: 'مقبول (D)', color: '#f97316', bg: 'rgba(249, 115, 22, 0.12)', border: 'rgba(249, 115, 22, 0.25)' };
+        if (gpa > 0) return { text: 'راسب (F)', color: '#f87171', bg: 'rgba(248, 113, 113, 0.12)', border: 'rgba(248, 113, 113, 0.25)' };
+        return { text: 'في انتظار إدخال التقديرات', color: '#9ca3af', bg: 'rgba(255, 255, 255, 0.05)', border: 'rgba(255, 255, 255, 0.1)' };
+    }
+
     // Modal Control
     function openGPAModal() {
         const modal = document.getElementById('gpaModal');
@@ -463,7 +839,6 @@
                 document.body.appendChild(modal);
             }
             modal.style.setProperty('display', 'flex', 'important');
-            // Trigger reflow before adding active for smooth opacity transition
             void modal.offsetWidth;
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -552,13 +927,11 @@
                 fetch(`${apiBase}/dent2025_api.php?action=data&specialty=${dentGpaSelection.specialty}&year=${dentGpaSelection.year}&semester=${dentGpaSelection.semester}`)
                     .then(res => res.json())
                     .then(resData => {
-                        if (resData.success) {
-                            if (resData.data) {
-                                if (resData.data.subjects) {
-                                    apiSubjects = resData.data.subjects;
-                                    buildSubjectsList(apiSubjects);
-                                }
-                            }
+                        if (resData.success && resData.data && resData.data.subjects) {
+                            apiSubjects = resData.data.subjects;
+                            buildSubjectsList(apiSubjects);
+                        } else {
+                            buildSubjectsList([]);
                         }
                     })
                     .catch(err => {
@@ -582,17 +955,15 @@
             try { savedState = JSON.parse(savedRaw); } catch(e){}
         }
 
-        // Check if old default subjects need fallback if no selection and no API
-        if (apiSubjects.length === 0) {
-            if (!dentGpaSelection) {
-                apiSubjects = [
-                    { id: "od", name: "تشخيص الفم", hours: 2 },
-                    { id: "gp", name: "علم الأمراض العام", hours: 3 },
-                    { id: "abm", name: "مواد طب الأسنان المتقدمة", hours: 2 },
-                    { id: "omi", name: "الأحياء الدقيقة", hours: 3 },
-                    { id: "dph", name: "الصحة العامة", hours: 1 }
-                ];
-            }
+        // Fallback demo subjects if no selection and no API
+        if (apiSubjects.length === 0 && !dentGpaSelection) {
+            apiSubjects = [
+                { id: "od", name: "تشخيص الفم | Oral Diagnosis", hours: 2 },
+                { id: "gp", name: "علم الأمراض العام | General Pathology", hours: 3 },
+                { id: "abm", name: "مواد طب الأسنان المتقدمة | Biomaterials", hours: 2 },
+                { id: "omi", name: "الأحياء الدقيقة | Microbiology", hours: 3 },
+                { id: "dph", name: "الصحة العامة | Public Health", hours: 1 }
+            ];
         }
 
         // Map API subjects to local state
@@ -619,18 +990,14 @@
             let restoredGrade = "";
             let restoredMarks = "";
 
-            if (savedState) {
-                if (savedState.grades) {
-                    const savedItem = savedState.grades[sub.id || idx];
-                    if (savedItem) {
-                        if (savedItem.grade !== undefined) restoredGrade = savedItem.grade;
-                        if (savedItem.marks !== undefined) restoredMarks = savedItem.marks;
-                        if (savedItem.hours !== undefined) {
-                            const sh = parseFloat(savedItem.hours);
-                            if (!isNaN(sh)) {
-                                if (sh > 0) restoredHours = sh;
-                            }
-                        }
+            if (savedState && savedState.grades) {
+                const savedItem = savedState.grades[sub.id || idx];
+                if (savedItem) {
+                    if (savedItem.grade !== undefined) restoredGrade = savedItem.grade;
+                    if (savedItem.marks !== undefined) restoredMarks = savedItem.marks;
+                    if (savedItem.hours !== undefined) {
+                        const sh = parseFloat(savedItem.hours);
+                        if (!isNaN(sh) && sh > 0) restoredHours = sh;
                     }
                 }
             }
@@ -648,20 +1015,18 @@
 
         // Restore custom subjects if saved
         if (savedState) {
-            if (savedState.customSubjects) {
-                if (Array.isArray(savedState.customSubjects)) {
-                    savedState.customSubjects.forEach(cSub => {
-                        dentGpaSubjects.push({
-                            id: cSub.id || `custom_${Date.now()}_${Math.random()}`,
-                            name: cSub.name || 'مادة إضافية',
-                            hours: parseFloat(cSub.hours) || 2,
-                            isMissingHours: false,
-                            isCustom: true,
-                            grade: cSub.grade || '',
-                            marks: cSub.marks || ''
-                        });
+            if (savedState.customSubjects && Array.isArray(savedState.customSubjects)) {
+                savedState.customSubjects.forEach(cSub => {
+                    dentGpaSubjects.push({
+                        id: cSub.id || `custom_${Date.now()}_${Math.random()}`,
+                        name: cSub.name || 'مادة إضافية',
+                        hours: parseFloat(cSub.hours) || 2,
+                        isMissingHours: false,
+                        isCustom: true,
+                        grade: cSub.grade || '',
+                        marks: cSub.marks || ''
                     });
-                }
+                });
             }
 
             if (savedState.prevHours) {
@@ -688,7 +1053,7 @@
 
         if (dentGpaSubjects.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; color: #9ca3af; padding: 18px; font-size: 0.85rem;">
+                <div style="text-align: center; color: #9ca3af; padding: 22px 14px; font-size: 0.85rem; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
                     لا توجد مواد مسجلة لهذا الفصل حتى الآن.<br>
                     يمكنك إضافة مواد يدوياً باستخدام الزر أدناه.
                 </div>
@@ -699,18 +1064,16 @@
         let html = '';
         dentGpaSubjects.forEach((sub, idx) => {
             let hasWarning = false;
-            if (sub.isMissingHours) {
-                if (sub.hours <= 0) {
-                    hasWarning = true;
-                }
+            if (sub.isMissingHours && sub.hours <= 0) {
+                hasWarning = true;
             }
-            const warningBadge = hasWarning ? `<span style="color: #9ca3af; font-size: 0.68rem; display: block;">تحديد الساعات</span>` : '';
-            const hoursClass = hasWarning ? 'gpa-hours-input missing-warning' : 'gpa-hours-input';
+            const warningBadge = hasWarning ? `<span class="gpa-hours-warning">حدد الساعات</span>` : '';
+            const hoursWrapperClass = hasWarning ? 'gpa-hours-wrapper missing-warning' : 'gpa-hours-wrapper';
 
             let gradeInputHtml = '';
             if (dentGpaGradeMode === 'letter') {
                 gradeInputHtml = `
-                    <select class="gpa-grade-select" onchange="updateSubjectGrade(${idx}, this.value)">
+                    <select class="gpa-grade-select" onchange="updateSubjectGrade(${idx}, this.value)" aria-label="تقدير المادة">
                         <option value="" ${sub.grade === '' ? 'selected' : ''}>--</option>
                         <option value="A+" ${sub.grade === 'A+' ? 'selected' : ''}>A+</option>
                         <option value="A" ${sub.grade === 'A' ? 'selected' : ''}>A</option>
@@ -725,27 +1088,37 @@
                 `;
             } else {
                 gradeInputHtml = `
-                    <input type="number" class="gpa-marks-input" min="0" max="100" value="${sub.marks !== undefined ? sub.marks : ''}" placeholder="/100" oninput="updateSubjectMarks(${idx}, this.value)">
+                    <input type="number" class="gpa-marks-input" min="0" max="100" value="${sub.marks !== undefined ? sub.marks : ''}" placeholder="/100" oninput="updateSubjectMarks(${idx}, this.value)" aria-label="درجة المادة من 100">
                 `;
             }
 
-            const deleteBtn = `<button type="button" onclick="removeSubjectRow(${idx})" title="حذف المادة" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #9ca3af; border-radius: 6px; width: 26px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; padding: 0;">×</button>`;
+            const deleteBtn = `<button type="button" class="gpa-btn-del" onclick="removeSubjectRow(${idx})" title="حذف المادة" aria-label="حذف المادة">×</button>`;
 
             const safeSubName = String(sub.name || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+
             html += `
-                <div class="gpa-subject-row">
-                    <div class="gpa-subject-info">
-                        ${sub.isCustom ? `<input type="text" value="${safeSubName}" onchange="updateSubjectName(${idx}, this.value)" style="width: 100%; font-size: 0.82rem; padding: 4px 6px; height: 32px;" placeholder="اسم المادة">` : `<h4 class="gpa-subject-name" title="${safeSubName}">${safeSubName}</h4>`}
-                        ${warningBadge}
+                <div class="gpa-subject-item">
+                    <div class="gpa-subject-top-row">
+                        <div class="gpa-subject-info">
+                            ${sub.isCustom ? `<input type="text" value="${safeSubName}" onchange="updateSubjectName(${idx}, this.value)" class="gpa-custom-name-input" placeholder="اسم المادة">` : `<h4 class="gpa-subject-name" title="${safeSubName}" dir="auto">${safeSubName}</h4>`}
+                            ${warningBadge}
+                        </div>
+                        <div class="gpa-mobile-del-wrapper">
+                            ${deleteBtn}
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 3px;">
-                        <input type="number" min="1" max="12" class="${hoursClass}" value="${sub.hours > 0 ? sub.hours : ''}" placeholder="ساعات" oninput="updateSubjectHours(${idx}, this.value)" title="عدد الساعات المعتمدة">
-                        <span style="font-size: 0.72rem; color: #9ca3af;">س</span>
+                    <div class="gpa-subject-controls">
+                        <div class="${hoursWrapperClass}" title="عدد الساعات المعتمدة">
+                            <input type="number" min="1" max="12" class="gpa-hours-input" value="${sub.hours > 0 ? sub.hours : ''}" placeholder="0" oninput="updateSubjectHours(${idx}, this.value)" aria-label="ساعات المادة">
+                            <span class="gpa-hours-label">ساعات</span>
+                        </div>
+                        <div class="gpa-grade-wrapper">
+                            ${gradeInputHtml}
+                        </div>
+                        <div class="gpa-desktop-del-wrapper">
+                            ${deleteBtn}
+                        </div>
                     </div>
-                    <div>
-                        ${gradeInputHtml}
-                    </div>
-                    ${deleteBtn}
                 </div>
             `;
         });
@@ -758,18 +1131,12 @@
         const btnLetter = document.getElementById('gpa-mode-letter');
         const btnMarks = document.getElementById('gpa-mode-marks');
         if (btnLetter) {
-            if (mode === 'letter') {
-                btnLetter.classList.add('active');
-            } else {
-                btnLetter.classList.remove('active');
-            }
+            if (mode === 'letter') btnLetter.classList.add('active');
+            else btnLetter.classList.remove('active');
         }
         if (btnMarks) {
-            if (mode === 'marks') {
-                btnMarks.classList.add('active');
-            } else {
-                btnMarks.classList.remove('active');
-            }
+            if (mode === 'marks') btnMarks.classList.add('active');
+            else btnMarks.classList.remove('active');
         }
         renderSubjectsTable();
     }
@@ -832,24 +1199,22 @@
         dentGpaSubjects.forEach(sub => {
             const hrs = parseLocalNum(sub.hours);
             const pts = dentGradePoints5[sub.grade] !== undefined ? dentGradePoints5[sub.grade] : 0;
-            if (hrs > 0) {
-                if (sub.grade) {
-                    semesterPoints += (pts * hrs);
-                    semesterCredits += hrs;
-                }
+            if (hrs > 0 && sub.grade) {
+                semesterPoints += (pts * hrs);
+                semesterCredits += hrs;
             }
         });
 
-        // Compute Semester Total Hours (all listed courses with assigned hours)
+        // Compute Semester Total Hours
         let totalCurrentTermHours = 0;
         dentGpaSubjects.forEach(sub => {
             const h = parseLocalNum(sub.hours);
             if (h > 0) totalCurrentTermHours += h;
         });
 
-        const currentTermHeader = document.getElementById('current-term-hours-text');
-        if (currentTermHeader) {
-            currentTermHeader.innerText = `مواد الفصل الحالي (${totalCurrentTermHours} ساعة)`;
+        const currentTermBadge = document.getElementById('current-term-hours-badge');
+        if (currentTermBadge) {
+            currentTermBadge.innerText = `${totalCurrentTermHours} ساعة`;
         }
 
         const semesterGPA = semesterCredits > 0 ? (semesterPoints / semesterCredits) : 0;
@@ -876,6 +1241,17 @@
             if (cumGpaEl) cumGpaEl.innerText = "0.00";
         }
 
+        // Update Academic Standing Badge
+        const standingEl = document.getElementById('gpa-standing-badge');
+        if (standingEl) {
+            const relevantGPA = cumulativeGPA > 0 ? cumulativeGPA : semesterGPA;
+            const standing = getAcademicStanding(relevantGPA);
+            standingEl.innerText = standing.text;
+            standingEl.style.color = standing.color;
+            standingEl.style.backgroundColor = standing.bg;
+            standingEl.style.border = `1px solid ${standing.border}`;
+        }
+
         calculateTargetGpaEstimate(prevHours, prevGPA, totalCurrentTermHours, cumulativeGPA);
 
         if (save) saveState();
@@ -884,17 +1260,19 @@
     function calculateTargetGpaEstimate(prevHours, prevGPA, termHours, currentCumGpa) {
         const targetInput = document.getElementById('target-gpa');
         const resultEl = document.getElementById('target-gpa-result');
-        if (!targetInput) return;
-        if (!resultEl) return;
+        if (!targetInput || !resultEl) return;
 
         const targetGpa = parseLocalNum(targetInput.value);
         if (isNaN(targetGpa) || targetGpa <= 0) {
             resultEl.innerHTML = '';
+            resultEl.style.display = 'none';
             return;
         }
 
+        resultEl.style.display = 'block';
+
         if (termHours <= 0) {
-            resultEl.innerHTML = '<span style="color: #9ca3af;">الرجاء تحديد ساعات المواد للفصل الحالي أولاً.</span>';
+            resultEl.innerHTML = '<div class="gpa-target-alert info">الرجاء تحديد ساعات المواد للفصل الحالي أولاً.</div>';
             return;
         }
 
@@ -902,9 +1280,9 @@
         const reqSemGPA = (targetGpa * totalHours - (prevHours * prevGPA)) / termHours;
 
         if (reqSemGPA > 5.0) {
-            resultEl.innerHTML = `<span style="color: #ef4444;">تحتاج معدل فصلي <strong>${reqSemGPA.toFixed(2)}</strong> (أعلى من 5.0 - غير ممكن في فصل واحد).</span>`;
+            resultEl.innerHTML = `<div class="gpa-target-alert danger">تحتاج إلى معدل فصلي <strong>${reqSemGPA.toFixed(2)}</strong> (أعلى من 5.0 — غير ممكن في فصل واحد).</div>`;
         } else if (reqSemGPA <= 0) {
-            resultEl.innerHTML = `<span style="color: #e2e8f0;">هدف المكتسب محقق بالكامل بفضل معدلك السابق!</span>`;
+            resultEl.innerHTML = `<div class="gpa-target-alert success">🎉 هدفك محقق بالفعل بفضل معدلك السابق!</div>`;
         } else {
             let letterHint = "A+";
             if (reqSemGPA <= 2.0) letterHint = "D";
@@ -915,7 +1293,7 @@
             else if (reqSemGPA <= 4.5) letterHint = "B+";
             else if (reqSemGPA <= 4.75) letterHint = "A";
 
-            resultEl.innerHTML = `تحتاج إلى معدل فصلي <strong style="color: #f8fafc; font-size: 1.05rem;">${reqSemGPA.toFixed(2)}</strong> (متوسط تقدير <strong>${letterHint}</strong>) لتحقيق هدفك.`;
+            resultEl.innerHTML = `<div class="gpa-target-alert normal">تحتاج إلى معدل فصلي <strong style="color: #38bdf8; font-size: 1.02rem;">${reqSemGPA.toFixed(2)}</strong> (متوسط تقدير <strong>${letterHint}</strong>) لتحقيق هدفك.</div>`;
         }
     }
 
