@@ -1253,7 +1253,22 @@ function renderClassesWidget() {
             border: 1px solid rgba(255,255,255,0.06);
         }
         .dent-class-card.active-now {
-            box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.4), 0 4px 20px rgba(52, 211, 153, 0.2);
+            background: rgba(255, 255, 255, 0.14) !important;
+            border-color: rgba(255, 255, 255, 0.35) !important;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25), 0 4px 20px rgba(0, 0, 0, 0.35);
+        }
+        .dent-class-card.active-now .dent-class-subject {
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .dent-class-card.active-now .dent-class-type {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .dent-class-card.active-now .dent-class-time {
+            color: #ffffff;
+            font-weight: 600;
         }
         .dent-class-info {
             display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -1264,14 +1279,6 @@ function renderClassesWidget() {
         .dent-class-type {
             font-size: 0.72rem; color: #94a3b8; background: rgba(255,255,255,0.06);
             padding: 2px 8px; border-radius: 5px; font-weight: 500;
-        }
-        .dent-class-now-pill {
-            background: #10b981; color: #ffffff; font-size: 0.68rem; font-weight: 700;
-            padding: 2px 7px; border-radius: 4px; animation: dentPulse 2s infinite;
-        }
-        @keyframes dentPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
         }
         .dent-class-time {
             font-size: 0.82rem; color: #cbd5e1; direction: ltr; font-weight: 500; font-family: monospace;
@@ -1325,7 +1332,6 @@ function renderClassesWidget() {
                 <div class="dent-class-info">
                     <h3 class="dent-class-subject">${dentEscapeHtml(c.subject)}</h3>
                     <span class="dent-class-type">${dentEscapeHtml(c.type)}</span>
-                    ${isActive ? `<span class="dent-class-now-pill">الآن</span>` : ''}
                 </div>
                 <div class="dent-class-time">${formatTime(c.start_time)} - ${formatTime(c.end_time)}</div>
             </div>`;
