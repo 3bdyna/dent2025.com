@@ -65,7 +65,7 @@
     }
 
     /* --------------------------------------------------
-       2. MODAL OVERLAY & CONTAINER
+       2. MODAL OVERLAY & CONTAINER (Body-attached, Centered)
        -------------------------------------------------- */
     .dent-absence-overlay {
         position: fixed !important;
@@ -73,18 +73,18 @@
         left: 0 !important;
         right: 0 !important;
         bottom: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
+        width: 100vw !important;
+        height: 100vh !important;
         background: rgba(0, 0, 0, 0.82) !important;
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
-        z-index: 999999 !important;
+        z-index: 9999999 !important;
         display: none !important;
         justify-content: center;
         align-items: center;
         opacity: 0;
         transition: opacity 0.25s ease;
-        padding: 12px;
+        padding: 16px;
         box-sizing: border-box;
         margin: 0 !important;
     }
@@ -96,19 +96,27 @@
         background: #18181b;
         color: #f8fafc;
         font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
-        padding: 22px;
+        padding: 24px;
         border-radius: 18px;
         direction: rtl;
         width: 100%;
         max-width: 520px;
-        max-height: 90vh;
+        max-height: 88vh;
         overflow-y: auto;
+        /* Completely Hide Scrollbars across all browsers */
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
         position: relative;
         transform: translateY(20px);
         transition: transform 0.25s ease;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75);
         border: 1px solid rgba(255, 255, 255, 0.12);
         box-sizing: border-box;
+    }
+    .dent-absence-modal::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
     }
     .dent-absence-overlay.active .dent-absence-modal {
         transform: translateY(0);
@@ -140,11 +148,12 @@
 
     /* Header */
     .dent-absence-header {
-        margin-bottom: 14px;
+        margin-bottom: 16px;
+        padding-left: 36px; /* Avoid overlapping close button */
     }
     .dent-absence-title {
         margin: 0;
-        font-size: 1.12rem;
+        font-size: 1.15rem;
         font-weight: 700;
         color: #f8fafc;
     }
@@ -163,7 +172,7 @@
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 10px;
         padding: 8px 12px;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
         font-size: 0.82rem;
         color: #cbd5e1;
         gap: 8px;
@@ -192,43 +201,41 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
     }
     .dent-absence-sub-name {
         margin: 0;
-        font-size: 0.9rem;
+        font-size: 0.92rem;
         font-weight: 600;
         color: #f8fafc;
-        flex: 1;
-        min-width: 0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        line-height: 1.35;
+        word-break: break-word;
     }
     .dent-absence-sub-meta {
-        font-size: 0.73rem;
+        font-size: 0.74rem;
         color: #94a3b8;
-        margin-top: 3px;
+        margin-top: 4px;
+        line-height: 1.4;
     }
 
     /* Stepper Controls */
     .dent-absence-stepper {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 5px;
         flex-shrink: 0;
     }
     .dent-step-btn {
         background: rgba(255, 255, 255, 0.07);
         border: 1px solid rgba(255, 255, 255, 0.12);
         color: #f8fafc;
-        width: 30px;
-        height: 30px;
+        width: 32px;
+        height: 32px;
         border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1rem;
+        font-size: 1.1rem;
         cursor: pointer;
         transition: all 0.15s;
         user-select: none;
@@ -236,15 +243,18 @@
     .dent-step-btn:hover {
         background: rgba(255, 255, 255, 0.16);
     }
+    .dent-step-btn:active {
+        transform: scale(0.95);
+    }
     .dent-step-input {
-        width: 42px;
-        height: 30px;
+        width: 44px;
+        height: 32px;
         text-align: center;
         background: #1e1e1e;
         border: 1px solid rgba(255, 255, 255, 0.12);
         color: #f8fafc;
         border-radius: 8px;
-        font-size: 0.88rem;
+        font-size: 0.92rem;
         font-weight: 600;
         font-family: inherit;
         -moz-appearance: textfield;
@@ -276,11 +286,13 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 0.74rem;
+        font-size: 0.75rem;
         color: #94a3b8;
+        gap: 6px;
     }
     .dent-absence-status-text {
         font-weight: 500;
+        color: #e2e8f0;
     }
 
     /* Collapsible Quick Calc Drawer */
@@ -294,7 +306,7 @@
         font-size: 0.78rem;
         font-family: inherit;
         cursor: pointer;
-        margin-top: 10px;
+        margin-top: 12px;
         transition: all 0.2s;
     }
     .dent-quick-toggle:hover {
@@ -406,10 +418,13 @@
     function openAbsenceModal() {
         const modal = document.getElementById('dentAbsenceModal');
         if (modal) {
+            // Attach modal to body so it escapes Astra's layout column container
+            if (modal.parentNode !== document.body) {
+                document.body.appendChild(modal);
+            }
             modal.style.setProperty('display', 'flex', 'important');
-            setTimeout(function() {
-                modal.classList.add('active');
-            }, 10);
+            void modal.offsetWidth; // Force layout recalculation
+            modal.classList.add('active');
             document.body.style.overflow = 'hidden';
             initAbsenceEngine();
         }
@@ -626,8 +641,6 @@
             const absences = Math.max(0, sub.absences || 0);
             const percentage = ((absences / totalSessions) * 100);
             const dnThresholdCount = Math.floor(totalSessions * 0.25);
-            const warn1Count = Math.ceil(totalSessions * 0.10);
-            const warn2Count = Math.ceil(totalSessions * 0.20);
 
             let statusLabel = '';
             let remainingText = '';
@@ -652,13 +665,13 @@
             const clampedProgress = Math.min(100, percentage);
             const safeName = String(sub.name || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
 
-            const deleteBtn = sub.isCustom ? `<button type="button" onclick="removeAbsenceSubject(${idx})" title="حذف" style="background: transparent; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem; padding: 0 4px;">×</button>` : '';
+            const deleteBtn = sub.isCustom ? `<button type="button" onclick="removeAbsenceSubject(${idx})" title="حذف" style="background: transparent; border: none; color: #9ca3af; cursor: pointer; font-size: 1.1rem; padding: 0 4px;">×</button>` : '';
 
             html += `
                 <div class="dent-absence-card">
                     <div class="dent-absence-card-top">
                         <div style="flex: 1; min-width: 0;">
-                            ${sub.isCustom ? `<input type="text" value="${safeName}" onchange="updateAbsenceSubName(${idx}, this.value)" style="width: 100%; font-size: 0.85rem; padding: 2px 6px; background: #1e1e1e; color: #f8fafc; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;" placeholder="اسم المادة">` : `<h4 class="dent-absence-sub-name" title="${safeName}">${safeName}</h4>`}
+                            ${sub.isCustom ? `<input type="text" value="${safeName}" onchange="updateAbsenceSubName(${idx}, this.value)" style="width: 100%; font-size: 0.88rem; padding: 2px 6px; background: #1e1e1e; color: #f8fafc; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;" placeholder="اسم المادة">` : `<h4 class="dent-absence-sub-name" title="${safeName}">${safeName}</h4>`}
                             <div class="dent-absence-sub-meta">
                                 <input type="number" min="1" max="15" value="${sub.weeklySessions}" onchange="updateAbsenceWeeklySessions(${idx}, this.value)" style="width: 28px; background: #18181b; border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.72rem; padding: 1px;"> حصص/أسبوع • الإجمالي: ${totalSessions} • حد الحرمان: ${dnThresholdCount}
                             </div>
