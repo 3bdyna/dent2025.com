@@ -124,7 +124,7 @@ function dentTrack(type, data) {
     }
 })();
 
-document.addEventListener('DOMContentLoaded', () => {
+function dentInitDashboard() {
     const isWelcomePage = window.location.pathname.includes('wolcome') || window.location.pathname.includes('welcome');
     let selectionData = null;
     try {
@@ -152,7 +152,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     loadDashboardData();
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', dentInitDashboard);
+} else {
+    dentInitDashboard();
+}
 
 function loadDashboardData(forceRefresh = false) {
     const selectionData = localStorage.getItem('dent2025_selection');
@@ -179,6 +185,7 @@ function loadDashboardData(forceRefresh = false) {
 
     renderLogo(selection);
     loadAnnouncements(selection);
+    loadClassesData(selection);
 
     const cacheKey = `dent2025_dashboard_data_${selection.specialty}_${selection.year}_${selection.semester}`;
     const cacheBuster = forceRefresh ? `&nocache=1&_t=${Date.now()}` : '';
@@ -1158,7 +1165,7 @@ function updateClassHighlights() {
 
     const savedGroup = localStorage.getItem('dent2025_selected_group') || 'المجموعة A';
     const matches = currentClassesData
-        .filter(c => c.subject === selectedSub && c.group_name === savedGroup)
+        .filter(c => c && c.subject === selectedSub && isClassInGroup(c, savedGroup))
         .sort((a, b) => {
             const dayOrder = { "الأحد": 1, "الإثنين": 2, "الثلاثاء": 3, "الأربعاء": 4, "الخميس": 5 };
             const dDiff = (dayOrder[a.day] || 9) - (dayOrder[b.day] || 9);
@@ -1188,6 +1195,15 @@ function updateClassHighlights() {
     if (modalBar) modalBar.innerHTML = barHtml;
 }
 
+// Helper: Check if a class belongs to the specified group (inclusive of universal batch classes)
+function isClassInGroup(c, targetGroup) {
+    if (!c) return false;
+    const g = (c.group_name || '').trim();
+    if (!g || g === 'الدفعة كاملة' || g === 'الكل' || g === 'كل الدفعة') return true;
+    if (!targetGroup) return true;
+    return g === targetGroup.trim();
+}
+
 function renderClassesWidget() {
     let container = document.getElementById('dynamic-classes-container');
     if (!container) {
@@ -1201,8 +1217,9 @@ function renderClassesWidget() {
         }
     }
     
-    let groups = [...new Set(currentClassesData.map(c => (c && c.group_name ? String(c.group_name).trim() : '')))].filter(Boolean);
-    if (groups.length === 0) groups = ["المجموعة A"];
+    let rawGroups = [...new Set(currentClassesData.map(c => (c && c.group_name ? String(c.group_name).trim() : '')))].filter(Boolean);
+    let specificGroups = rawGroups.filter(g => g !== 'الدفعة كاملة' && g !== 'الكل' && g !== 'كل الدفعة');
+    let groups = specificGroups.length > 0 ? specificGroups : (rawGroups.length > 0 ? rawGroups : ["المجموعة A"]);
     
     let savedGroup = localStorage.getItem('dent2025_selected_group') || groups[0];
     if (!groups.includes(savedGroup)) savedGroup = groups[0];
@@ -1234,7 +1251,7 @@ function renderClassesWidget() {
             font-family: inherit; outline: none; cursor: pointer; transition: border-color 0.2s;
         }
         .dent-classes-group-select:focus {
-            border-color: #38bdf8;
+            border-color: rgba(255,255,255,0.35);
         }
         .dent-classes-day-title {
             color: #94a3b8; font-size: 0.9rem; font-weight: 600; margin-bottom: 14px;
@@ -1242,36 +1259,37 @@ function renderClassesWidget() {
         .dent-class-item {
             cursor: pointer;
             user-select: none;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
         }
         .dent-class-item:hover {
             transform: translateX(-3px);
-            border-color: rgba(255, 255, 255, 0.18) !important;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border-color: rgba(255, 255, 255, 0.22) !important;
+            background: rgba(255, 255, 255, 0.08) !important;
         }
         .dent-class-item.dent-spotlight-active {
-            background: rgba(14, 165, 233, 0.12) !important;
-            border-color: #38bdf8 !important;
-            box-shadow: 0 0 0 1px #38bdf8, 0 4px 20px rgba(56, 189, 248, 0.25) !important;
+            background: rgba(255, 255, 255, 0.12) !important;
+            border-color: rgba(255, 255, 255, 0.4) !important;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3), 0 6px 20px rgba(0, 0, 0, 0.4) !important;
             transform: scale(1.015) !important;
             opacity: 1 !important;
             filter: none !important;
         }
         .dent-class-item.dent-spotlight-active .dent-class-subject,
-        .dent-class-item.dent-spotlight-active .dent-week-sub-title {
-            color: #38bdf8 !important;
-            font-weight: 700;
+        .dent-class-item.dent-spotlight-active .dent-week-sub-title span:first-child {
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
         }
         .dent-class-item.dent-spotlight-dimmed {
-            opacity: 0.28 !important;
-            filter: grayscale(0.5) !important;
+            opacity: 0.18 !important;
+            filter: grayscale(0.9) !important;
             transform: scale(0.99) !important;
         }
         .dent-class-card {
             display: flex; justify-content: space-between; align-items: center;
             padding: 12px 16px; border-radius: 10px; margin-bottom: 10px;
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.25);
             border: 1px solid rgba(255,255,255,0.06);
         }
         .dent-class-card.active-now {
@@ -1308,10 +1326,10 @@ function renderClassesWidget() {
             background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25);
         }
 
-        /* Spotlight Top Banner / Chip */
+        /* Spotlight Top Banner / Chip - Neutral Modern Design */
         .dent-spotlight-bar {
-            background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(56, 189, 248, 0.05));
-            border: 1px solid rgba(56, 189, 248, 0.35);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 12px;
             padding: 10px 14px;
             margin-bottom: 16px;
@@ -1334,7 +1352,7 @@ function renderClassesWidget() {
         .dent-spotlight-bar-title {
             font-size: 0.92rem;
             font-weight: 700;
-            color: #38bdf8;
+            color: #ffffff;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -1386,7 +1404,7 @@ function renderClassesWidget() {
         <div id="dent-widget-spotlight-container"></div>
     `;
     
-    const todaysClasses = currentClassesData.filter(c => c.day === daysAr[todayIndex] && c.group_name === savedGroup);
+    const todaysClasses = currentClassesData.filter(c => c.day === daysAr[todayIndex] && isClassInGroup(c, savedGroup));
     
     if (todaysClasses.length === 0) {
         html += `<div style="color:#94a3b8; font-size:0.85rem; text-align:center; padding: 15px;">لا توجد محاضرات في هذا اليوم. إذا كان هناك نقص، يرجى التواصل مع الليدر.</div>`;
@@ -1439,7 +1457,9 @@ function buildClassesModals(group) {
         document.body.appendChild(mc);
     }
     const daysAr = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس"];
-    const weekClasses = currentClassesData.filter(c => c.group_name === group);
+    
+    // Inclusive filtering: match group or universal (الدفعة كاملة / empty)
+    const weekClasses = currentClassesData.filter(c => isClassInGroup(c, group));
     let weekHtml = '';
     daysAr.forEach(day => {
         let dayClasses = weekClasses.filter(c => c.day === day).sort((a,b) => String(a.start_time || '').localeCompare(String(b.start_time || '')));
@@ -1462,7 +1482,17 @@ function buildClassesModals(group) {
             weekHtml += `</div>`;
         }
     });
-    if (!weekHtml) weekHtml = `<div style="text-align:center; color:#9ca3af; padding: 20px 0;">لا يوجد فصول مسجلة لهذه المجموعة بعد.</div>`;
+    
+    if (!weekHtml) {
+        if (currentClassesData && currentClassesData.length > 0) {
+            weekHtml = `<div style="text-align:center; color:#9ca3af; padding: 25px 10px;">
+                <p style="margin-bottom: 10px;">لا توجد محاضرات مسجلة تحت (${group}).</p>
+                <p style="font-size: 0.8rem; color: #64748b;">توجد محاضرات مسجلة لمجموعات أخرى، يمكنك تغيير المجموعة من القائمة بالأعلى.</p>
+            </div>`;
+        } else {
+            weekHtml = `<div style="text-align:center; color:#9ca3af; padding: 25px 0;">لا يوجد جدول محاضرات مسجل لهذا الفصل بعد.</div>`;
+        }
+    }
     
     let adminListHtml = '';
     if (isAdmin()) {
