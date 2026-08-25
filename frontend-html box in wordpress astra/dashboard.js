@@ -1117,6 +1117,50 @@ function loadClassesData(selection) {
         }).catch(err => console.error("Classes API Error:", err));
 }
 
+// 16-Color Curated Muted Dark-Mode Palette for Weekly Schedule Subjects
+function dentGetSubjectColor(subject) {
+    if (!subject) return {
+        accent: '#94a3b8',
+        bg: 'rgba(148, 163, 184, 0.08)',
+        border: 'rgba(148, 163, 184, 0.65)',
+        text: '#cbd5e1'
+    };
+
+    const PALETTE = [
+        { accent: '#34d399', bg: 'rgba(52, 211, 153, 0.08)', border: 'rgba(52, 211, 153, 0.65)', text: '#6ee7b7' },  // Sage Green
+        { accent: '#60a5fa', bg: 'rgba(96, 165, 250, 0.08)', border: 'rgba(96, 165, 250, 0.65)', text: '#93c5fd' },  // Slate Blue
+        { accent: '#a78bfa', bg: 'rgba(167, 139, 250, 0.08)', border: 'rgba(167, 139, 250, 0.65)', text: '#c4b5fd' }, // Soft Lavender
+        { accent: '#fbbf24', bg: 'rgba(251, 191, 36, 0.08)', border: 'rgba(251, 191, 36, 0.65)', text: '#fcd34d' },  // Warm Amber
+        { accent: '#f87171', bg: 'rgba(248, 113, 113, 0.08)', border: 'rgba(248, 113, 113, 0.65)', text: '#fca5a5' }, // Dusty Rose
+        { accent: '#2dd4bf', bg: 'rgba(45, 212, 191, 0.08)', border: 'rgba(45, 212, 191, 0.65)', text: '#5eead4' },  // Soft Teal
+        { accent: '#f472b6', bg: 'rgba(244, 114, 182, 0.08)', border: 'rgba(244, 114, 182, 0.65)', text: '#f9a8d4' }, // Muted Orchid
+        { accent: '#fb923c', bg: 'rgba(251, 146, 60, 0.08)', border: 'rgba(251, 146, 60, 0.65)', text: '#fdba74' },  // Terracotta
+        { accent: '#38bdf8', bg: 'rgba(56, 189, 248, 0.08)', border: 'rgba(56, 189, 248, 0.65)', text: '#7dd3fc' },  // Sky Cyan
+        { accent: '#818cf8', bg: 'rgba(129, 140, 248, 0.08)', border: 'rgba(129, 140, 248, 0.65)', text: '#a5b4fc' }, // Periwinkle Indigo
+        { accent: '#10b981', bg: 'rgba(16, 185, 129, 0.08)', border: 'rgba(16, 185, 129, 0.65)', text: '#6ee7b7' },  // Emerald
+        { accent: '#c084fc', bg: 'rgba(192, 132, 252, 0.08)', border: 'rgba(192, 132, 252, 0.65)', text: '#d8b4fe' }, // Violet
+        { accent: '#e879f9', bg: 'rgba(232, 121, 249, 0.08)', border: 'rgba(232, 121, 249, 0.65)', text: '#f0abfc' }, // Fuchsia
+        { accent: '#a3e635', bg: 'rgba(163, 230, 53, 0.08)', border: 'rgba(163, 230, 53, 0.65)', text: '#bef264' },  // Olive Lime
+        { accent: '#eab308', bg: 'rgba(234, 179, 8, 0.08)', border: 'rgba(234, 179, 8, 0.65)', text: '#fde047' },   // Bronze Gold
+        { accent: '#06b6d4', bg: 'rgba(6, 182, 212, 0.08)', border: 'rgba(6, 182, 212, 0.65)', text: '#67e8f9' }    // Cyan Marine
+    ];
+
+    // Normalize: strip Arabic diacritics and standardize Alef/Yaa variations for reliable hashing
+    const norm = String(subject).trim().toLowerCase()
+        .replace(/[\u064B-\u065F]/g, '')
+        .replace(/[أإآ]/g, 'ا')
+        .replace(/ة/g, 'ه')
+        .replace(/ى/g, 'ي');
+    
+    let hash = 5381;
+    for (let i = 0; i < norm.length; i++) {
+        hash = ((hash << 5) + hash) + norm.charCodeAt(i);
+        hash |= 0;
+    }
+    const index = Math.abs(hash) % PALETTE.length;
+    return PALETTE[index];
+}
+
 function renderClassesWidget() {
     let container = document.getElementById('dynamic-classes-container');
     if (!container) {
@@ -1143,6 +1187,78 @@ function renderClassesWidget() {
     if (todayIndex > 4) todayIndex = 0; 
     
     let html = `
+    <style>
+        .dent-classes-widget {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px; padding: 22px; margin-bottom: 25px;
+            direction: rtl; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        }
+        .dent-classes-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+        }
+        .dent-classes-title {
+            font-size: 1.15rem; font-weight: 700; color: #f8fafc; margin: 0;
+        }
+        .dent-classes-group-select {
+            background: #18181b; border: 1px solid rgba(255,255,255,0.15);
+            color: #f8fafc; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem;
+            font-family: inherit; outline: none; cursor: pointer; transition: border-color 0.2s;
+        }
+        .dent-classes-group-select:focus {
+            border-color: #60a5fa;
+        }
+        .dent-classes-day-title {
+            color: #94a3b8; font-size: 0.9rem; font-weight: 600; margin-bottom: 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .dent-class-card {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 16px; border-radius: 10px; margin-bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .dent-class-card:hover {
+            transform: translateX(-3px);
+            border-color: rgba(255,255,255,0.18);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .dent-class-card.active-now {
+            box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.4), 0 4px 20px rgba(52, 211, 153, 0.2);
+        }
+        .dent-class-info {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        }
+        .dent-class-subject {
+            font-size: 0.95rem; font-weight: 600; margin: 0;
+        }
+        .dent-class-type {
+            font-size: 0.72rem; color: #94a3b8; background: rgba(255,255,255,0.06);
+            padding: 2px 8px; border-radius: 5px; font-weight: 500;
+        }
+        .dent-class-now-pill {
+            background: #10b981; color: #ffffff; font-size: 0.68rem; font-weight: 700;
+            padding: 2px 7px; border-radius: 4px; animation: dentPulse 2s infinite;
+        }
+        @keyframes dentPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .dent-class-time {
+            font-size: 0.82rem; color: #cbd5e1; direction: ltr; font-weight: 500; font-family: monospace;
+        }
+        .dent-classes-btn {
+            width: 100%; margin-top: 14px; background: rgba(255,255,255,0.05); color: #f8fafc;
+            border: 1px solid rgba(255,255,255,0.12); padding: 10px 16px; border-radius: 10px;
+            font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+            font-family: inherit; text-align: center;
+        }
+        .dent-classes-btn:hover {
+            background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25);
+        }
+    </style>
     <div class="dent-classes-widget">
         <div class="dent-classes-header">
             <h2 class="dent-classes-title">الفصول (Classes)</h2>
@@ -1166,6 +1282,7 @@ function renderClassesWidget() {
         const currentMins = now.getHours() * 60 + now.getMinutes();
         
         todaysClasses.forEach(c => {
+            const col = dentGetSubjectColor(c.subject);
             let isActive = false;
             if (new Date().getDay() === todayIndex) {
                 if (c.start_time && c.end_time && c.start_time.includes(':') && c.end_time.includes(':')) {
@@ -1177,10 +1294,11 @@ function renderClassesWidget() {
                 }
             }
             html += `
-            <div class="dent-class-card ${isActive ? 'active-now' : ''}">
+            <div class="dent-class-card ${isActive ? 'active-now' : ''}" style="border-right: 4px solid ${col.accent}; background: ${col.bg};">
                 <div class="dent-class-info">
-                    <h3 class="dent-class-subject">${c.subject}</h3>
-                    <span class="dent-class-type">${c.type}</span>
+                    <h3 class="dent-class-subject" style="color: ${col.text};">${dentEscapeHtml(c.subject)}</h3>
+                    <span class="dent-class-type">${dentEscapeHtml(c.type)}</span>
+                    ${isActive ? `<span class="dent-class-now-pill">الآن</span>` : ''}
                 </div>
                 <div class="dent-class-time">${formatTime(c.start_time)} - ${formatTime(c.end_time)}</div>
             </div>`;
@@ -1211,18 +1329,25 @@ function buildClassesModals(group) {
     daysAr.forEach(day => {
         let dayClasses = weekClasses.filter(c => c.day === day).sort((a,b) => String(a.start_time || '').localeCompare(String(b.start_time || '')));
         if (dayClasses.length > 0) {
-            weekHtml += `<div style="margin-bottom: 15px; text-align: right;">
-                <div style="color: #cbd5e1; font-size: 0.95rem; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">${day}</div>`;
+            weekHtml += `<div style="margin-bottom: 20px; text-align: right;">
+                <div style="color: #cbd5e1; font-size: 0.95rem; font-weight: 700; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>${day}</span>
+                    <span style="font-size: 0.75rem; font-weight: 500; color: #94a3b8;">${dayClasses.length} ${dayClasses.length === 1 ? 'محاضرة' : (dayClasses.length === 2 ? 'محاضرتين' : 'محاضرات')}</span>
+                </div>`;
             dayClasses.forEach(c => {
-                weekHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05);">
-                    <div style="font-size: 0.85rem; color: #f8fafc;">${c.subject} <span style="font-size: 0.7rem; color: #94a3b8;">(${c.type})</span></div>
-                    <div style="font-size: 0.75rem; color: #9ca3af; direction: ltr;">${formatTime(c.start_time)} - ${formatTime(c.end_time)}</div>
+                const col = dentGetSubjectColor(c.subject);
+                weekHtml += `<div style="background: ${col.bg}; padding: 10px 14px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.06); border-right: 4px solid ${col.accent}; transition: transform 0.2s ease;">
+                    <div style="font-size: 0.88rem; font-weight: 600; color: ${col.text}; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span>${dentEscapeHtml(c.subject)}</span>
+                        <span style="font-size: 0.7rem; font-weight: 400; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 4px;">(${dentEscapeHtml(c.type)})</span>
+                    </div>
+                    <div style="font-size: 0.78rem; color: #cbd5e1; direction: ltr; font-weight: 500; font-family: monospace;">${formatTime(c.start_time)} - ${formatTime(c.end_time)}</div>
                 </div>`;
             });
             weekHtml += `</div>`;
         }
     });
-    if (!weekHtml) weekHtml = `<div style="text-align:center; color:#9ca3af;">لا يوجد فصول مسجلة لهذه المجموعة بعد.</div>`;
+    if (!weekHtml) weekHtml = `<div style="text-align:center; color:#9ca3af; padding: 20px 0;">لا يوجد فصول مسجلة لهذه المجموعة بعد.</div>`;
     
     let adminListHtml = '';
     if (isAdmin()) {
