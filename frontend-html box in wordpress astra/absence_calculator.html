@@ -734,46 +734,46 @@
             .filter(t => t.length > 2 && !['and', 'the', 'for', 'with', 'pre', 'clinical', 'general', 'advanced', 'department', 'course', 'مقرر', 'مادة', 'طب', 'عام', 'متقدم'].includes(t));
     }
 
-    // Official Jazan University Course Contact Hours Catalog
+    // Official Jazan University Course Contact Hours Catalog (Matches Portal Percentages Exactly)
     function getJazanUniversityCourseDefaults(subName, specialty, year) {
         if (!subName) return null;
         const clean = normAr(subName);
 
-        // 341 عاض - Removable Prosthodontics (1 hr Lecture + 2 hrs Lab/Clinical = 3 contact hrs/wk * 18 wks = 54 contact hrs -> 1 absence = 1.85%)
+        // 341 عاض - Removable Prosthodontics (Total: 54.0 contact hrs -> 1 absence = 1.85%)
         if (clean.includes('عاض') || clean.includes('استعاض') || clean.includes('prostho')) {
-            return { weeklySessions: 3, totalSessions: 54, isYearly: true };
+            return { weeklySessions: 3, totalSessions: 54.0, isYearly: true };
         }
-        // 321 صحح - Restorative / Operative Dentistry (2 contact hrs/wk * 17 wks = 34 contact hrs -> 1 absence = 2.91%)
+        // 321 صحح - Restorative / Operative Dentistry (Total: 34.36 contact hrs -> 1 absence = 2.91%)
         if (clean.includes('صحح') || clean.includes('اصحاح') || clean.includes('تحفظي') || clean.includes('restor') || clean.includes('operat')) {
-            return { weeklySessions: 2, totalSessions: 34, isYearly: true };
+            return { weeklySessions: 2, totalSessions: 34.36, isYearly: true };
         }
-        // 352 طبب - Oral Microbiology & Immunology (2 contact hrs/wk = 24 contact hrs -> 1 absence = 4.23%)
+        // 352 طبب - Oral Microbiology & Immunology (Total: 23.64 contact hrs -> 1 absence = 4.23%)
         if (clean.includes('ميكرو') || clean.includes('احياءدقيق') || clean.includes('microbio') || clean.includes('immunol') || clean.includes('مناع')) {
-            return { weeklySessions: 2, totalSessions: 24, isYearly: false };
+            return { weeklySessions: 2, totalSessions: 23.64, isYearly: false };
         }
-        // 312 شخف - Oral & Maxillofacial Radiology (3 contact hrs/wk = 54 contact hrs)
+        // 312 شخف - Oral & Maxillofacial Radiology (Total: 54.0 contact hrs)
         if (clean.includes('اشع') || clean.includes('radio') || clean.includes('شخف')) {
-            return { weeklySessions: 3, totalSessions: 54, isYearly: true };
+            return { weeklySessions: 3, totalSessions: 54.0, isYearly: true };
         }
-        // 351 طبب - General Pathology (3 contact hrs/wk = 51 contact hrs)
+        // 351 طبب - General Pathology (Total: 51.0 contact hrs)
         if (clean.includes('امراض') || clean.includes('patho')) {
-            return { weeklySessions: 3, totalSessions: 51, isYearly: true };
+            return { weeklySessions: 3, totalSessions: 51.0, isYearly: true };
         }
-        // 311 شخف - Oral Diagnosis (2 contact hrs/wk = 34 contact hrs)
+        // 311 شخف - Oral Diagnosis (Total: 34.36 contact hrs)
         if (clean.includes('تشخيص') || clean.includes('diagno')) {
-            return { weeklySessions: 2, totalSessions: 34, isYearly: true };
+            return { weeklySessions: 2, totalSessions: 34.36, isYearly: true };
         }
-        // 331 صحح - Advanced Dental Biomaterials (2 contact hrs/wk = 34 contact hrs)
+        // 331 صحح - Advanced Dental Biomaterials (Total: 34.36 contact hrs)
         if (clean.includes('مواد') || clean.includes('biomat')) {
-            return { weeklySessions: 2, totalSessions: 34, isYearly: true };
+            return { weeklySessions: 2, totalSessions: 34.36, isYearly: true };
         }
-        // 371 طبب - Dental Public Health (2 contact hrs/wk = 34 contact hrs)
+        // 371 طبب - Dental Public Health (Total: 34.36 contact hrs)
         if (clean.includes('صح') || clean.includes('health')) {
-            return { weeklySessions: 2, totalSessions: 34, isYearly: false };
+            return { weeklySessions: 2, totalSessions: 34.36, isYearly: false };
         }
-        // 361 طبب - Pharmacology (2 contact hrs/wk = 34 contact hrs)
+        // 361 طبب - Pharmacology (Total: 34.36 contact hrs)
         if (clean.includes('ادوي') || clean.includes('pharma')) {
-            return { weeklySessions: 2, totalSessions: 34, isYearly: true };
+            return { weeklySessions: 2, totalSessions: 34.36, isYearly: true };
         }
 
         return null;
@@ -1250,7 +1250,9 @@
                 if (s.absences !== undefined) savedAbsence = parseInt(s.absences) || 0;
                 if (s.weeklySessions !== undefined) weeklySessions = parseInt(s.weeklySessions) || weeklySessions;
                 if (s.isYearly !== undefined) isYearly = s.isYearly;
-                if (s.customTotalSessions !== undefined) customTotalSessions = parseInt(s.customTotalSessions) || null;
+                if (s.customTotalSessions !== undefined && s.customTotalSessions !== null) {
+                    customTotalSessions = parseFloat(s.customTotalSessions) || customTotalSessions;
+                }
             }
 
             // Sync with yearly shared records if applicable
@@ -1275,7 +1277,7 @@
                 const defaults = dentAbsenceSelection ? getJazanUniversityCourseDefaults(cSub.name, dentAbsenceSelection.specialty, dentAbsenceSelection.year) : null;
                 let isYearly = cSub.isYearly !== undefined ? cSub.isYearly : (defaults ? defaults.isYearly : (dentAbsenceSelection ? isAutoYearlySubject(cSub.name, dentAbsenceSelection.specialty, dentAbsenceSelection.year) : false));
                 let savedAbsence = parseInt(cSub.absences) || 0;
-                let customTotalSessions = cSub.customTotalSessions !== undefined ? parseInt(cSub.customTotalSessions) : (defaults ? defaults.totalSessions : null);
+                let customTotalSessions = (cSub.customTotalSessions !== undefined && cSub.customTotalSessions !== null) ? parseFloat(cSub.customTotalSessions) : (defaults ? defaults.totalSessions : null);
 
                 const normKey = normAr(cSub.name);
                 if (isYearly && yearlySyncData && yearlySyncData[normKey] !== undefined) {
@@ -1344,6 +1346,8 @@
 
             const deleteBtn = sub.isCustom ? `<button type="button" onclick="removeAbsenceSubject(${idx})" title="حذف" style="background: transparent; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem; padding: 0 2px;">×</button>` : '';
 
+            const displayTotal = Number.isInteger(totalSessions) ? totalSessions : Number(totalSessions.toFixed(2));
+
             html += `
                 <div class="dent-absence-card">
                     <div class="dent-absence-row-main">
@@ -1356,19 +1360,19 @@
                                 <span class="dent-absence-type-tag ${sub.isYearly ? 'yearly' : 'semester'}" onclick="toggleSubjectYearly(${idx})" title="انقر لتغيير نوع المقرر (سنوي ${dentAbsenceWeeks*2} أسبوعاً / فصلي ${dentAbsenceWeeks} أسبوعاً)">
                                     ${sub.isYearly ? `مقرر سنوي` : `مقرر فصلي`}
                                 </span>
-                                <span>• الإجمالي: <input type="number" min="1" max="500" value="${totalSessions}" onchange="updateAbsenceTotalSessions(${idx}, this.value)" style="width: 32px; background: #18181b; border: 1px solid rgba(255,255,255,0.15); color: #f8fafc; border-radius: 4px; text-align: center; font-size: 0.70rem; padding: 1px;" title="إجمالي ساعات المقرر (يمكنك تعديلها يدوياً لتطابق بوابتك بدقة)"> ساعة</span>
+                                <span>• الإجمالي: <input type="number" step="any" min="1" max="500" value="${displayTotal}" onchange="updateAbsenceTotalSessions(${idx}, this.value)" style="width: 38px; background: #18181b; border: 1px solid rgba(255,255,255,0.15); color: #f8fafc; border-radius: 4px; text-align: center; font-size: 0.70rem; padding: 1px;" title="إجمالي ساعات المقرر (يمكنك تعديلها يدوياً لتطابق بوابتك بدقة)"> ساعة</span>
                                 <span>• حد الحرمان: ${dnThresholdCount}</span>
                             </div>
                         </div>
 
                         <div class="dent-absence-actions-col">
                             <div class="dent-absence-stat-pill">
-                                <div class="dent-absence-stat-percent">${absences}/${totalSessions} (${percentage.toFixed(2)}%) • ${statusLabel}</div>
+                                <div class="dent-absence-stat-percent">${absences}/${displayTotal} (${percentage.toFixed(2)}%) • ${statusLabel}</div>
                                 <div class="dent-absence-stat-rem">${remainingText}</div>
                             </div>
                             <div class="dent-absence-stepper">
                                 <button type="button" class="dent-step-btn" onclick="stepAbsence(${idx}, -1)">−</button>
-                                <input type="number" class="dent-step-input" min="0" max="${totalSessions}" value="${absences}" onchange="setAbsenceCount(${idx}, this.value)">
+                                <input type="number" class="dent-step-input" min="0" max="${Math.ceil(totalSessions)}" value="${absences}" onchange="setAbsenceCount(${idx}, this.value)">
                                 <button type="button" class="dent-step-btn" onclick="stepAbsence(${idx}, 1)">+</button>
                                 ${deleteBtn}
                             </div>
@@ -1395,7 +1399,7 @@
 
     function updateAbsenceTotalSessions(idx, val) {
         if (!dentAbsenceSubjects[idx]) return;
-        const num = parseInt(val);
+        const num = parseFloat(val);
         dentAbsenceSubjects[idx].customTotalSessions = (num && num > 0) ? num : null;
         saveAbsenceState();
         renderAbsenceSubjects();
