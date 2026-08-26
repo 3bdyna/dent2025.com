@@ -734,10 +734,58 @@
             .filter(t => t.length > 2 && !['and', 'the', 'for', 'with', 'pre', 'clinical', 'general', 'advanced', 'department', 'course', 'مقرر', 'مادة', 'طب', 'عام', 'متقدم'].includes(t));
     }
 
+    // Official Jazan University Course Contact Hours Catalog
+    function getJazanUniversityCourseDefaults(subName, specialty, year) {
+        if (!subName) return null;
+        const clean = normAr(subName);
+
+        // 341 عاض - Removable Prosthodontics (1 hr Lecture + 2 hrs Lab/Clinical = 3 contact hrs/wk * 18 wks = 54 contact hrs -> 1 absence = 1.85%)
+        if (clean.includes('عاض') || clean.includes('استعاض') || clean.includes('prostho')) {
+            return { weeklySessions: 3, totalSessions: 54, isYearly: true };
+        }
+        // 321 صحح - Restorative / Operative Dentistry (2 contact hrs/wk * 17 wks = 34 contact hrs -> 1 absence = 2.91%)
+        if (clean.includes('صحح') || clean.includes('اصحاح') || clean.includes('تحفظي') || clean.includes('restor') || clean.includes('operat')) {
+            return { weeklySessions: 2, totalSessions: 34, isYearly: true };
+        }
+        // 352 طبب - Oral Microbiology & Immunology (2 contact hrs/wk = 24 contact hrs -> 1 absence = 4.23%)
+        if (clean.includes('ميكرو') || clean.includes('احياءدقيق') || clean.includes('microbio') || clean.includes('immunol') || clean.includes('مناع')) {
+            return { weeklySessions: 2, totalSessions: 24, isYearly: false };
+        }
+        // 312 شخف - Oral & Maxillofacial Radiology (3 contact hrs/wk = 54 contact hrs)
+        if (clean.includes('اشع') || clean.includes('radio') || clean.includes('شخف')) {
+            return { weeklySessions: 3, totalSessions: 54, isYearly: true };
+        }
+        // 351 طبب - General Pathology (3 contact hrs/wk = 51 contact hrs)
+        if (clean.includes('امراض') || clean.includes('patho')) {
+            return { weeklySessions: 3, totalSessions: 51, isYearly: true };
+        }
+        // 311 شخف - Oral Diagnosis (2 contact hrs/wk = 34 contact hrs)
+        if (clean.includes('تشخيص') || clean.includes('diagno')) {
+            return { weeklySessions: 2, totalSessions: 34, isYearly: true };
+        }
+        // 331 صحح - Advanced Dental Biomaterials (2 contact hrs/wk = 34 contact hrs)
+        if (clean.includes('مواد') || clean.includes('biomat')) {
+            return { weeklySessions: 2, totalSessions: 34, isYearly: true };
+        }
+        // 371 طبب - Dental Public Health (2 contact hrs/wk = 34 contact hrs)
+        if (clean.includes('صح') || clean.includes('health')) {
+            return { weeklySessions: 2, totalSessions: 34, isYearly: false };
+        }
+        // 361 طبب - Pharmacology (2 contact hrs/wk = 34 contact hrs)
+        if (clean.includes('ادوي') || clean.includes('pharma')) {
+            return { weeklySessions: 2, totalSessions: 34, isYearly: true };
+        }
+
+        return null;
+    }
+
     // Auto-detect yearly / extended courses based on Jazan University curricula
     function isAutoYearlySubject(subName, specialty, year) {
         if (!subName) return false;
         if (specialty === 'pre-med' || parseInt(year) === 0) return false;
+
+        const defaults = getJazanUniversityCourseDefaults(subName, specialty, year);
+        if (defaults && defaults.isYearly !== undefined) return defaults.isYearly;
 
         const yearlyKeywords = [
             'prostho', 'استعاضة', 'استعاضه', 'تركيبات',
@@ -1003,12 +1051,14 @@
 
             if (!targetSub) {
                 const autoYearly = dentAbsenceSelection ? isAutoYearlySubject(classSub, dentAbsenceSelection.specialty, dentAbsenceSelection.year) : false;
+                const defaults = dentAbsenceSelection ? getJazanUniversityCourseDefaults(classSub, dentAbsenceSelection.specialty, dentAbsenceSelection.year) : null;
                 targetSub = {
                     id: `auto_${Date.now()}_${Math.floor(Math.random()*1000)}`,
                     name: classSub,
-                    weeklySessions: 2,
+                    weeklySessions: defaults ? defaults.weeklySessions : 2,
+                    customTotalSessions: defaults ? defaults.totalSessions : null,
                     absences: 1,
-                    isYearly: autoYearly,
+                    isYearly: defaults ? defaults.isYearly : autoYearly,
                     isCustom: true
                 };
                 dentAbsenceSubjects.push(targetSub);
@@ -1168,8 +1218,13 @@
             let weeklySessions = 0;
             const matchedClasses = relevantClasses.filter(c => isSubjectMatch(c.subject, sub.name));
 
+            // Check official university catalog defaults
+            const defaults = dentAbsenceSelection ? getJazanUniversityCourseDefaults(sub.name, dentAbsenceSelection.specialty, dentAbsenceSelection.year) : null;
+
             if (matchedClasses.length > 0) {
                 weeklySessions = matchedClasses.length;
+            } else if (defaults) {
+                weeklySessions = defaults.weeklySessions;
             } else {
                 let parsedHours = 2;
                 if (typeof sub.hours === 'string') {
@@ -1186,10 +1241,8 @@
             }
 
             // Detect if yearly course automatically
-            let isYearly = false;
-            if (dentAbsenceSelection) {
-                isYearly = isAutoYearlySubject(sub.name, dentAbsenceSelection.specialty, dentAbsenceSelection.year);
-            }
+            let isYearly = defaults ? defaults.isYearly : (dentAbsenceSelection ? isAutoYearlySubject(sub.name, dentAbsenceSelection.specialty, dentAbsenceSelection.year) : false);
+            let customTotalSessions = defaults ? defaults.totalSessions : null;
 
             let savedAbsence = 0;
             if (savedState && savedState.subjects && savedState.subjects[sub.id || idx]) {
@@ -1197,6 +1250,7 @@
                 if (s.absences !== undefined) savedAbsence = parseInt(s.absences) || 0;
                 if (s.weeklySessions !== undefined) weeklySessions = parseInt(s.weeklySessions) || weeklySessions;
                 if (s.isYearly !== undefined) isYearly = s.isYearly;
+                if (s.customTotalSessions !== undefined) customTotalSessions = parseInt(s.customTotalSessions) || null;
             }
 
             // Sync with yearly shared records if applicable
@@ -1209,6 +1263,7 @@
                 id: sub.id || `sub_${idx}`,
                 name: sub.name || `مادة ${idx + 1}`,
                 weeklySessions: weeklySessions,
+                customTotalSessions: customTotalSessions,
                 absences: savedAbsence,
                 isYearly: isYearly,
                 isCustom: false
@@ -1217,8 +1272,10 @@
 
         if (savedState && Array.isArray(savedState.customSubjects)) {
             savedState.customSubjects.forEach(cSub => {
-                let isYearly = cSub.isYearly !== undefined ? cSub.isYearly : (dentAbsenceSelection ? isAutoYearlySubject(cSub.name, dentAbsenceSelection.specialty, dentAbsenceSelection.year) : false);
+                const defaults = dentAbsenceSelection ? getJazanUniversityCourseDefaults(cSub.name, dentAbsenceSelection.specialty, dentAbsenceSelection.year) : null;
+                let isYearly = cSub.isYearly !== undefined ? cSub.isYearly : (defaults ? defaults.isYearly : (dentAbsenceSelection ? isAutoYearlySubject(cSub.name, dentAbsenceSelection.specialty, dentAbsenceSelection.year) : false));
                 let savedAbsence = parseInt(cSub.absences) || 0;
+                let customTotalSessions = cSub.customTotalSessions !== undefined ? parseInt(cSub.customTotalSessions) : (defaults ? defaults.totalSessions : null);
 
                 const normKey = normAr(cSub.name);
                 if (isYearly && yearlySyncData && yearlySyncData[normKey] !== undefined) {
@@ -1228,7 +1285,8 @@
                 dentAbsenceSubjects.push({
                     id: cSub.id || `custom_${Date.now()}_${Math.random()}`,
                     name: cSub.name || 'مادة إضافية',
-                    weeklySessions: parseInt(cSub.weeklySessions) || 2,
+                    weeklySessions: parseInt(cSub.weeklySessions) || (defaults ? defaults.weeklySessions : 2),
+                    customTotalSessions: customTotalSessions,
                     absences: savedAbsence,
                     isYearly: isYearly,
                     isCustom: true
@@ -1255,9 +1313,8 @@
 
         let html = '';
         dentAbsenceSubjects.forEach((sub, idx) => {
-            // If yearly subject, multiply semester weeks by 2 (e.g. 17 * 2 = 34 weeks)
             const subjectWeeks = sub.isYearly ? (dentAbsenceWeeks * 2) : dentAbsenceWeeks;
-            const totalSessions = Math.max(1, (sub.weeklySessions || 1) * subjectWeeks);
+            const totalSessions = (sub.customTotalSessions && sub.customTotalSessions > 0) ? sub.customTotalSessions : Math.max(1, (sub.weeklySessions || 1) * subjectWeeks);
             const absences = Math.max(0, sub.absences || 0);
             const percentage = ((absences / totalSessions) * 100);
             const dnThresholdCount = Math.floor(totalSessions * 0.25);
@@ -1294,19 +1351,19 @@
                             ${sub.isCustom ? `<input type="text" value="${safeName}" onchange="updateAbsenceSubName(${idx}, this.value)" style="width: 100%; font-size: 0.84rem; padding: 2px 6px; background: #1e1e1e; color: #f8fafc; border: 1px solid rgba(255,255,255,0.15); border-radius: 5px;" placeholder="اسم المادة">` : `<h4 class="dent-absence-sub-name" title="${safeName}">${safeName}</h4>`}
                             <div class="dent-absence-sub-meta">
                                 <span>
-                                    <input type="number" min="1" max="15" value="${sub.weeklySessions}" onchange="updateAbsenceWeeklySessions(${idx}, this.value)" style="width: 26px; background: #18181b; border: 1px solid rgba(255,255,255,0.15); color: #f8fafc; border-radius: 4px; text-align: center; font-size: 0.70rem; padding: 1px;"> حصص/أسبوع
+                                    <input type="number" min="1" max="15" value="${sub.weeklySessions}" onchange="updateAbsenceWeeklySessions(${idx}, this.value)" style="width: 26px; background: #18181b; border: 1px solid rgba(255,255,255,0.15); color: #f8fafc; border-radius: 4px; text-align: center; font-size: 0.70rem; padding: 1px;"> ساعات/أسبوع
                                 </span>
                                 <span class="dent-absence-type-tag ${sub.isYearly ? 'yearly' : 'semester'}" onclick="toggleSubjectYearly(${idx})" title="انقر لتغيير نوع المقرر (سنوي ${dentAbsenceWeeks*2} أسبوعاً / فصلي ${dentAbsenceWeeks} أسبوعاً)">
-                                    ${sub.isYearly ? `مقرر سنوي (${dentAbsenceWeeks*2} أسبوعاً)` : `مقرر فصلي (${dentAbsenceWeeks} أسبوعاً)`}
+                                    ${sub.isYearly ? `مقرر سنوي` : `مقرر فصلي`}
                                 </span>
-                                <span>• الإجمالي: ${totalSessions}</span>
+                                <span>• الإجمالي: <input type="number" min="1" max="500" value="${totalSessions}" onchange="updateAbsenceTotalSessions(${idx}, this.value)" style="width: 32px; background: #18181b; border: 1px solid rgba(255,255,255,0.15); color: #f8fafc; border-radius: 4px; text-align: center; font-size: 0.70rem; padding: 1px;" title="إجمالي ساعات المقرر (يمكنك تعديلها يدوياً لتطابق بوابتك بدقة)"> ساعة</span>
                                 <span>• حد الحرمان: ${dnThresholdCount}</span>
                             </div>
                         </div>
 
                         <div class="dent-absence-actions-col">
                             <div class="dent-absence-stat-pill">
-                                <div class="dent-absence-stat-percent">${absences}/${totalSessions} (${percentage.toFixed(1)}%) • ${statusLabel}</div>
+                                <div class="dent-absence-stat-percent">${absences}/${totalSessions} (${percentage.toFixed(2)}%) • ${statusLabel}</div>
                                 <div class="dent-absence-stat-rem">${remainingText}</div>
                             </div>
                             <div class="dent-absence-stepper">
@@ -1331,6 +1388,15 @@
     function toggleSubjectYearly(idx) {
         if (!dentAbsenceSubjects[idx]) return;
         dentAbsenceSubjects[idx].isYearly = !dentAbsenceSubjects[idx].isYearly;
+        dentAbsenceSubjects[idx].customTotalSessions = null;
+        saveAbsenceState();
+        renderAbsenceSubjects();
+    }
+
+    function updateAbsenceTotalSessions(idx, val) {
+        if (!dentAbsenceSubjects[idx]) return;
+        const num = parseInt(val);
+        dentAbsenceSubjects[idx].customTotalSessions = (num && num > 0) ? num : null;
         saveAbsenceState();
         renderAbsenceSubjects();
     }
@@ -1353,6 +1419,7 @@
     function updateAbsenceWeeklySessions(idx, val) {
         if (!dentAbsenceSubjects[idx]) return;
         dentAbsenceSubjects[idx].weeklySessions = Math.max(1, parseInt(val) || 1);
+        dentAbsenceSubjects[idx].customTotalSessions = null;
         saveAbsenceState();
         renderAbsenceSubjects();
     }
@@ -1369,6 +1436,7 @@
             id: `custom_${Date.now()}`,
             name: 'مادة إضافية',
             weeklySessions: 2,
+            customTotalSessions: null,
             absences: 0,
             isYearly: autoYearly,
             isCustom: true
@@ -1406,6 +1474,7 @@
                 state.subjects[sub.id] = {
                     absences: sub.absences,
                     weeklySessions: sub.weeklySessions,
+                    customTotalSessions: sub.customTotalSessions,
                     isYearly: sub.isYearly
                 };
             }
@@ -1441,7 +1510,7 @@
 
         resultBox.innerHTML = `
             الإجمالي: <strong>${total}</strong> حصة (${weekly} أسبوعياً × ${weeks} أسبوع) • حد الحرمان: <strong>${dn}</strong><br>
-            نسبة الغياب: <strong>${pct.toFixed(1)}%</strong> • متبقي: <strong>${left}</strong> غيابات قبل الحرمان
+            نسبة الغياب: <strong>${pct.toFixed(2)}%</strong> • متبقي: <strong>${left}</strong> غيابات قبل الحرمان
         `;
     }
 </script>
