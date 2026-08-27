@@ -739,41 +739,44 @@
         if (!subName) return null;
         const clean = normAr(subName);
 
-        // 341 عاض - Removable Prosthodontics (Total: 54.0 contact hrs -> 1 absence = 1.85%)
-        if (clean.includes('عاض') || clean.includes('استعاض') || clean.includes('prostho')) {
+        // --- 4 YEARLY COURSES (Run Both Semesters) ---
+        // 1. PRO341 / 341عاض - Pre-clinical Prosthodontics (Total: 54.0 contact hrs -> 1 absence = 1.85%)
+        if (clean.includes('341') || clean.includes('pro341') || clean.includes('عاض') || clean.includes('استعاض') || clean.includes('prostho')) {
             return { weeklySessions: 3, totalSessions: 54.0, isYearly: true };
         }
-        // 321 صحح - Restorative / Operative Dentistry (Total: 34.36 contact hrs -> 1 absence = 2.91%)
-        if (clean.includes('صحح') || clean.includes('اصحاح') || clean.includes('تحفظي') || clean.includes('restor') || clean.includes('operat')) {
+        // 2. OPT321 / 321صحح - Pre-clinical Restorative Dentistry (Total: 34.36 contact hrs -> 1 absence = 2.91%)
+        if (clean.includes('321') || clean.includes('opt321') || clean.includes('صحح') || clean.includes('اصحاح') || clean.includes('تحفظي') || clean.includes('restor') || clean.includes('operat')) {
             return { weeklySessions: 2, totalSessions: 34.36, isYearly: true };
         }
-        // 352 طبب - Oral Microbiology & Immunology (Total: 23.64 contact hrs -> 1 absence = 4.23%)
-        if (clean.includes('ميكرو') || clean.includes('احياءدقيق') || clean.includes('microbio') || clean.includes('immunol') || clean.includes('مناع')) {
+        // 3. DIG311 / 311شخف - Oral & Maxillofacial Radiology (Total: 54.0 contact hrs)
+        if (clean.includes('311') || clean.includes('dig311') || clean.includes('اشع') || clean.includes('radio') || clean.includes('radiology')) {
+            return { weeklySessions: 3, totalSessions: 54.0, isYearly: true };
+        }
+        // 4. DMS353 / 353طبب / 361طبب - Pharmacology
+        if (clean.includes('353') || clean.includes('dms353') || clean.includes('361') || clean.includes('ادوي') || clean.includes('pharma')) {
+            return { weeklySessions: 2, totalSessions: 34.36, isYearly: true };
+        }
+
+        // --- 5 SEMESTER 1 ONLY COURSES (End This Semester) ---
+        // 1. DMS352 / 352طبب - Oral Microbiology & Immunology (Total: 23.64 contact hrs -> 1 absence = 4.23%)
+        if (clean.includes('352') || clean.includes('dms352') || clean.includes('ميكرو') || clean.includes('احياءدقيق') || clean.includes('microbio') || clean.includes('immunol') || clean.includes('مناع')) {
             return { weeklySessions: 2, totalSessions: 23.64, isYearly: false };
         }
-        // 312 شخف - Oral & Maxillofacial Radiology (Total: 54.0 contact hrs)
-        if (clean.includes('اشع') || clean.includes('radio') || clean.includes('شخف')) {
-            return { weeklySessions: 3, totalSessions: 54.0, isYearly: true };
+        // 2. DMS351 / 351طبب - General Pathology
+        if (clean.includes('351') || clean.includes('dms351') || clean.includes('امراض') || clean.includes('patho') || clean.includes('pathology')) {
+            return { weeklySessions: 2, totalSessions: 34.0, isYearly: false };
         }
-        // 351 طبب - General Pathology (Total: 51.0 contact hrs)
-        if (clean.includes('امراض') || clean.includes('patho')) {
-            return { weeklySessions: 3, totalSessions: 51.0, isYearly: true };
+        // 3. DIG313-2 / 313شخف - Oral Diagnosis
+        if (clean.includes('313') || clean.includes('dig313') || clean.includes('تشخيص') || clean.includes('diagno') || clean.includes('diagnosis')) {
+            return { weeklySessions: 2, totalSessions: 34.0, isYearly: false };
         }
-        // 311 شخف - Oral Diagnosis (Total: 34.36 contact hrs)
-        if (clean.includes('تشخيص') || clean.includes('diagno')) {
-            return { weeklySessions: 2, totalSessions: 34.36, isYearly: true };
+        // 4. PRO322 / 322عاض / 331صحح - Advanced Dental Biomaterials
+        if (clean.includes('322') || clean.includes('pro322') || clean.includes('331') || clean.includes('مواد') || clean.includes('biomat')) {
+            return { weeklySessions: 2, totalSessions: 34.0, isYearly: false };
         }
-        // 331 صحح - Advanced Dental Biomaterials (Total: 34.36 contact hrs)
-        if (clean.includes('مواد') || clean.includes('biomat')) {
-            return { weeklySessions: 2, totalSessions: 34.36, isYearly: true };
-        }
-        // 371 طبب - Dental Public Health (Total: 34.36 contact hrs)
-        if (clean.includes('صح') || clean.includes('health')) {
-            return { weeklySessions: 2, totalSessions: 34.36, isYearly: false };
-        }
-        // 361 طبب - Pharmacology (Total: 34.36 contact hrs)
-        if (clean.includes('ادوي') || clean.includes('pharma')) {
-            return { weeklySessions: 2, totalSessions: 34.36, isYearly: true };
+        // 5. DPH331 / 331صح / 371طبب - Dental Public Health
+        if (clean.includes('dph') || clean.includes('dph331') || clean.includes('371') || clean.includes('صحه') || clean.includes('صح') || clean.includes('health') || clean.includes('publichealth')) {
+            return { weeklySessions: 2, totalSessions: 34.0, isYearly: false };
         }
 
         return null;
@@ -791,17 +794,12 @@
             'prostho', 'استعاضة', 'استعاضه', 'تركيبات',
             'restorative', 'operative', 'تحفظي', 'حشوات',
             'radiology', 'أشعة', 'اشعه',
-            'pathology', 'أمراض', 'امراض', 'باثولوجي',
-            'microbiology', 'أحياء دقيقة', 'احياء دقيقة', 'ميكروبيولوجي',
-            'immunology', 'مناعة', 'مناعه',
             'pharmacology', 'أدوية', 'ادوية', 'فارماكولوجي',
-            'diagnosis', 'تشخيص',
             'periodont', 'لثة', 'لثه',
             'orthodont', 'تقويم',
             'pediatric', 'pedodont', 'أطفال', 'اطفال',
             'surgery', 'جراحة', 'جراحه',
             'endodont', 'عصب', 'جذور',
-            'biomaterial', 'مواد الأسنان', 'مواد الاسنان',
             'anatomy', 'تشريح',
             'physiology', 'وظائف الأعضاء', 'وظائف الاعضاء',
             'biochemistry', 'كيمياء حيوية', 'كيمياء حيويه',
