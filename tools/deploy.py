@@ -118,6 +118,22 @@ def upload_files(file_paths, ftp=None, config=None):
                 ftp.quit()
             except Exception:
                 pass
+            
+            # Automatically purge LiteSpeed cache and transients on deploy
+            try:
+                token = config.get('health_passkey', '') if isinstance(config, dict) else ''
+                if not token:
+                    token = os.environ.get('DENT2025_PURGE_KEY', '')
+                if token:
+                    import urllib.request, urllib.parse
+                    url = f"https://dent2025.com/purge_cache.php?token={urllib.parse.quote(token)}"
+                    req = urllib.request.Request(url, headers={'User-Agent': 'Dent2025-Deploy/2.0'})
+                    with urllib.request.urlopen(req, timeout=10) as resp:
+                        resp_text = resp.read().decode('utf-8', errors='ignore').strip()
+                        print(f"[CACHE PURGE] {resp_text}", flush=True)
+            except Exception as e:
+                print(f"[CACHE PURGE] Notice: {e}", flush=True)
+
             print("Deployment finished cleanly.", flush=True)
 
 def restore_from_snapshot(snapshot_dir, rel_paths, ftp=None, config=None):
