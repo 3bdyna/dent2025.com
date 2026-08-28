@@ -419,7 +419,7 @@
         background: rgba(255, 255, 255, 0.025);
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 10px;
-        padding: 10px 12px;
+        padding: 10px 10px;
         margin-bottom: 8px;
         box-sizing: border-box;
         transition: all 0.15s ease;
@@ -448,75 +448,99 @@
         overflow-wrap: anywhere;
         flex: 1;
     }
-    .dent-absence-sub-meta {
+    
+    /* Clean Metadata Row */
+    .dent-absence-meta-row {
         display: flex;
         align-items: center;
         gap: 4px;
-        flex-wrap: wrap;
-        font-size: 0.70rem;
-        color: #94a3b8;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
         margin-bottom: 8px;
         width: 100%;
     }
-    .dent-absence-meta-chip {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        padding: 2px 5px;
-        border-radius: 5px;
-        display: inline-flex;
-        align-items: center;
-        gap: 3px;
-        font-size: 0.68rem;
-        color: #cbd5e1;
-        white-space: nowrap;
-    }
-    .dent-absence-meta-input {
-        background: #141416;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        color: #f8fafc;
-        border-radius: 4px;
-        text-align: center;
-        font-size: 0.70rem;
-        font-weight: 600;
-        padding: 0 2px;
-        height: 19px;
-        box-sizing: border-box;
-        -moz-appearance: textfield;
-    }
-    .dent-absence-meta-input::-webkit-outer-spin-button,
-    .dent-absence-meta-input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
+    .dent-absence-meta-row::-webkit-scrollbar {
+        display: none;
     }
 
-    /* Yearly vs Semester Type Tag */
+    /* Neutral Monochrome Type Tag (No Blue) */
     .dent-absence-type-tag {
-        font-size: 0.68rem;
+        font-size: 0.67rem;
         padding: 2px 6px;
         border-radius: 5px;
         cursor: pointer;
         user-select: none;
-        transition: all 0.15s;
         font-weight: 600;
         white-space: nowrap;
+        background: rgba(255, 255, 255, 0.07);
+        color: #e2e8f0;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        transition: all 0.15s;
+        height: 22px;
+        display: inline-flex;
+        align-items: center;
+        flex-shrink: 0;
+        font-family: inherit;
     }
-    .dent-absence-type-tag.yearly {
-        background: rgba(59, 130, 246, 0.16);
-        color: #93c5fd;
-        border: 1px solid rgba(59, 130, 246, 0.3);
-    }
-    .dent-absence-type-tag.yearly:hover {
-        background: rgba(59, 130, 246, 0.28);
+    .dent-absence-type-tag:hover {
+        background: rgba(255, 255, 255, 0.15);
         color: #ffffff;
     }
-    .dent-absence-type-tag.semester {
-        background: rgba(255, 255, 255, 0.06);
-        color: #94a3b8;
-        border: 1px solid rgba(255, 255, 255, 0.12);
+
+    /* Clean Meta Pill */
+    .dent-meta-pill {
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 2px 5px;
+        border-radius: 5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        font-size: 0.67rem;
+        color: #cbd5e1;
+        white-space: nowrap;
+        height: 22px;
+        flex-shrink: 0;
+        box-sizing: border-box;
     }
-    .dent-absence-type-tag.semester:hover {
-        background: rgba(255, 255, 255, 0.14);
-        color: #e2e8f0;
+    .dent-meta-label {
+        color: #94a3b8;
+        font-size: 0.67rem;
+        line-height: 1;
+    }
+    .dent-meta-val {
+        color: #f8fafc;
+        font-weight: 700;
+        font-size: 0.70rem;
+        line-height: 1;
+    }
+
+    /* Fixed Clean Number Input */
+    .dent-meta-input {
+        background: #111113 !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: #ffffff !important;
+        border-radius: 4px !important;
+        text-align: center !important;
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        font-family: inherit !important;
+        height: 18px !important;
+        min-height: 18px !important;
+        line-height: 16px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: textfield !important;
+        appearance: textfield !important;
+        display: inline-block !important;
+    }
+    .dent-meta-input::-webkit-outer-spin-button,
+    .dent-meta-input::-webkit-inner-spin-button {
+        -webkit-appearance: none !important;
+        margin: 0 !important;
     }
 
     /* Card Bottom: Stats & Stepper */
@@ -556,9 +580,9 @@
         white-space: nowrap;
     }
     .dent-status-safe {
-        background: rgba(16, 185, 129, 0.15);
-        color: #34d399;
-        border: 1px solid rgba(16, 185, 129, 0.3);
+        background: rgba(255, 255, 255, 0.07);
+        color: #cbd5e1;
+        border: 1px solid rgba(255, 255, 255, 0.14);
     }
     .dent-status-warn1 {
         background: rgba(251, 191, 36, 0.15);
@@ -1454,7 +1478,7 @@
 
             let statusLabel = 'آمن';
             let statusClass = 'dent-status-safe';
-            let progressColor = '#10b981';
+            let progressColor = 'rgba(255, 255, 255, 0.28)';
             let remainingText = '';
 
             if (percentage >= 25.0) {
@@ -1477,7 +1501,7 @@
             } else {
                 statusLabel = 'آمن';
                 statusClass = 'dent-status-safe';
-                progressColor = '#10b981';
+                progressColor = 'rgba(255, 255, 255, 0.28)';
                 const leftForDn = Math.max(0, dnThresholdCount - absences);
                 remainingText = `متبقي ${leftForDn} قبل الحرمان`;
             }
@@ -1500,19 +1524,25 @@
                         ${deleteBtn}
                     </div>
 
-                    <div class="dent-absence-sub-meta">
-                        <span class="dent-absence-type-tag ${sub.isYearly ? 'yearly' : 'semester'}" onclick="toggleSubjectYearly(${idx})" title="انقر للتبديل بين مقرر سنوي (${dentAbsenceWeeks*2} أسبوعاً) ومقرر فصلي (${dentAbsenceWeeks} أسبوعاً)">
-                            ${sub.isYearly ? `مقرر سنوي` : `مقرر فصلي`}
-                        </span>
-                        <span class="dent-absence-meta-chip">
-                            <input type="number" min="1" max="15" value="${sub.weeklySessions}" onchange="updateAbsenceWeeklySessions(${idx}, this.value)" class="dent-absence-meta-input" style="width: 26px;"> ساعات/أسبوع
-                        </span>
-                        <span class="dent-absence-meta-chip">
-                            الإجمالي: <input type="number" step="any" min="1" max="500" value="${displayTotal}" onchange="updateAbsenceTotalSessions(${idx}, this.value)" class="dent-absence-meta-input" style="width: 38px;" title="إجمالي ساعات المقرر"> ساعة
-                        </span>
-                        <span class="dent-absence-meta-chip">
-                            حد الحرمان: <strong>${dnThresholdCount}</strong>
-                        </span>
+                    <div class="dent-absence-meta-row">
+                        <button type="button" class="dent-absence-type-tag" onclick="toggleSubjectYearly(${idx})" title="انقر للتبديل بين مقرر سنوي ومقرر فصلي">
+                            ${sub.isYearly ? 'مقرر سنوي' : 'مقرر فصلي'}
+                        </button>
+                        
+                        <div class="dent-meta-pill">
+                            <input type="number" min="1" max="15" value="${sub.weeklySessions}" onchange="updateAbsenceWeeklySessions(${idx}, this.value)" class="dent-meta-input" style="width: 20px;">
+                            <span class="dent-meta-label">س/أسبوع</span>
+                        </div>
+
+                        <div class="dent-meta-pill">
+                            <span class="dent-meta-label">الإجمالي:</span>
+                            <input type="number" step="any" min="1" max="500" value="${displayTotal}" onchange="updateAbsenceTotalSessions(${idx}, this.value)" class="dent-meta-input" style="width: 28px;" title="إجمالي ساعات المقرر">
+                        </div>
+
+                        <div class="dent-meta-pill">
+                            <span class="dent-meta-label">الحرمان:</span>
+                            <span class="dent-meta-val">${dnThresholdCount}</span>
+                        </div>
                     </div>
 
                     <div class="dent-absence-card-bottom">
