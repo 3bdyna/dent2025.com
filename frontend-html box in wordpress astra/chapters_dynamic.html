@@ -56,23 +56,23 @@
     .dent-chapter-iframe-container.is-expanded iframe { height: 520px; }
 }
 
-/* Tab Switcher & Content Panels */
-.dent-tab-switcher {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    background: rgba(0, 0, 0, 0.3) !important;
+/* Tab Switcher & Content Panels (Scoped to Subject Cards) */
+.dent-chapter-details .dent-tab-switcher {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    background: rgba(0, 0, 0, 0.3);
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     padding: 6px;
     gap: 6px;
 }
-.dent-tab-btn {
-    flex: 1 1 50% !important;
-    width: auto !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+.dent-chapter-details .dent-tab-btn {
+    flex: 1 1 50%;
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 9px 12px;
     background: transparent;
     border: 1px solid transparent;
@@ -84,35 +84,35 @@
     transition: all 0.2s ease;
     font-family: inherit;
     text-align: center;
-    white-space: nowrap !important;
-    box-sizing: border-box !important;
+    white-space: nowrap;
+    box-sizing: border-box;
 }
-.dent-tab-btn:hover {
+.dent-chapter-details .dent-tab-btn:hover {
     color: #f8fafc;
     background: rgba(255, 255, 255, 0.04);
 }
-.dent-tab-btn.active {
+.dent-chapter-details .dent-tab-btn.active {
     color: #ffffff;
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.12);
 }
-.dent-tab-panel {
+.dent-chapter-details .dent-tab-panel {
     display: none;
 }
-.dent-tab-panel.active {
+.dent-chapter-details .dent-tab-panel.active {
     display: block;
 }
-.dent-tab-footer {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 10px 14px !important;
-    background: rgba(0, 0, 0, 0.2) !important;
+.dent-chapter-details .dent-tab-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.2);
     border-top: 1px solid rgba(255, 255, 255, 0.05);
-    gap: 8px !important;
-    flex-wrap: wrap !important;
+    gap: 8px;
+    flex-wrap: wrap;
 }
-.dent-drive-action-btn {
+.dent-chapter-details .dent-drive-action-btn {
     font-size: 0.82rem;
     font-weight: 600;
     color: #f8fafc;
@@ -127,8 +127,8 @@
     gap: 6px;
     cursor: pointer;
     font-family: inherit;
-    white-space: nowrap !important;
-    box-sizing: border-box !important;
+    white-space: nowrap;
+    box-sizing: border-box;
 }
 .dent-drive-action-btn:hover {
     background: rgba(255, 255, 255, 0.14);

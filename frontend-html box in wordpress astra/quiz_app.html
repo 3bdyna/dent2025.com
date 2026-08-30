@@ -7,10 +7,10 @@
 .dent-quiz-header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 15px; font-weight: 700; font-size: 1.35rem; background: linear-gradient(90deg, #e2e8f0, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
 /* Main Mode Tabs - Identical to Site Tab Switcher */
-.dent-tab-switcher { display: flex; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 6px; gap: 6px; margin-bottom: 22px; }
-.dent-tab-btn { flex: 1; padding: 10px 16px; background: transparent; border: 1px solid transparent; border-radius: 8px; color: #94a3b8; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; user-select: none; }
-.dent-tab-btn:hover { color: #f8fafc; background: rgba(255, 255, 255, 0.04); }
-.dent-tab-btn.active { color: #ffffff; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.12); }
+.dent-quiz-card .dent-tab-switcher, .dent-tab-switcher { display: flex; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 6px; gap: 6px; margin-bottom: 22px; }
+.dent-quiz-card .dent-tab-btn, .dent-tab-btn { flex: 1 1 auto; min-width: 0; padding: 10px 14px; background: transparent; border: 1px solid transparent; border-radius: 8px; color: #94a3b8; font-size: 0.88rem; font-weight: 600; line-height: 1.35; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; user-select: none; white-space: normal; word-break: normal; box-sizing: border-box; }
+.dent-quiz-card .dent-tab-btn:hover, .dent-tab-btn:hover { color: #f8fafc; background: rgba(255, 255, 255, 0.04); }
+.dent-quiz-card .dent-tab-btn.active, .dent-tab-btn.active { color: #ffffff; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.12); }
 
 .dent-quiz-form-group { margin-bottom: 18px; }
 .dent-quiz-label { display: block; font-weight: 500; margin-bottom: 8px; color: #9ca3af; font-size: 0.85rem; }
@@ -139,11 +139,12 @@ details.dent-chapters-details summary { list-style: none; }
     scrollbar-color: rgba(255, 255, 255, 0.15) rgba(0, 0, 0, 0.2);
 }
 
-@media (max-width: 600px) {
-    .dent-quiz-card { padding: 16px; }
+@media (max-width: 650px) {
+    .dent-quiz-card { padding: 16px 12px; }
     .dent-quiz-checkbox-group { grid-template-columns: 1fr; }
     .dent-bank-filters { flex-direction: column; }
-    .dent-tab-switcher { flex-direction: column; }
+    .dent-quiz-card .dent-tab-switcher, .dent-tab-switcher { flex-direction: column; gap: 6px; }
+    .dent-quiz-card .dent-tab-btn, .dent-tab-btn { width: 100%; padding: 10px 12px; font-size: 0.85rem; }
 }
 </style>
 
