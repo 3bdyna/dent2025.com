@@ -95,7 +95,7 @@
         @keyframes ana-spin { to { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="h-[100dvh] flex flex-col md:flex-row overflow-hidden">
+<body class="min-h-screen md:h-screen flex flex-col md:flex-row md:overflow-hidden bg-dark text-slate-100 font-sans">
 
     <!-- Login Overlay -->
     <div id="login-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-darker bg-opacity-95 backdrop-blur-md p-4">
@@ -180,7 +180,7 @@
     </script>
 
     <!-- Mobile Header -->
-    <header class="flex md:hidden items-center justify-between px-4 py-3 glass border-b border-white/10 z-30 shrink-0">
+    <header class="sticky top-0 z-30 flex md:hidden items-center justify-between px-4 py-2.5 glass border-b border-white/10 shrink-0 shadow-lg">
         <div class="flex items-center gap-3">
             <button id="mobile-menu-btn" onclick="AdminApp.toggleMobileDrawer()" class="p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition" aria-label="القائمة">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,7 +202,7 @@
     </header>
 
     <!-- Mobile Horizontal Tab Pills Bar -->
-    <div class="flex md:hidden overflow-x-auto bg-darker/90 border-b border-white/10 px-2.5 py-2 gap-1.5 shrink-0 custom-scrollbar select-none" id="mobile-pill-bar">
+    <div class="sticky top-[49px] z-20 flex md:hidden overflow-x-auto bg-darker/95 backdrop-blur-md border-b border-white/10 px-2.5 py-2 gap-1.5 shrink-0 select-none shadow-md" id="mobile-pill-bar">
         <button onclick="AdminApp.switchTab('subjects')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/10 text-white font-medium border border-white/10" data-tab="subjects">المواد والروابط</button>
         <button onclick="AdminApp.switchTab('classes')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="classes">الجداول</button>
         <button onclick="AdminApp.switchTab('events')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="events">التقويم</button>
@@ -327,7 +327,7 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 overflow-y-auto bg-dark p-2.5 sm:p-4 md:p-6 relative min-h-0 custom-scrollbar">
+    <main class="flex-1 md:overflow-y-auto bg-dark p-3 sm:p-5 md:p-7 relative min-h-0 md:custom-scrollbar">
         <!-- Toast Notification -->
         <div id="toast" class="fixed top-4 sm:top-5 left-1/2 transform -translate-x-1/2 glass px-4 sm:px-6 py-2.5 sm:py-3 rounded-full text-white shadow-lg transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2 max-w-[90vw] text-xs sm:text-sm">
             <span id="toast-icon"></span>
@@ -359,7 +359,7 @@
     </template>
 
     <template id="tpl-analytics">
-        <div class="h-full flex flex-col gap-4 sm:gap-5 overflow-y-auto custom-scrollbar">
+        <div class="space-y-3 sm:space-y-4">
             <!-- Header -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
                 <div>
@@ -448,7 +448,7 @@
     </template>
 
     <template id="tpl-passwords">
-        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5">
+        <div class="space-y-3 sm:space-y-4">
             <!-- Compact Header -->
             <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
@@ -459,16 +459,14 @@
                     <span>+</span> إضافة كلمة مرور
                 </button>
             </div>
-            <div class="flex-1 overflow-auto glass rounded-xl p-2.5 sm:p-4 custom-scrollbar min-h-0">
-                <div id="passwords-list" class="space-y-3 sm:space-y-4">
-                    <!-- Populated by JS -->
-                </div>
+            <div id="passwords-list" class="space-y-3 sm:space-y-4">
+                <!-- Populated by JS -->
             </div>
         </div>
     </template>
 
     <template id="tpl-events">
-        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5">
+        <div class="space-y-3 sm:space-y-4">
             <!-- Compact Header -->
             <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
@@ -548,16 +546,14 @@
             </div>
 
             <!-- Categorized Events List Container -->
-            <div class="flex-1 overflow-auto glass rounded-xl p-2.5 sm:p-4 custom-scrollbar min-h-0">
-                <div id="events-list" class="space-y-3 sm:space-y-4">
-                    <!-- Populated by JS -->
-                </div>
+            <div id="events-list" class="space-y-3 sm:space-y-4">
+                <!-- Populated by JS -->
             </div>
         </div>
     </template>
 
     <template id="tpl-subjects">
-        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5">
+        <div class="space-y-3 sm:space-y-4">
             <!-- Compact Header -->
             <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
@@ -599,16 +595,14 @@
             </div>
 
             <!-- Subjects List Container -->
-            <div class="flex-1 overflow-auto glass rounded-xl p-2.5 sm:p-4 custom-scrollbar min-h-0">
-                <div id="subjects-list" class="space-y-3 sm:space-y-4">
-                    <!-- Populated by JS -->
-                </div>
+            <div id="subjects-list" class="space-y-3 sm:space-y-4">
+                <!-- Populated by JS -->
             </div>
         </div>
     </template>
 
     <template id="tpl-classes">
-        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5">
+        <div class="space-y-3 sm:space-y-4">
             <!-- Compact Header -->
             <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
@@ -658,17 +652,15 @@
             </div>
 
             <!-- Timetable View Container by Days -->
-            <div class="flex-1 overflow-auto glass rounded-xl p-2.5 sm:p-4 custom-scrollbar min-h-0">
-                <div id="classes-timetable" class="grid grid-cols-1 md:grid-cols-5 gap-2.5 sm:gap-4">
-                    <!-- Populated by JS for Sun to Thu -->
-                </div>
+            <div id="classes-timetable" class="grid grid-cols-1 md:grid-cols-5 gap-2.5 sm:gap-4">
+                <!-- Populated by JS for Sun to Thu -->
             </div>
         </div>
     </template>
 
     <!-- 6. HISTORY & ROLLBACK TAB -->
     <template id="tpl-history">
-        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5 overflow-y-auto custom-scrollbar">
+        <div class="space-y-3 sm:space-y-4">
             <!-- Top row: Save Checkpoint + Undo button -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3.5 shrink-0">
                 <!-- Save Named Checkpoint box -->
@@ -758,17 +750,15 @@
                 </div>
 
                 <!-- Timeline Container -->
-                <div class="flex-1 overflow-auto glass rounded-xl p-2.5 sm:p-4 border border-white/10 custom-scrollbar min-h-0">
-                    <div id="history-timeline-container" class="space-y-2">
-                        <!-- Populated by AdminApp.renderHistory() -->
-                    </div>
+                <div id="history-timeline-container" class="space-y-2">
+                    <!-- Populated by AdminApp.renderHistory() -->
                 </div>
             </div>
         </div>
     </template>
 
     <template id="tpl-announcements">
-        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5 overflow-y-auto custom-scrollbar">
+        <div class="space-y-3 sm:space-y-4">
             <!-- Compact Header -->
             <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
@@ -861,16 +851,14 @@
             </div>
 
             <!-- Announcements List Container -->
-            <div class="flex-1 overflow-auto glass rounded-xl p-2.5 sm:p-4 custom-scrollbar min-h-0">
-                <div id="announcements-list" class="space-y-3 sm:space-y-4">
-                    <!-- Populated by JS -->
-                </div>
+            <div id="announcements-list" class="space-y-3 sm:space-y-4">
+                <!-- Populated by JS -->
             </div>
         </div>
     </template>
 
     <template id="tpl-safedeploy">
-        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5 overflow-y-auto custom-scrollbar">
+        <div class="space-y-3 sm:space-y-4">
             <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
                     <h2 class="text-base sm:text-2xl font-bold text-white flex items-center gap-2">
@@ -918,7 +906,7 @@
             </div>
 
             <!-- Deployments History Table -->
-            <div class="flex-1 overflow-auto glass rounded-xl p-3 sm:p-4 custom-scrollbar min-h-0">
+            <div class="glass rounded-xl p-3 sm:p-4">
                 <h3 class="font-semibold mb-2.5 text-gray-300 border-b border-white/10 pb-1.5 flex items-center justify-between text-xs sm:text-sm">
                     <span>سجل التحديثات واللقطات</span>
                     <span id="sd-total-count" class="text-xs font-mono text-gray-400">0 تحديثات</span>
@@ -948,7 +936,7 @@
 
     <!-- Gemini AI Monitoring Template -->
     <template id="tpl-gemini">
-        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5 overflow-y-auto custom-scrollbar">
+        <div class="space-y-3 sm:space-y-4">
             <!-- Compact Header -->
             <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
@@ -993,9 +981,9 @@
             </div>
 
             <!-- Recent Activity Log -->
-            <div class="flex-1 glass rounded-xl p-3 sm:p-4 flex flex-col overflow-hidden min-h-[180px]">
+            <div class="glass rounded-xl p-3 sm:p-4 space-y-2">
                 <h3 class="text-xs sm:text-sm font-bold text-white mb-2">سجل الطلبات والاستهلاك</h3>
-                <div class="flex-1 overflow-auto -mx-1 sm:mx-0">
+                <div class="overflow-x-auto -mx-1 sm:mx-0">
                     <table class="w-full text-right text-xs min-w-[450px]">
                         <thead class="text-[11px] text-gray-400 uppercase bg-black/40 sticky top-0 border-b border-white/10">
                             <tr>
@@ -1018,7 +1006,7 @@
 
     <!-- Quizzes Management Template -->
     <template id="tpl-quizzes">
-        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5 overflow-y-auto custom-scrollbar">
+        <div class="space-y-3 sm:space-y-4">
             <div class="flex justify-between items-center gap-2 glass p-3 sm:p-4 rounded-xl border border-white/5 shrink-0">
                 <div>
                     <h2 class="text-base sm:text-xl font-bold text-white">إدارة بنك الاختبارات</h2>
@@ -1039,8 +1027,8 @@
             </div>
 
             <!-- Table -->
-            <div class="flex-1 glass rounded-xl overflow-hidden border border-white/5 min-h-0">
-                <div class="overflow-x-auto h-full custom-scrollbar">
+            <div class="glass rounded-xl overflow-hidden border border-white/5">
+                <div class="overflow-x-auto">
                     <table class="w-full text-right text-xs min-w-[600px]">
                         <thead class="bg-white/5 text-gray-400 border-b border-white/5 sticky top-0">
                             <tr>
@@ -1066,7 +1054,7 @@
 
     <!-- Template for Cache & Pre-Warm Management -->
     <template id="tpl-cache">
-        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5 overflow-y-auto custom-scrollbar">
+        <div class="space-y-3 sm:space-y-4">
             <!-- Header -->
             <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
