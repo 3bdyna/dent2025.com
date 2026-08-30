@@ -1191,12 +1191,20 @@ window.AdminApp = {
     renderSubjects() {
         const container = document.getElementById('subjects-list');
         if (!container) return;
+
         if (!this.subjectsData || this.subjectsData.length === 0) {
-            container.innerHTML = '<p class="text-gray-400">لا توجد مواد مضافة في هذه الدفعة.</p>';
+            container.innerHTML = `
+                <div class="p-8 text-center text-gray-400">
+                    <span class="text-3xl block mb-2">📚</span>
+                    <h3 class="text-lg font-bold mb-1 text-white">لا توجد مواد مسجلة</h3>
+                    <p class="text-xs text-gray-400">انقر على "إضافة مادة جديدة" لإضافة أول مادة في هذا الترم.</p>
+                </div>
+            `;
             return;
         }
 
         let html = '';
+
         this.subjectsData.forEach(sub => {
             const links = sub.links || [];
             let linksHtml = '';
@@ -1209,50 +1217,51 @@ window.AdminApp = {
                     else if (l.type === 'telegram') icon = '✈️';
 
                     return `
-                        <div class="flex justify-between items-center bg-black/40 p-2.5 rounded-lg border border-white/5 text-xs">
-                            <a href="${l.url}" target="_blank" class="text-gray-300 hover:underline flex items-center gap-2 truncate max-w-md">
-                                <span>${icon}</span>
-                                <span>${l.title || l.url}</span>
+                        <div class="flex justify-between items-center bg-black/30 p-2 rounded-lg border border-white/5 text-xs gap-2">
+                            <a href="${l.url}" target="_blank" class="text-gray-300 hover:text-white flex items-center gap-1.5 truncate max-w-[70vw] sm:max-w-md">
+                                <span class="shrink-0">${icon}</span>
+                                <span class="truncate">${l.title || l.url}</span>
                             </a>
-                            <button onclick="AdminApp.deleteLink(${l.id})" class="text-gray-400 hover:text-gray-300 px-2 py-0.5 bg-white/5 rounded border border-white/10">حذف</button>
+                            <button onclick="AdminApp.deleteLink(${l.id})" class="text-red-400 hover:text-red-300 text-[11px] px-2 py-0.5 bg-red-500/10 hover:bg-red-500/20 rounded border border-red-500/20 shrink-0">حذف</button>
                         </div>
                     `;
                 }).join('');
             } else {
-                linksHtml = '<p class="text-xs text-gray-500">لا توجد روابط مساعدة مضافة بعد.</p>';
+                linksHtml = '<p class="text-[11px] text-gray-500 py-1">لا توجد روابط مساعدة مضافة بعد.</p>';
             }
 
             html += `
-                <div class="bg-black/30 p-5 rounded-xl border border-white/10 relative hover:border-white/20 transition">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 border-b border-white/5 pb-3">
-                        <div>
-                            <h3 class="text-xl font-bold text-white mb-1">${sub.name}</h3>
-                            <div class="flex flex-wrap items-center gap-3 text-xs text-gray-400">
+                <div class="bg-black/30 p-3 sm:p-4 rounded-xl border border-white/10 relative hover:border-white/20 transition">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 mb-3 border-b border-white/5 pb-2.5">
+                        <div class="min-w-0 flex-1">
+                            <h3 class="text-base sm:text-lg font-bold text-white leading-snug mb-1 truncate">${sub.name}</h3>
+                            <div class="flex flex-wrap items-center gap-2.5 text-[11px] text-gray-400">
                                 <span>⏱️ الساعات: <strong class="text-gray-200">${sub.hours || '0'}</strong></span>
+                                <span class="text-gray-600">•</span>
                                 <span>📊 توزيع الدرجات: <strong class="text-gray-200">${sub.marks || 'غير محدد'}</strong></span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="AdminApp.openAddLinkModal(${sub.id})" class="btn btn-secondary text-xs py-1.5 px-3">إضافة رابط</button>
-                            <button onclick="AdminApp.openEditSubjectModal(${sub.id})" class="btn btn-primary text-xs py-1.5 px-3">تعديل المادة</button>
-                            <button onclick="AdminApp.deleteSubject(${sub.id})" class="btn btn-danger text-xs py-1.5 px-3">حذف المادة</button>
+                        <div class="grid grid-cols-3 gap-1.5 w-full sm:w-auto shrink-0">
+                            <button onclick="AdminApp.openAddLinkModal(${sub.id})" class="btn btn-secondary text-xs py-1 px-2.5 flex items-center justify-center gap-1">+ رابط</button>
+                            <button onclick="AdminApp.openEditSubjectModal(${sub.id})" class="btn btn-primary text-xs py-1 px-2.5 flex items-center justify-center gap-1">تعديل</button>
+                            <button onclick="AdminApp.deleteSubject(${sub.id})" class="btn btn-danger text-xs py-1 px-2.5 flex items-center justify-center gap-1">حذف</button>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-xs">
-                        <div class="bg-black/20 p-3 rounded-lg border border-white/5">
-                            <span class="text-gray-400 block mb-1">مجلد الشباتر (Chapters Folder ID):</span>
-                            <code class="text-gray-300 font-mono select-all bg-black/40 px-2 py-1 rounded block truncate border border-white/5">${sub.chapters_folder_id || 'غير مسبوق'}</code>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2.5 text-xs">
+                        <div class="bg-black/25 p-2 rounded-lg border border-white/5 flex items-center justify-between gap-2">
+                            <span class="text-gray-400 text-[11px] shrink-0 font-medium">📁 الشباتر:</span>
+                            <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 flex-1 text-left" dir="ltr">${sub.chapters_folder_id || 'غير مرتبط'}</code>
                         </div>
-                        <div class="bg-black/20 p-3 rounded-lg border border-white/5">
-                            <span class="text-gray-400 block mb-1">مجلد التجميعات (Materials Folder ID):</span>
-                            <code class="text-gray-300 font-mono select-all bg-black/40 px-2 py-1 rounded block truncate border border-white/5">${sub.materials_folder_id || 'غير مسبوق'}</code>
+                        <div class="bg-black/25 p-2 rounded-lg border border-white/5 flex items-center justify-between gap-2">
+                            <span class="text-gray-400 text-[11px] shrink-0 font-medium">📁 التجميعات:</span>
+                            <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 flex-1 text-left" dir="ltr">${sub.materials_folder_id || 'غير مرتبط'}</code>
                         </div>
                     </div>
 
                     <div>
-                        <h4 class="text-xs font-semibold text-gray-400 mb-2">الروابط المساعدة والشبترات:</h4>
-                        <div class="space-y-2">${linksHtml}</div>
+                        <h4 class="text-[11px] font-semibold text-gray-400 mb-1.5">الروابط المساعدة والمصادر:</h4>
+                        <div class="space-y-1.5">${linksHtml}</div>
                     </div>
                 </div>
             `;

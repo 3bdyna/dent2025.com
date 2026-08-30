@@ -327,7 +327,7 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 overflow-y-auto bg-dark p-3.5 sm:p-5 md:p-8 relative min-h-0 custom-scrollbar">
+    <main class="flex-1 overflow-y-auto bg-dark p-2.5 sm:p-4 md:p-6 relative min-h-0 custom-scrollbar">
         <!-- Toast Notification -->
         <div id="toast" class="fixed top-4 sm:top-5 left-1/2 transform -translate-x-1/2 glass px-4 sm:px-6 py-2.5 sm:py-3 rounded-full text-white shadow-lg transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2 max-w-[90vw] text-xs sm:text-sm">
             <span id="toast-icon"></span>
@@ -448,18 +448,19 @@
     </template>
 
     <template id="tpl-passwords">
-        <div class="h-full flex flex-col">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5">
+            <!-- Compact Header -->
+            <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
-                    <h2 class="text-2xl sm:text-3xl font-bold">إدارة كلمات المرور والصلاحيات</h2>
-                    <p class="text-gray-400 text-xs sm:text-sm mt-1">التحكم في مفاتيح المرور والصلاحيات الصريحة لكل تخصص أو ترم</p>
+                    <h2 class="text-base sm:text-2xl font-bold text-white leading-tight">إدارة الصلاحيات والمفاتيح</h2>
+                    <p class="text-gray-400 text-xs hidden sm:block mt-0.5">التحكم في مفاتيح المرور والصلاحيات الصريحة</p>
                 </div>
-                <button onclick="AdminApp.openPasswordModal()" class="btn btn-primary w-full sm:w-auto flex items-center gap-2">
-                    إضافة كلمة مرور جديدة
+                <button onclick="AdminApp.openPasswordModal()" class="btn btn-primary text-xs sm:text-sm py-1.5 px-3 flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                    <span>+</span> إضافة كلمة مرور
                 </button>
             </div>
-            <div class="flex-1 overflow-auto glass rounded-2xl p-4 sm:p-6 custom-scrollbar">
-                <div id="passwords-list" class="space-y-4">
+            <div class="flex-1 overflow-auto glass rounded-xl p-2.5 sm:p-4 custom-scrollbar min-h-0">
+                <div id="passwords-list" class="space-y-3 sm:space-y-4">
                     <!-- Populated by JS -->
                 </div>
             </div>
@@ -467,69 +468,60 @@
     </template>
 
     <template id="tpl-events">
-        <div class="h-full flex flex-col">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5">
+            <!-- Compact Header -->
+            <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
-                        إدارة التقويم والأحداث
-                    </h2>
-                    <p class="text-gray-400 text-xs sm:text-sm mt-1">تتبع وتصنيف جميع أحداث الأجندة الدراسية حسب التخصصات والسنوات</p>
+                    <h2 class="text-base sm:text-2xl font-bold text-white leading-tight">إدارة التقويم والأحداث</h2>
+                    <p class="text-gray-400 text-xs hidden sm:block mt-0.5">تتبع وتصنيف أحداث الأجندة الدراسية</p>
                 </div>
-                <button onclick="AdminApp.openEventModal()" class="btn btn-primary w-full sm:w-auto flex items-center gap-2">
-                    إضافة حدث جديد
+                <button onclick="AdminApp.openEventModal()" class="btn btn-primary text-xs sm:text-sm py-1.5 px-3 flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                    <span>+</span> إضافة حدث
                 </button>
             </div>
 
             <!-- Summary Stats Counters -->
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3 mb-4">
-                <div class="bg-black/30 p-2.5 sm:p-3 rounded-xl border border-white/10 text-center">
-                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">إجمالي الأحداث</span>
-                    <span id="evt-stat-total" class="text-lg sm:text-xl font-bold text-white font-mono">0</span>
+            <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5 sm:gap-2 shrink-0">
+                <div class="bg-black/30 p-1.5 sm:p-2 rounded-xl border border-white/10 text-center">
+                    <span class="text-[10px] sm:text-xs text-gray-400 block">الإجمالي</span>
+                    <span id="evt-stat-total" class="text-sm sm:text-lg font-bold text-white font-mono">0</span>
                 </div>
-                <div class="bg-black/30 p-2.5 sm:p-3 rounded-xl border border-purple-500/20 text-center">
-                    <span class="text-[11px] sm:text-xs text-purple-300 block mb-1">أحداث عامة</span>
-                    <span id="evt-stat-global" class="text-lg sm:text-xl font-bold text-purple-400 font-mono">0</span>
+                <div class="bg-black/30 p-1.5 sm:p-2 rounded-xl border border-purple-500/20 text-center">
+                    <span class="text-[10px] sm:text-xs text-purple-300 block">عامة</span>
+                    <span id="evt-stat-global" class="text-sm sm:text-lg font-bold text-purple-400 font-mono">0</span>
                 </div>
-                <div class="bg-black/30 p-2.5 sm:p-3 rounded-xl border border-red-500/20 text-center">
-                    <span class="text-[11px] sm:text-xs text-red-300 block mb-1">اختبارات</span>
-                    <span id="evt-stat-exams" class="text-lg sm:text-xl font-bold text-red-400 font-mono">0</span>
+                <div class="bg-black/30 p-1.5 sm:p-2 rounded-xl border border-red-500/20 text-center">
+                    <span class="text-[10px] sm:text-xs text-red-300 block">اختبارات</span>
+                    <span id="evt-stat-exams" class="text-sm sm:text-lg font-bold text-red-400 font-mono">0</span>
                 </div>
-                <div class="bg-black/30 p-2.5 sm:p-3 rounded-xl border border-emerald-500/20 text-center">
-                    <span class="text-[11px] sm:text-xs text-emerald-300 block mb-1">إجازات</span>
-                    <span id="evt-stat-holidays" class="text-lg sm:text-xl font-bold text-emerald-400 font-mono">0</span>
+                <div class="bg-black/30 p-1.5 sm:p-2 rounded-xl border border-emerald-500/20 text-center">
+                    <span class="text-[10px] sm:text-xs text-emerald-300 block">إجازات</span>
+                    <span id="evt-stat-holidays" class="text-sm sm:text-lg font-bold text-emerald-400 font-mono">0</span>
                 </div>
-                <div class="bg-black/30 p-2.5 sm:p-3 rounded-xl border border-amber-500/20 text-center col-span-2 sm:col-span-1">
-                    <span class="text-[11px] sm:text-xs text-amber-300 block mb-1">قادمة / جارية</span>
-                    <span id="evt-stat-upcoming" class="text-lg sm:text-xl font-bold text-amber-400 font-mono">0</span>
-                </div>
-            </div>
-
-            <!-- Arabic Guidance Banner -->
-            <div class="bg-black/30 border border-white/10 p-3 rounded-xl mb-4 text-gray-300 text-xs leading-relaxed flex items-center gap-2.5">
-                <span class="text-base">ℹ️</span>
-                <div>
-                    <strong class="text-white">دليل الأحداث والتصنيف:</strong> الأحداث العامة (<code class="text-gray-300 font-mono">Global</code>) تظهر لجميع الطلاب، بينما الأحداث المخصصة ترتبط بتخصص وسنة محددين.
+                <div class="bg-black/30 p-1.5 sm:p-2 rounded-xl border border-amber-500/20 text-center col-span-2 sm:col-span-1">
+                    <span class="text-[10px] sm:text-xs text-amber-300 block">قادمة</span>
+                    <span id="evt-stat-upcoming" class="text-sm sm:text-lg font-bold text-amber-400 font-mono">0</span>
                 </div>
             </div>
 
-            <!-- Multi-level Filter Bar -->
-            <div class="glass p-3.5 sm:p-4 rounded-xl mb-4 sm:mb-6">
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
+            <!-- Compact Multi-level Filter Bar -->
+            <div class="glass p-2.5 sm:p-3 rounded-xl shrink-0">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                     <div>
-                        <label class="block text-xs text-gray-400 mb-1">التخصص / النطاق</label>
-                        <select id="evt-filter-scope" class="input-field text-xs" onchange="AdminApp.onEventFilterChange()">
-                            <option value="all">الكل (جميع الأحداث)</option>
-                            <option value="global">أحداث عامة فقط (Global)</option>
-                            <option value="dentistry">طب الأسنان (Dentistry)</option>
-                            <option value="medicine">الطب البشري (Medicine)</option>
-                            <option value="pre-med">التحضيري (Pre-Med)</option>
+                        <label class="block text-[11px] text-gray-400 mb-1 font-medium">التخصص / النطاق</label>
+                        <select id="evt-filter-scope" class="input-field text-xs py-1 px-1.5 h-9" onchange="AdminApp.onEventFilterChange()">
+                            <option value="all">الكل</option>
+                            <option value="global">عام فقط</option>
+                            <option value="dentistry">أسنان</option>
+                            <option value="medicine">بشري</option>
+                            <option value="pre-med">تحضيري</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-400 mb-1">السنة الأكاديمية</label>
-                        <select id="evt-filter-year" class="input-field text-xs" onchange="AdminApp.onEventFilterChange()">
+                        <label class="block text-[11px] text-gray-400 mb-1 font-medium">السنة</label>
+                        <select id="evt-filter-year" class="input-field text-xs py-1 px-1.5 h-9" onchange="AdminApp.onEventFilterChange()">
                             <option value="all">جميع السنوات</option>
-                            <option value="0">السنة التحضيرية (Pre-Med)</option>
+                            <option value="0">تحضيري</option>
                             <option value="2">سنة 2</option>
                             <option value="3">سنة 3</option>
                             <option value="4">سنة 4</option>
@@ -538,57 +530,58 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-400 mb-1">نوع الحدث</label>
-                        <select id="evt-filter-type" class="input-field text-xs" onchange="AdminApp.onEventFilterChange()">
-                            <option value="all">جميع أنواع الأحداث</option>
-                            <option value="exam">اختبارات (Exam)</option>
-                            <option value="holiday">إجازات رسمية (Holiday)</option>
-                            <option value="start">بداية ترم (Semester Start)</option>
-                            <option value="payment">مكافآت / رسوم (Payment)</option>
-                            <option value="other">أخرى (Other)</option>
+                        <label class="block text-[11px] text-gray-400 mb-1 font-medium">نوع الحدث</label>
+                        <select id="evt-filter-type" class="input-field text-xs py-1 px-1.5 h-9" onchange="AdminApp.onEventFilterChange()">
+                            <option value="all">الكل</option>
+                            <option value="exam">اختبارات</option>
+                            <option value="holiday">إجازات</option>
+                            <option value="start">بداية ترم</option>
+                            <option value="payment">مكافآت</option>
+                            <option value="other">أخرى</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-400 mb-1">بحث في الأحداث</label>
-                        <input type="text" id="evt-search-input" class="input-field text-xs" placeholder="ابحث باسم الحدث أو التاريخ..." oninput="AdminApp.onEventFilterChange()">
+                        <label class="block text-[11px] text-gray-400 mb-1 font-medium">بحث</label>
+                        <input type="text" id="evt-search-input" class="input-field text-xs py-1 px-2 h-9" placeholder="بحث باسم الحدث..." oninput="AdminApp.onEventFilterChange()">
                     </div>
                 </div>
             </div>
 
             <!-- Categorized Events List Container -->
-            <div class="flex-1 overflow-auto glass rounded-2xl p-3.5 sm:p-6 custom-scrollbar">
-                <div id="events-list" class="space-y-4 sm:space-y-6">
-                    <!-- Populated by JS with Categorized Sections -->
+            <div class="flex-1 overflow-auto glass rounded-xl p-2.5 sm:p-4 custom-scrollbar min-h-0">
+                <div id="events-list" class="space-y-3 sm:space-y-4">
+                    <!-- Populated by JS -->
                 </div>
             </div>
         </div>
     </template>
 
     <template id="tpl-subjects">
-        <div class="h-full flex flex-col">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5">
+            <!-- Compact Header -->
+            <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
-                    <h2 class="text-2xl sm:text-3xl font-bold">إدارة المواد والروابط</h2>
-                    <p class="text-gray-400 text-xs sm:text-sm mt-0.5">تعديل مقررات التخصصات، روابط Drive واليوتيوب والمصادر</p>
+                    <h2 class="text-base sm:text-2xl font-bold text-white leading-tight">إدارة المواد والروابط</h2>
+                    <p class="text-gray-400 text-xs hidden sm:block mt-0.5">تعديل مقررات التخصصات، روابط Drive واليوتيوب والمصادر</p>
                 </div>
-                <button onclick="AdminApp.openAddSubjectModal()" class="btn btn-primary w-full sm:w-auto flex items-center gap-2">
-                    إضافة مادة جديدة
+                <button onclick="AdminApp.openAddSubjectModal()" class="btn btn-primary text-xs sm:text-sm py-1.5 px-3 flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                    <span>+</span> إضافة مادة جديدة
                 </button>
             </div>
 
-            <!-- Filter bar -->
-            <div class="glass p-3.5 sm:p-4 rounded-xl mb-4 sm:mb-6 grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4">
+            <!-- Compact 3-Column Filter Bar -->
+            <div class="glass p-2.5 sm:p-3 rounded-xl grid grid-cols-3 gap-2 shrink-0">
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">التخصص</label>
-                    <select id="sub-spec" class="input-field text-xs sm:text-sm" onchange="AdminApp.onSubjectSpecChange()">
-                        <option value="dentistry">أسنان (Dentistry)</option>
-                        <option value="medicine">بشري (Medicine)</option>
-                        <option value="pre-med">تحضيري (Pre-med)</option>
+                    <label class="block text-[11px] text-gray-400 mb-1 font-medium">التخصص</label>
+                    <select id="sub-spec" class="input-field text-xs py-1 px-1.5 h-9" onchange="AdminApp.onSubjectSpecChange()">
+                        <option value="dentistry">أسنان</option>
+                        <option value="medicine">بشري</option>
+                        <option value="pre-med">تحضيري</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">السنة</label>
-                    <select id="sub-year" class="input-field text-xs sm:text-sm" onchange="AdminApp.loadSubjects()">
+                    <label class="block text-[11px] text-gray-400 mb-1 font-medium">السنة</label>
+                    <select id="sub-year" class="input-field text-xs py-1 px-1.5 h-9" onchange="AdminApp.loadSubjects()">
                         <option value="2">سنة 2</option>
                         <option value="3">سنة 3</option>
                         <option value="4">سنة 4</option>
@@ -597,8 +590,8 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">الترم</label>
-                    <select id="sub-sem" class="input-field text-xs sm:text-sm" onchange="AdminApp.loadSubjects()">
+                    <label class="block text-[11px] text-gray-400 mb-1 font-medium">الترم</label>
+                    <select id="sub-sem" class="input-field text-xs py-1 px-1.5 h-9" onchange="AdminApp.loadSubjects()">
                         <option value="1">الترم 1</option>
                         <option value="2">الترم 2</option>
                     </select>
@@ -606,8 +599,8 @@
             </div>
 
             <!-- Subjects List Container -->
-            <div class="flex-1 overflow-auto glass rounded-2xl p-3.5 sm:p-6 custom-scrollbar">
-                <div id="subjects-list" class="space-y-4 sm:space-y-6">
+            <div class="flex-1 overflow-auto glass rounded-xl p-2.5 sm:p-4 custom-scrollbar min-h-0">
+                <div id="subjects-list" class="space-y-3 sm:space-y-4">
                     <!-- Populated by JS -->
                 </div>
             </div>
@@ -615,30 +608,31 @@
     </template>
 
     <template id="tpl-classes">
-        <div class="h-full flex flex-col">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5">
+            <!-- Compact Header -->
+            <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
-                    <h2 class="text-2xl sm:text-3xl font-bold">إدارة الجداول الدراسية (Timetable)</h2>
-                    <p class="text-gray-400 text-xs sm:text-sm mt-0.5">تحديد مواعيد الحصص والمحاضرات اليومية لكل شعبة ومجموعة</p>
+                    <h2 class="text-base sm:text-2xl font-bold text-white leading-tight">إدارة الجداول الدراسية</h2>
+                    <p class="text-gray-400 text-xs hidden sm:block mt-0.5">تحديد مواعيد الحصص والمحاضرات اليومية</p>
                 </div>
-                <button onclick="AdminApp.openClassModal()" class="btn btn-primary w-full sm:w-auto flex items-center gap-2">
-                    إضافة حصة / محاضرة
+                <button onclick="AdminApp.openClassModal()" class="btn btn-primary text-xs sm:text-sm py-1.5 px-3 flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                    <span>+</span> إضافة حصة
                 </button>
             </div>
 
-            <!-- Filter bar -->
-            <div class="glass p-3.5 sm:p-4 rounded-xl mb-4 sm:mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
+            <!-- Compact 2x2 Filter bar on mobile, 4-col on desktop -->
+            <div class="glass p-2.5 sm:p-3 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-2 shrink-0">
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">التخصص</label>
-                    <select id="cls-spec" class="input-field text-xs sm:text-sm" onchange="AdminApp.onClassSpecChange()">
-                        <option value="dentistry">أسنان (Dentistry)</option>
-                        <option value="medicine">بشري (Medicine)</option>
-                        <option value="pre-med">تحضيري (Pre-med)</option>
+                    <label class="block text-[11px] text-gray-400 mb-1 font-medium">التخصص</label>
+                    <select id="cls-spec" class="input-field text-xs py-1 px-1.5 h-9" onchange="AdminApp.onClassSpecChange()">
+                        <option value="dentistry">أسنان</option>
+                        <option value="medicine">بشري</option>
+                        <option value="pre-med">تحضيري</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">السنة</label>
-                    <select id="cls-year" class="input-field text-xs sm:text-sm" onchange="AdminApp.loadClasses()">
+                    <label class="block text-[11px] text-gray-400 mb-1 font-medium">السنة</label>
+                    <select id="cls-year" class="input-field text-xs py-1 px-1.5 h-9" onchange="AdminApp.loadClasses()">
                         <option value="2">سنة 2</option>
                         <option value="3">سنة 3</option>
                         <option value="4">سنة 4</option>
@@ -647,15 +641,15 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">الترم</label>
-                    <select id="cls-sem" class="input-field text-xs sm:text-sm" onchange="AdminApp.loadClasses()">
+                    <label class="block text-[11px] text-gray-400 mb-1 font-medium">الترم</label>
+                    <select id="cls-sem" class="input-field text-xs py-1 px-1.5 h-9" onchange="AdminApp.loadClasses()">
                         <option value="1">الترم 1</option>
                         <option value="2">الترم 2</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">المجموعة</label>
-                    <select id="cls-group" class="input-field text-xs sm:text-sm" onchange="AdminApp.renderClasses()">
+                    <label class="block text-[11px] text-gray-400 mb-1 font-medium">المجموعة</label>
+                    <select id="cls-group" class="input-field text-xs py-1 px-1.5 h-9" onchange="AdminApp.renderClasses()">
                         <option value="all">كل المجموعات</option>
                         <option value="المجموعة A">المجموعة A</option>
                         <option value="المجموعة B">المجموعة B</option>
@@ -664,8 +658,8 @@
             </div>
 
             <!-- Timetable View Container by Days -->
-            <div class="flex-1 overflow-auto glass rounded-2xl p-3.5 sm:p-6 custom-scrollbar">
-                <div id="classes-timetable" class="grid grid-cols-1 md:grid-cols-5 gap-3.5 sm:gap-4">
+            <div class="flex-1 overflow-auto glass rounded-xl p-2.5 sm:p-4 custom-scrollbar min-h-0">
+                <div id="classes-timetable" class="grid grid-cols-1 md:grid-cols-5 gap-2.5 sm:gap-4">
                     <!-- Populated by JS for Sun to Thu -->
                 </div>
             </div>
@@ -674,61 +668,57 @@
 
     <!-- 6. HISTORY & ROLLBACK TAB -->
     <template id="tpl-history">
-        <div class="h-full flex flex-col gap-4 sm:gap-5 overflow-y-auto custom-scrollbar">
-
+        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5 overflow-y-auto custom-scrollbar">
             <!-- Top row: Save Checkpoint + Undo button -->
-            <div class="flex flex-col md:flex-row gap-3 sm:gap-4 shrink-0">
-
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3.5 shrink-0">
                 <!-- Save Named Checkpoint box -->
-                <div class="glass p-4 sm:p-5 rounded-xl border border-white/10 flex-1">
-                    <h3 class="font-semibold text-white mb-2 text-sm sm:text-base flex items-center gap-2">
+                <div class="glass p-3 sm:p-4 rounded-xl border border-white/10">
+                    <h3 class="font-semibold text-white mb-1.5 text-xs sm:text-sm flex items-center gap-2">
                         <span>📌</span> حفظ نقطة مرجعية يدوية
                     </h3>
-                    <p class="text-xs text-gray-400 mb-3">يحفظ حالة النظام بالكامل الآن مع وصف أو ملاحظة مخصصة لسهولة العودة إليها مستقبلاً.</p>
-                    <textarea id="manual-snapshot-note" rows="2" class="input-field text-xs sm:text-sm w-full mb-3 resize-none" placeholder="مثال: نقطة أمان قبل تعديل مواد وجداول الترم الجديد..."></textarea>
-                    <button onclick="AdminApp.saveManualSnapshot()" class="btn btn-primary text-xs sm:text-sm w-full py-2.5 flex items-center justify-center gap-2">
+                    <textarea id="manual-snapshot-note" rows="1" class="input-field text-xs w-full mb-2 resize-none" placeholder="وصف النقطة المرجعية..."></textarea>
+                    <button onclick="AdminApp.saveManualSnapshot()" class="btn btn-primary text-xs w-full py-1.5 flex items-center justify-center gap-1.5">
                         <span>💾</span> حفظ النقطة المرجعية الآن
                     </button>
                 </div>
 
                 <!-- Saved Manual Checkpoints -->
-                <div class="glass p-4 sm:p-5 rounded-xl border border-white/10 flex-1 flex flex-col">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="font-semibold text-white text-sm sm:text-base flex items-center gap-2">
+                <div class="glass p-3 sm:p-4 rounded-xl border border-white/10 flex flex-col">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <h3 class="font-semibold text-white text-xs sm:text-sm flex items-center gap-1.5">
                             <span>⭐</span> النقاط المرجعية المحفوظة
                         </h3>
                         <button onclick="AdminApp.loadManualSnapshots()" class="text-xs text-sky-400 hover:text-sky-300">تحديث</button>
                     </div>
-                    <div id="manual-snapshots-list" class="flex-1 overflow-auto space-y-2 max-h-48 pr-1 custom-scrollbar">
+                    <div id="manual-snapshots-list" class="flex-1 overflow-auto space-y-1.5 max-h-28 pr-1 custom-scrollbar">
                         <p class="text-xs text-gray-500">جاري التحميل...</p>
                     </div>
                 </div>
             </div>
 
             <!-- Audit Log Section -->
-            <div class="flex flex-col flex-1 min-h-0">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 mb-3">
+            <div class="flex flex-col flex-1 min-h-0 space-y-2.5">
+                <div class="flex justify-between items-center gap-2">
                     <div>
-                        <h3 class="font-semibold text-white text-sm sm:text-base flex items-center gap-2">
+                        <h3 class="font-semibold text-white text-xs sm:text-sm flex items-center gap-1.5">
                             <span>📜</span> سجل التغييرات والعمليات التلقائي
                         </h3>
-                        <p class="text-xs text-gray-400 mt-0.5" id="hist-total-status">جاري جلب السجلات...</p>
                     </div>
-                    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                        <button id="btn-undo-rollback" onclick="AdminApp.undoLastRollback()" class="btn bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs py-2 px-3.5 hidden flex items-center gap-1.5 font-semibold">
-                            <span>↩</span> تراجع عن آخر استعادة
+                    <div class="flex items-center gap-1.5">
+                        <button id="btn-undo-rollback" onclick="AdminApp.undoLastRollback()" class="btn bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs py-1 px-2.5 hidden flex items-center gap-1 font-semibold">
+                            <span>↩</span> تراجع عن الاستعادة
                         </button>
-                        <button onclick="AdminApp.loadHistory()" class="btn btn-secondary text-xs py-2 px-3.5 flex items-center gap-1.5">
-                            <span>🔄</span> تحديث السجل
+                        <button onclick="AdminApp.loadHistory()" class="btn btn-secondary text-xs py-1 px-2.5 flex items-center gap-1">
+                            <span>🔄</span> تحديث
                         </button>
                     </div>
                 </div>
 
                 <!-- Filters -->
-                <div class="glass p-3 rounded-xl mb-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 border border-white/10">
+                <div class="glass p-2.5 sm:p-3 rounded-xl grid grid-cols-2 lg:grid-cols-4 gap-2 border border-white/10 shrink-0">
                     <div>
-                        <label class="block text-[11px] text-gray-400 mb-1">القسم</label>
-                        <select id="hist-filter-category" class="input-field text-xs py-1.5 w-full" onchange="AdminApp.filterHistory()">
+                        <label class="block text-[11px] text-gray-400 mb-0.5">القسم</label>
+                        <select id="hist-filter-category" class="input-field text-xs py-1 px-1.5 h-8" onchange="AdminApp.filterHistory()">
                             <option value="">جميع الأقسام</option>
                             <option value="subjects">📚 المواد والروابط</option>
                             <option value="classes">📅 الجداول الدراسية</option>
@@ -740,8 +730,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[11px] text-gray-400 mb-1">نوع الإجراء</label>
-                        <select id="hist-filter-action" class="input-field text-xs py-1.5 w-full" onchange="AdminApp.filterHistory()">
+                        <label class="block text-[11px] text-gray-400 mb-0.5">نوع الإجراء</label>
+                        <select id="hist-filter-action" class="input-field text-xs py-1 px-1.5 h-8" onchange="AdminApp.filterHistory()">
                             <option value="">جميع الإجراءات</option>
                             <option value="add">➕ إضافة جديدة</option>
                             <option value="edit">✏️ تعديل</option>
@@ -753,8 +743,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[11px] text-gray-400 mb-1">الفترة الزمنية</label>
-                        <select id="hist-filter-period" class="input-field text-xs py-1.5 w-full" onchange="AdminApp.filterHistory()">
+                        <label class="block text-[11px] text-gray-400 mb-0.5">الفترة الزمنية</label>
+                        <select id="hist-filter-period" class="input-field text-xs py-1 px-1.5 h-8" onchange="AdminApp.filterHistory()">
                             <option value="all">كل الأوقات</option>
                             <option value="today">اليوم</option>
                             <option value="week">آخر 7 أيام</option>
@@ -762,54 +752,50 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[11px] text-gray-400 mb-1">بحث بالنص أو المشرف</label>
-                        <input type="text" id="hist-filter-search" class="input-field text-xs py-1.5 w-full" placeholder="بحث بالوصف، المنفذ، المادة..." oninput="AdminApp.filterHistory()">
+                        <label class="block text-[11px] text-gray-400 mb-0.5">بحث</label>
+                        <input type="text" id="hist-filter-search" class="input-field text-xs py-1 px-2 h-8" placeholder="بحث بالوصف..." oninput="AdminApp.filterHistory()">
                     </div>
                 </div>
 
                 <!-- Timeline Container -->
-                <div class="flex-1 overflow-auto glass rounded-xl p-3 sm:p-4 border border-white/10 custom-scrollbar">
-                    <div id="history-timeline-container" class="space-y-2.5">
+                <div class="flex-1 overflow-auto glass rounded-xl p-2.5 sm:p-4 border border-white/10 custom-scrollbar min-h-0">
+                    <div id="history-timeline-container" class="space-y-2">
                         <!-- Populated by AdminApp.renderHistory() -->
                     </div>
                 </div>
             </div>
-
         </div>
     </template>
 
     <template id="tpl-announcements">
-        <div class="h-full flex flex-col overflow-y-auto custom-scrollbar">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6 shrink-0">
+        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5 overflow-y-auto custom-scrollbar">
+            <!-- Compact Header -->
+            <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
-                    <h2 class="text-2xl sm:text-3xl font-bold">إدارة الإعلانات</h2>
-                    <p class="text-gray-400 text-xs sm:text-sm mt-0.5">نشر وتعديل الإعلانات الموجهة لجميع الدفعات أو تخصص معين</p>
+                    <h2 class="text-base sm:text-2xl font-bold text-white leading-tight">إدارة الإعلانات</h2>
+                    <p class="text-gray-400 text-xs hidden sm:block mt-0.5">نشر وتعديل الإعلانات الموجهة للدفعات</p>
                 </div>
-                <div class="flex gap-2 w-full sm:w-auto">
-                    <button onclick="AdminApp.undoAnnouncements()" class="btn btn-secondary text-xs sm:text-sm flex-1 sm:flex-initial flex items-center justify-center gap-2" title="تراجع عن آخر إجراء (Undo)">
-                        تراجع
-                    </button>
-                    <button onclick="AdminApp.clearAllAnnouncements()" class="btn btn-danger text-xs sm:text-sm flex-1 sm:flex-initial flex items-center justify-center gap-2">
-                        مسح الكل
-                    </button>
+                <div class="flex gap-1.5 shrink-0">
+                    <button onclick="AdminApp.undoAnnouncements()" class="btn btn-secondary text-xs py-1.5 px-2.5" title="تراجع">تراجع</button>
+                    <button onclick="AdminApp.clearAllAnnouncements()" class="btn btn-danger text-xs py-1.5 px-2.5">مسح الكل</button>
                 </div>
             </div>
 
-            <div class="glass p-4 sm:p-6 rounded-2xl mb-4 sm:mb-6 shrink-0">
-                <h3 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-accent">تعديل الإعلانات (فردي أو مجمع)</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4 mb-4">
+            <!-- Add/Edit Form Box -->
+            <div class="glass p-3 sm:p-4 rounded-xl shrink-0 space-y-2.5">
+                <div class="grid grid-cols-3 gap-2">
                     <div>
-                        <label class="block text-xs sm:text-sm text-gray-400 mb-1">التخصص</label>
-                        <select id="ann-spec" class="input-field text-xs sm:text-sm" onchange="AdminApp.updateYearOptions('ann-spec', 'ann-year')">
-                            <option value="all">الكل (Bulk Update)</option>
-                            <option value="dentistry">أسنان (Dentistry)</option>
-                            <option value="medicine">بشري (Medicine)</option>
-                            <option value="pre-med">تحضيري (Pre-med)</option>
+                        <label class="block text-[11px] text-gray-400 mb-1 font-medium">التخصص</label>
+                        <select id="ann-spec" class="input-field text-xs py-1 px-1.5 h-9" onchange="AdminApp.updateYearOptions('ann-spec', 'ann-year')">
+                            <option value="all">الكل (شامل)</option>
+                            <option value="dentistry">أسنان</option>
+                            <option value="medicine">بشري</option>
+                            <option value="pre-med">تحضيري</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs sm:text-sm text-gray-400 mb-1">السنة</label>
-                        <select id="ann-year" class="input-field text-xs sm:text-sm">
+                        <label class="block text-[11px] text-gray-400 mb-1 font-medium">السنة</label>
+                        <select id="ann-year" class="input-field text-xs py-1 px-1.5 h-9">
                             <option value="all">الكل</option>
                             <option value="1">سنة 1</option>
                             <option value="2">سنة 2</option>
@@ -820,8 +806,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs sm:text-sm text-gray-400 mb-1">الترم</label>
-                        <select id="ann-sem" class="input-field text-xs sm:text-sm">
+                        <label class="block text-[11px] text-gray-400 mb-1 font-medium">الترم</label>
+                        <select id="ann-sem" class="input-field text-xs py-1 px-1.5 h-9">
                             <option value="all">الكل</option>
                             <option value="1">الترم 1</option>
                             <option value="2">الترم 2</option>
@@ -829,28 +815,28 @@
                     </div>
                 </div>
                 
-                <div class="mb-4">
-                    <label class="block text-xs sm:text-sm text-gray-400 mb-1">محتوى الإعلان</label>
-                    <div id="ann-editor-container" class="bg-black/30 border border-white/10 rounded-b-lg text-white" style="height: 140px;"></div>
+                <div>
+                    <label class="block text-[11px] text-gray-400 mb-1 font-medium">نص الإعلان</label>
+                    <div id="ann-editor-container" class="bg-black/30 border border-white/10 rounded-b-lg text-white" style="height: 110px;"></div>
                 </div>
                 
-                <button onclick="AdminApp.saveAnnouncements()" class="btn btn-primary w-full py-2.5 sm:py-3 mt-3 text-sm sm:text-base">حفظ الإعلان</button>
+                <button onclick="AdminApp.saveAnnouncements()" class="btn btn-primary w-full py-2 text-xs sm:text-sm font-semibold">حفظ الإعلان الآن</button>
             </div>
 
-            <!-- Filter Bar -->
-            <div class="glass p-3.5 sm:p-4 rounded-xl mb-4 sm:mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 shrink-0">
+            <!-- Compact Filter Bar -->
+            <div class="glass p-2.5 sm:p-3 rounded-xl grid grid-cols-2 md:grid-cols-4 gap-2 shrink-0">
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">تصفية بالتخصص</label>
-                    <select id="ann-filter-spec" class="input-field text-xs sm:text-sm" onchange="AdminApp.updateYearOptions('ann-filter-spec', 'ann-filter-year'); AdminApp.renderAnnouncements()">
+                    <label class="block text-[11px] text-gray-400 mb-1 font-medium">التخصص</label>
+                    <select id="ann-filter-spec" class="input-field text-xs py-1 px-1.5 h-9" onchange="AdminApp.updateYearOptions('ann-filter-spec', 'ann-filter-year'); AdminApp.renderAnnouncements()">
                         <option value="all">الكل</option>
-                        <option value="dentistry">أسنان (Dentistry)</option>
-                        <option value="medicine">بشري (Medicine)</option>
-                        <option value="pre-med">تحضيري (Pre-med)</option>
+                        <option value="dentistry">أسنان</option>
+                        <option value="medicine">بشري</option>
+                        <option value="pre-med">تحضيري</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">تصفية بالسنة</label>
-                    <select id="ann-filter-year" class="input-field text-xs sm:text-sm" onchange="AdminApp.renderAnnouncements()">
+                    <label class="block text-[11px] text-gray-400 mb-1 font-medium">السنة</label>
+                    <select id="ann-filter-year" class="input-field text-xs py-1 px-1.5 h-9" onchange="AdminApp.renderAnnouncements()">
                         <option value="all">الكل</option>
                         <option value="1">سنة 1</option>
                         <option value="2">سنة 2</option>
@@ -861,22 +847,22 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">تصفية بالترم</label>
-                    <select id="ann-filter-sem" class="input-field text-xs sm:text-sm" onchange="AdminApp.renderAnnouncements()">
+                    <label class="block text-[11px] text-gray-400 mb-1 font-medium">الترم</label>
+                    <select id="ann-filter-sem" class="input-field text-xs py-1 px-1.5 h-9" onchange="AdminApp.renderAnnouncements()">
                         <option value="all">الكل</option>
                         <option value="1">الترم 1</option>
                         <option value="2">الترم 2</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">بحث</label>
-                    <input type="text" id="ann-filter-search" class="input-field text-xs sm:text-sm" placeholder="ابحث في المحتوى..." oninput="AdminApp.renderAnnouncements()">
+                    <label class="block text-[11px] text-gray-400 mb-1 font-medium">بحث</label>
+                    <input type="text" id="ann-filter-search" class="input-field text-xs py-1 px-2 h-9" placeholder="ابحث في المحتوى..." oninput="AdminApp.renderAnnouncements()">
                 </div>
             </div>
 
-            <div class="flex-1 overflow-auto glass rounded-2xl p-3.5 sm:p-6 custom-scrollbar">
-                <h3 class="font-semibold mb-3 sm:mb-4 text-gray-300 border-b border-white/10 pb-2 text-sm sm:text-base">الإعلانات الحالية المنشورة</h3>
-                <div id="announcements-list" class="space-y-4 sm:space-y-6">
+            <!-- Announcements List Container -->
+            <div class="flex-1 overflow-auto glass rounded-xl p-2.5 sm:p-4 custom-scrollbar min-h-0">
+                <div id="announcements-list" class="space-y-3 sm:space-y-4">
                     <!-- Populated by JS -->
                 </div>
             </div>
@@ -884,74 +870,74 @@
     </template>
 
     <template id="tpl-safedeploy">
-        <div class="h-full flex flex-col overflow-y-auto custom-scrollbar">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6 shrink-0">
+        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5 overflow-y-auto custom-scrollbar">
+            <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2 sm:gap-3">
+                    <h2 class="text-base sm:text-2xl font-bold text-white flex items-center gap-2">
                         <span>🛡️</span> نظام SafeDeploy واللقطات
                     </h2>
-                    <p class="text-gray-400 text-xs sm:text-sm mt-1">مراقبة صحة النظام، التحديثات المنظومة، واللقطات الاحتياطية</p>
+                    <p class="text-gray-400 text-xs hidden sm:block mt-0.5">مراقبة صحة النظام والتحديثات واللقطات الاحتياطية</p>
                 </div>
-                <button onclick="AdminApp.loadSafeDeployTab()" class="btn btn-secondary text-xs sm:text-sm flex items-center gap-2 w-full sm:w-auto">
-                    تحديث حالة النظام
+                <button onclick="AdminApp.loadSafeDeployTab()" class="btn btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0">
+                    <span>🔄</span> تحديث
                 </button>
             </div>
 
             <!-- Urgent Alert Banner if error detected -->
-            <div id="sd-urgent-alert" class="hidden p-4 sm:p-5 rounded-2xl bg-red-950/80 border border-red-500/80 text-red-100 mb-4 sm:mb-6 shadow-xl animate-pulse shrink-0">
-                <div class="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
+            <div id="sd-urgent-alert" class="hidden p-3 sm:p-4 rounded-xl bg-red-950/80 border border-red-500/80 text-red-100 shadow-xl animate-pulse shrink-0">
+                <div class="flex flex-col sm:flex-row items-start justify-between gap-2.5">
                     <div>
-                        <h3 class="text-base sm:text-lg font-bold text-white mb-1">تنبيه عاجل: تم اكتشاف مشكلة بالنظام أثناء فحص الصحة!</h3>
-                        <p id="sd-alert-summary" class="text-red-200 text-xs mb-3">التحديث الأخير يحتوي على خطأ أو تعذر الوصول لبعض APIs.</p>
-                        <pre id="sd-alert-trace" class="p-3 bg-black/60 rounded-lg text-xs font-mono text-red-300 max-h-32 overflow-y-auto border border-red-900/60"></pre>
+                        <h3 class="text-sm sm:text-base font-bold text-white mb-0.5">تنبيه: تم اكتشاف مشكلة بالنظام!</h3>
+                        <p id="sd-alert-summary" class="text-red-200 text-xs mb-2">التحديث الأخير يحتوي على خطأ أو تعذر الوصول لبعض APIs.</p>
+                        <pre id="sd-alert-trace" class="p-2 bg-black/60 rounded-lg text-[11px] font-mono text-red-300 max-h-24 overflow-y-auto border border-red-900/60"></pre>
                     </div>
-                    <button id="sd-alert-rollback-btn" class="btn btn-danger text-xs sm:text-sm font-bold whitespace-nowrap w-full sm:w-auto">
+                    <button id="sd-alert-rollback-btn" class="btn btn-danger text-xs font-bold whitespace-nowrap w-full sm:w-auto py-1.5 px-3">
                         استعادة فورية (Rollback)
                     </button>
                 </div>
             </div>
 
             <!-- Health Status Cards -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-6 shrink-0">
-                <div class="glass p-3 sm:p-4 rounded-xl border border-white/10">
-                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">WP Integrated API</span>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 shrink-0">
+                <div class="glass p-2 sm:p-3 rounded-xl border border-white/10">
+                    <span class="text-[10px] sm:text-[11px] text-gray-400 block mb-0.5">WP Integrated API</span>
                     <span id="sd-health-wp" class="text-xs sm:text-sm font-bold text-emerald-400 font-mono">جاري الفحص...</span>
                 </div>
-                <div class="glass p-3 sm:p-4 rounded-xl border border-white/10">
-                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">Announcements API</span>
+                <div class="glass p-2 sm:p-3 rounded-xl border border-white/10">
+                    <span class="text-[10px] sm:text-[11px] text-gray-400 block mb-0.5">Announcements API</span>
                     <span id="sd-health-ann" class="text-xs sm:text-sm font-bold text-emerald-400 font-mono">جاري الفحص...</span>
                 </div>
-                <div class="glass p-3 sm:p-4 rounded-xl border border-white/10">
-                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">Schedule API</span>
+                <div class="glass p-2 sm:p-3 rounded-xl border border-white/10">
+                    <span class="text-[10px] sm:text-[11px] text-gray-400 block mb-0.5">Schedule API</span>
                     <span id="sd-health-sch" class="text-xs sm:text-sm font-bold text-emerald-400 font-mono">جاري الفحص...</span>
                 </div>
-                <div class="glass p-3 sm:p-4 rounded-xl border border-white/10">
-                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">Drive Snapshot</span>
+                <div class="glass p-2 sm:p-3 rounded-xl border border-white/10">
+                    <span class="text-[10px] sm:text-[11px] text-gray-400 block mb-0.5">Drive Snapshot</span>
                     <span class="text-xs sm:text-sm font-bold text-sky-400 font-mono">مفعل تلقائياً</span>
                 </div>
             </div>
 
             <!-- Deployments History Table -->
-            <div class="flex-1 overflow-auto glass rounded-2xl p-4 sm:p-6 custom-scrollbar">
-                <h3 class="font-semibold mb-3 sm:mb-4 text-gray-300 border-b border-white/10 pb-2 flex items-center justify-between text-sm sm:text-base">
+            <div class="flex-1 overflow-auto glass rounded-xl p-3 sm:p-4 custom-scrollbar min-h-0">
+                <h3 class="font-semibold mb-2.5 text-gray-300 border-b border-white/10 pb-1.5 flex items-center justify-between text-xs sm:text-sm">
                     <span>سجل التحديثات واللقطات</span>
                     <span id="sd-total-count" class="text-xs font-mono text-gray-400">0 تحديثات</span>
                 </h3>
-                <div class="overflow-x-auto -mx-2 sm:mx-0">
-                    <table class="w-full text-right text-xs sm:text-sm text-gray-300 min-w-[600px]">
+                <div class="overflow-x-auto -mx-1 sm:mx-0">
+                    <table class="w-full text-right text-xs text-gray-300 min-w-[500px]">
                         <thead class="bg-black/40 text-gray-400 text-xs">
                             <tr>
-                                <th class="py-2.5 px-3 rounded-r-xl">التاريخ والوقت</th>
-                                <th class="py-2.5 px-3">ملاحظة التحديث</th>
-                                <th class="py-2.5 px-3">الملفات المعدلة</th>
-                                <th class="py-2.5 px-3">الحالة</th>
-                                <th class="py-2.5 px-3">أرشيف الموقع</th>
-                                <th class="py-2.5 px-3 rounded-l-xl text-center">الإجراءات</th>
+                                <th class="py-2 px-2.5 rounded-r-lg">التاريخ</th>
+                                <th class="py-2 px-2.5">ملاحظة التحديث</th>
+                                <th class="py-2 px-2.5">الملفات</th>
+                                <th class="py-2 px-2.5">الحالة</th>
+                                <th class="py-2 px-2.5">الأرشيف</th>
+                                <th class="py-2 px-2.5 rounded-l-lg text-center">الإجراء</th>
                             </tr>
                         </thead>
                         <tbody id="sd-deployments-list" class="divide-y divide-white/5">
                             <tr>
-                                <td colspan="6" class="text-center py-8 text-gray-500">جاري تحميل سجلات التحديثات واللقطات...</td>
+                                <td colspan="6" class="text-center py-6 text-gray-500">جاري تحميل سجلات التحديثات...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -962,69 +948,63 @@
 
     <!-- Gemini AI Monitoring Template -->
     <template id="tpl-gemini">
-        <div class="h-full flex flex-col space-y-4 sm:space-y-6 overflow-y-auto custom-scrollbar">
-            <!-- Header section -->
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4 shrink-0">
+        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5 overflow-y-auto custom-scrollbar">
+            <!-- Compact Header -->
+            <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2 sm:gap-3">
+                    <h2 class="text-base sm:text-2xl font-bold text-white flex items-center gap-2">
                         <span>🤖</span> مراقبة مفاتيح Gemini AI
                     </h2>
-                    <p class="text-gray-400 text-xs sm:text-sm mt-1">إضافة وتعديل مفاتيح API، مراقبة الكوتا اليومية، واستهلاك الرموز</p>
+                    <p class="text-gray-400 text-xs hidden sm:block mt-0.5">مراقبة الكوتا اليومية واستهلاك الرموز</p>
                 </div>
-                <div class="flex flex-wrap gap-2 w-full md:w-auto">
-                    <button onclick="AdminApp.openAddGeminiKeyModal()" class="btn btn-primary flex-1 sm:flex-initial text-xs sm:text-sm flex items-center justify-center gap-1.5">
-                        + إضافة مفتاح
-                    </button>
-                    <button onclick="AdminApp.testGeminiKeys()" class="btn btn-secondary flex-1 sm:flex-initial text-xs sm:text-sm flex items-center justify-center gap-1.5">
-                        اختبار المفاتيح
-                    </button>
-                    <button onclick="AdminApp.loadGeminiStatus()" class="btn btn-secondary text-xs sm:text-sm flex items-center justify-center gap-1.5">
-                        تحديث
-                    </button>
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button onclick="AdminApp.openAddGeminiKeyModal()" class="btn btn-primary text-xs py-1.5 px-2.5">+ مفتاح</button>
+                    <button onclick="AdminApp.testGeminiKeys()" class="btn btn-secondary text-xs py-1.5 px-2.5">اختبار</button>
+                    <button onclick="AdminApp.loadGeminiStatus()" class="btn btn-secondary text-xs py-1.5 px-2.5">تحديث</button>
                 </div>
             </div>
 
             <!-- Summary Cards -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 shrink-0">
-                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-slate-400">
-                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">طلبات اليوم</span>
-                    <span id="gemini-stat-requests" class="text-xl sm:text-2xl font-bold text-white font-mono">0</span>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 shrink-0">
+                <div class="glass p-2.5 sm:p-3.5 rounded-xl border-l-4 border-slate-400">
+                    <span class="text-[10px] sm:text-xs text-gray-400 block">طلبات اليوم</span>
+                    <span id="gemini-stat-requests" class="text-lg sm:text-xl font-bold text-white font-mono">0</span>
                 </div>
-                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-blue-500">
-                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">الرموز (Tokens)</span>
-                    <span id="gemini-stat-tokens" class="text-xl sm:text-2xl font-bold text-blue-400 font-mono">0</span>
+                <div class="glass p-2.5 sm:p-3.5 rounded-xl border-l-4 border-blue-500">
+                    <span class="text-[10px] sm:text-xs text-gray-400 block">الرموز (Tokens)</span>
+                    <span id="gemini-stat-tokens" class="text-lg sm:text-xl font-bold text-blue-400 font-mono">0</span>
                 </div>
-                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-emerald-500">
-                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">المفاتيح النشطة</span>
-                    <span id="gemini-stat-active" class="text-xl sm:text-2xl font-bold text-emerald-400 font-mono">0</span>
+                <div class="glass p-2.5 sm:p-3.5 rounded-xl border-l-4 border-emerald-500">
+                    <span class="text-[10px] sm:text-xs text-gray-400 block">المفاتيح النشطة</span>
+                    <span id="gemini-stat-active" class="text-lg sm:text-xl font-bold text-emerald-400 font-mono">0</span>
                 </div>
-                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-amber-500">
-                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">المفاتيح المتوقفة</span>
-                    <span id="gemini-stat-exhausted" class="text-xl sm:text-2xl font-bold text-amber-400 font-mono">0</span>
+                <div class="glass p-2.5 sm:p-3.5 rounded-xl border-l-4 border-amber-500">
+                    <span class="text-[10px] sm:text-xs text-gray-400 block">المفاتيح المتوقفة</span>
+                    <span id="gemini-stat-exhausted" class="text-lg sm:text-xl font-bold text-amber-400 font-mono">0</span>
                 </div>
             </div>
 
             <!-- Keys Grid -->
             <div class="shrink-0">
-                <h3 class="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">حالة المفاتيح المثبتة</h3>
-                <div id="gemini-keys-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+                <h3 class="text-xs sm:text-sm font-bold text-white mb-2">حالة المفاتيح المثبتة</h3>
+                <div id="gemini-keys-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                     <!-- Populated by JS -->
                 </div>
             </div>
 
             <!-- Recent Activity Log -->
-            <div class="flex-1 glass rounded-2xl p-4 sm:p-6 flex flex-col overflow-hidden min-h-[250px]">
-                <h3 class="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4">سجل الطلبات والاستهلاك</h3>
-                <div class="flex-1 overflow-auto -mx-2 sm:mx-0">
-                    <table class="w-full text-right text-xs sm:text-sm min-w-[500px]">
-                        <thead class="text-xs text-gray-400 uppercase bg-black/40 sticky top-0 border-b border-white/10">
+            <div class="flex-1 glass rounded-xl p-3 sm:p-4 flex flex-col overflow-hidden min-h-[180px]">
+                <h3 class="text-xs sm:text-sm font-bold text-white mb-2">سجل الطلبات والاستهلاك</h3>
+                <div class="flex-1 overflow-auto -mx-1 sm:mx-0">
+                    <table class="w-full text-right text-xs min-w-[450px]">
+                        <thead class="text-[11px] text-gray-400 uppercase bg-black/40 sticky top-0 border-b border-white/10">
                             <tr>
-                                <th class="p-2.5 sm:p-3">الوقت</th>
-                                <th class="p-2.5 sm:p-3">المفتاح</th>
-                                <th class="p-2.5 sm:p-3">الأسئلة</th>
-                                <th class="p-2.5 sm:p-3">الرموز</th>
-                                <th class="p-2.5 sm:p-3">الاستجابة</th>
-                                <th class="p-2.5 sm:p-3">الحالة</th>
+                                <th class="p-2">الوقت</th>
+                                <th class="p-2">المفتاح</th>
+                                <th class="p-2">الأسئلة</th>
+                                <th class="p-2">الرموز</th>
+                                <th class="p-2">الاستجابة</th>
+                                <th class="p-2">الحالة</th>
                             </tr>
                         </thead>
                         <tbody id="gemini-logs-body" class="divide-y divide-white/5">
@@ -1038,44 +1018,44 @@
 
     <!-- Quizzes Management Template -->
     <template id="tpl-quizzes">
-        <div class="space-y-4 sm:space-y-6 overflow-y-auto custom-scrollbar">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 glass p-4 sm:p-6 rounded-2xl border border-white/5">
+        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5 overflow-y-auto custom-scrollbar">
+            <div class="flex justify-between items-center gap-2 glass p-3 sm:p-4 rounded-xl border border-white/5 shrink-0">
                 <div>
-                    <h2 class="text-xl sm:text-2xl font-bold text-white">إدارة بنك الاختبارات المحفوظة</h2>
-                    <p class="text-gray-400 text-xs sm:text-sm mt-0.5">عرض وتعديل وحذف الاختبارات التراكمية المولدة ذكياً</p>
+                    <h2 class="text-base sm:text-xl font-bold text-white">إدارة بنك الاختبارات</h2>
+                    <p class="text-gray-400 text-xs hidden sm:block mt-0.5">عرض وتعديل وحذف الاختبارات المولدة ذكياً</p>
                 </div>
-                <div class="bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-xl text-center self-end sm:self-auto">
-                    <span class="block text-[11px] text-gray-400">إجمالي الاختبارات</span>
-                    <span class="text-lg sm:text-xl font-bold text-emerald-400 font-mono" id="quizzes-count">0</span>
+                <div class="bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg text-center shrink-0">
+                    <span class="text-[10px] text-gray-400 block">الإجمالي</span>
+                    <span class="text-sm sm:text-base font-bold text-emerald-400 font-mono" id="quizzes-count">0</span>
                 </div>
             </div>
 
             <!-- Filters -->
-            <div class="glass p-3 sm:p-4 rounded-xl flex flex-wrap gap-2.5 sm:gap-4 border border-white/5">
-                <input type="text" id="quizzes-search-input" onkeyup="AdminApp.filterQuizzesTable()" class="input-field flex-1 sm:max-w-xs text-xs sm:text-sm" placeholder="بحث باسم الاختبار أو المحاضرة...">
-                <button onclick="AdminApp.loadQuizzes()" class="btn btn-secondary text-xs sm:text-sm flex items-center gap-2">
-                    تحديث القائمة
+            <div class="glass p-2.5 sm:p-3 rounded-xl flex gap-2 border border-white/5 shrink-0">
+                <input type="text" id="quizzes-search-input" onkeyup="AdminApp.filterQuizzesTable()" class="input-field flex-1 text-xs py-1 px-2 h-9" placeholder="بحث باسم الاختبار...">
+                <button onclick="AdminApp.loadQuizzes()" class="btn btn-secondary text-xs py-1 px-3 shrink-0">
+                    تحديث
                 </button>
             </div>
 
             <!-- Table -->
-            <div class="glass rounded-2xl overflow-hidden border border-white/5">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-right text-xs sm:text-sm min-w-[700px]">
-                        <thead class="bg-white/5 text-gray-400 border-b border-white/5">
+            <div class="flex-1 glass rounded-xl overflow-hidden border border-white/5 min-h-0">
+                <div class="overflow-x-auto h-full custom-scrollbar">
+                    <table class="w-full text-right text-xs min-w-[600px]">
+                        <thead class="bg-white/5 text-gray-400 border-b border-white/5 sticky top-0">
                             <tr>
-                                <th class="p-3 sm:p-4 font-semibold">اسم الاختبار</th>
-                                <th class="p-3 sm:p-4 font-semibold">المادة الدراسية</th>
-                                <th class="p-3 sm:p-4 font-semibold">المحاضرة / الشابتر</th>
-                                <th class="p-3 sm:p-4 font-semibold text-center">النطاق الدراسي</th>
-                                <th class="p-3 sm:p-4 font-semibold text-center">الأسئلة</th>
-                                <th class="p-3 sm:p-4 font-semibold text-center">تاريخ الإنشاء</th>
-                                <th class="p-3 sm:p-4 font-semibold text-center">الإجراءات</th>
+                                <th class="p-2.5 font-semibold">اسم الاختبار</th>
+                                <th class="p-2.5 font-semibold">المادة</th>
+                                <th class="p-2.5 font-semibold">الشابتر</th>
+                                <th class="p-2.5 font-semibold text-center">النطاق</th>
+                                <th class="p-2.5 font-semibold text-center">الأسئلة</th>
+                                <th class="p-2.5 font-semibold text-center">التاريخ</th>
+                                <th class="p-2.5 font-semibold text-center">الإجراء</th>
                             </tr>
                         </thead>
                         <tbody id="quizzes-table-body" class="divide-y divide-white/5">
                             <tr>
-                                <td colspan="7" class="p-8 text-center text-gray-400">جاري تحميل الاختبارات...</td>
+                                <td colspan="7" class="p-6 text-center text-gray-400">جاري تحميل الاختبارات...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1086,183 +1066,108 @@
 
     <!-- Template for Cache & Pre-Warm Management -->
     <template id="tpl-cache">
-        <div class="h-full flex flex-col gap-4 sm:gap-6 overflow-y-auto custom-scrollbar">
+        <div class="h-full flex flex-col gap-2.5 sm:gap-3.5 overflow-y-auto custom-scrollbar">
             <!-- Header -->
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4 shrink-0">
+            <div class="flex justify-between items-center gap-2 shrink-0">
                 <div>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                        ذاكرة التخزين السريع والتجهيز المسبق
-                    </h2>
-                    <p class="text-gray-400 text-xs sm:text-sm mt-1">
-                        استخراج وفهرسة نصوص المقررات الدراسية محلياً لتوليد الاختبارات فورياً
-                    </p>
+                    <h2 class="text-base sm:text-2xl font-bold text-white">ذاكرة الكاش والتجهيز المسبق</h2>
+                    <p class="text-gray-400 text-xs hidden sm:block mt-0.5">استخراج وفهرسة نصوص المقررات لتوليد الاختبارات فورياً</p>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto">
-                    <button onclick="AdminApp.scanDriveCatalog()" class="btn btn-secondary flex-1 sm:flex-initial flex items-center justify-center gap-2 text-xs sm:text-sm">
-                        فحص الفهرس
-                    </button>
-                    <button id="btn-prewarm-now" onclick="AdminApp.runPrewarmCache()" class="btn btn-primary flex-1 sm:flex-initial flex items-center justify-center gap-2 text-xs sm:text-sm">
-                        بدء التجهيز الشامل
-                    </button>
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button onclick="AdminApp.scanDriveCatalog()" class="btn btn-secondary text-xs py-1.5 px-2.5">فحص</button>
+                    <button id="btn-prewarm-now" onclick="AdminApp.runPrewarmCache()" class="btn btn-primary text-xs py-1.5 px-3 font-semibold">بدء التجهيز</button>
                 </div>
             </div>
 
-            <!-- Summary Stats Overview Cards -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 shrink-0">
-                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-slate-400">
-                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">الملفات في الكاش</span>
-                    <span class="text-xl sm:text-2xl font-bold text-white font-mono" id="cache-count-display">0</span>
-                    <span class="text-[11px] text-emerald-400 block mt-1" id="cache-size-display">0 KB</span>
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 shrink-0">
+                <div class="glass p-2.5 sm:p-3.5 rounded-xl border-l-4 border-slate-400">
+                    <span class="text-[10px] sm:text-xs text-gray-400 block">الملفات في الكاش</span>
+                    <span class="text-lg sm:text-xl font-bold text-white font-mono" id="cache-count-display">0</span>
+                    <span class="text-[10px] text-emerald-400 block" id="cache-size-display">0 KB</span>
                 </div>
-
-                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-amber-500/50">
-                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">الملفات المعلقة</span>
-                    <span class="text-xl sm:text-2xl font-bold text-white font-mono" id="uncached-count-display">0</span>
-                    <span class="text-[11px] text-gray-400 block mt-1">بانتظار الاستخراج</span>
+                <div class="glass p-2.5 sm:p-3.5 rounded-xl border-l-4 border-amber-500/50">
+                    <span class="text-[10px] sm:text-xs text-gray-400 block">الملفات المعلقة</span>
+                    <span class="text-lg sm:text-xl font-bold text-white font-mono" id="uncached-count-display">0</span>
+                    <span class="text-[10px] text-gray-400 block">بانتظار الاستخراج</span>
                 </div>
-
-                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-blue-500/50">
-                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">المواد بملفات جاهزة</span>
-                    <span class="text-xl sm:text-2xl font-bold text-white font-mono" id="subjects-with-files-display">0</span>
-                    <span class="text-[11px] text-gray-400 block mt-1">من إجمالي المواد</span>
+                <div class="glass p-2.5 sm:p-3.5 rounded-xl border-l-4 border-blue-500/50">
+                    <span class="text-[10px] sm:text-xs text-gray-400 block">المواد الجاهزة</span>
+                    <span class="text-lg sm:text-xl font-bold text-white font-mono" id="subjects-with-files-display">0</span>
+                    <span class="text-[10px] text-gray-400 block">من إجمالي المواد</span>
                 </div>
-
-                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-purple-500/50">
-                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">صلاحية التخزين</span>
-                    <span class="text-xl sm:text-2xl font-bold text-white font-mono">180 يوم</span>
-                    <span class="text-[11px] text-gray-400 block mt-1">تجديد تلقائي</span>
+                <div class="glass p-2.5 sm:p-3.5 rounded-xl border-l-4 border-purple-500/50">
+                    <span class="text-[10px] sm:text-xs text-gray-400 block">صلاحية التخزين</span>
+                    <span class="text-lg sm:text-xl font-bold text-white font-mono">180 يوم</span>
+                    <span class="text-[10px] text-gray-400 block">تجديد تلقائي</span>
                 </div>
-            </div>
-
-            <!-- Notice Banner -->
-            <div class="bg-black/30 border border-white/10 p-3 sm:p-3.5 rounded-xl text-gray-300 text-xs leading-relaxed flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shrink-0">
-                <div>
-                    <strong class="text-white">تنويه تشغيل الخلفية:</strong>
-                    تتم المعالجة عبر السيرفر بشكل مستقل، ويمكنك إغلاق المتصفح بأمان أثناء العمل.
-                </div>
-                <div id="cache-last-scan-label" class="text-[11px] text-gray-400 font-mono shrink-0">آخر فحص: جاري التحميل...</div>
-            </div>
-
-            <!-- Pre-Warm Progress Box -->
-            <div id="prewarm-progress-box" class="hidden glass p-3.5 sm:p-4 rounded-xl space-y-2 shrink-0">
-                <div class="flex justify-between items-center text-xs">
-                    <span id="prewarm-status-msg" class="text-gray-300 font-medium">جاري معالجة واستخراج الملفات...</span>
-                    <span id="prewarm-pct" class="font-mono font-bold text-white">0%</span>
-                </div>
-                <div class="w-full bg-black/40 rounded-full h-2 overflow-hidden border border-white/10">
-                    <div id="prewarm-bar" class="bg-white/80 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                </div>
-                <div id="prewarm-log-console" class="bg-black/40 border border-white/10 rounded-lg p-2.5 font-mono text-[11px] text-gray-300 max-h-36 overflow-y-auto space-y-1 mt-2"></div>
             </div>
 
             <!-- Dual Table Views: Cached Files & Pending Files -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 shrink-0">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5 sm:gap-3.5 shrink-0">
                 <!-- Cached Files Table -->
-                <div class="glass rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+                <div class="glass rounded-xl p-3 sm:p-4 flex flex-col justify-between">
                     <div>
-                        <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-3">
-                            <h3 class="text-sm sm:text-base font-bold text-white">
+                        <div class="flex justify-between items-center border-b border-white/10 pb-2 mb-2">
+                            <h3 class="text-xs sm:text-sm font-bold text-white">
                                 الملفات المخزنة (<span id="cached-table-count">0</span>)
                             </h3>
-                            <span class="text-xs text-gray-400">جاهزة للاستدعاء الفوري</span>
+                            <span class="text-[11px] text-gray-400">جاهزة للاستدعاء</span>
                         </div>
-
-                        <div class="max-h-80 overflow-y-auto rounded-xl border border-white/10 bg-black/20 custom-scrollbar">
+                        <div class="max-h-56 overflow-y-auto rounded-lg border border-white/10 bg-black/20 custom-scrollbar">
                             <table class="w-full text-right text-xs">
                                 <thead class="bg-white/5 text-gray-400 border-b border-white/10 sticky top-0">
                                     <tr>
-                                        <th class="p-2.5 sm:p-3 font-semibold">المادة</th>
-                                        <th class="p-2.5 sm:p-3 font-semibold">الشابتر</th>
-                                        <th class="p-2.5 sm:p-3 font-semibold text-center">الحجم</th>
-                                        <th class="p-2.5 sm:p-3 font-semibold text-center">الإجراء</th>
+                                        <th class="p-2 font-semibold">المادة</th>
+                                        <th class="p-2 font-semibold">الشابتر</th>
+                                        <th class="p-2 font-semibold text-center">الحجم</th>
+                                        <th class="p-2 font-semibold text-center">الإجراء</th>
                                     </tr>
                                 </thead>
                                 <tbody id="cached-files-list" class="divide-y divide-white/5">
                                     <tr>
-                                        <td colspan="4" class="p-4 text-center text-gray-500">جاري تحميل الملفات...</td>
+                                        <td colspan="4" class="p-3 text-center text-gray-500">جاري التحميل...</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
-
-                    <div class="pt-3 mt-3 border-t border-white/10 flex justify-between items-center">
-                        <span class="text-[11px] text-gray-500 font-mono truncate max-w-[180px]">text_cache/</span>
-                        <button onclick="AdminApp.clearCache()" class="btn btn-danger text-xs py-1 px-3">
-                            تفريغ الكاش
-                        </button>
+                    <div class="pt-2 mt-2 border-t border-white/10 flex justify-between items-center">
+                        <span class="text-[10px] text-gray-500 font-mono">text_cache/</span>
+                        <button onclick="AdminApp.clearCache()" class="btn btn-danger text-xs py-1 px-2.5">تفريغ الكاش</button>
                     </div>
                 </div>
 
-                <!-- Pending / Uncached Files Table -->
-                <div class="glass rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+                <!-- Pending Files Table -->
+                <div class="glass rounded-xl p-3 sm:p-4 flex flex-col justify-between">
                     <div>
-                        <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-3">
-                            <h3 class="text-sm sm:text-base font-bold text-white">
-                                الملفات المعلقة بقوقل درايف (<span id="uncached-table-count">0</span>)
+                        <div class="flex justify-between items-center border-b border-white/10 pb-2 mb-2">
+                            <h3 class="text-xs sm:text-sm font-bold text-white">
+                                الملفات المعلقة (<span id="uncached-table-count">0</span>)
                             </h3>
-                            <span class="text-xs text-gray-400">بانتظار الاستخراج</span>
+                            <span class="text-[11px] text-gray-400">بانتظار الاستخراج</span>
                         </div>
-
-                        <div class="max-h-80 overflow-y-auto rounded-xl border border-white/10 bg-black/20 custom-scrollbar">
+                        <div class="max-h-56 overflow-y-auto rounded-lg border border-white/10 bg-black/20 custom-scrollbar">
                             <table class="w-full text-right text-xs">
                                 <thead class="bg-white/5 text-gray-400 border-b border-white/10 sticky top-0">
                                     <tr>
-                                        <th class="p-2.5 sm:p-3 font-semibold">المادة</th>
-                                        <th class="p-2.5 sm:p-3 font-semibold">الشابتر</th>
-                                        <th class="p-2.5 sm:p-3 font-semibold text-center">الحالة</th>
-                                        <th class="p-2.5 sm:p-3 font-semibold text-center">الإجراء</th>
+                                        <th class="p-2 font-semibold">المادة</th>
+                                        <th class="p-2 font-semibold">الشابتر</th>
+                                        <th class="p-2 font-semibold text-center">الحالة</th>
+                                        <th class="p-2 font-semibold text-center">الإجراء</th>
                                     </tr>
                                 </thead>
                                 <tbody id="uncached-files-list" class="divide-y divide-white/5">
                                     <tr>
-                                        <td colspan="4" class="p-4 text-center text-gray-500">لا توجد ملفات معلقة حالياً</td>
+                                        <td colspan="4" class="p-3 text-center text-gray-500">لا توجد ملفات معلقة</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
-
-                    <div class="pt-3 mt-3 border-t border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                        <span class="text-xs text-gray-400">تجهيز الملفات المعلقة فقط:</span>
-                        <button id="btn-prewarm-pending" onclick="AdminApp.prewarmPendingFilesOnly()" class="btn btn-secondary text-xs py-1 px-3 font-semibold w-full sm:w-auto">
-                            تجهيز المعلقة
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Automation Settings -->
-            <div class="glass rounded-2xl p-4 sm:p-5 shrink-0">
-                <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-3 sm:mb-4">
-                    <h3 class="text-sm sm:text-base font-bold text-white">
-                        إعدادات الأتمتة والفحص التلقائي
-                    </h3>
-                    <button onclick="AdminApp.saveCacheSettings()" class="btn btn-primary text-xs py-1.5 px-4">
-                        حفظ الإعدادات
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                    <label class="flex items-start gap-3 cursor-pointer select-none bg-black/30 p-3 sm:p-3.5 rounded-xl border border-white/10">
-                        <input type="checkbox" id="cache-auto-prewarm" class="mt-0.5 w-4 h-4 rounded bg-black/50 border-white/20 text-blue-600 focus:ring-0">
-                        <div>
-                            <span class="block text-xs font-semibold text-white">تجهيز الكاش تلقائياً عند إضافة شباتر جديدة</span>
-                            <span class="block text-[11px] text-gray-400 mt-0.5">سحب وتخزين الشباتر تلقائياً فور ربط المجلدات.</span>
-                        </div>
-                    </label>
-
-                    <div class="bg-black/30 p-3 sm:p-3.5 rounded-xl border border-white/10 flex flex-col justify-between">
-                        <div class="flex items-center justify-between gap-2">
-                            <label class="block text-xs font-semibold text-white">الجدول الدوري:</label>
-                            <select id="cache-periodic-schedule" class="input-field text-xs w-auto">
-                                <option value="weekly">أسبوعياً (مستحسن)</option>
-                                <option value="biweekly">كل أسبوعين</option>
-                                <option value="monthly">شهرياً</option>
-                                <option value="manual">يدوي فقط</option>
-                            </select>
-                        </div>
-                        <span class="block text-[11px] text-gray-400 mt-1">فحص دوري هادئ للتأكد من اكتمال النصوص.</span>
+                    <div class="pt-2 mt-2 border-t border-white/10 flex justify-between items-center gap-2">
+                        <span class="text-[11px] text-gray-400">تجهيز المعلقة:</span>
+                        <button id="btn-prewarm-pending" onclick="AdminApp.prewarmPendingFilesOnly()" class="btn btn-secondary text-xs py-1 px-2.5 font-semibold">تجهيز الآن</button>
                     </div>
                 </div>
             </div>
