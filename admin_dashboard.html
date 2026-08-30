@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Dent2025 - Admin Dashboard</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -27,44 +27,66 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #121212; background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 20px 20px; color: #f8fafc; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif; }
+        body { 
+            background-color: #121212; 
+            background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px); 
+            background-size: 20px 20px; 
+            color: #f8fafc; 
+            font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
         .glass { background: #1e1e1e; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; transition: all 0.2s; font-weight: 600; cursor: pointer; }
+        .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; transition: all 0.2s; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; min-height: 38px; }
         .btn-primary { background: #262626; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         .btn-primary:hover { background: #383838; border-color: rgba(255, 255, 255, 0.3); }
         .btn-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); }
         .btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
         .btn-secondary { background: rgba(255, 255, 255, 0.05); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.1); }
         .btn-secondary:hover { background: rgba(255, 255, 255, 0.12); }
-        .input-field { background: #1e1e1e; border: 1px solid rgba(255, 255, 255, 0.1); padding: 0.5rem 0.75rem; border-radius: 0.5rem; color: white; width: 100%; }
+        .input-field { background: #1e1e1e; border: 1px solid rgba(255, 255, 255, 0.1); padding: 0.5rem 0.75rem; border-radius: 0.5rem; color: white; width: 100%; min-height: 40px; }
         .input-field:focus { outline: none; border-color: rgba(255, 255, 255, 0.3); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05); }
         
+        /* Ensure font size on mobile is at least 16px to prevent iOS Safari auto-zoom */
+        @media (max-width: 768px) {
+            .input-field, select, input, textarea {
+                font-size: 16px !important;
+            }
+        }
+
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #121212; }
+        .custom-scrollbar::-webkit-scrollbar,
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track,
+        ::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb,
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover,
         ::-webkit-scrollbar-thumb:hover { background: #555; }
+        
+        /* Mobile horizontal pill scroll without scrollbar */
+        #mobile-pill-bar::-webkit-scrollbar { display: none; }
+        #mobile-pill-bar { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* Analytics Tab Styles */
-        .ana-range-btn { font-size: 0.78rem; padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: #a1a1aa; cursor: pointer; transition: all 0.2s; }
+        .ana-range-btn { font-size: 0.78rem; padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: #a1a1aa; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
         .ana-range-btn:hover { background: rgba(255,255,255,0.1); color: #e2e8f0; }
         .ana-range-btn.on { background: rgba(96,165,250,0.15); border-color: #60a5fa; color: #f8fafc; }
         .ana-stat { background: #18181b; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px; }
         .ana-stat .lbl { font-size: 0.74rem; color: #a1a1aa; margin-bottom: 6px; }
-        .ana-stat .num { font-size: 1.6rem; font-weight: 700; color: #f8fafc; }
+        .ana-stat .num { font-size: 1.5rem; font-weight: 700; color: #f8fafc; }
         .ana-stat .note { font-size: 0.7rem; color: #71717a; margin-top: 8px; }
         .ana-cell { background: #18181b; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; text-align: center; }
         .ana-cell .t { font-size: 0.7rem; color: #a1a1aa; margin-bottom: 4px; }
-        .ana-cell .n { font-size: 1.3rem; font-weight: 700; color: #f8fafc; }
+        .ana-cell .n { font-size: 1.25rem; font-weight: 700; color: #f8fafc; }
         .ana-cell .c { font-size: 0.66rem; color: #71717a; margin-top: 3px; direction: ltr; }
         .ana-fstep { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .ana-fstep .fnum { width: 24px; height: 24px; border-radius: 8px; background: rgba(96,165,250,0.15); color: #60a5fa; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
-        .ana-fstep .finfo { flex: 1; }
-        .ana-fstep .fname { font-size: 0.82rem; color: #f8fafc; }
+        .ana-fstep .finfo { flex: 1; min-width: 0; }
+        .ana-fstep .fname { font-size: 0.82rem; color: #f8fafc; word-break: break-word; }
         .ana-fstep .fmeta { font-size: 0.7rem; color: #71717a; margin-top: 2px; }
-        .ana-fstep .b-trk { flex: 0 0 35%; background: rgba(255,255,255,0.05); border-radius: 6px; height: 10px; overflow: hidden; }
+        .ana-fstep .b-trk { flex: 0 0 30%; background: rgba(255,255,255,0.05); border-radius: 6px; height: 10px; overflow: hidden; }
         .ana-fstep .b-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, rgba(96,165,250,0.6), rgba(96,165,250,0.3)); min-width: 2px; display: block; }
-        .ana-fstep .b-val { min-width: 44px; text-align: left; color: #e2e8f0; font-size: 0.78rem; font-variant-numeric: tabular-nums; direction: ltr; }
+        .ana-fstep .b-val { min-width: 40px; text-align: left; color: #e2e8f0; font-size: 0.78rem; font-variant-numeric: tabular-nums; direction: ltr; }
         .ana-ret-chip { background: #18181b; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; text-align: center; margin-bottom: 10px; }
         .ana-ret-chip .lbl { font-size: 0.7rem; color: #a1a1aa; margin-bottom: 4px; }
         .ana-ret-chip .num { font-size: 1.3rem; font-weight: 700; color: #4ade80; }
@@ -73,15 +95,15 @@
         @keyframes ana-spin { to { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="h-screen flex overflow-hidden">
+<body class="h-[100dvh] flex flex-col md:flex-row overflow-hidden">
 
     <!-- Login Overlay -->
-    <div id="login-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-darker bg-opacity-90 backdrop-blur-sm">
-        <div class="glass p-8 rounded-2xl w-full max-w-md text-center shadow-2xl">
-            <h2 class="text-2xl font-bold mb-6 text-white">تسجيل دخول الإدارة</h2>
-            <input type="password" id="admin-password" class="input-field mb-4 text-center text-xl tracking-widest" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter') AdminApp.login()">
-            <button id="login-btn" onclick="AdminApp.login()" class="btn btn-primary w-full py-3 text-lg cursor-pointer">دخول</button>
-            <p id="login-error" class="text-red-400 font-semibold text-sm mt-4 hidden">كلمة المرور غير صحيحة</p>
+    <div id="login-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-darker bg-opacity-95 backdrop-blur-md p-4">
+        <div class="glass p-6 sm:p-8 rounded-2xl w-full max-w-md text-center shadow-2xl border border-white/10">
+            <h2 class="text-xl sm:text-2xl font-bold mb-6 text-white">تسجيل دخول الإدارة</h2>
+            <input type="password" id="admin-password" class="input-field mb-4 text-center text-lg sm:text-xl tracking-widest" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter') AdminApp.login()">
+            <button id="login-btn" onclick="AdminApp.login()" class="btn btn-primary w-full py-3 text-base sm:text-lg cursor-pointer">دخول</button>
+            <p id="login-error" class="text-red-400 font-semibold text-xs sm:text-sm mt-4 hidden">كلمة المرور غير صحيحة</p>
         </div>
     </div>
 
@@ -96,12 +118,10 @@
                 if (err) { err.innerText = 'يرجى إدخال كلمة المرور أولاً'; err.classList.remove('hidden'); }
                 return;
             }
-            // If AdminApp loaded properly, delegate to it
             if (window.AdminApp && typeof window.AdminApp.login === 'function') {
                 window.AdminApp.login();
                 return;
             }
-            // Otherwise do a direct fetch
             var btn = document.getElementById('login-btn');
             if (btn) { btn.innerText = 'جاري التحقق...'; btn.disabled = true; }
             var base = window.location.origin;
@@ -138,7 +158,6 @@
             });
         }
 
-        // Attach directly using onX properties (overrides any stale listeners)
         document.addEventListener('DOMContentLoaded', function() {
             var btn = document.getElementById('login-btn');
             if (btn) {
@@ -151,7 +170,6 @@
                 inp.onkeydown = function(e) { if (e.key === 'Enter') fallbackLogin(); };
                 inp.style.pointerEvents = 'auto';
             }
-            // Make sure login overlay itself isn't blocked
             var overlay = document.getElementById('login-overlay');
             if (overlay) {
                 overlay.style.pointerEvents = 'auto';
@@ -161,9 +179,109 @@
     })();
     </script>
 
-    <!-- Sidebar -->
+    <!-- Mobile Header -->
+    <header class="flex md:hidden items-center justify-between px-4 py-3 glass border-b border-white/10 z-30 shrink-0">
+        <div class="flex items-center gap-3">
+            <button id="mobile-menu-btn" onclick="AdminApp.toggleMobileDrawer()" class="p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition" aria-label="القائمة">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            <div>
+                <h1 class="text-base font-bold text-white leading-tight">Dent2025 Admin</h1>
+                <span id="mobile-active-tab-badge" class="text-[11px] text-gray-400 font-medium">المواد والروابط</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="AdminApp.logout()" class="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 active:scale-95 transition" title="تسجيل الخروج">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Horizontal Tab Pills Bar -->
+    <div class="flex md:hidden overflow-x-auto bg-darker/90 border-b border-white/10 px-2.5 py-2 gap-1.5 shrink-0 custom-scrollbar select-none" id="mobile-pill-bar">
+        <button onclick="AdminApp.switchTab('subjects')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/10 text-white font-medium border border-white/10" data-tab="subjects">المواد والروابط</button>
+        <button onclick="AdminApp.switchTab('classes')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="classes">الجداول</button>
+        <button onclick="AdminApp.switchTab('events')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="events">التقويم</button>
+        <button onclick="AdminApp.switchTab('announcements')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="announcements">الإعلانات</button>
+        <button onclick="AdminApp.switchTab('quizzes')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="quizzes">بنك الاختبارات</button>
+        <button onclick="AdminApp.switchTab('cache')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="cache">الكاش</button>
+        <button onclick="AdminApp.switchTab('analytics')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="analytics">التحليلات</button>
+        <button onclick="AdminApp.switchTab('gemini')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="gemini">Gemini</button>
+        <button onclick="AdminApp.switchTab('passwords')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="passwords">الصلاحيات</button>
+        <button onclick="AdminApp.switchTab('history')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="history">سجل التغييرات</button>
+        <button onclick="AdminApp.switchTab('safedeploy')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="safedeploy">SafeDeploy</button>
+    </div>
+
+    <!-- Mobile Drawer Overlay -->
+    <div id="mobile-drawer-overlay" onclick="AdminApp.closeMobileDrawer()" class="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm hidden md:hidden transition-opacity duration-300 opacity-0"></div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobile-drawer" class="fixed inset-y-0 right-0 z-50 w-72 max-w-[85vw] bg-[#161616] border-l border-white/10 flex flex-col justify-between transform translate-x-full md:hidden transition-transform duration-300 ease-in-out shadow-2xl">
+        <div class="overflow-y-auto custom-scrollbar flex-1">
+            <div class="p-5 border-b border-white/10 flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-white tracking-wide">Dent2025 Admin</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">لوحة التحكم والإدارة الأكاديمية</p>
+                </div>
+                <button onclick="AdminApp.closeMobileDrawer()" class="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10" aria-label="إغلاق">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="px-4 pt-3 pb-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider">الأقسام الأكاديمية</div>
+            <nav class="px-3 space-y-1" id="mobile-sidebar-nav">
+                <button onclick="AdminApp.switchTab('subjects')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 bg-white/10 text-white font-semibold" data-tab="subjects">
+                    <span>📚</span> المواد والروابط
+                </button>
+                <button onclick="AdminApp.switchTab('classes')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="classes">
+                    <span>📅</span> الجداول الدراسية
+                </button>
+                <button onclick="AdminApp.switchTab('events')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="events">
+                    <span>🗓</span> التقويم والأحداث
+                </button>
+                <button onclick="AdminApp.switchTab('announcements')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="announcements">
+                    <span>📢</span> الإعلانات
+                </button>
+                <button onclick="AdminApp.switchTab('quizzes')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="quizzes">
+                    <span>📝</span> بنك الاختبارات الذكية
+                </button>
+                
+                <div class="pt-4 px-1 pb-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider">النظام والأدوات</div>
+                <button onclick="AdminApp.switchTab('cache')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="cache">
+                    <span>⚡</span> ذاكرة الكاش والتجهيز
+                </button>
+                <button onclick="AdminApp.switchTab('analytics')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="analytics">
+                    <span>📊</span> لوحة التحليلات
+                </button>
+                <button onclick="AdminApp.switchTab('gemini')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="gemini">
+                    <span>🤖</span> مراقبة مفاتيح Gemini
+                </button>
+                <button onclick="AdminApp.switchTab('passwords')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="passwords">
+                    <span>🔑</span> كلمات المرور والصلاحيات
+                </button>
+                <button onclick="AdminApp.switchTab('history')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="history">
+                    <span>📜</span> سجل التغييرات والاستعادة
+                </button>
+                <button onclick="AdminApp.switchTab('safedeploy')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="safedeploy">
+                    <span>🛡</span> الأمان واللقطات SafeDeploy
+                </button>
+            </nav>
+        </div>
+        <div class="p-4 border-t border-white/10 shrink-0">
+            <button onclick="AdminApp.logout()" class="btn btn-danger w-full py-2.5 flex items-center justify-center gap-2">
+                <span>🚪</span> تسجيل الخروج
+            </button>
+        </div>
+    </div>
+
+    <!-- Desktop Sidebar -->
     <aside class="w-64 flex-shrink-0 glass border-l border-white/5 flex flex-col justify-between hidden md:flex z-10">
-        <div>
+        <div class="overflow-y-auto custom-scrollbar flex-1">
             <div class="p-6 border-b border-white/5">
                 <h1 class="text-2xl font-bold text-white tracking-wide">Dent2025 Admin</h1>
             </div>
@@ -203,15 +321,15 @@
                 </button>
             </nav>
         </div>
-        <div class="p-4 border-t border-white/5">
+        <div class="p-4 border-t border-white/5 shrink-0">
             <button onclick="AdminApp.logout()" class="btn btn-danger w-full">تسجيل الخروج</button>
         </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 overflow-y-auto bg-dark p-4 md:p-8 relative">
+    <main class="flex-1 overflow-y-auto bg-dark p-3.5 sm:p-5 md:p-8 relative min-h-0 custom-scrollbar">
         <!-- Toast Notification -->
-        <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 glass px-6 py-3 rounded-full text-white shadow-lg transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2">
+        <div id="toast" class="fixed top-4 sm:top-5 left-1/2 transform -translate-x-1/2 glass px-4 sm:px-6 py-2.5 sm:py-3 rounded-full text-white shadow-lg transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2 max-w-[90vw] text-xs sm:text-sm">
             <span id="toast-icon"></span>
             <span id="toast-msg">تم بنجاح</span>
         </div>
@@ -219,7 +337,7 @@
         <!-- Loading Overlay -->
         <div id="loading" class="absolute inset-0 bg-dark/50 backdrop-blur-sm z-40 hidden flex-col items-center justify-center">
             <div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
-            <p class="mt-4 text-gray-300 animate-pulse">جاري التحميل...</p>
+            <p class="mt-4 text-gray-300 animate-pulse text-sm">جاري التحميل...</p>
         </div>
 
         <div id="tab-content" class="h-full">
@@ -230,79 +348,82 @@
     <!-- Templates for different tabs -->
     <template id="tpl-dashboard">
         <div>
-            <h2 class="text-3xl font-bold mb-6">مرحباً بك في لوحة الإدارة</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="glass p-6 rounded-2xl border-l-4 border-primary">
-                    <h3 class="text-gray-400 mb-2">اختر القسم للبدء</h3>
-                    <p class="text-sm">استخدم القائمة الجانبية للتنقل بين الأقسام المختلفة وتعديل محتوى الموقع.</p>
+            <h2 class="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">مرحباً بك في لوحة الإدارة</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div class="glass p-5 sm:p-6 rounded-2xl border-l-4 border-primary">
+                    <h3 class="text-gray-400 mb-2 font-semibold">اختر القسم للبدء</h3>
+                    <p class="text-xs sm:text-sm text-gray-300">استخدم القائمة للتنقل بين الأقسام المختلفة وتعديل محتوى الموقع.</p>
                 </div>
             </div>
         </div>
     </template>
 
     <template id="tpl-analytics">
-        <div class="h-full flex flex-col gap-5 overflow-y-auto">
+        <div class="h-full flex flex-col gap-4 sm:gap-5 overflow-y-auto custom-scrollbar">
             <!-- Header -->
-            <div class="flex justify-between items-center mb-2">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
                 <div>
-                    <h2 class="text-3xl font-bold">لوحة التحليلات</h2>
-                    <p class="text-gray-400 text-sm mt-1">إحصائيات استخدام الموقع (بيانات مجهولة الهوية)</p>
+                    <h2 class="text-2xl sm:text-3xl font-bold">لوحة التحليلات</h2>
+                    <p class="text-gray-400 text-xs sm:text-sm mt-1">إحصائيات استخدام الموقع (بيانات مجهولة الهوية)</p>
                 </div>
-                <div class="flex items-center gap-2" id="ana-toolbar">
+                <div class="flex items-center gap-2 self-end sm:self-auto" id="ana-toolbar">
                     <span class="spinner hidden" id="ana-spin"></span>
-                    <button class="btn btn-secondary" onclick="AdminAnalytics.render()">تحديث</button>
+                    <button class="btn btn-secondary text-xs sm:text-sm" onclick="AdminAnalytics.render()">تحديث</button>
                 </div>
             </div>
 
             <!-- Filters -->
-            <div class="glass p-4 rounded-2xl flex flex-wrap items-center gap-3">
-                <div class="flex items-center gap-1" id="ana-range-btns">
+            <div class="glass p-3.5 sm:p-4 rounded-2xl flex flex-wrap items-center gap-2.5 sm:gap-3">
+                <div class="flex items-center gap-1 overflow-x-auto" id="ana-range-btns">
                     <button class="ana-range-btn" data-days="7" onclick="AdminAnalytics.setRange(7)">7 أيام</button>
                     <button class="ana-range-btn" data-days="30" onclick="AdminAnalytics.setRange(30)">30 يوم</button>
                     <button class="ana-range-btn" data-days="90" onclick="AdminAnalytics.setRange(90)">90 يوم</button>
                 </div>
-                <span class="mx-1 text-gray-500 text-sm">|</span>
-                <span class="text-gray-400 text-xs">من</span>
-                <input type="date" id="ana-from" class="input-field text-xs w-auto" onchange="AdminAnalytics.customRange()">
-                <span class="text-gray-400 text-xs">إلى</span>
-                <input type="date" id="ana-to" class="input-field text-xs w-auto" onchange="AdminAnalytics.customRange()">
-                <span class="mx-1 text-gray-500 text-sm">|</span>
-                <span class="text-gray-400 text-xs">الفترة</span>
-                <select id="ana-period" class="input-field text-xs w-auto" onchange="AdminAnalytics.periodChanged()">
-                    <option value="day">يومي</option>
-                    <option value="week">أسبوعي</option>
-                    <option value="month">شهري</option>
-                    <option value="hour">ساعي</option>
-                </select>
+                <span class="text-gray-500 text-sm hidden sm:inline">|</span>
+                <div class="flex items-center gap-1.5 w-full sm:w-auto">
+                    <span class="text-gray-400 text-xs shrink-0">من</span>
+                    <input type="date" id="ana-from" class="input-field text-xs flex-1 sm:w-auto" onchange="AdminAnalytics.customRange()">
+                    <span class="text-gray-400 text-xs shrink-0">إلى</span>
+                    <input type="date" id="ana-to" class="input-field text-xs flex-1 sm:w-auto" onchange="AdminAnalytics.customRange()">
+                </div>
+                <div class="flex items-center gap-1.5 w-full sm:w-auto">
+                    <span class="text-gray-400 text-xs shrink-0">الفترة</span>
+                    <select id="ana-period" class="input-field text-xs w-full sm:w-auto" onchange="AdminAnalytics.periodChanged()">
+                        <option value="day">يومي</option>
+                        <option value="week">أسبوعي</option>
+                        <option value="month">شهري</option>
+                        <option value="hour">ساعي</option>
+                    </select>
+                </div>
             </div>
 
             <!-- Overview Stats -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="ana-stats"></div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4" id="ana-stats"></div>
 
             <!-- Heatmap + Funnel -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div class="glass p-5 rounded-2xl border border-white/10">
-                    <h3 class="font-semibold mb-3 text-gray-200"><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>خريطة التخصص × السنة × الفصل</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                <div class="glass p-4 sm:p-5 rounded-2xl border border-white/10">
+                    <h3 class="font-semibold mb-3 text-sm sm:text-base text-gray-200"><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>خريطة التخصص × السنة × الفصل</h3>
                     <div id="ana-ctx"></div>
                 </div>
-                <div class="glass p-5 rounded-2xl border border-white/10">
-                    <h3 class="font-semibold mb-3 text-gray-200"><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>المسار التفاعلي (Funnel)</h3>
+                <div class="glass p-4 sm:p-5 rounded-2xl border border-white/10">
+                    <h3 class="font-semibold mb-3 text-sm sm:text-base text-gray-200"><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>المسار التفاعلي (Funnel)</h3>
                     <div id="ana-funnel"></div>
                 </div>
             </div>
 
             <!-- Trend -->
-            <div class="glass p-5 rounded-2xl border border-white/10">
-                <h3 class="font-semibold mb-3 text-gray-200"><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>اتجاه الأحداث</h3>
+            <div class="glass p-4 sm:p-5 rounded-2xl border border-white/10">
+                <h3 class="font-semibold mb-3 text-sm sm:text-base text-gray-200"><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>اتجاه الأحداث</h3>
                 <div id="ana-trend" style="overflow-x:auto;"></div>
             </div>
 
             <!-- Subjects + Retention -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                <div class="glass p-5 rounded-2xl border border-white/10 lg:col-span-2">
-                    <h3 class="font-semibold mb-3 text-gray-200"><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>تفاعل المواد</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-right text-sm">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+                <div class="glass p-4 sm:p-5 rounded-2xl border border-white/10 lg:col-span-2">
+                    <h3 class="font-semibold mb-3 text-sm sm:text-base text-gray-200"><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>تفاعل المواد</h3>
+                    <div class="overflow-x-auto -mx-2 sm:mx-0">
+                        <table class="w-full text-right text-xs sm:text-sm min-w-[480px]">
                             <thead class="text-gray-400 text-xs">
                                 <tr>
                                     <th class="py-2 px-2">المادة</th>
@@ -318,8 +439,8 @@
                     </div>
                     <p class="text-xs text-gray-500 mt-2">معدل الهجر = نسبة فتح المادة دون فتح أي مصدر خلال نفس المدة.</p>
                 </div>
-                <div class="glass p-5 rounded-2xl border border-white/10">
-                    <h3 class="font-semibold mb-3 text-gray-200"><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>الاحتفاظ (Retention)</h3>
+                <div class="glass p-4 sm:p-5 rounded-2xl border border-white/10">
+                    <h3 class="font-semibold mb-3 text-sm sm:text-base text-gray-200"><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>الاحتفاظ (Retention)</h3>
                     <div id="ana-retention"></div>
                 </div>
             </div>
@@ -328,16 +449,16 @@
 
     <template id="tpl-passwords">
         <div class="h-full flex flex-col">
-            <div class="flex justify-between items-center mb-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
                 <div>
-                    <h2 class="text-3xl font-bold">إدارة كلمات المرور والصلاحيات</h2>
-                    <p class="text-gray-400 text-sm mt-1">التحكم في مفاتيح المرور والصلاحيات الصريحة لكل تخصص أو ترم</p>
+                    <h2 class="text-2xl sm:text-3xl font-bold">إدارة كلمات المرور والصلاحيات</h2>
+                    <p class="text-gray-400 text-xs sm:text-sm mt-1">التحكم في مفاتيح المرور والصلاحيات الصريحة لكل تخصص أو ترم</p>
                 </div>
-                <button onclick="AdminApp.openPasswordModal()" class="btn btn-primary flex items-center gap-2">
+                <button onclick="AdminApp.openPasswordModal()" class="btn btn-primary w-full sm:w-auto flex items-center gap-2">
                     إضافة كلمة مرور جديدة
                 </button>
             </div>
-            <div class="flex-1 overflow-auto glass rounded-2xl p-6">
+            <div class="flex-1 overflow-auto glass rounded-2xl p-4 sm:p-6 custom-scrollbar">
                 <div id="passwords-list" class="space-y-4">
                     <!-- Populated by JS -->
                 </div>
@@ -347,53 +468,53 @@
 
     <template id="tpl-events">
         <div class="h-full flex flex-col">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                 <div>
-                    <h2 class="text-3xl font-bold text-white flex items-center gap-3">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
                         إدارة التقويم والأحداث
                     </h2>
-                    <p class="text-gray-400 text-sm mt-1">تتبع وتصنيف جميع أحداث الأجندة الدراسية حسب التخصصات والسنوات</p>
+                    <p class="text-gray-400 text-xs sm:text-sm mt-1">تتبع وتصنيف جميع أحداث الأجندة الدراسية حسب التخصصات والسنوات</p>
                 </div>
-                <button onclick="AdminApp.openEventModal()" class="btn btn-primary flex items-center gap-2">
+                <button onclick="AdminApp.openEventModal()" class="btn btn-primary w-full sm:w-auto flex items-center gap-2">
                     إضافة حدث جديد
                 </button>
             </div>
 
             <!-- Summary Stats Counters -->
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
-                <div class="bg-black/30 p-3 rounded-xl border border-white/10 text-center">
-                    <span class="text-xs text-gray-400 block mb-1">إجمالي الأحداث</span>
-                    <span id="evt-stat-total" class="text-xl font-bold text-white font-mono">0</span>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3 mb-4">
+                <div class="bg-black/30 p-2.5 sm:p-3 rounded-xl border border-white/10 text-center">
+                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">إجمالي الأحداث</span>
+                    <span id="evt-stat-total" class="text-lg sm:text-xl font-bold text-white font-mono">0</span>
                 </div>
-                <div class="bg-black/30 p-3 rounded-xl border border-purple-500/20 text-center">
-                    <span class="text-xs text-purple-300 block mb-1">أحداث عامة</span>
-                    <span id="evt-stat-global" class="text-xl font-bold text-purple-400 font-mono">0</span>
+                <div class="bg-black/30 p-2.5 sm:p-3 rounded-xl border border-purple-500/20 text-center">
+                    <span class="text-[11px] sm:text-xs text-purple-300 block mb-1">أحداث عامة</span>
+                    <span id="evt-stat-global" class="text-lg sm:text-xl font-bold text-purple-400 font-mono">0</span>
                 </div>
-                <div class="bg-black/30 p-3 rounded-xl border border-red-500/20 text-center">
-                    <span class="text-xs text-red-300 block mb-1">اختبارات</span>
-                    <span id="evt-stat-exams" class="text-xl font-bold text-red-400 font-mono">0</span>
+                <div class="bg-black/30 p-2.5 sm:p-3 rounded-xl border border-red-500/20 text-center">
+                    <span class="text-[11px] sm:text-xs text-red-300 block mb-1">اختبارات</span>
+                    <span id="evt-stat-exams" class="text-lg sm:text-xl font-bold text-red-400 font-mono">0</span>
                 </div>
-                <div class="bg-black/30 p-3 rounded-xl border border-emerald-500/20 text-center">
-                    <span class="text-xs text-emerald-300 block mb-1">إجازات</span>
-                    <span id="evt-stat-holidays" class="text-xl font-bold text-emerald-400 font-mono">0</span>
+                <div class="bg-black/30 p-2.5 sm:p-3 rounded-xl border border-emerald-500/20 text-center">
+                    <span class="text-[11px] sm:text-xs text-emerald-300 block mb-1">إجازات</span>
+                    <span id="evt-stat-holidays" class="text-lg sm:text-xl font-bold text-emerald-400 font-mono">0</span>
                 </div>
-                <div class="bg-black/30 p-3 rounded-xl border border-amber-500/20 text-center col-span-2 sm:col-span-1">
-                    <span class="text-xs text-amber-300 block mb-1">قادمة / جارية</span>
-                    <span id="evt-stat-upcoming" class="text-xl font-bold text-amber-400 font-mono">0</span>
+                <div class="bg-black/30 p-2.5 sm:p-3 rounded-xl border border-amber-500/20 text-center col-span-2 sm:col-span-1">
+                    <span class="text-[11px] sm:text-xs text-amber-300 block mb-1">قادمة / جارية</span>
+                    <span id="evt-stat-upcoming" class="text-lg sm:text-xl font-bold text-amber-400 font-mono">0</span>
                 </div>
             </div>
 
             <!-- Arabic Guidance Banner -->
-            <div class="bg-black/30 border border-white/10 p-3.5 rounded-xl mb-4 text-gray-300 text-xs leading-relaxed flex items-center gap-3">
-                <span class="text-lg"></span>
+            <div class="bg-black/30 border border-white/10 p-3 rounded-xl mb-4 text-gray-300 text-xs leading-relaxed flex items-center gap-2.5">
+                <span class="text-base">ℹ️</span>
                 <div>
-                    <strong class="text-white">دليل الأحداث والتصنيف:</strong> الأحداث العامة (<code class="text-gray-300">Global</code>) تظهر لجميع الطلاب، بينما الأحداث المخصصة ترتبط بتخصص وسنة ترم محددين. يمكنك التصفية حسب السنة أو نوع الحدث أو البحث النصي.
+                    <strong class="text-white">دليل الأحداث والتصنيف:</strong> الأحداث العامة (<code class="text-gray-300 font-mono">Global</code>) تظهر لجميع الطلاب، بينما الأحداث المخصصة ترتبط بتخصص وسنة محددين.
                 </div>
             </div>
 
             <!-- Multi-level Filter Bar -->
-            <div class="glass p-4 rounded-xl mb-6 space-y-3">
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="glass p-3.5 sm:p-4 rounded-xl mb-4 sm:mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
                     <div>
                         <label class="block text-xs text-gray-400 mb-1">التخصص / النطاق</label>
                         <select id="evt-filter-scope" class="input-field text-xs" onchange="AdminApp.onEventFilterChange()">
@@ -435,8 +556,8 @@
             </div>
 
             <!-- Categorized Events List Container -->
-            <div class="flex-1 overflow-auto glass rounded-2xl p-6">
-                <div id="events-list" class="space-y-6">
+            <div class="flex-1 overflow-auto glass rounded-2xl p-3.5 sm:p-6 custom-scrollbar">
+                <div id="events-list" class="space-y-4 sm:space-y-6">
                     <!-- Populated by JS with Categorized Sections -->
                 </div>
             </div>
@@ -445,18 +566,21 @@
 
     <template id="tpl-subjects">
         <div class="h-full flex flex-col">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-3xl font-bold">إدارة المواد والروابط</h2>
-                <button onclick="AdminApp.openAddSubjectModal()" class="btn btn-primary flex items-center gap-2">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                <div>
+                    <h2 class="text-2xl sm:text-3xl font-bold">إدارة المواد والروابط</h2>
+                    <p class="text-gray-400 text-xs sm:text-sm mt-0.5">تعديل مقررات التخصصات، روابط Drive واليوتيوب والمصادر</p>
+                </div>
+                <button onclick="AdminApp.openAddSubjectModal()" class="btn btn-primary w-full sm:w-auto flex items-center gap-2">
                     إضافة مادة جديدة
                 </button>
             </div>
 
             <!-- Filter bar -->
-            <div class="glass p-4 rounded-xl mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="glass p-3.5 sm:p-4 rounded-xl mb-4 sm:mb-6 grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4">
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">التخصص</label>
-                    <select id="sub-spec" class="input-field text-sm" onchange="AdminApp.onSubjectSpecChange()">
+                    <select id="sub-spec" class="input-field text-xs sm:text-sm" onchange="AdminApp.onSubjectSpecChange()">
                         <option value="dentistry">أسنان (Dentistry)</option>
                         <option value="medicine">بشري (Medicine)</option>
                         <option value="pre-med">تحضيري (Pre-med)</option>
@@ -464,7 +588,7 @@
                 </div>
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">السنة</label>
-                    <select id="sub-year" class="input-field text-sm" onchange="AdminApp.loadSubjects()">
+                    <select id="sub-year" class="input-field text-xs sm:text-sm" onchange="AdminApp.loadSubjects()">
                         <option value="2">سنة 2</option>
                         <option value="3">سنة 3</option>
                         <option value="4">سنة 4</option>
@@ -474,7 +598,7 @@
                 </div>
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">الترم</label>
-                    <select id="sub-sem" class="input-field text-sm" onchange="AdminApp.loadSubjects()">
+                    <select id="sub-sem" class="input-field text-xs sm:text-sm" onchange="AdminApp.loadSubjects()">
                         <option value="1">الترم 1</option>
                         <option value="2">الترم 2</option>
                     </select>
@@ -482,8 +606,8 @@
             </div>
 
             <!-- Subjects List Container -->
-            <div class="flex-1 overflow-auto glass rounded-2xl p-6">
-                <div id="subjects-list" class="space-y-6">
+            <div class="flex-1 overflow-auto glass rounded-2xl p-3.5 sm:p-6 custom-scrollbar">
+                <div id="subjects-list" class="space-y-4 sm:space-y-6">
                     <!-- Populated by JS -->
                 </div>
             </div>
@@ -492,18 +616,21 @@
 
     <template id="tpl-classes">
         <div class="h-full flex flex-col">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-3xl font-bold">إدارة الجداول الدراسية (Timetable)</h2>
-                <button onclick="AdminApp.openClassModal()" class="btn btn-primary flex items-center gap-2">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                <div>
+                    <h2 class="text-2xl sm:text-3xl font-bold">إدارة الجداول الدراسية (Timetable)</h2>
+                    <p class="text-gray-400 text-xs sm:text-sm mt-0.5">تحديد مواعيد الحصص والمحاضرات اليومية لكل شعبة ومجموعة</p>
+                </div>
+                <button onclick="AdminApp.openClassModal()" class="btn btn-primary w-full sm:w-auto flex items-center gap-2">
                     إضافة حصة / محاضرة
                 </button>
             </div>
 
             <!-- Filter bar -->
-            <div class="glass p-4 rounded-xl mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="glass p-3.5 sm:p-4 rounded-xl mb-4 sm:mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">التخصص</label>
-                    <select id="cls-spec" class="input-field text-sm" onchange="AdminApp.onClassSpecChange()">
+                    <select id="cls-spec" class="input-field text-xs sm:text-sm" onchange="AdminApp.onClassSpecChange()">
                         <option value="dentistry">أسنان (Dentistry)</option>
                         <option value="medicine">بشري (Medicine)</option>
                         <option value="pre-med">تحضيري (Pre-med)</option>
@@ -511,7 +638,7 @@
                 </div>
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">السنة</label>
-                    <select id="cls-year" class="input-field text-sm" onchange="AdminApp.loadClasses()">
+                    <select id="cls-year" class="input-field text-xs sm:text-sm" onchange="AdminApp.loadClasses()">
                         <option value="2">سنة 2</option>
                         <option value="3">سنة 3</option>
                         <option value="4">سنة 4</option>
@@ -521,14 +648,14 @@
                 </div>
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">الترم</label>
-                    <select id="cls-sem" class="input-field text-sm" onchange="AdminApp.loadClasses()">
+                    <select id="cls-sem" class="input-field text-xs sm:text-sm" onchange="AdminApp.loadClasses()">
                         <option value="1">الترم 1</option>
                         <option value="2">الترم 2</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">المجموعة</label>
-                    <select id="cls-group" class="input-field text-sm" onchange="AdminApp.renderClasses()">
+                    <select id="cls-group" class="input-field text-xs sm:text-sm" onchange="AdminApp.renderClasses()">
                         <option value="all">كل المجموعات</option>
                         <option value="المجموعة A">المجموعة A</option>
                         <option value="المجموعة B">المجموعة B</option>
@@ -537,8 +664,8 @@
             </div>
 
             <!-- Timetable View Container by Days -->
-            <div class="flex-1 overflow-auto glass rounded-2xl p-6">
-                <div id="classes-timetable" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div class="flex-1 overflow-auto glass rounded-2xl p-3.5 sm:p-6 custom-scrollbar">
+                <div id="classes-timetable" class="grid grid-cols-1 md:grid-cols-5 gap-3.5 sm:gap-4">
                     <!-- Populated by JS for Sun to Thu -->
                 </div>
             </div>
@@ -547,27 +674,27 @@
 
     <!-- 6. HISTORY & ROLLBACK TAB -->
     <template id="tpl-history">
-        <div class="h-full flex flex-col gap-5">
+        <div class="h-full flex flex-col gap-4 sm:gap-5 overflow-y-auto custom-scrollbar">
 
             <!-- Top row: Save Checkpoint + Undo button -->
-            <div class="flex flex-col md:flex-row gap-4">
+            <div class="flex flex-col md:flex-row gap-3 sm:gap-4 shrink-0">
 
                 <!-- Save Named Checkpoint box -->
-                <div class="glass p-5 rounded-xl border border-white/10 flex-1">
-                    <h3 class="font-semibold text-white mb-2 text-base flex items-center gap-2">
+                <div class="glass p-4 sm:p-5 rounded-xl border border-white/10 flex-1">
+                    <h3 class="font-semibold text-white mb-2 text-sm sm:text-base flex items-center gap-2">
                         <span>📌</span> حفظ نقطة مرجعية يدوية
                     </h3>
                     <p class="text-xs text-gray-400 mb-3">يحفظ حالة النظام بالكامل الآن مع وصف أو ملاحظة مخصصة لسهولة العودة إليها مستقبلاً.</p>
-                    <textarea id="manual-snapshot-note" rows="2" class="input-field text-sm w-full mb-3 resize-none" placeholder="مثال: نقطة أمان قبل تعديل مواد وجداول الترم الجديد..."></textarea>
-                    <button onclick="AdminApp.saveManualSnapshot()" class="btn btn-primary text-sm w-full py-2.5 flex items-center justify-center gap-2">
+                    <textarea id="manual-snapshot-note" rows="2" class="input-field text-xs sm:text-sm w-full mb-3 resize-none" placeholder="مثال: نقطة أمان قبل تعديل مواد وجداول الترم الجديد..."></textarea>
+                    <button onclick="AdminApp.saveManualSnapshot()" class="btn btn-primary text-xs sm:text-sm w-full py-2.5 flex items-center justify-center gap-2">
                         <span>💾</span> حفظ النقطة المرجعية الآن
                     </button>
                 </div>
 
                 <!-- Saved Manual Checkpoints -->
-                <div class="glass p-5 rounded-xl border border-white/10 flex-1 flex flex-col">
+                <div class="glass p-4 sm:p-5 rounded-xl border border-white/10 flex-1 flex flex-col">
                     <div class="flex justify-between items-center mb-3">
-                        <h3 class="font-semibold text-white text-base flex items-center gap-2">
+                        <h3 class="font-semibold text-white text-sm sm:text-base flex items-center gap-2">
                             <span>⭐</span> النقاط المرجعية المحفوظة
                         </h3>
                         <button onclick="AdminApp.loadManualSnapshots()" class="text-xs text-sky-400 hover:text-sky-300">تحديث</button>
@@ -580,14 +707,14 @@
 
             <!-- Audit Log Section -->
             <div class="flex flex-col flex-1 min-h-0">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-3">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 mb-3">
                     <div>
-                        <h3 class="font-semibold text-white text-base flex items-center gap-2">
+                        <h3 class="font-semibold text-white text-sm sm:text-base flex items-center gap-2">
                             <span>📜</span> سجل التغييرات والعمليات التلقائي
                         </h3>
                         <p class="text-xs text-gray-400 mt-0.5" id="hist-total-status">جاري جلب السجلات...</p>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                         <button id="btn-undo-rollback" onclick="AdminApp.undoLastRollback()" class="btn bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs py-2 px-3.5 hidden flex items-center gap-1.5 font-semibold">
                             <span>↩</span> تراجع عن آخر استعادة
                         </button>
@@ -598,10 +725,10 @@
                 </div>
 
                 <!-- Filters -->
-                <div class="glass p-3.5 rounded-xl mb-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 border border-white/10">
+                <div class="glass p-3 rounded-xl mb-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 border border-white/10">
                     <div>
                         <label class="block text-[11px] text-gray-400 mb-1">القسم</label>
-                        <select id="hist-filter-category" class="input-field text-xs py-2 w-full" onchange="AdminApp.filterHistory()">
+                        <select id="hist-filter-category" class="input-field text-xs py-1.5 w-full" onchange="AdminApp.filterHistory()">
                             <option value="">جميع الأقسام</option>
                             <option value="subjects">📚 المواد والروابط</option>
                             <option value="classes">📅 الجداول الدراسية</option>
@@ -614,7 +741,7 @@
                     </div>
                     <div>
                         <label class="block text-[11px] text-gray-400 mb-1">نوع الإجراء</label>
-                        <select id="hist-filter-action" class="input-field text-xs py-2 w-full" onchange="AdminApp.filterHistory()">
+                        <select id="hist-filter-action" class="input-field text-xs py-1.5 w-full" onchange="AdminApp.filterHistory()">
                             <option value="">جميع الإجراءات</option>
                             <option value="add">➕ إضافة جديدة</option>
                             <option value="edit">✏️ تعديل</option>
@@ -627,7 +754,7 @@
                     </div>
                     <div>
                         <label class="block text-[11px] text-gray-400 mb-1">الفترة الزمنية</label>
-                        <select id="hist-filter-period" class="input-field text-xs py-2 w-full" onchange="AdminApp.filterHistory()">
+                        <select id="hist-filter-period" class="input-field text-xs py-1.5 w-full" onchange="AdminApp.filterHistory()">
                             <option value="all">كل الأوقات</option>
                             <option value="today">اليوم</option>
                             <option value="week">آخر 7 أيام</option>
@@ -636,12 +763,12 @@
                     </div>
                     <div>
                         <label class="block text-[11px] text-gray-400 mb-1">بحث بالنص أو المشرف</label>
-                        <input type="text" id="hist-filter-search" class="input-field text-xs py-2 w-full" placeholder="بحث بالوصف، المنفذ، المادة..." oninput="AdminApp.filterHistory()">
+                        <input type="text" id="hist-filter-search" class="input-field text-xs py-1.5 w-full" placeholder="بحث بالوصف، المنفذ، المادة..." oninput="AdminApp.filterHistory()">
                     </div>
                 </div>
 
                 <!-- Timeline Container -->
-                <div class="flex-1 overflow-auto glass rounded-xl p-4 border border-white/10 custom-scrollbar">
+                <div class="flex-1 overflow-auto glass rounded-xl p-3 sm:p-4 border border-white/10 custom-scrollbar">
                     <div id="history-timeline-container" class="space-y-2.5">
                         <!-- Populated by AdminApp.renderHistory() -->
                     </div>
@@ -652,25 +779,28 @@
     </template>
 
     <template id="tpl-announcements">
-        <div class="h-full flex flex-col">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-3xl font-bold">إدارة الإعلانات</h2>
-                <div class="flex gap-2">
-                    <button onclick="AdminApp.undoAnnouncements()" class="btn btn-secondary text-sm flex items-center gap-2" title="تراجع عن آخر إجراء (Undo)">
+        <div class="h-full flex flex-col overflow-y-auto custom-scrollbar">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6 shrink-0">
+                <div>
+                    <h2 class="text-2xl sm:text-3xl font-bold">إدارة الإعلانات</h2>
+                    <p class="text-gray-400 text-xs sm:text-sm mt-0.5">نشر وتعديل الإعلانات الموجهة لجميع الدفعات أو تخصص معين</p>
+                </div>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="AdminApp.undoAnnouncements()" class="btn btn-secondary text-xs sm:text-sm flex-1 sm:flex-initial flex items-center justify-center gap-2" title="تراجع عن آخر إجراء (Undo)">
                         تراجع
                     </button>
-                    <button onclick="AdminApp.clearAllAnnouncements()" class="btn btn-danger text-sm flex items-center gap-2">
+                    <button onclick="AdminApp.clearAllAnnouncements()" class="btn btn-danger text-xs sm:text-sm flex-1 sm:flex-initial flex items-center justify-center gap-2">
                         مسح الكل
                     </button>
                 </div>
             </div>
 
-            <div class="glass p-6 rounded-2xl mb-6">
-                <h3 class="text-xl font-semibold mb-4 text-accent">تعديل الإعلانات (فردي أو مجمع)</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div class="glass p-4 sm:p-6 rounded-2xl mb-4 sm:mb-6 shrink-0">
+                <h3 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-accent">تعديل الإعلانات (فردي أو مجمع)</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4 mb-4">
                     <div>
-                        <label class="block text-sm text-gray-400 mb-1">التخصص</label>
-                        <select id="ann-spec" class="input-field" onchange="AdminApp.updateYearOptions('ann-spec', 'ann-year')">
+                        <label class="block text-xs sm:text-sm text-gray-400 mb-1">التخصص</label>
+                        <select id="ann-spec" class="input-field text-xs sm:text-sm" onchange="AdminApp.updateYearOptions('ann-spec', 'ann-year')">
                             <option value="all">الكل (Bulk Update)</option>
                             <option value="dentistry">أسنان (Dentistry)</option>
                             <option value="medicine">بشري (Medicine)</option>
@@ -678,8 +808,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-400 mb-1">السنة</label>
-                        <select id="ann-year" class="input-field">
+                        <label class="block text-xs sm:text-sm text-gray-400 mb-1">السنة</label>
+                        <select id="ann-year" class="input-field text-xs sm:text-sm">
                             <option value="all">الكل</option>
                             <option value="1">سنة 1</option>
                             <option value="2">سنة 2</option>
@@ -690,8 +820,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-400 mb-1">الترم</label>
-                        <select id="ann-sem" class="input-field">
+                        <label class="block text-xs sm:text-sm text-gray-400 mb-1">الترم</label>
+                        <select id="ann-sem" class="input-field text-xs sm:text-sm">
                             <option value="all">الكل</option>
                             <option value="1">الترم 1</option>
                             <option value="2">الترم 2</option>
@@ -700,18 +830,18 @@
                 </div>
                 
                 <div class="mb-4">
-                    <label class="block text-sm text-gray-400 mb-1">محتوى الإعلان</label>
-                    <div id="ann-editor-container" class="bg-black/30 border border-white/10 rounded-b-lg text-white" style="height: 150px;"></div>
+                    <label class="block text-xs sm:text-sm text-gray-400 mb-1">محتوى الإعلان</label>
+                    <div id="ann-editor-container" class="bg-black/30 border border-white/10 rounded-b-lg text-white" style="height: 140px;"></div>
                 </div>
                 
-                <button onclick="AdminApp.saveAnnouncements()" class="btn btn-primary w-full py-3 mt-4">حفظ الإعلان</button>
+                <button onclick="AdminApp.saveAnnouncements()" class="btn btn-primary w-full py-2.5 sm:py-3 mt-3 text-sm sm:text-base">حفظ الإعلان</button>
             </div>
 
             <!-- Filter Bar -->
-            <div class="glass p-4 rounded-xl mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="glass p-3.5 sm:p-4 rounded-xl mb-4 sm:mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 shrink-0">
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">تصفية بالتخصص</label>
-                    <select id="ann-filter-spec" class="input-field text-sm" onchange="AdminApp.updateYearOptions('ann-filter-spec', 'ann-filter-year'); AdminApp.renderAnnouncements()">
+                    <select id="ann-filter-spec" class="input-field text-xs sm:text-sm" onchange="AdminApp.updateYearOptions('ann-filter-spec', 'ann-filter-year'); AdminApp.renderAnnouncements()">
                         <option value="all">الكل</option>
                         <option value="dentistry">أسنان (Dentistry)</option>
                         <option value="medicine">بشري (Medicine)</option>
@@ -720,7 +850,7 @@
                 </div>
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">تصفية بالسنة</label>
-                    <select id="ann-filter-year" class="input-field text-sm" onchange="AdminApp.renderAnnouncements()">
+                    <select id="ann-filter-year" class="input-field text-xs sm:text-sm" onchange="AdminApp.renderAnnouncements()">
                         <option value="all">الكل</option>
                         <option value="1">سنة 1</option>
                         <option value="2">سنة 2</option>
@@ -732,7 +862,7 @@
                 </div>
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">تصفية بالترم</label>
-                    <select id="ann-filter-sem" class="input-field text-sm" onchange="AdminApp.renderAnnouncements()">
+                    <select id="ann-filter-sem" class="input-field text-xs sm:text-sm" onchange="AdminApp.renderAnnouncements()">
                         <option value="all">الكل</option>
                         <option value="1">الترم 1</option>
                         <option value="2">الترم 2</option>
@@ -740,13 +870,13 @@
                 </div>
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">بحث</label>
-                    <input type="text" id="ann-filter-search" class="input-field text-sm" placeholder="ابحث في المحتوى..." oninput="AdminApp.renderAnnouncements()">
+                    <input type="text" id="ann-filter-search" class="input-field text-xs sm:text-sm" placeholder="ابحث في المحتوى..." oninput="AdminApp.renderAnnouncements()">
                 </div>
             </div>
 
-            <div class="flex-1 overflow-auto glass rounded-2xl p-6">
-                <h3 class="font-semibold mb-4 text-gray-300 border-b border-white/10 pb-2">الإعلانات الحالية المنشورة</h3>
-                <div id="announcements-list" class="space-y-6">
+            <div class="flex-1 overflow-auto glass rounded-2xl p-3.5 sm:p-6 custom-scrollbar">
+                <h3 class="font-semibold mb-3 sm:mb-4 text-gray-300 border-b border-white/10 pb-2 text-sm sm:text-base">الإعلانات الحالية المنشورة</h3>
+                <div id="announcements-list" class="space-y-4 sm:space-y-6">
                     <!-- Populated by JS -->
                 </div>
             </div>
@@ -754,69 +884,69 @@
     </template>
 
     <template id="tpl-safedeploy">
-        <div class="h-full flex flex-col">
-            <div class="flex justify-between items-center mb-6">
+        <div class="h-full flex flex-col overflow-y-auto custom-scrollbar">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6 shrink-0">
                 <div>
-                    <h2 class="text-3xl font-bold text-white flex items-center gap-3">
-                        نظام الأمان واللقطات SafeDeploy & Snapshots
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2 sm:gap-3">
+                        <span>🛡️</span> نظام SafeDeploy واللقطات
                     </h2>
-                    <p class="text-gray-400 text-sm mt-1">مراقبة صحة النظام، التحديثات المنظومة، واللقطات النسخ الاحتياطي في Google Drive</p>
+                    <p class="text-gray-400 text-xs sm:text-sm mt-1">مراقبة صحة النظام، التحديثات المنظومة، واللقطات الاحتياطية</p>
                 </div>
-                <button onclick="AdminApp.loadSafeDeployTab()" class="btn btn-secondary flex items-center gap-2">
+                <button onclick="AdminApp.loadSafeDeployTab()" class="btn btn-secondary text-xs sm:text-sm flex items-center gap-2 w-full sm:w-auto">
                     تحديث حالة النظام
                 </button>
             </div>
 
             <!-- Urgent Alert Banner if error detected -->
-            <div id="sd-urgent-alert" class="hidden p-5 rounded-2xl bg-red-950/80 border border-red-500/80 text-red-100 mb-6 shadow-xl animate-pulse">
-                <div class="flex items-start justify-between gap-4">
+            <div id="sd-urgent-alert" class="hidden p-4 sm:p-5 rounded-2xl bg-red-950/80 border border-red-500/80 text-red-100 mb-4 sm:mb-6 shadow-xl animate-pulse shrink-0">
+                <div class="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
                     <div>
-                        <h3 class="text-lg font-bold text-white mb-1">تنبيه عاجل: تم اكتشاف مشكلة بالنظام أثناء فحص الصحة!</h3>
+                        <h3 class="text-base sm:text-lg font-bold text-white mb-1">تنبيه عاجل: تم اكتشاف مشكلة بالنظام أثناء فحص الصحة!</h3>
                         <p id="sd-alert-summary" class="text-red-200 text-xs mb-3">التحديث الأخير يحتوي على خطأ أو تعذر الوصول لبعض APIs.</p>
                         <pre id="sd-alert-trace" class="p-3 bg-black/60 rounded-lg text-xs font-mono text-red-300 max-h-32 overflow-y-auto border border-red-900/60"></pre>
                     </div>
-                    <button id="sd-alert-rollback-btn" class="btn btn-danger text-sm font-bold whitespace-nowrap">
+                    <button id="sd-alert-rollback-btn" class="btn btn-danger text-xs sm:text-sm font-bold whitespace-nowrap w-full sm:w-auto">
                         استعادة فورية (Rollback)
                     </button>
                 </div>
             </div>
 
             <!-- Health Status Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-                <div class="glass p-4 rounded-xl border border-white/10">
-                    <span class="text-xs text-gray-400 block mb-1">WP Integrated API</span>
-                    <span id="sd-health-wp" class="text-sm font-bold text-emerald-400 font-mono">جاري الفحص...</span>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-6 shrink-0">
+                <div class="glass p-3 sm:p-4 rounded-xl border border-white/10">
+                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">WP Integrated API</span>
+                    <span id="sd-health-wp" class="text-xs sm:text-sm font-bold text-emerald-400 font-mono">جاري الفحص...</span>
                 </div>
-                <div class="glass p-4 rounded-xl border border-white/10">
-                    <span class="text-xs text-gray-400 block mb-1">Announcements API</span>
-                    <span id="sd-health-ann" class="text-sm font-bold text-emerald-400 font-mono">جاري الفحص...</span>
+                <div class="glass p-3 sm:p-4 rounded-xl border border-white/10">
+                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">Announcements API</span>
+                    <span id="sd-health-ann" class="text-xs sm:text-sm font-bold text-emerald-400 font-mono">جاري الفحص...</span>
                 </div>
-                <div class="glass p-4 rounded-xl border border-white/10">
-                    <span class="text-xs text-gray-400 block mb-1">Schedule API</span>
-                    <span id="sd-health-sch" class="text-sm font-bold text-emerald-400 font-mono">جاري الفحص...</span>
+                <div class="glass p-3 sm:p-4 rounded-xl border border-white/10">
+                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">Schedule API</span>
+                    <span id="sd-health-sch" class="text-xs sm:text-sm font-bold text-emerald-400 font-mono">جاري الفحص...</span>
                 </div>
-                <div class="glass p-4 rounded-xl border border-white/10">
-                    <span class="text-xs text-gray-400 block mb-1">Google Drive Snapshot</span>
-                    <span class="text-sm font-bold text-sky-400 font-mono">مفعل تلقائياً</span>
+                <div class="glass p-3 sm:p-4 rounded-xl border border-white/10">
+                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">Drive Snapshot</span>
+                    <span class="text-xs sm:text-sm font-bold text-sky-400 font-mono">مفعل تلقائياً</span>
                 </div>
             </div>
 
             <!-- Deployments History Table -->
-            <div class="flex-1 overflow-auto glass rounded-2xl p-6">
-                <h3 class="font-semibold mb-4 text-gray-300 border-b border-white/10 pb-2 flex items-center justify-between">
-                    <span>سجل التحديثات واللقطات (Deployments & Snapshots)</span>
+            <div class="flex-1 overflow-auto glass rounded-2xl p-4 sm:p-6 custom-scrollbar">
+                <h3 class="font-semibold mb-3 sm:mb-4 text-gray-300 border-b border-white/10 pb-2 flex items-center justify-between text-sm sm:text-base">
+                    <span>سجل التحديثات واللقطات</span>
                     <span id="sd-total-count" class="text-xs font-mono text-gray-400">0 تحديثات</span>
                 </h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-right text-sm text-gray-300">
+                <div class="overflow-x-auto -mx-2 sm:mx-0">
+                    <table class="w-full text-right text-xs sm:text-sm text-gray-300 min-w-[600px]">
                         <thead class="bg-black/40 text-gray-400 text-xs">
                             <tr>
-                                <th class="py-3 px-4 rounded-r-xl">التاريخ والوقت</th>
-                                <th class="py-3 px-4">ملاحظة التحديث (AI Note)</th>
-                                <th class="py-3 px-4">الملفات المعدلة</th>
-                                <th class="py-3 px-4">الحالة</th>
-                                <th class="py-3 px-4">أرشيف ملفات الموقع (.ZIP)</th>
-                                <th class="py-3 px-4 rounded-l-xl text-center">الإجراءات</th>
+                                <th class="py-2.5 px-3 rounded-r-xl">التاريخ والوقت</th>
+                                <th class="py-2.5 px-3">ملاحظة التحديث</th>
+                                <th class="py-2.5 px-3">الملفات المعدلة</th>
+                                <th class="py-2.5 px-3">الحالة</th>
+                                <th class="py-2.5 px-3">أرشيف الموقع</th>
+                                <th class="py-2.5 px-3 rounded-l-xl text-center">الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody id="sd-deployments-list" class="divide-y divide-white/5">
@@ -830,16 +960,327 @@
         </div>
     </template>
 
-    <!-- MODALS CONTAINER -->
+    <!-- Gemini AI Monitoring Template -->
+    <template id="tpl-gemini">
+        <div class="h-full flex flex-col space-y-4 sm:space-y-6 overflow-y-auto custom-scrollbar">
+            <!-- Header section -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4 shrink-0">
+                <div>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2 sm:gap-3">
+                        <span>🤖</span> مراقبة مفاتيح Gemini AI
+                    </h2>
+                    <p class="text-gray-400 text-xs sm:text-sm mt-1">إضافة وتعديل مفاتيح API، مراقبة الكوتا اليومية، واستهلاك الرموز</p>
+                </div>
+                <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                    <button onclick="AdminApp.openAddGeminiKeyModal()" class="btn btn-primary flex-1 sm:flex-initial text-xs sm:text-sm flex items-center justify-center gap-1.5">
+                        + إضافة مفتاح
+                    </button>
+                    <button onclick="AdminApp.testGeminiKeys()" class="btn btn-secondary flex-1 sm:flex-initial text-xs sm:text-sm flex items-center justify-center gap-1.5">
+                        اختبار المفاتيح
+                    </button>
+                    <button onclick="AdminApp.loadGeminiStatus()" class="btn btn-secondary text-xs sm:text-sm flex items-center justify-center gap-1.5">
+                        تحديث
+                    </button>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 shrink-0">
+                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-slate-400">
+                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">طلبات اليوم</span>
+                    <span id="gemini-stat-requests" class="text-xl sm:text-2xl font-bold text-white font-mono">0</span>
+                </div>
+                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-blue-500">
+                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">الرموز (Tokens)</span>
+                    <span id="gemini-stat-tokens" class="text-xl sm:text-2xl font-bold text-blue-400 font-mono">0</span>
+                </div>
+                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-emerald-500">
+                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">المفاتيح النشطة</span>
+                    <span id="gemini-stat-active" class="text-xl sm:text-2xl font-bold text-emerald-400 font-mono">0</span>
+                </div>
+                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-amber-500">
+                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">المفاتيح المتوقفة</span>
+                    <span id="gemini-stat-exhausted" class="text-xl sm:text-2xl font-bold text-amber-400 font-mono">0</span>
+                </div>
+            </div>
+
+            <!-- Keys Grid -->
+            <div class="shrink-0">
+                <h3 class="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">حالة المفاتيح المثبتة</h3>
+                <div id="gemini-keys-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Recent Activity Log -->
+            <div class="flex-1 glass rounded-2xl p-4 sm:p-6 flex flex-col overflow-hidden min-h-[250px]">
+                <h3 class="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4">سجل الطلبات والاستهلاك</h3>
+                <div class="flex-1 overflow-auto -mx-2 sm:mx-0">
+                    <table class="w-full text-right text-xs sm:text-sm min-w-[500px]">
+                        <thead class="text-xs text-gray-400 uppercase bg-black/40 sticky top-0 border-b border-white/10">
+                            <tr>
+                                <th class="p-2.5 sm:p-3">الوقت</th>
+                                <th class="p-2.5 sm:p-3">المفتاح</th>
+                                <th class="p-2.5 sm:p-3">الأسئلة</th>
+                                <th class="p-2.5 sm:p-3">الرموز</th>
+                                <th class="p-2.5 sm:p-3">الاستجابة</th>
+                                <th class="p-2.5 sm:p-3">الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gemini-logs-body" class="divide-y divide-white/5">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Quizzes Management Template -->
+    <template id="tpl-quizzes">
+        <div class="space-y-4 sm:space-y-6 overflow-y-auto custom-scrollbar">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 glass p-4 sm:p-6 rounded-2xl border border-white/5">
+                <div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-white">إدارة بنك الاختبارات المحفوظة</h2>
+                    <p class="text-gray-400 text-xs sm:text-sm mt-0.5">عرض وتعديل وحذف الاختبارات التراكمية المولدة ذكياً</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-xl text-center self-end sm:self-auto">
+                    <span class="block text-[11px] text-gray-400">إجمالي الاختبارات</span>
+                    <span class="text-lg sm:text-xl font-bold text-emerald-400 font-mono" id="quizzes-count">0</span>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="glass p-3 sm:p-4 rounded-xl flex flex-wrap gap-2.5 sm:gap-4 border border-white/5">
+                <input type="text" id="quizzes-search-input" onkeyup="AdminApp.filterQuizzesTable()" class="input-field flex-1 sm:max-w-xs text-xs sm:text-sm" placeholder="بحث باسم الاختبار أو المحاضرة...">
+                <button onclick="AdminApp.loadQuizzes()" class="btn btn-secondary text-xs sm:text-sm flex items-center gap-2">
+                    تحديث القائمة
+                </button>
+            </div>
+
+            <!-- Table -->
+            <div class="glass rounded-2xl overflow-hidden border border-white/5">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-xs sm:text-sm min-w-[700px]">
+                        <thead class="bg-white/5 text-gray-400 border-b border-white/5">
+                            <tr>
+                                <th class="p-3 sm:p-4 font-semibold">اسم الاختبار</th>
+                                <th class="p-3 sm:p-4 font-semibold">المادة الدراسية</th>
+                                <th class="p-3 sm:p-4 font-semibold">المحاضرة / الشابتر</th>
+                                <th class="p-3 sm:p-4 font-semibold text-center">النطاق الدراسي</th>
+                                <th class="p-3 sm:p-4 font-semibold text-center">الأسئلة</th>
+                                <th class="p-3 sm:p-4 font-semibold text-center">تاريخ الإنشاء</th>
+                                <th class="p-3 sm:p-4 font-semibold text-center">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="quizzes-table-body" class="divide-y divide-white/5">
+                            <tr>
+                                <td colspan="7" class="p-8 text-center text-gray-400">جاري تحميل الاختبارات...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Template for Cache & Pre-Warm Management -->
+    <template id="tpl-cache">
+        <div class="h-full flex flex-col gap-4 sm:gap-6 overflow-y-auto custom-scrollbar">
+            <!-- Header -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4 shrink-0">
+                <div>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                        ذاكرة التخزين السريع والتجهيز المسبق
+                    </h2>
+                    <p class="text-gray-400 text-xs sm:text-sm mt-1">
+                        استخراج وفهرسة نصوص المقررات الدراسية محلياً لتوليد الاختبارات فورياً
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto">
+                    <button onclick="AdminApp.scanDriveCatalog()" class="btn btn-secondary flex-1 sm:flex-initial flex items-center justify-center gap-2 text-xs sm:text-sm">
+                        فحص الفهرس
+                    </button>
+                    <button id="btn-prewarm-now" onclick="AdminApp.runPrewarmCache()" class="btn btn-primary flex-1 sm:flex-initial flex items-center justify-center gap-2 text-xs sm:text-sm">
+                        بدء التجهيز الشامل
+                    </button>
+                </div>
+            </div>
+
+            <!-- Summary Stats Overview Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 shrink-0">
+                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-slate-400">
+                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">الملفات في الكاش</span>
+                    <span class="text-xl sm:text-2xl font-bold text-white font-mono" id="cache-count-display">0</span>
+                    <span class="text-[11px] text-emerald-400 block mt-1" id="cache-size-display">0 KB</span>
+                </div>
+
+                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-amber-500/50">
+                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">الملفات المعلقة</span>
+                    <span class="text-xl sm:text-2xl font-bold text-white font-mono" id="uncached-count-display">0</span>
+                    <span class="text-[11px] text-gray-400 block mt-1">بانتظار الاستخراج</span>
+                </div>
+
+                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-blue-500/50">
+                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">المواد بملفات جاهزة</span>
+                    <span class="text-xl sm:text-2xl font-bold text-white font-mono" id="subjects-with-files-display">0</span>
+                    <span class="text-[11px] text-gray-400 block mt-1">من إجمالي المواد</span>
+                </div>
+
+                <div class="glass p-3.5 sm:p-5 rounded-2xl border-l-4 border-purple-500/50">
+                    <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">صلاحية التخزين</span>
+                    <span class="text-xl sm:text-2xl font-bold text-white font-mono">180 يوم</span>
+                    <span class="text-[11px] text-gray-400 block mt-1">تجديد تلقائي</span>
+                </div>
+            </div>
+
+            <!-- Notice Banner -->
+            <div class="bg-black/30 border border-white/10 p-3 sm:p-3.5 rounded-xl text-gray-300 text-xs leading-relaxed flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shrink-0">
+                <div>
+                    <strong class="text-white">تنويه تشغيل الخلفية:</strong>
+                    تتم المعالجة عبر السيرفر بشكل مستقل، ويمكنك إغلاق المتصفح بأمان أثناء العمل.
+                </div>
+                <div id="cache-last-scan-label" class="text-[11px] text-gray-400 font-mono shrink-0">آخر فحص: جاري التحميل...</div>
+            </div>
+
+            <!-- Pre-Warm Progress Box -->
+            <div id="prewarm-progress-box" class="hidden glass p-3.5 sm:p-4 rounded-xl space-y-2 shrink-0">
+                <div class="flex justify-between items-center text-xs">
+                    <span id="prewarm-status-msg" class="text-gray-300 font-medium">جاري معالجة واستخراج الملفات...</span>
+                    <span id="prewarm-pct" class="font-mono font-bold text-white">0%</span>
+                </div>
+                <div class="w-full bg-black/40 rounded-full h-2 overflow-hidden border border-white/10">
+                    <div id="prewarm-bar" class="bg-white/80 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div id="prewarm-log-console" class="bg-black/40 border border-white/10 rounded-lg p-2.5 font-mono text-[11px] text-gray-300 max-h-36 overflow-y-auto space-y-1 mt-2"></div>
+            </div>
+
+            <!-- Dual Table Views: Cached Files & Pending Files -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 shrink-0">
+                <!-- Cached Files Table -->
+                <div class="glass rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-3">
+                            <h3 class="text-sm sm:text-base font-bold text-white">
+                                الملفات المخزنة (<span id="cached-table-count">0</span>)
+                            </h3>
+                            <span class="text-xs text-gray-400">جاهزة للاستدعاء الفوري</span>
+                        </div>
+
+                        <div class="max-h-80 overflow-y-auto rounded-xl border border-white/10 bg-black/20 custom-scrollbar">
+                            <table class="w-full text-right text-xs">
+                                <thead class="bg-white/5 text-gray-400 border-b border-white/10 sticky top-0">
+                                    <tr>
+                                        <th class="p-2.5 sm:p-3 font-semibold">المادة</th>
+                                        <th class="p-2.5 sm:p-3 font-semibold">الشابتر</th>
+                                        <th class="p-2.5 sm:p-3 font-semibold text-center">الحجم</th>
+                                        <th class="p-2.5 sm:p-3 font-semibold text-center">الإجراء</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cached-files-list" class="divide-y divide-white/5">
+                                    <tr>
+                                        <td colspan="4" class="p-4 text-center text-gray-500">جاري تحميل الملفات...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 mt-3 border-t border-white/10 flex justify-between items-center">
+                        <span class="text-[11px] text-gray-500 font-mono truncate max-w-[180px]">text_cache/</span>
+                        <button onclick="AdminApp.clearCache()" class="btn btn-danger text-xs py-1 px-3">
+                            تفريغ الكاش
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pending / Uncached Files Table -->
+                <div class="glass rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-3">
+                            <h3 class="text-sm sm:text-base font-bold text-white">
+                                الملفات المعلقة بقوقل درايف (<span id="uncached-table-count">0</span>)
+                            </h3>
+                            <span class="text-xs text-gray-400">بانتظار الاستخراج</span>
+                        </div>
+
+                        <div class="max-h-80 overflow-y-auto rounded-xl border border-white/10 bg-black/20 custom-scrollbar">
+                            <table class="w-full text-right text-xs">
+                                <thead class="bg-white/5 text-gray-400 border-b border-white/10 sticky top-0">
+                                    <tr>
+                                        <th class="p-2.5 sm:p-3 font-semibold">المادة</th>
+                                        <th class="p-2.5 sm:p-3 font-semibold">الشابتر</th>
+                                        <th class="p-2.5 sm:p-3 font-semibold text-center">الحالة</th>
+                                        <th class="p-2.5 sm:p-3 font-semibold text-center">الإجراء</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="uncached-files-list" class="divide-y divide-white/5">
+                                    <tr>
+                                        <td colspan="4" class="p-4 text-center text-gray-500">لا توجد ملفات معلقة حالياً</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 mt-3 border-t border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <span class="text-xs text-gray-400">تجهيز الملفات المعلقة فقط:</span>
+                        <button id="btn-prewarm-pending" onclick="AdminApp.prewarmPendingFilesOnly()" class="btn btn-secondary text-xs py-1 px-3 font-semibold w-full sm:w-auto">
+                            تجهيز المعلقة
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Automation Settings -->
+            <div class="glass rounded-2xl p-4 sm:p-5 shrink-0">
+                <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-3 sm:mb-4">
+                    <h3 class="text-sm sm:text-base font-bold text-white">
+                        إعدادات الأتمتة والفحص التلقائي
+                    </h3>
+                    <button onclick="AdminApp.saveCacheSettings()" class="btn btn-primary text-xs py-1.5 px-4">
+                        حفظ الإعدادات
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                    <label class="flex items-start gap-3 cursor-pointer select-none bg-black/30 p-3 sm:p-3.5 rounded-xl border border-white/10">
+                        <input type="checkbox" id="cache-auto-prewarm" class="mt-0.5 w-4 h-4 rounded bg-black/50 border-white/20 text-blue-600 focus:ring-0">
+                        <div>
+                            <span class="block text-xs font-semibold text-white">تجهيز الكاش تلقائياً عند إضافة شباتر جديدة</span>
+                            <span class="block text-[11px] text-gray-400 mt-0.5">سحب وتخزين الشباتر تلقائياً فور ربط المجلدات.</span>
+                        </div>
+                    </label>
+
+                    <div class="bg-black/30 p-3 sm:p-3.5 rounded-xl border border-white/10 flex flex-col justify-between">
+                        <div class="flex items-center justify-between gap-2">
+                            <label class="block text-xs font-semibold text-white">الجدول الدوري:</label>
+                            <select id="cache-periodic-schedule" class="input-field text-xs w-auto">
+                                <option value="weekly">أسبوعياً (مستحسن)</option>
+                                <option value="biweekly">كل أسبوعين</option>
+                                <option value="monthly">شهرياً</option>
+                                <option value="manual">يدوي فقط</option>
+                            </select>
+                        </div>
+                        <span class="block text-[11px] text-gray-400 mt-1">فحص دوري هادئ للتأكد من اكتمال النصوص.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- ========================================================================= -->
+    <!-- MODALS CONTAINER (Responsive bottom sheet on phone, centered modal on desktop) -->
+    <!-- ========================================================================= -->
 
     <!-- 1. Password Modal -->
-    <div id="password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-4">
-        <div class="glass p-6 rounded-2xl w-full max-w-2xl my-8 border border-white/10 shadow-2xl relative">
-            <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
-                <h3 id="pass-modal-title" class="text-xl font-bold text-white">إضافة / تعديل كلمة مرور</h3>
-                <button onclick="AdminApp.closeModal('password-modal')" class="text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+    <div id="password-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-0 sm:p-4">
+        <div class="glass p-4 sm:p-6 rounded-t-2xl sm:rounded-2xl w-full max-w-2xl max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-white/10 shadow-2xl relative">
+            <div class="flex justify-between items-center pb-3 border-b border-white/10 shrink-0">
+                <h3 id="pass-modal-title" class="text-lg sm:text-xl font-bold text-white">إضافة / تعديل كلمة مرور</h3>
+                <button onclick="AdminApp.closeModal('password-modal')" class="text-gray-400 hover:text-white text-2xl font-bold p-1">&times;</button>
             </div>
-            <div class="space-y-4 text-right">
+            <div class="space-y-4 text-right overflow-y-auto flex-1 py-4 pr-1 custom-scrollbar">
                 <input type="hidden" id="pass-id">
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">الوصف / التسمية (Label)</label>
@@ -851,12 +1292,12 @@
                 </div>
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">السياقات المسموحة (Allowed Contexts)</label>
-                    <input type="text" id="pass-contexts" class="input-field text-sm font-mono" placeholder="* للكل، أو أدخل السياقات مفصولة بفواصل مثل: dentistry_3_1, medicine_2_1">
-                    <p class="text-xs text-gray-500 mt-1">استخدم * لمنح الوصول لجميع الدفعات، أو اكتب سياقات محددة (مثل dentistry_3_1).</p>
+                    <input type="text" id="pass-contexts" class="input-field text-sm font-mono" placeholder="* للكل، أو: dentistry_3_1, medicine_2_1">
+                    <p class="text-xs text-gray-500 mt-1">استخدم * للوصول الكامل، أو اكتب سياقات محددة مفصولة بفواصل.</p>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-300 font-semibold mb-2">الصلاحيات التفصيلية (10 Granular Permissions):</label>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-black/30 p-4 rounded-xl border border-white/5">
+                    <label class="block text-xs text-gray-300 font-semibold mb-2">الصلاحيات التفصيلية (10 Permissions):</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 bg-black/30 p-3 sm:p-4 rounded-xl border border-white/5">
                         <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
                             <input type="checkbox" id="perm-add_subject" class="rounded bg-black/50 border-white/20 text-primary">
                             <span>إضافة مواد (<code class="text-accent">add_subject</code>)</span>
@@ -871,7 +1312,7 @@
                         </label>
                         <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
                             <input type="checkbox" id="perm-edit_basic_subject" class="rounded bg-black/50 border-white/20 text-primary">
-                            <span>تعديل فرعيات المادة والروابط (<code class="text-accent">edit_basic_subject</code>)</span>
+                            <span>تعديل الروابط والفرعيات (<code class="text-accent">edit_basic_subject</code>)</span>
                         </label>
                         <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
                             <input type="checkbox" id="perm-global_events" class="rounded bg-black/50 border-white/20 text-primary">
@@ -900,21 +1341,21 @@
                     </div>
                 </div>
             </div>
-            <div class="flex gap-3 mt-6">
-                <button onclick="AdminApp.savePassword()" class="btn btn-primary flex-1 py-2">حفظ كلمة المرور</button>
-                <button onclick="AdminApp.closeModal('password-modal')" class="btn btn-secondary py-2">إلغاء</button>
+            <div class="flex gap-2.5 sm:gap-3 pt-3 border-t border-white/10 shrink-0">
+                <button onclick="AdminApp.savePassword()" class="btn btn-primary flex-1 py-2.5">حفظ كلمة المرور</button>
+                <button onclick="AdminApp.closeModal('password-modal')" class="btn btn-secondary py-2.5 px-5">إلغاء</button>
             </div>
         </div>
     </div>
 
     <!-- 2. Event Modal -->
-    <div id="event-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-4">
-        <div class="glass p-6 rounded-2xl w-full max-w-md my-8 border border-white/10 shadow-2xl">
-            <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
-                <h3 id="event-modal-title" class="text-xl font-bold text-white">إضافة / تعديل حدث</h3>
-                <button onclick="AdminApp.closeModal('event-modal')" class="text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+    <div id="event-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-0 sm:p-4">
+        <div class="glass p-4 sm:p-6 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-white/10 shadow-2xl">
+            <div class="flex justify-between items-center pb-3 border-b border-white/10 shrink-0">
+                <h3 id="event-modal-title" class="text-lg sm:text-xl font-bold text-white">إضافة / تعديل حدث</h3>
+                <button onclick="AdminApp.closeModal('event-modal')" class="text-gray-400 hover:text-white text-2xl font-bold p-1">&times;</button>
             </div>
-            <div class="space-y-4 text-right">
+            <div class="space-y-4 text-right overflow-y-auto flex-1 py-4 pr-1 custom-scrollbar">
                 <input type="hidden" id="evt-id">
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">عنوان الحدث</label>
@@ -930,7 +1371,7 @@
                         <option value="other">حدث آخر (other)</option>
                     </select>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs text-gray-400 mb-1">تاريخ البداية</label>
                         <input type="date" id="evt-date" class="input-field text-sm">
@@ -948,14 +1389,14 @@
                 <div class="bg-black/30 p-3 rounded-xl border border-white/5 space-y-3">
                     <label class="flex items-center gap-2 text-sm text-gray-200 cursor-pointer">
                         <input type="checkbox" id="evt-is-global" class="rounded bg-black/50 border-white/20 text-primary" onchange="AdminApp.toggleEventTargetFields()">
-                        <span class="font-semibold text-gray-300">حدث عام (Global Event - يظهر لجميع التخصصات)</span>
+                        <span class="font-semibold text-gray-300">حدث عام (يظهر لجميع التخصصات)</span>
                     </label>
 
                     <!-- Non-Global Batch Target Selector -->
                     <div id="evt-target-fields" class="space-y-3 pt-2 border-t border-white/10">
                         <div class="grid grid-cols-3 gap-2">
                             <div>
-                                <label class="block text-xs text-gray-400 mb-1">التخصص Target</label>
+                                <label class="block text-xs text-gray-400 mb-1">التخصص</label>
                                 <select id="evt-entry-spec" class="input-field text-xs" onchange="AdminApp.updateYearOptions('evt-entry-spec', 'evt-entry-year'); AdminApp.updateEventAudiencePreview();">
                                     <option value="dentistry">أسنان</option>
                                     <option value="medicine">بشري</option>
@@ -963,7 +1404,7 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs text-gray-400 mb-1">السنة Target</label>
+                                <label class="block text-xs text-gray-400 mb-1">السنة</label>
                                 <select id="evt-entry-year" class="input-field text-xs" onchange="AdminApp.updateEventAudiencePreview()">
                                     <option value="2">2</option>
                                     <option value="3">3</option>
@@ -973,7 +1414,7 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs text-gray-400 mb-1">الترم Target</label>
+                                <label class="block text-xs text-gray-400 mb-1">الترم</label>
                                 <select id="evt-entry-sem" class="input-field text-xs" onchange="AdminApp.updateEventAudiencePreview()">
                                     <option value="1">1</option>
                                     <option value="2">2</option>
@@ -984,31 +1425,30 @@
 
                     <!-- Target Audience Preview Pill -->
                     <div id="evt-audience-pill" class="text-xs bg-gray-500/10 border border-gray-500/30 text-gray-200 px-3 py-1.5 rounded-lg flex items-center gap-2">
-                        <span></span>
                         <span id="evt-audience-text">الفئة المستهدفة: جميع الدفعات والتخصصات (عام)</span>
                     </div>
                 </div>
             </div>
-            <div class="flex gap-3 mt-6">
-                <button onclick="AdminApp.saveEvent()" class="btn btn-primary flex-1 py-2">حفظ الحدث</button>
-                <button onclick="AdminApp.closeModal('event-modal')" class="btn btn-secondary py-2">إلغاء</button>
+            <div class="flex gap-2.5 sm:gap-3 pt-3 border-t border-white/10 shrink-0">
+                <button onclick="AdminApp.saveEvent()" class="btn btn-primary flex-1 py-2.5">حفظ الحدث</button>
+                <button onclick="AdminApp.closeModal('event-modal')" class="btn btn-secondary py-2.5 px-5">إلغاء</button>
             </div>
         </div>
     </div>
 
     <!-- 3. Add Subject Modal -->
-    <div id="add-subject-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-4">
-        <div class="glass p-6 rounded-2xl w-full max-w-md my-8 border border-white/10 shadow-2xl">
-            <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
-                <h3 class="text-xl font-bold text-white">إضافة مادة جديدة</h3>
-                <button onclick="AdminApp.closeModal('add-subject-modal')" class="text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+    <div id="add-subject-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-0 sm:p-4">
+        <div class="glass p-4 sm:p-6 rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-white/10 shadow-2xl">
+            <div class="flex justify-between items-center pb-3 border-b border-white/10 shrink-0">
+                <h3 class="text-lg sm:text-xl font-bold text-white">إضافة مادة جديدة</h3>
+                <button onclick="AdminApp.closeModal('add-subject-modal')" class="text-gray-400 hover:text-white text-2xl font-bold p-1">&times;</button>
             </div>
-            <div class="space-y-4 text-right">
+            <div class="space-y-4 text-right overflow-y-auto flex-1 py-4 pr-1 custom-scrollbar">
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">اسم المادة (English Name)</label>
                     <input type="text" id="add-sub-name" class="input-field text-sm" placeholder="e.g. Oral Pathology">
                 </div>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs text-gray-400 mb-1">الساعات المعتمدة</label>
                         <input type="number" id="add-sub-hours" class="input-field text-sm" placeholder="3">
@@ -1019,30 +1459,30 @@
                     </div>
                 </div>
                 <p class="text-xs text-gray-300 bg-black/30 p-3 rounded-xl border border-white/10">
-                    عند إنشاء المادة، سيتم تلقائياً إنشاء مجلدات Google Drive الخاصة بالشباتر والمواد عبر Webhook.
+                    عند إنشاء المادة، سيتم تلقائياً ربط وإنشاء مجلدات Google Drive الخاصة بالشباتر والمواد عبر Webhook.
                 </p>
             </div>
-            <div class="flex gap-3 mt-6">
-                <button onclick="AdminApp.saveNewSubject()" class="btn btn-primary flex-1 py-2">إضافة المادة</button>
-                <button onclick="AdminApp.closeModal('add-subject-modal')" class="btn btn-secondary py-2">إلغاء</button>
+            <div class="flex gap-2.5 sm:gap-3 pt-3 border-t border-white/10 shrink-0">
+                <button onclick="AdminApp.saveNewSubject()" class="btn btn-primary flex-1 py-2.5">إضافة المادة</button>
+                <button onclick="AdminApp.closeModal('add-subject-modal')" class="btn btn-secondary py-2.5 px-5">إلغاء</button>
             </div>
         </div>
     </div>
 
     <!-- 4. Edit Subject Modal -->
-    <div id="edit-subject-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-4">
-        <div class="glass p-6 rounded-2xl w-full max-w-lg my-8 border border-white/10 shadow-2xl">
-            <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
-                <h3 class="text-xl font-bold text-white">تعديل المادة</h3>
-                <button onclick="AdminApp.closeModal('edit-subject-modal')" class="text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+    <div id="edit-subject-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-0 sm:p-4">
+        <div class="glass p-4 sm:p-6 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-white/10 shadow-2xl">
+            <div class="flex justify-between items-center pb-3 border-b border-white/10 shrink-0">
+                <h3 class="text-lg sm:text-xl font-bold text-white">تعديل المادة</h3>
+                <button onclick="AdminApp.closeModal('edit-subject-modal')" class="text-gray-400 hover:text-white text-2xl font-bold p-1">&times;</button>
             </div>
-            <div class="space-y-4 text-right">
+            <div class="space-y-4 text-right overflow-y-auto flex-1 py-4 pr-1 custom-scrollbar">
                 <input type="hidden" id="edit-sub-id">
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">اسم المادة (English Name)</label>
                     <input type="text" id="edit-sub-name" class="input-field text-sm">
                 </div>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs text-gray-400 mb-1">الساعات المعتمدة</label>
                         <input type="text" id="edit-sub-hours" class="input-field text-sm">
@@ -1053,29 +1493,29 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">معرف مجلد الشباتر (Google Drive Folder ID)</label>
+                    <label class="block text-xs text-gray-400 mb-1">معرف مجلد الشباتر (Drive Folder ID)</label>
                     <input type="text" id="edit-sub-chap-folder" class="input-field text-sm font-mono" placeholder="Folder ID...">
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">معرف مجلد التجميعات (Google Drive Folder ID)</label>
+                    <label class="block text-xs text-gray-400 mb-1">معرف مجلد التجميعات (Drive Folder ID)</label>
                     <input type="text" id="edit-sub-mat-folder" class="input-field text-sm font-mono" placeholder="Folder ID...">
                 </div>
             </div>
-            <div class="flex gap-3 mt-6">
-                <button onclick="AdminApp.saveEditedSubject()" class="btn btn-primary flex-1 py-2">حفظ التعديلات</button>
-                <button onclick="AdminApp.closeModal('edit-subject-modal')" class="btn btn-secondary py-2">إلغاء</button>
+            <div class="flex gap-2.5 sm:gap-3 pt-3 border-t border-white/10 shrink-0">
+                <button onclick="AdminApp.saveEditedSubject()" class="btn btn-primary flex-1 py-2.5">حفظ التعديلات</button>
+                <button onclick="AdminApp.closeModal('edit-subject-modal')" class="btn btn-secondary py-2.5 px-5">إلغاء</button>
             </div>
         </div>
     </div>
 
     <!-- 5. Add Link Modal -->
-    <div id="add-link-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-4">
-        <div class="glass p-6 rounded-2xl w-full max-w-md my-8 border border-white/10 shadow-2xl">
-            <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
-                <h3 class="text-xl font-bold text-white">إضافة رابط مساعد جديد</h3>
-                <button onclick="AdminApp.closeModal('add-link-modal')" class="text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+    <div id="add-link-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-0 sm:p-4">
+        <div class="glass p-4 sm:p-6 rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-white/10 shadow-2xl">
+            <div class="flex justify-between items-center pb-3 border-b border-white/10 shrink-0">
+                <h3 class="text-lg sm:text-xl font-bold text-white">إضافة رابط مساعد جديد</h3>
+                <button onclick="AdminApp.closeModal('add-link-modal')" class="text-gray-400 hover:text-white text-2xl font-bold p-1">&times;</button>
             </div>
-            <div class="space-y-4 text-right">
+            <div class="space-y-4 text-right overflow-y-auto flex-1 py-4 pr-1 custom-scrollbar">
                 <input type="hidden" id="link-sub-id">
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">عنوان الرابط</label>
@@ -1086,21 +1526,21 @@
                     <input type="url" id="link-url" class="input-field text-sm font-mono" placeholder="https://youtube.com/watch?... أو https://drive.google.com/...">
                 </div>
             </div>
-            <div class="flex gap-3 mt-6">
-                <button onclick="AdminApp.saveNewLink()" class="btn btn-primary flex-1 py-2">إضافة الرابط</button>
-                <button onclick="AdminApp.closeModal('add-link-modal')" class="btn btn-secondary py-2">إلغاء</button>
+            <div class="flex gap-2.5 sm:gap-3 pt-3 border-t border-white/10 shrink-0">
+                <button onclick="AdminApp.saveNewLink()" class="btn btn-primary flex-1 py-2.5">إضافة الرابط</button>
+                <button onclick="AdminApp.closeModal('add-link-modal')" class="btn btn-secondary py-2.5 px-5">إلغاء</button>
             </div>
         </div>
     </div>
 
     <!-- 6. Class Timetable Entry Modal -->
-    <div id="class-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-4">
-        <div class="glass p-6 rounded-2xl w-full max-w-md my-8 border border-white/10 shadow-2xl">
-            <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
-                <h3 class="text-xl font-bold text-white">إضافة حصة / محاضرة جدول</h3>
-                <button onclick="AdminApp.closeModal('class-modal')" class="text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+    <div id="class-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-0 sm:p-4">
+        <div class="glass p-4 sm:p-6 rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-white/10 shadow-2xl">
+            <div class="flex justify-between items-center pb-3 border-b border-white/10 shrink-0">
+                <h3 class="text-lg sm:text-xl font-bold text-white">إضافة حصة / محاضرة</h3>
+                <button onclick="AdminApp.closeModal('class-modal')" class="text-gray-400 hover:text-white text-2xl font-bold p-1">&times;</button>
             </div>
-            <div class="space-y-4 text-right">
+            <div class="space-y-4 text-right overflow-y-auto flex-1 py-4 pr-1 custom-scrollbar">
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-xs text-gray-400 mb-1">التخصص</label>
@@ -1170,23 +1610,23 @@
                     </select>
                 </div>
             </div>
-            <div class="flex gap-3 mt-6">
-                <button onclick="AdminApp.saveNewClass()" class="btn btn-primary flex-1 py-2">حفظ الحصة</button>
-                <button onclick="AdminApp.closeModal('class-modal')" class="btn btn-secondary py-2">إلغاء</button>
+            <div class="flex gap-2.5 sm:gap-3 pt-3 border-t border-white/10 shrink-0">
+                <button onclick="AdminApp.saveNewClass()" class="btn btn-primary flex-1 py-2.5">حفظ الحصة</button>
+                <button onclick="AdminApp.closeModal('class-modal')" class="btn btn-secondary py-2.5 px-5">إلغاء</button>
             </div>
         </div>
     </div>
 
     <!-- 7. Snapshot Preview & Rollback Confirmation Modal -->
-    <div id="snapshot-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm hidden overflow-y-auto p-3 sm:p-4">
-        <div class="glass p-5 sm:p-7 rounded-2xl w-full max-w-4xl my-6 border border-white/15 shadow-2xl flex flex-col max-h-[92vh]">
+    <div id="snapshot-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-sm hidden overflow-y-auto p-0 sm:p-4">
+        <div class="glass p-4 sm:p-7 rounded-t-2xl sm:rounded-2xl w-full max-w-4xl max-h-[92dvh] sm:max-h-[92vh] flex flex-col border border-white/15 shadow-2xl">
 
             <!-- Modal Header -->
-            <div class="flex justify-between items-start mb-4 border-b border-white/10 pb-3.5 shrink-0">
+            <div class="flex justify-between items-start pb-3.5 border-b border-white/10 shrink-0">
                 <div class="min-w-0 flex-1">
                     <div class="flex flex-wrap items-center gap-2 mb-1">
-                        <h3 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                            <span>🔍</span> تفاصيل النقطة والمقارنة الفورية
+                        <h3 class="text-base sm:text-xl font-bold text-white flex items-center gap-2">
+                            <span>🔍</span> تفاصيل النقطة والمقارنة
                         </h3>
                         <span id="snap-modal-rel-time" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-500/15 text-sky-300 border border-sky-500/25"></span>
                         <span id="snap-modal-id-badge" class="px-2 py-0.5 rounded text-[11px] font-mono bg-white/5 text-gray-400 border border-white/10 select-all cursor-pointer" title="انقر للنسخ" onclick="AdminApp.copyToClipboard(this.innerText, 'تم نسخ معرف اللقطة')"></span>
@@ -1197,64 +1637,55 @@
             </div>
 
             <!-- Tab Navigation inside Snapshot Modal -->
-            <div class="flex border-b border-white/10 mb-4 gap-1.5 shrink-0 overflow-x-auto pb-1">
-                <button onclick="AdminApp.switchSnapshotModalTab('overview')" id="snap-nav-overview" class="snap-modal-tab-btn px-3.5 py-2 text-xs font-semibold rounded-lg bg-sky-600/30 text-sky-300 border border-sky-500/30 flex items-center gap-1.5 whitespace-nowrap">
-                    <span>📊</span> نظرة عامة ومقارنة حية
+            <div class="flex border-b border-white/10 my-3 gap-1.5 shrink-0 overflow-x-auto pb-1 custom-scrollbar">
+                <button onclick="AdminApp.switchSnapshotModalTab('overview')" id="snap-nav-overview" class="snap-modal-tab-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-600/30 text-sky-300 border border-sky-500/30 flex items-center gap-1.5 whitespace-nowrap">
+                    <span>📊</span> مقارنة حية
                 </button>
-                <button onclick="AdminApp.switchSnapshotModalTab('subjects')" id="snap-nav-subjects" class="snap-modal-tab-btn px-3.5 py-2 text-xs font-semibold rounded-lg text-gray-400 hover:bg-white/5 hover:text-white border border-transparent flex items-center gap-1.5 whitespace-nowrap">
+                <button onclick="AdminApp.switchSnapshotModalTab('subjects')" id="snap-nav-subjects" class="snap-modal-tab-btn px-3 py-1.5 text-xs font-semibold rounded-lg text-gray-400 hover:bg-white/5 hover:text-white border border-transparent flex items-center gap-1.5 whitespace-nowrap">
                     <span>📚</span> المواد والروابط (<span id="snap-tab-subjects-count">0</span>)
                 </button>
-                <button onclick="AdminApp.switchSnapshotModalTab('content')" id="snap-nav-content" class="snap-modal-tab-btn px-3.5 py-2 text-xs font-semibold rounded-lg text-gray-400 hover:bg-white/5 hover:text-white border border-transparent flex items-center gap-1.5 whitespace-nowrap">
-                    <span>📅</span> الجداول والإعلانات والأحداث
+                <button onclick="AdminApp.switchSnapshotModalTab('content')" id="snap-nav-content" class="snap-modal-tab-btn px-3 py-1.5 text-xs font-semibold rounded-lg text-gray-400 hover:bg-white/5 hover:text-white border border-transparent flex items-center gap-1.5 whitespace-nowrap">
+                    <span>📅</span> الجداول والإعلانات
                 </button>
-                <button onclick="AdminApp.switchSnapshotModalTab('export')" id="snap-nav-export" class="snap-modal-tab-btn px-3.5 py-2 text-xs font-semibold rounded-lg text-gray-400 hover:bg-white/5 hover:text-white border border-transparent flex items-center gap-1.5 whitespace-nowrap">
-                    <span>💾</span> تصدير وبيانات JSON
+                <button onclick="AdminApp.switchSnapshotModalTab('export')" id="snap-nav-export" class="snap-modal-tab-btn px-3 py-1.5 text-xs font-semibold rounded-lg text-gray-400 hover:bg-white/5 hover:text-white border border-transparent flex items-center gap-1.5 whitespace-nowrap">
+                    <span>💾</span> JSON
                 </button>
             </div>
 
             <!-- Scrollable Tab Content Container -->
-            <div class="flex-1 overflow-y-auto pr-1 space-y-4 min-h-[300px] custom-scrollbar">
+            <div class="flex-1 overflow-y-auto pr-1 space-y-4 min-h-[220px] custom-scrollbar">
 
                 <!-- TAB 1: OVERVIEW & LIVE DIFF -->
                 <div id="snap-tab-overview-content" class="space-y-4">
-                    <!-- What Triggered This Snapshot -->
-                    <div class="bg-black/40 border border-white/10 p-4 rounded-xl">
+                    <div class="bg-black/40 border border-white/10 p-3.5 sm:p-4 rounded-xl">
                         <div class="flex items-center justify-between gap-2 mb-1.5">
-                            <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">ما الذي حدث في هذه العملية؟</span>
+                            <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">العملية المنفذة</span>
                             <span id="snap-modal-actor" class="text-xs text-sky-400 font-medium"></span>
                         </div>
                         <p id="snap-modal-desc" class="text-white text-sm sm:text-base font-semibold leading-relaxed"></p>
                     </div>
 
-                    <!-- Metrics & Live Diff Grid -->
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">مقارنة حالة اللقطة بالحالة الحالية المباشرة:</span>
-                            <span class="text-[11px] text-gray-500">حالة اللقطة ⚡ الحالة المباشرة الآن</span>
+                            <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">مقارنة حالة اللقطة بالحالة المباشرة:</span>
                         </div>
-                        <div id="snap-metrics-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                            <!-- Populated by JS -->
-                        </div>
+                        <div id="snap-metrics-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2"></div>
                     </div>
 
-                    <!-- Live Diff Detailed Changes Breakdown -->
-                    <div id="snap-diff-section" class="bg-black/30 border border-white/10 p-4 rounded-xl space-y-3">
+                    <div id="snap-diff-section" class="bg-black/30 border border-white/10 p-3.5 sm:p-4 rounded-xl space-y-3">
                         <h4 class="text-xs font-bold text-white flex items-center gap-2">
-                            <span>⚖️</span> تحليل الفروقات الدقيقة بين هذه اللحظة والوضع الحالي:
+                            <span>⚖️</span> تحليل الفروقات الدقيقة:
                         </h4>
-                        <div id="snap-diff-container" class="space-y-2 text-xs">
-                            <!-- Populated by JS with added/removed/modified subject tags -->
-                        </div>
+                        <div id="snap-diff-container" class="space-y-2 text-xs"></div>
                     </div>
 
-                    <!-- What Restoring Will Do -->
                     <div class="bg-rose-500/5 border border-rose-500/20 p-3.5 rounded-xl space-y-1.5 text-xs text-rose-200">
-                        <p class="font-bold text-rose-300 flex items-center gap-1.5 text-sm">
+                        <p class="font-bold text-rose-300 flex items-center gap-1.5 text-xs sm:text-sm">
                             <span>⚠️</span> إذا قمت بتأكيد الاستعادة:
                         </p>
                         <ul class="space-y-1 list-disc list-inside text-gray-300">
-                            <li>سيتم <strong class="text-white">استبدال كامل محتويات الموقع</strong> (المواد، الروابط، الجداول، الإعلانات، الأحداث) بحالتها الدقيقة عند هذه اللحظة.</li>
-                            <li>سيأخذ النظام <strong class="text-emerald-300">نسخة أمان فورية من الوضع الحالي</strong> قبل التنفيذ، ويمكنك التراجع عنها فوراً بضغطة زر.</li>
+                            <li>سيتم <strong class="text-white">استبدال كامل محتويات الموقع</strong> بحالتها الدقيقة عند هذه اللحظة.</li>
+                            <li>سيأخذ النظام <strong class="text-emerald-300">نسخة أمان فورية</strong> قبل التنفيذ يمكنك العودة إليها فوراً.</li>
                         </ul>
                     </div>
                 </div>
@@ -1274,27 +1705,19 @@
                             </select>
                         </div>
                     </div>
-                    <div id="snap-subjects-list" class="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
-                        <!-- Populated by JS -->
-                    </div>
+                    <div id="snap-subjects-list" class="space-y-2 max-h-96 overflow-y-auto custom-scrollbar"></div>
                 </div>
 
-                <!-- TAB 3: OTHER CONTENT (CLASSES, ANNOUNCEMENTS, EVENTS) -->
+                <!-- TAB 3: OTHER CONTENT -->
                 <div id="snap-tab-content-content" class="hidden space-y-4">
-                    <div class="flex gap-2 border-b border-white/10 pb-2">
-                        <button onclick="AdminApp.switchSnapshotContentSubTab('classes')" id="snap-subtab-btn-classes" class="text-xs px-3 py-1.5 rounded-md bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">الجداول الدراسية</button>
-                        <button onclick="AdminApp.switchSnapshotContentSubTab('announcements')" id="snap-subtab-btn-announcements" class="text-xs px-3 py-1.5 rounded-md text-gray-400 hover:text-white">الإعلانات والمهام</button>
-                        <button onclick="AdminApp.switchSnapshotContentSubTab('events')" id="snap-subtab-btn-events" class="text-xs px-3 py-1.5 rounded-md text-gray-400 hover:text-white">التقويم والأحداث</button>
+                    <div class="flex gap-2 border-b border-white/10 pb-2 overflow-x-auto">
+                        <button onclick="AdminApp.switchSnapshotContentSubTab('classes')" id="snap-subtab-btn-classes" class="text-xs px-3 py-1.5 rounded-md bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30 whitespace-nowrap">الجداول الدراسية</button>
+                        <button onclick="AdminApp.switchSnapshotContentSubTab('announcements')" id="snap-subtab-btn-announcements" class="text-xs px-3 py-1.5 rounded-md text-gray-400 hover:text-white whitespace-nowrap">الإعلانات والمهام</button>
+                        <button onclick="AdminApp.switchSnapshotContentSubTab('events')" id="snap-subtab-btn-events" class="text-xs px-3 py-1.5 rounded-md text-gray-400 hover:text-white whitespace-nowrap">التقويم والأحداث</button>
                     </div>
-                    <div id="snap-subtab-classes" class="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
-                        <!-- Populated by JS -->
-                    </div>
-                    <div id="snap-subtab-announcements" class="hidden space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
-                        <!-- Populated by JS -->
-                    </div>
-                    <div id="snap-subtab-events" class="hidden space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
-                        <!-- Populated by JS -->
-                    </div>
+                    <div id="snap-subtab-classes" class="space-y-2 max-h-96 overflow-y-auto custom-scrollbar"></div>
+                    <div id="snap-subtab-announcements" class="hidden space-y-2 max-h-96 overflow-y-auto custom-scrollbar"></div>
+                    <div id="snap-subtab-events" class="hidden space-y-2 max-h-96 overflow-y-auto custom-scrollbar"></div>
                 </div>
 
                 <!-- TAB 4: JSON & EXPORT -->
@@ -1302,14 +1725,14 @@
                     <div class="flex flex-wrap gap-2 justify-between items-center bg-black/40 p-3 rounded-xl border border-white/10">
                         <div>
                             <h4 class="text-xs font-bold text-white">تصدير بيانات اللقطة كملف JSON</h4>
-                            <p class="text-[11px] text-gray-400">يمكنك تحميل هذه النقطة محلياً أو نسخ محتواها بالكامل.</p>
+                            <p class="text-[11px] text-gray-400">يمكنك تحميل هذه النقطة محلياً أو نسخ محتواها.</p>
                         </div>
                         <div class="flex gap-2">
                             <button onclick="AdminApp.copySnapshotJson()" class="btn btn-secondary text-xs py-1.5 px-3 flex items-center gap-1">
                                 <span>📋</span> نسخ JSON
                             </button>
                             <button onclick="AdminApp.downloadSnapshotJson()" class="btn btn-primary text-xs py-1.5 px-3 flex items-center gap-1">
-                                <span>📥</span> تحميل ملف .json
+                                <span>📥</span> تحميل .json
                             </button>
                         </div>
                     </div>
@@ -1319,7 +1742,7 @@
             </div>
 
             <!-- Modal Footer with Action Buttons -->
-            <div class="flex flex-col sm:flex-row gap-2.5 pt-4 mt-2 border-t border-white/10 shrink-0">
+            <div class="flex flex-col sm:flex-row gap-2.5 pt-3.5 mt-2 border-t border-white/10 shrink-0">
                 <button id="snap-execute-rollback-btn" class="btn bg-rose-600 hover:bg-rose-500 text-white flex-1 py-2.5 text-xs font-bold shadow-lg flex items-center justify-center gap-2 transition-all">
                     <span>⏪</span> تأكيد استعادة حالة الموقع لهذه اللحظة
                 </button>
@@ -1329,13 +1752,13 @@
     </div>
 
     <!-- 8. Gemini Key Modal -->
-    <div id="gemini-key-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-4">
-        <div class="glass p-6 rounded-2xl w-full max-w-md my-8 border border-white/10 shadow-2xl">
-            <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
-                <h3 id="gemini-key-modal-title" class="text-xl font-bold text-white">إضافة مفتاح Gemini جديد</h3>
-                <button onclick="AdminApp.closeModal('gemini-key-modal')" class="text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+    <div id="gemini-key-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-0 sm:p-4">
+        <div class="glass p-4 sm:p-6 rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-white/10 shadow-2xl">
+            <div class="flex justify-between items-center pb-3 border-b border-white/10 shrink-0">
+                <h3 id="gemini-key-modal-title" class="text-lg sm:text-xl font-bold text-white">إضافة مفتاح Gemini جديد</h3>
+                <button onclick="AdminApp.closeModal('gemini-key-modal')" class="text-gray-400 hover:text-white text-2xl font-bold p-1">&times;</button>
             </div>
-            <div class="space-y-4 text-right">
+            <div class="space-y-4 text-right overflow-y-auto flex-1 py-4 pr-1 custom-scrollbar">
                 <input type="hidden" id="gemini-key-index" value="-1">
                 <input type="hidden" id="gemini-key-id" value="">
                 <div>
@@ -1348,97 +1771,21 @@
                     <p class="text-[11px] text-gray-500 mt-1">مفتاح API صالح من Google AI Studio (يبدأ بـ <code>AIzaSy</code> أو <code>AQ.</code>).</p>
                 </div>
             </div>
-            <div class="flex gap-3 mt-6">
-                <button id="gemini-key-save-btn" onclick="AdminApp.saveGeminiKey()" class="btn btn-primary flex-1 py-2">حفظ واختبار المفتاح</button>
-                <button onclick="AdminApp.closeModal('gemini-key-modal')" class="btn btn-secondary py-2">إلغاء</button>
+            <div class="flex gap-2.5 sm:gap-3 pt-3 border-t border-white/10 shrink-0">
+                <button id="gemini-key-save-btn" onclick="AdminApp.saveGeminiKey()" class="btn btn-primary flex-1 py-2.5">حفظ واختبار المفتاح</button>
+                <button onclick="AdminApp.closeModal('gemini-key-modal')" class="btn btn-secondary py-2.5 px-5">إلغاء</button>
             </div>
         </div>
     </div>
 
-    <!-- Gemini AI Monitoring Template -->
-    <template id="tpl-gemini">
-        <div class="h-full flex flex-col space-y-6">
-            <!-- Header section -->
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 class="text-3xl font-bold text-white flex items-center gap-3">
-                        مراقبة وإدارة مفاتيح Gemini AI
-                    </h2>
-                    <p class="text-gray-400 text-sm mt-1">إضافة وتعديل وحذف مفاتيح API، مراقبة الكوتا اليومية، معدل استهلاك الرموز، وزمن الاستجابة</p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="AdminApp.openAddGeminiKeyModal()" class="btn btn-primary flex items-center gap-2">
-                        + إضافة مفتاح Gemini
-                    </button>
-                    <button onclick="AdminApp.testGeminiKeys()" class="btn btn-secondary flex items-center gap-2">
-                        اختبار المفاتيح الآن
-                    </button>
-                    <button onclick="AdminApp.loadGeminiStatus()" class="btn btn-secondary flex items-center gap-2">
-                        تحديث البيانات
-                    </button>
-                </div>
+    <!-- 9. Rename Quiz Modal -->
+    <div id="rename-quiz-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-0 sm:p-4">
+        <div class="glass p-4 sm:p-6 rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-white/10 shadow-2xl">
+            <div class="flex justify-between items-center pb-3 border-b border-white/10 shrink-0">
+                <h3 class="text-lg sm:text-xl font-bold text-white">تعديل اسم الاختبار</h3>
+                <button onclick="AdminApp.closeModal('rename-quiz-modal')" class="text-gray-400 hover:text-white text-2xl font-bold p-1">&times;</button>
             </div>
-
-            <!-- Summary Cards -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="glass p-5 rounded-2xl border-l-4 border-slate-400">
-                    <span class="text-xs text-gray-400 block mb-1">إجمالي الطلبات اليوم</span>
-                    <span id="gemini-stat-requests" class="text-2xl font-bold text-white font-mono">0</span>
-                </div>
-                <div class="glass p-5 rounded-2xl border-l-4 border-blue-500">
-                    <span class="text-xs text-gray-400 block mb-1">إجمالي الرموز (Tokens)</span>
-                    <span id="gemini-stat-tokens" class="text-2xl font-bold text-blue-400 font-mono">0</span>
-                </div>
-                <div class="glass p-5 rounded-2xl border-l-4 border-emerald-500">
-                    <span class="text-xs text-gray-400 block mb-1">المفاتيح النشطة</span>
-                    <span id="gemini-stat-active" class="text-2xl font-bold text-emerald-400 font-mono">0</span>
-                </div>
-                <div class="glass p-5 rounded-2xl border-l-4 border-amber-500">
-                    <span class="text-xs text-gray-400 block mb-1">المفاتيح المتوقفة / المتجاوزة</span>
-                    <span id="gemini-stat-exhausted" class="text-2xl font-bold text-amber-400 font-mono">0</span>
-                </div>
-            </div>
-
-            <!-- Keys Grid -->
-            <div>
-                <h3 class="text-xl font-bold text-white mb-3">حالة المفاتيح المثبتة</h3>
-                <div id="gemini-keys-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-
-            <!-- Recent Activity Log -->
-            <div class="flex-1 glass rounded-2xl p-6 flex flex-col overflow-hidden">
-                <h3 class="text-xl font-bold text-white mb-4">سجل الطلبات والاستهلاك</h3>
-                <div class="flex-1 overflow-auto">
-                    <table class="w-full text-right text-sm">
-                        <thead class="text-xs text-gray-400 uppercase bg-black/40 sticky top-0 border-b border-white/10">
-                            <tr>
-                                <th class="p-3">الوقت</th>
-                                <th class="p-3">المفتاح</th>
-                                <th class="p-3">عدد الأسئلة</th>
-                                <th class="p-3">الرموز (Tokens)</th>
-                                <th class="p-3">زمن الاستجابة</th>
-                                <th class="p-3">الحالة</th>
-                            </tr>
-                        </thead>
-                        <tbody id="gemini-logs-body" class="divide-y divide-white/5">
-                            <!-- Populated by JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <!-- Rename Quiz Modal (No emojis) -->
-    <div id="rename-quiz-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden overflow-y-auto p-4">
-        <div class="glass p-6 rounded-2xl w-full max-w-md my-8 border border-white/10 shadow-2xl">
-            <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
-                <h3 class="text-xl font-bold text-white">تعديل اسم الاختبار</h3>
-                <button onclick="AdminApp.closeModal('rename-quiz-modal')" class="text-gray-400 hover:text-white text-xl font-bold">&times;</button>
-            </div>
-            <div class="space-y-4 text-right">
+            <div class="space-y-4 text-right overflow-y-auto flex-1 py-4 pr-1 custom-scrollbar">
                 <input type="hidden" id="rename-quiz-id" value="">
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">الاسم الحالي للاختبار</label>
@@ -1449,248 +1796,12 @@
                     <input type="text" id="rename-quiz-new-name" class="input-field text-sm w-full" placeholder="أدخل اسم الاختبار الجديد..." onkeydown="if(event.key==='Enter') AdminApp.submitRenameQuiz()">
                 </div>
             </div>
-            <div class="flex gap-3 mt-6">
-                <button id="rename-quiz-save-btn" onclick="AdminApp.submitRenameQuiz()" class="btn btn-primary flex-1 py-2 font-medium">حفظ التعديل</button>
-                <button onclick="AdminApp.closeModal('rename-quiz-modal')" class="btn btn-secondary py-2">إلغاء</button>
+            <div class="flex gap-2.5 sm:gap-3 pt-3 border-t border-white/10 shrink-0">
+                <button id="rename-quiz-save-btn" onclick="AdminApp.submitRenameQuiz()" class="btn btn-primary flex-1 py-2.5 font-medium">حفظ التعديل</button>
+                <button onclick="AdminApp.closeModal('rename-quiz-modal')" class="btn btn-secondary py-2.5 px-5">إلغاء</button>
             </div>
         </div>
     </div>
-
-    <!-- Quizzes Management Template -->
-    <template id="tpl-quizzes">
-        <div class="space-y-6">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 glass p-6 rounded-2xl border border-white/5">
-                <div>
-                    <h2 class="text-2xl font-bold text-white">إدارة بنك الاختبارات المحفوظة</h2>
-                    <p class="text-gray-400 text-sm mt-1">عرض وحذف الاختبارات التراكمية التي تم إنشاؤها عبر الذكاء الاصطناعي</p>
-                </div>
-                <div class="flex items-center gap-4">
-                    <div class="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-center">
-                        <span class="block text-xs text-gray-400">إجمالي الاختبارات</span>
-                        <span class="text-xl font-bold text-emerald-400" id="quizzes-count">0</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Filters -->
-            <div class="glass p-4 rounded-xl flex flex-wrap gap-4 border border-white/5">
-                <input type="text" id="quizzes-search-input" onkeyup="AdminApp.filterQuizzesTable()" class="input-field max-w-xs" placeholder="بحث باسم الاختبار أو المحاضرة...">
-                <button onclick="AdminApp.loadQuizzes()" class="btn btn-secondary flex items-center gap-2">
-                    تحديث القائمة
-                </button>
-            </div>
-
-            <!-- Table -->
-            <div class="glass rounded-2xl overflow-hidden border border-white/5">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-right text-sm">
-                        <thead class="bg-white/5 text-gray-400 border-b border-white/5">
-                            <tr>
-                                <th class="p-4 font-semibold">اسم الاختبار</th>
-                                <th class="p-4 font-semibold">المادة الدراسية</th>
-                                <th class="p-4 font-semibold">المحاضرة / الشابتر</th>
-                                <th class="p-4 font-semibold text-center">النطاق الدراسي</th>
-                                <th class="p-4 font-semibold text-center">عدد الأسئلة</th>
-                                <th class="p-4 font-semibold text-center">تاريخ الإنشاء</th>
-                                <th class="p-4 font-semibold text-center">الإجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody id="quizzes-table-body" class="divide-y divide-white/5">
-                            <tr>
-                                <td colspan="7" class="p-8 text-center text-gray-400">جاري تحميل الاختبارات...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <!-- Template for Cache & Pre-Warm Management -->
-    <template id="tpl-cache">
-        <div class="h-full flex flex-col gap-6 overflow-y-auto">
-            <!-- Header -->
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 class="text-3xl font-bold text-white tracking-tight">
-                        ذاكرة التخزين السريع والتجهيز المسبق
-                    </h2>
-                    <p class="text-gray-400 text-sm mt-1">
-                        استخراج وفهرسة نصوص المقررات الدراسية محلياً لتوليد الاختبارات فورياً وتفادي ضغط المعالجة المتكرر.
-                    </p>
-                </div>
-                <div class="flex flex-wrap items-center gap-3">
-                    <button onclick="AdminApp.scanDriveCatalog()" class="btn btn-secondary flex items-center gap-2 text-sm">
-                        فحص وتحديث الفهرس
-                    </button>
-                    <button id="btn-prewarm-now" onclick="AdminApp.runPrewarmCache()" class="btn btn-primary flex items-center gap-2 text-sm">
-                        بدء التجهيز الشامل الآن
-                    </button>
-                </div>
-            </div>
-
-            <!-- Summary Stats Overview Cards (Matching site style) -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="glass p-5 rounded-2xl border-l-4 border-slate-400">
-                    <span class="text-xs text-gray-400 block mb-1">الملفات المخزنة في الكاش</span>
-                    <span class="text-2xl font-bold text-white font-mono" id="cache-count-display">0</span>
-                    <span class="text-xs text-emerald-400 block mt-1" id="cache-size-display">0 KB (نصوص مستخرجة)</span>
-                </div>
-
-                <div class="glass p-5 rounded-2xl border-l-4 border-amber-500/50">
-                    <span class="text-xs text-gray-400 block mb-1">الملفات المعلقة (غير المخزنة)</span>
-                    <span class="text-2xl font-bold text-white font-mono" id="uncached-count-display">0</span>
-                    <span class="text-xs text-gray-400 block mt-1">بانتظار الاستخراج والتخزين</span>
-                </div>
-
-                <div class="glass p-5 rounded-2xl border-l-4 border-blue-500/50">
-                    <span class="text-xs text-gray-400 block mb-1">المواد ذات الملفات المتاحة</span>
-                    <span class="text-2xl font-bold text-white font-mono" id="subjects-with-files-display">0</span>
-                    <span class="text-xs text-gray-400 block mt-1">من إجمالي 103 مادة بالبوابة</span>
-                </div>
-
-                <div class="glass p-5 rounded-2xl border-l-4 border-purple-500/50">
-                    <span class="text-xs text-gray-400 block mb-1">صلاحية التخزين الدائم</span>
-                    <span class="text-2xl font-bold text-white font-mono">180 يوم</span>
-                    <span class="text-xs text-gray-400 block mt-1">تجديد تلقائي مع كل استدعاء</span>
-                </div>
-            </div>
-
-            <!-- Server Independent Notice Banner (Matching Guidance Banners) -->
-            <div class="bg-black/30 border border-white/10 p-3.5 rounded-xl text-gray-300 text-xs leading-relaxed flex items-center justify-between">
-                <div>
-                    <strong class="text-white">تنويه تشغيل الخلفية:</strong>
-                    تتم المعالجة عبر خادم السيرفر بشكل مستقل. يمكنك بدء التجهيز وإغلاق المتصفح بأمان، وسيواصل السيرفر حفظ واستخراج الملفات.
-                </div>
-                <div id="cache-last-scan-label" class="text-[11px] text-gray-400 font-mono">آخر فحص: جاري التحميل...</div>
-            </div>
-
-            <!-- Pre-Warm Progress Box & Terminal -->
-            <div id="prewarm-progress-box" class="hidden glass p-4 rounded-xl space-y-2">
-                <div class="flex justify-between items-center text-xs">
-                    <span id="prewarm-status-msg" class="text-gray-300 font-medium">جاري معالجة واستخراج الملفات...</span>
-                    <span id="prewarm-pct" class="font-mono font-bold text-white">0%</span>
-                </div>
-                <div class="w-full bg-black/40 rounded-full h-2 overflow-hidden border border-white/10">
-                    <div id="prewarm-bar" class="bg-white/80 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                </div>
-                <div id="prewarm-log-console" class="bg-black/40 border border-white/10 rounded-lg p-3 font-mono text-[11px] text-gray-300 max-h-40 overflow-y-auto space-y-1 mt-2">
-                </div>
-            </div>
-
-            <!-- Dual Table Views: Cached Files & Pending Files (Matching Glass Table Layout) -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Cached Files Table -->
-                <div class="glass rounded-2xl p-5 flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-3">
-                            <h3 class="text-base font-bold text-white">
-                                الملفات المخزنة في الكاش (<span id="cached-table-count">0</span>)
-                            </h3>
-                            <span class="text-xs text-gray-400">نصوص جاهزة للاستدعاء الفوري</span>
-                        </div>
-
-                        <div class="max-h-80 overflow-y-auto rounded-xl border border-white/10 bg-black/20">
-                            <table class="w-full text-right text-xs">
-                                <thead class="bg-white/5 text-gray-400 border-b border-white/10 sticky top-0">
-                                    <tr>
-                                        <th class="p-3 font-semibold">المادة الدراسية</th>
-                                        <th class="p-3 font-semibold">اسم الملف / الشابتر</th>
-                                        <th class="p-3 font-semibold text-center">الحجم</th>
-                                        <th class="p-3 font-semibold text-center">الإجراء</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="cached-files-list" class="divide-y divide-white/5">
-                                    <tr>
-                                        <td colspan="4" class="p-4 text-center text-gray-500">جاري تحميل الملفات...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="pt-4 mt-3 border-t border-white/10 flex justify-between items-center">
-                        <span class="text-xs text-gray-500 font-mono truncate max-w-xs">backend/gemini_keys_data/text_cache/</span>
-                        <button onclick="AdminApp.clearCache()" class="btn btn-danger text-xs py-1.5 px-3">
-                            تفريغ الكاش
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Pending / Uncached Files Table -->
-                <div class="glass rounded-2xl p-5 flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-3">
-                            <h3 class="text-base font-bold text-white">
-                                الملفات المعلقة بقوقل درايف (<span id="uncached-table-count">0</span>)
-                            </h3>
-                            <span class="text-xs text-gray-400">بانتظار التجهيز والاستخراج</span>
-                        </div>
-
-                        <div class="max-h-80 overflow-y-auto rounded-xl border border-white/10 bg-black/20">
-                            <table class="w-full text-right text-xs">
-                                <thead class="bg-white/5 text-gray-400 border-b border-white/10 sticky top-0">
-                                    <tr>
-                                        <th class="p-3 font-semibold">المادة الدراسية</th>
-                                        <th class="p-3 font-semibold">اسم الملف / الشابتر</th>
-                                        <th class="p-3 font-semibold text-center">الحالة</th>
-                                        <th class="p-3 font-semibold text-center">الإجراء</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="uncached-files-list" class="divide-y divide-white/5">
-                                    <tr>
-                                        <td colspan="4" class="p-4 text-center text-gray-500">لا توجد ملفات معلقة حالياً</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="pt-4 mt-3 border-t border-white/10 flex justify-between items-center">
-                        <span class="text-xs text-gray-400">تجهيز الملفات المعلقة فقط دون فحص باقي المواد:</span>
-                        <button id="btn-prewarm-pending" onclick="AdminApp.prewarmPendingFilesOnly()" class="btn btn-secondary text-xs py-1.5 px-3 font-semibold">
-                            تجهيز الملفات المعلقة
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Automation Settings (Matching Glass Form Panels) -->
-            <div class="glass rounded-2xl p-5">
-                <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-4">
-                    <h3 class="text-base font-bold text-white">
-                        إعدادات الأتمتة والفحص التلقائي
-                    </h3>
-                    <button onclick="AdminApp.saveCacheSettings()" class="btn btn-primary text-xs py-1.5 px-4">
-                        حفظ الإعدادات
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <label class="flex items-start gap-3 cursor-pointer select-none bg-black/30 p-3.5 rounded-xl border border-white/10">
-                        <input type="checkbox" id="cache-auto-prewarm" class="mt-0.5 w-4 h-4 rounded bg-black/50 border-white/20 text-blue-600 focus:ring-0">
-                        <div>
-                            <span class="block text-xs font-semibold text-white">تجهيز الكاش تلقائياً عند إضافة شباتر جديدة</span>
-                            <span class="block text-[11px] text-gray-400 mt-0.5">فور إضافة أو تعديل مجلد قوقل درايف لأي مادة، يقوم النظام بسحب وتخزين الشباتر تلقائياً.</span>
-                        </div>
-                    </label>
-
-                    <div class="bg-black/30 p-3.5 rounded-xl border border-white/10 flex flex-col justify-between">
-                        <div class="flex items-center justify-between">
-                            <label class="block text-xs font-semibold text-white">الجدول الدوري للتخزين التلقائي:</label>
-                            <select id="cache-periodic-schedule" class="input-field text-xs w-auto">
-                                <option value="weekly">أسبوعياً (مستحسن)</option>
-                                <option value="biweekly">كل أسبوعين</option>
-                                <option value="monthly">شهرياً</option>
-                                <option value="manual">يدوي فقط</option>
-                            </select>
-                        </div>
-                        <span class="block text-[11px] text-gray-400 mt-1">يقوم بالفحص الدوري بهدوء للتأكد من عدم وجود ملفات جديدة غير مستخرجة.</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
 
     <!-- Quill JS -->
     <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
@@ -1704,7 +1815,7 @@
         .ql-editor { font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif; font-size: 1rem; }
     </style>
 
-    <script src="admin_app.js?v=20260816_02"></script>
-    <script src="admin_analytics.js?v=3"></script>
+    <script src="admin_app.js?v=20260830_01"></script>
+    <script src="admin_analytics.js?v=4"></script>
 </body>
 </html>

@@ -175,23 +175,54 @@ window.AdminApp = {
         }
     },
 
+    toggleMobileDrawer() {
+        const drawer = document.getElementById('mobile-drawer');
+        const overlay = document.getElementById('mobile-drawer-overlay');
+        if (!drawer || !overlay) return;
+        const isOpen = !drawer.classList.contains('translate-x-full');
+        if (isOpen) {
+            this.closeMobileDrawer();
+        } else {
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+                overlay.classList.add('opacity-100');
+            }, 10);
+            drawer.classList.remove('translate-x-full');
+            document.body.classList.add('overflow-hidden');
+        }
+    },
+
+    closeMobileDrawer() {
+        const drawer = document.getElementById('mobile-drawer');
+        const overlay = document.getElementById('mobile-drawer-overlay');
+        if (drawer) {
+            drawer.classList.add('translate-x-full');
+        }
+        if (overlay) {
+            overlay.classList.remove('opacity-100');
+            overlay.classList.add('opacity-0');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 300);
+        }
+        const hasOpenModal = document.querySelector('[id$="-modal"]:not(.hidden)');
+        if (!hasOpenModal) {
+            document.body.classList.remove('overflow-hidden');
+        }
+    },
+
     applyPermissionsUI() {
-        const passwordsBtn = document.querySelector('.tab-btn[data-tab="passwords"]');
-        if (passwordsBtn) {
-            if (this.permissions && this.permissions.manage_passwords) {
-                passwordsBtn.classList.remove('hidden');
-            } else {
-                passwordsBtn.classList.add('hidden');
-            }
-        }
-        const analyticsBtn = document.querySelector('.tab-btn[data-tab="analytics"]');
-        if (analyticsBtn) {
-            if (this.permissions && this.permissions.manage_passwords) {
-                analyticsBtn.classList.remove('hidden');
-            } else {
-                analyticsBtn.classList.add('hidden');
-            }
-        }
+        const canManagePasswords = !!(this.permissions && this.permissions.manage_passwords);
+        ['passwords', 'analytics'].forEach(tabName => {
+            document.querySelectorAll(`[data-tab="${tabName}"]`).forEach(el => {
+                if (canManagePasswords) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+        });
     },
 
     showMain() {
@@ -210,7 +241,27 @@ window.AdminApp = {
         }
 
         this.currentTab = tabId;
+
+        const tabNames = {
+            'subjects': 'المواد والروابط',
+            'classes': 'الجداول الدراسية',
+            'events': 'التقويم والأحداث',
+            'announcements': 'الإعلانات',
+            'quizzes': 'بنك الاختبارات الذكية',
+            'cache': 'ذاكرة الكاش والتجهيز',
+            'analytics': 'لوحة التحليلات',
+            'gemini': 'مراقبة مفاتيح Gemini',
+            'passwords': 'الصلاحيات والمفاتيح',
+            'history': 'سجل التغييرات والاستعادة',
+            'safedeploy': 'الأمان واللقطات SafeDeploy'
+        };
+
+        const badge = document.getElementById('mobile-active-tab-badge');
+        if (badge && tabNames[tabId]) {
+            badge.innerText = tabNames[tabId];
+        }
         
+        // Desktop sidebar tabs
         document.querySelectorAll('.tab-btn').forEach(btn => {
             if (btn.dataset.tab === tabId) {
                 btn.classList.add('bg-white/10', 'text-white', 'font-semibold');
@@ -220,6 +271,33 @@ window.AdminApp = {
                 btn.classList.add('text-gray-400');
             }
         });
+
+        // Mobile drawer tabs
+        document.querySelectorAll('.mobile-tab-btn').forEach(btn => {
+            if (btn.dataset.tab === tabId) {
+                btn.classList.add('bg-white/10', 'text-white', 'font-semibold');
+                btn.classList.remove('text-gray-400');
+            } else {
+                btn.classList.remove('bg-white/10', 'text-white', 'font-semibold');
+                btn.classList.add('text-gray-400');
+            }
+        });
+
+        // Mobile pills tabs
+        document.querySelectorAll('.pill-tab-btn').forEach(btn => {
+            if (btn.dataset.tab === tabId) {
+                btn.classList.add('bg-white/10', 'text-white', 'font-medium', 'border-white/10');
+                btn.classList.remove('bg-white/5', 'text-gray-400', 'border-white/5');
+                if (typeof btn.scrollIntoView === 'function') {
+                    btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
+            } else {
+                btn.classList.remove('bg-white/10', 'text-white', 'font-medium', 'border-white/10');
+                btn.classList.add('bg-white/5', 'text-gray-400', 'border-white/5');
+            }
+        });
+
+        this.closeMobileDrawer();
 
         const contentDiv = document.getElementById('tab-content');
         const tpl = document.getElementById(`tpl-${tabId}`);
@@ -313,12 +391,21 @@ window.AdminApp = {
 
     openModal(modalId) {
         const el = document.getElementById(modalId);
-        if (el) el.classList.remove('hidden');
+        if (el) {
+            el.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
     },
 
     closeModal(modalId) {
         const el = document.getElementById(modalId);
-        if (el) el.classList.add('hidden');
+        if (el) {
+            el.classList.add('hidden');
+            const hasOtherOpenModal = document.querySelector('[id$="-modal"]:not(.hidden)');
+            if (!hasOtherOpenModal) {
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
     },
 
     escapeHtml(str) {
@@ -1473,7 +1560,7 @@ window.AdminApp = {
                     <div class="bg-black/40 p-3 rounded-lg border border-white/10 relative group hover:border-primary/50 transition">
                         <div class="flex justify-between items-start mb-1">
                             <span class="bg-white/10 text-gray-200 text-xs px-1.5 py-0.5 rounded font-mono">${c.start_time} - ${c.end_time}</span>
-                            <button onclick="AdminApp.deleteClass('${c.id}')" class="opacity-0 group-hover:opacity-100 transition text-red-400 hover:text-red-300 text-xs px-1.5 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20" title="حذف الحصة">🗑️</button>
+                            <button onclick="AdminApp.deleteClass('${c.id}')" class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20" title="حذف الحصة">🗑️</button>
                         </div>
                         <h5 class="font-bold text-white text-sm mb-1">${c.subject}</h5>
                         <div class="flex items-center justify-between text-xs text-gray-400">
@@ -1658,9 +1745,9 @@ window.AdminApp = {
                         </span>
                         <div class="flex items-center gap-3">
                             <span class="text-xs text-gray-500 font-mono">${dateStr}</span>
-                            <div class="opacity-0 group-hover:opacity-100 transition flex gap-2">
-                                <button onclick="AdminApp.editAnnouncement(${index})" class="btn btn-secondary text-xs px-2 py-1">تعديل</button>
-                                <button onclick="AdminApp.deleteAnnouncement('${ann.specialty}', ${ann.year}, ${ann.semester})" class="btn btn-danger text-xs px-2 py-1">حذف</button>
+                            <div class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition flex gap-1.5 sm:gap-2">
+                                <button onclick="AdminApp.editAnnouncement(${index})" class="btn btn-secondary text-xs px-2.5 py-1">تعديل</button>
+                                <button onclick="AdminApp.deleteAnnouncement('${ann.specialty}', ${ann.year}, ${ann.semester})" class="btn btn-danger text-xs px-2.5 py-1">حذف</button>
                             </div>
                         </div>
                     </div>
