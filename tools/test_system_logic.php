@@ -225,6 +225,24 @@ assert_test("Past event returns 'انتهى'", $past_badge['class'] === 'passed'
 $ongoing_vacation = calculate_event_badge('2026-08-15', $today, '2026-08-20');
 assert_test("Ongoing multi-day event returns 'جارية الآن'", $ongoing_vacation['class'] === 'today' && $ongoing_vacation['text'] === 'جارية الآن');
 
+// Test 3-day post-end hiding rule
+function is_event_hidden_for_user($eventDateStr, $todayStr, $endDateStr = null) {
+    $today = strtotime($todayStr);
+    $endStr = $endDateStr ?: $eventDateStr;
+    $endDate = strtotime($endStr);
+    if ($today > $endDate) {
+        $diffDays = floor(($today - $endDate) / 86400);
+        return $diffDays > 3;
+    }
+    return false;
+}
+
+$test_today = '2026-09-02';
+assert_test("Event ended 2 days ago is not hidden", !is_event_hidden_for_user('2026-08-31', $test_today));
+assert_test("Event ended 3 days ago is not hidden", !is_event_hidden_for_user('2026-08-30', $test_today));
+assert_test("Event ended 4 days ago (>3 days) is hidden", is_event_hidden_for_user('2026-08-29', $test_today));
+assert_test("Event ended 10 days ago is hidden", is_event_hidden_for_user('2026-08-23', $test_today));
+
 // -----------------------------------------------------------------------------
 // SUITE 5: Analytics Validation & Classification Logic
 // -----------------------------------------------------------------------------

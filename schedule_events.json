@@ -1,19 +1,5 @@
 [
     {
-        "id": "evt_study_start",
-        "date": "2026-08-23",
-        "hijri": "1448\/03\/10",
-        "title": "بداية الدراسة في الفصل الدراسي الأول",
-        "type": "start"
-    },
-    {
-        "id": "evt_pay_aug",
-        "date": "2026-08-27",
-        "hijri": "1448\/03\/14",
-        "title": "مكافأة شهر أغسطس",
-        "type": "payment"
-    },
-    {
         "id": "evt_hol_national",
         "date": "2026-09-23",
         "hijri": "1448\/04\/11",

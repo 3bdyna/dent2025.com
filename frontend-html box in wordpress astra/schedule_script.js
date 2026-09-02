@@ -96,6 +96,9 @@ const ScheduleApp = {
     },
     init: async function() {
         try {
+            if (!this.adminPassword) {
+                this.adminPassword = sessionStorage.getItem('dent2025_schedule_admin_pass') || null;
+            }
             try {
                 if (window.dentAnalytics && typeof window.dentAnalytics.track === 'function') {
                     window.dentAnalytics.track('schedule_view', { subject: this.scheduleId });
@@ -141,12 +144,43 @@ const ScheduleApp = {
             return;
         }
         this.calculateStats(events);
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const isAdmin = !!(this.adminPassword || sessionStorage.getItem('dent2025_schedule_admin_pass'));
+
         const groupedEvents = {};
+        let totalVisibleEvents = 0;
+
         events.forEach(ev => {
+            // Determine if event ended more than 3 days ago
+            let isEndedPast3Days = false;
+            const endStr = ev.end_date || ev.date;
+            const endDate = this.parseLocalDate(endStr);
+            if (endDate) {
+                endDate.setHours(0, 0, 0, 0);
+                if (today > endDate) {
+                    const diffDays = Math.floor((today.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24));
+                    if (diffDays > 3) {
+                        isEndedPast3Days = true;
+                    }
+                }
+            }
+
+            // Hide from regular users if ended more than 3 days ago
+            if (!isAdmin && isEndedPast3Days) {
+                return;
+            }
+
+            totalVisibleEvents++;
+
             const monthName = this.getMonthName(ev.date);
             if (!groupedEvents[monthName]) {
                 groupedEvents[monthName] = { events: [], hijriLabel: '' };
             }
+
+            ev._isEndedPast3Days = isEndedPast3Days;
             groupedEvents[monthName].events.push(ev);
             
             if (!groupedEvents[monthName].hijriLabel && ev.hijri) {
@@ -165,11 +199,14 @@ const ScheduleApp = {
                 }
             }
         });
-        
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+
+        if (totalVisibleEvents === 0) {
+            container.innerHTML = '<div class="schedule-loading">لا توجد أحداث قادمة حالياً.</div>';
+            return;
+        }
 
         for (const [month, groupData] of Object.entries(groupedEvents)) {
+            if (!groupData.events || groupData.events.length === 0) continue;
             const monthSection = document.createElement('div');
             monthSection.className = 'timeline-month';
             const monthHeader = document.createElement('div');
@@ -220,6 +257,11 @@ const ScheduleApp = {
                     badgeClass = 'today';
                 }
 
+                let adminNoticeBadge = '';
+                if (this.adminPassword && ev._isEndedPast3Days) {
+                    adminNoticeBadge = '<span style="font-size: 0.75em; color: #ef4444; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); padding: 2px 6px; border-radius: 4px; margin-right: 4px;">مخفي عن الطلاب</span>';
+                }
+
                 let deleteBtn = '';
                 if (this.adminPassword) {
                     if (!ev.is_global || this.scheduleId === 'global') {
@@ -233,6 +275,7 @@ const ScheduleApp = {
                         <span>${dateDisplay}</span>
                         ${formattedHijri ? `<span style="opacity: 0.8;">- ${formattedHijri}</span>` : ''}
                         <span style="font-size: 0.85em; color: var(--event-color); font-weight: bold; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-right: 4px;">${badgeHtml}</span>
+                        ${adminNoticeBadge}
                     </div>
                     <h3 class="event-title">${dentEscapeHtml(ev.title)}</h3>
                 `;
@@ -291,9 +334,6 @@ const ScheduleApp = {
 
         const elDays = document.getElementById('val-days');
         const elDaysSub = document.querySelector('#val-days + .stat-subvalue');
-        const elStatus = document.getElementById('val-status');
-        const elStatusTitle = document.getElementById('val-status-title');
-        const elStatusSubtitle = document.getElementById('val-status-subtitle');
         
         let lastEvent = events.length > 0 ? events[events.length - 1] : null;
         let semesterEndDate = null;
@@ -307,9 +347,6 @@ const ScheduleApp = {
         const startDate = startEvent ? this.parseLocalDate(startEvent.date) : null;
 
         if (currentVacation) {
-            if (elStatusTitle) elStatusTitle.innerText = 'حالة الدراسة';
-            if (elStatusSubtitle) elStatusSubtitle.innerText = 'STATUS';
-            if (elStatus) elStatus.innerText = 'في إجازة';
             if (semesterEndDate) {
                 if (today <= semesterEndDate) {
                     const diffTime = Math.abs(semesterEndDate - today);
@@ -320,23 +357,11 @@ const ScheduleApp = {
                 }
             }
         } else if (startDate && today < startDate) {
-            if (elStatusTitle) elStatusTitle.innerText = 'نهاية الإجازة الصيفية';
-            if (elStatusSubtitle) elStatusSubtitle.innerText = 'VACATION ENDS';
-            const diffTime = Math.abs(startDate - today);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            if (elStatus) elStatus.innerText = diffDays + ' يوم / days';
-            
             if (elDays) elDays.innerText = 'لم يبدأ';
             if (elDaysSub) elDaysSub.innerText = 'في الفصل الدراسي / in semester';
         } else if (semesterEndDate && today > semesterEndDate) {
-            if (elStatusTitle) elStatusTitle.innerText = 'حالة الدراسة';
-            if (elStatusSubtitle) elStatusSubtitle.innerText = 'STATUS';
-            if (elStatus) elStatus.innerText = 'انتهى الترم';
             if (elDays) elDays.innerText = '0';
         } else {
-            if (elStatusTitle) elStatusTitle.innerText = 'حالة الدراسة';
-            if (elStatusSubtitle) elStatusSubtitle.innerText = 'STATUS';
-            if (elStatus) elStatus.innerText = 'بدأت الدراسة';
             if (semesterEndDate) {
                 const diffTime = Math.abs(semesterEndDate - today);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
