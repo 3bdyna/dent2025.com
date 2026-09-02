@@ -787,6 +787,7 @@
                 </select>
             </div>
             
+            <button type="button" class="dent-absence-btn-add" onclick="syncWithOfficialCatalog()" title="مطابقة نسب وساعات المقررات مع بوابة الجامعة">🔄 مطابقة البوابة</button>
             <button type="button" class="dent-absence-btn-add" onclick="addCustomAbsenceSubject()">+ إضافة مادة</button>
 
             <div id="dent-absence-timeline-info" class="dent-absence-timeline-badge">
@@ -1409,10 +1410,13 @@
                 }
             }
 
-            // Auto-heal legacy stale saved state for official catalog courses (e.g. 311 or 351)
+            // Auto-heal legacy stale saved state for official catalog courses (e.g. 311, 351, 321, 341, 352)
             if (defaults && defaults.totalSessions) {
-                const isStaleLegacy = !customTotalSessions || customTotalSessions === 112 || customTotalSessions === 54 || (defaults.totalSessions === 19.34 && (customTotalSessions !== 19.34 || isYearly !== false)) || (defaults.totalSessions === 30.0 && customTotalSessions === 34);
-                if (isStaleLegacy) {
+                const isLegacyState = !savedState || savedState.version !== 4;
+                const isStaleTotal = customTotalSessions === 112 || customTotalSessions === 54 || customTotalSessions === 51 || customTotalSessions === 34 || customTotalSessions === null;
+                const isMismatchedYearly = (defaults.isYearly !== undefined && isYearly !== defaults.isYearly);
+                
+                if (isLegacyState || isStaleTotal || isMismatchedYearly) {
                     customTotalSessions = defaults.totalSessions;
                     isYearly = defaults.isYearly;
                     if (defaults.weeklySessions) weeklySessions = defaults.weeklySessions;
@@ -1657,6 +1661,7 @@
         const yearlySyncKey = getYearlySyncStorageKey();
 
         const state = {
+            version: 4,
             weeks: dentAbsenceWeeks,
             subjects: {},
             customSubjects: []
@@ -1691,6 +1696,21 @@
             localStorage.setItem(storageKey, JSON.stringify(state));
             localStorage.setItem(yearlySyncKey, JSON.stringify(yearlySyncData));
         } catch(e){}
+    }
+
+    function syncWithOfficialCatalog() {
+        if (!dentAbsenceSubjects || dentAbsenceSubjects.length === 0) return;
+        dentAbsenceSubjects.forEach(sub => {
+            const defaults = dentAbsenceSelection ? getJazanUniversityCourseDefaults(sub.name, dentAbsenceSelection.specialty, dentAbsenceSelection.year) : null;
+            if (defaults && defaults.totalSessions) {
+                sub.customTotalSessions = defaults.totalSessions;
+                sub.isYearly = defaults.isYearly;
+                if (defaults.weeklySessions) sub.weeklySessions = defaults.weeklySessions;
+            }
+        });
+        saveAbsenceState();
+        renderAbsenceSubjects();
+        showDayFeedback('<span style="color: #10b981; font-weight: bold;">✓ تم مطابقة جميع ساعات ونسب المقررات مع بوابة جامعة جازان بنجاح (100%)!</span>');
     }
 
     function calculateQuickAbsence() {
