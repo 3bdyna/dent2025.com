@@ -1409,6 +1409,16 @@
                 }
             }
 
+            // Auto-heal legacy stale saved state for official catalog courses (e.g. 311 or 351)
+            if (defaults && defaults.totalSessions) {
+                const isStaleLegacy = !customTotalSessions || customTotalSessions === 112 || customTotalSessions === 54 || (defaults.totalSessions === 19.34 && (customTotalSessions !== 19.34 || isYearly !== false)) || (defaults.totalSessions === 30.0 && customTotalSessions === 34);
+                if (isStaleLegacy) {
+                    customTotalSessions = defaults.totalSessions;
+                    isYearly = defaults.isYearly;
+                    if (defaults.weeklySessions) weeklySessions = defaults.weeklySessions;
+                }
+            }
+
             // Sync with yearly shared records if applicable
             const normKey = normAr(sub.name);
             if (isYearly && yearlySyncData && yearlySyncData[normKey] !== undefined) {
@@ -1573,7 +1583,13 @@
     function toggleSubjectYearly(idx) {
         if (!dentAbsenceSubjects[idx]) return;
         dentAbsenceSubjects[idx].isYearly = !dentAbsenceSubjects[idx].isYearly;
-        dentAbsenceSubjects[idx].customTotalSessions = null;
+        const defaults = dentAbsenceSelection ? getJazanUniversityCourseDefaults(dentAbsenceSubjects[idx].name, dentAbsenceSelection.specialty, dentAbsenceSelection.year) : null;
+        if (defaults && defaults.totalSessions && dentAbsenceSubjects[idx].isYearly === defaults.isYearly) {
+            dentAbsenceSubjects[idx].customTotalSessions = defaults.totalSessions;
+            if (defaults.weeklySessions) dentAbsenceSubjects[idx].weeklySessions = defaults.weeklySessions;
+        } else {
+            dentAbsenceSubjects[idx].customTotalSessions = null;
+        }
         saveAbsenceState();
         renderAbsenceSubjects();
     }
