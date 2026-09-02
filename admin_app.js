@@ -213,10 +213,11 @@ window.AdminApp = {
     },
 
     applyPermissionsUI() {
-        const canManagePasswords = !!(this.permissions && this.permissions.manage_passwords);
-        ['passwords', 'analytics'].forEach(tabName => {
+        const canManageMaster = !!(this.permissions && this.permissions.manage_passwords);
+        const masterOnlyTabs = ['passwords', 'analytics', 'gemini', 'cache', 'history', 'safedeploy'];
+        masterOnlyTabs.forEach(tabName => {
             document.querySelectorAll(`[data-tab="${tabName}"]`).forEach(el => {
-                if (canManagePasswords) {
+                if (canManageMaster) {
                     el.classList.remove('hidden');
                 } else {
                     el.classList.add('hidden');
@@ -231,13 +232,13 @@ window.AdminApp = {
     },
 
     switchTab(tabId) {
-        if (tabId === 'passwords' && this.permissions && this.permissions.manage_passwords === false) {
-            this.showToast('غير مصرح لك بالوصول لإدارة الصلاحيات (Unauthorized)', true);
-            return;
-        }
-        if (tabId === 'analytics' && this.permissions && this.permissions.manage_passwords === false) {
-            this.showToast('غير مصرح لك بالوصول للوحة التحليلات (Unauthorized)', true);
-            return;
+        const masterOnlyTabs = ['passwords', 'analytics', 'gemini', 'cache', 'history', 'safedeploy'];
+        if (masterOnlyTabs.includes(tabId)) {
+            const canManageMaster = !!(this.permissions && this.permissions.manage_passwords);
+            if (!canManageMaster) {
+                this.showToast('غير مصرح لك بالوصول لهذا القسم (صلاحية Master مطلوبة)', true);
+                return;
+            }
         }
 
         this.currentTab = tabId;
@@ -409,10 +410,29 @@ window.AdminApp = {
     },
 
     escapeHtml(str) {
-        if (!str) return '';
+        if (str === null || str === undefined) return '';
         return String(str).replace(/[&<>"']/g, function(m) {
             return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
         });
+    },
+
+    sanitizeUrl(url) {
+        if (!url) return '#';
+        const trimmed = String(url).trim();
+        if (/^(https?:\/\/|mailto:|\/)/i.test(trimmed)) {
+            return this.escapeHtml(trimmed);
+        }
+        return '#blocked';
+    },
+
+    normalizeArabic(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/[أإآ]/g, 'ا')
+            .replace(/ة/g, 'ه')
+            .replace(/ى/g, 'ي')
+            .toLowerCase()
+            .trim();
     },
 
     updateYearOptions(specId, yearId) {
@@ -545,14 +565,20 @@ window.AdminApp = {
             const passDisplay = isVisible ? p.passkey : '••••••••••••';
             const allowedCtx = Array.isArray(p.allowed_contexts) ? p.allowed_contexts.join(', ') : '*';
             
+            const safeId = this.escapeHtml(p.id);
+            const safeLabel = this.escapeHtml(p.label || 'بدون عنوان');
+            const safePassDisplay = this.escapeHtml(passDisplay);
+            const safeAllowedCtx = this.escapeHtml(allowedCtx);
+            
             let permBadges = '';
             const perms = p.permissions || {};
             for (let [k, label] of Object.entries(permLabels)) {
                 const active = !!perms[k];
+                const safePermLabel = this.escapeHtml(label);
                 if (active) {
-                    permBadges += `<span class="bg-gray-500/20 text-gray-300 border border-gray-500/30 px-2 py-0.5 rounded text-xs">${label}</span> `;
+                    permBadges += `<span class="bg-gray-500/20 text-gray-300 border border-gray-500/30 px-2 py-0.5 rounded text-xs">${safePermLabel}</span> `;
                 } else {
-                    permBadges += `<span class="bg-gray-800/50 text-gray-500 border border-gray-700 px-2 py-0.5 rounded text-xs opacity-50">${label}</span> `;
+                    permBadges += `<span class="bg-gray-800/50 text-gray-500 border border-gray-700 px-2 py-0.5 rounded text-xs opacity-50">${safePermLabel}</span> `;
                 }
             }
 
@@ -561,27 +587,27 @@ window.AdminApp = {
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-3 border-b border-white/5 pb-3">
                         <div>
                             <div class="flex items-center gap-3">
-                                <h3 class="text-lg font-bold text-white">${p.label || 'بدون عنوان'}</h3>
-                                <span class="bg-primary/20 text-accent font-mono text-xs px-2 py-0.5 rounded border border-primary/30">${p.id}</span>
+                                <h3 class="text-lg font-bold text-white">${safeLabel}</h3>
+                                <span class="bg-primary/20 text-accent font-mono text-xs px-2 py-0.5 rounded border border-primary/30">${safeId}</span>
                             </div>
                             <div class="flex items-center gap-2 mt-2">
                                 <span class="text-xs text-gray-400">كلمة المرور:</span>
-                                <code class="bg-black/50 text-gray-300 px-3 py-1 rounded text-sm font-mono tracking-widest border border-white/10">${passDisplay}</code>
-                                <button onclick="AdminApp.toggleKeyVisibility('${p.id}')" class="text-xs text-gray-300 hover:text-white px-2 py-1 bg-white/5 rounded border border-white/10">
+                                <code class="bg-black/50 text-gray-300 px-3 py-1 rounded text-sm font-mono tracking-widest border border-white/10">${safePassDisplay}</code>
+                                <button onclick="AdminApp.toggleKeyVisibility('${safeId}')" class="text-xs text-gray-300 hover:text-white px-2 py-1 bg-white/5 rounded border border-white/10">
                                     ${isVisible ? 'إخفاء' : 'إظهار'}
                                 </button>
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button onclick="AdminApp.editPassword('${p.id}')" class="btn btn-secondary text-xs py-1 px-3">تعديل</button>
-                            <button onclick="AdminApp.deletePassword('${p.id}')" class="btn btn-danger text-xs py-1 px-3">حذف</button>
+                            <button onclick="AdminApp.editPassword('${safeId}')" class="btn btn-secondary text-xs py-1 px-3">تعديل</button>
+                            <button onclick="AdminApp.deletePassword('${safeId}')" class="btn btn-danger text-xs py-1 px-3">حذف</button>
                         </div>
                     </div>
                     
                     <div class="space-y-2 text-xs">
                         <div class="flex items-center gap-2">
                             <span class="text-gray-400">السياقات المسموحة:</span>
-                            <span class="bg-white/10 text-gray-200 px-2 py-0.5 rounded font-mono border border-white/20">${allowedCtx}</span>
+                            <span class="bg-white/10 text-gray-200 px-2 py-0.5 rounded font-mono border border-white/20">${safeAllowedCtx}</span>
                         </div>
                         <div>
                             <span class="text-gray-400 block mb-1">الصلاحيات الممنوحة:</span>
@@ -944,13 +970,19 @@ window.AdminApp = {
                     targetBadge = '<span class="bg-gray-500/20 text-gray-300 border border-gray-500/30 px-2 py-0.5 rounded text-xs">عام (Global)</span>';
                 } else {
                     const specNames = { 'dentistry': 'أسنان', 'medicine': 'بشري', 'pre-med': 'تحضيري' };
-                    const specTxt = specNames[ev.specialty] || ev.specialty || '';
-                    const yearTxt = ev.specialty === 'pre-med' ? 'سنة 1' : (ev.year ? `سنة ${ev.year}` : '');
-                    const semTxt = ev.semester ? `ترم ${ev.semester}` : '';
+                    const specTxt = this.escapeHtml(specNames[ev.specialty] || ev.specialty || '');
+                    const yearTxt = this.escapeHtml(ev.specialty === 'pre-med' ? 'سنة 1' : (ev.year ? `سنة ${ev.year}` : ''));
+                    const semTxt = this.escapeHtml(ev.semester ? `ترم ${ev.semester}` : '');
                     targetBadge = `<span class="bg-white/10 text-gray-200 border border-white/20 px-2 py-0.5 rounded text-xs font-semibold">${specTxt} | ${yearTxt} | ${semTxt}</span>`;
                 }
 
                 const schedIdAttr = ev.schedule_id || (isGlobal ? 'global' : '');
+                const safeEvId = this.escapeHtml(ev.id);
+                const safeSchedId = this.escapeHtml(schedIdAttr);
+                const safeTitle = this.escapeHtml(ev.title || 'بدون عنوان');
+                const safeDateStr = this.escapeHtml(dateStr);
+                const safeEndDateStr = endDateStr ? this.escapeHtml(endDateStr) : '';
+                const safeHijri = ev.hijri ? this.escapeHtml(ev.hijri) : '';
 
                 html += `
                     <div class="bg-black/30 p-4 rounded-xl border border-white/10 flex flex-col justify-between hover:border-white/20 transition">
@@ -962,15 +994,15 @@ window.AdminApp = {
                                     ${statusBadge}
                                 </div>
                             </div>
-                            <h4 class="text-base font-bold text-white mb-2">${ev.title || 'بدون عنوان'}</h4>
+                            <h4 class="text-base font-bold text-white mb-2">${safeTitle}</h4>
                             <div class="text-xs text-gray-400 space-y-1 mb-4">
-                                <div>التاريخ: <span class="text-gray-200 font-mono">${dateStr}${endDateStr ? ' ⬅️ ' + endDateStr : ''}</span></div>
-                                ${ev.hijri ? `<div>🌙 الهجري: <span class="text-gray-300 font-mono">${ev.hijri}</span></div>` : ''}
+                                <div>التاريخ: <span class="text-gray-200 font-mono">${safeDateStr}${safeEndDateStr ? ' ⬅️ ' + safeEndDateStr : ''}</span></div>
+                                ${safeHijri ? `<div>🌙 الهجري: <span class="text-gray-300 font-mono">${safeHijri}</span></div>` : ''}
                             </div>
                         </div>
                         <div class="flex justify-end gap-2 border-t border-white/5 pt-3">
-                            <button onclick="AdminApp.editEvent('${ev.id}')" class="text-xs text-gray-300 hover:text-white px-2.5 py-1 bg-white/5 rounded border border-white/10">تعديل</button>
-                            <button onclick="AdminApp.deleteEvent('${ev.id}', '${schedIdAttr}')" class="text-xs text-gray-400 hover:text-gray-300 px-2.5 py-1 bg-white/5 rounded border border-white/10">حذف</button>
+                            <button onclick="AdminApp.editEvent('${safeEvId}')" class="text-xs text-gray-300 hover:text-white px-2.5 py-1 bg-white/5 rounded border border-white/10">تعديل</button>
+                            <button onclick="AdminApp.deleteEvent('${safeEvId}', '${safeSchedId}')" class="text-xs text-gray-400 hover:text-gray-300 px-2.5 py-1 bg-white/5 rounded border border-white/10">حذف</button>
                         </div>
                     </div>
                 `;
@@ -1216,13 +1248,17 @@ window.AdminApp = {
                     else if (l.type === 'drive') icon = '📁';
                     else if (l.type === 'telegram') icon = '✈️';
 
+                    const safeUrl = this.sanitizeUrl(l.url);
+                    const safeTitle = this.escapeHtml(l.title || l.url);
+                    const safeLinkId = parseInt(l.id, 10) || 0;
+
                     return `
                         <div class="flex justify-between items-center bg-black/30 p-2 rounded-lg border border-white/5 text-xs gap-2">
-                            <a href="${l.url}" target="_blank" class="text-gray-300 hover:text-white flex items-center gap-1.5 truncate max-w-[70vw] sm:max-w-md">
+                            <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-white flex items-center gap-1.5 truncate max-w-[70vw] sm:max-w-md">
                                 <span class="shrink-0">${icon}</span>
-                                <span class="truncate">${l.title || l.url}</span>
+                                <span class="truncate">${safeTitle}</span>
                             </a>
-                            <button onclick="AdminApp.deleteLink(${l.id})" class="text-red-400 hover:text-red-300 text-[11px] px-2 py-0.5 bg-red-500/10 hover:bg-red-500/20 rounded border border-red-500/20 shrink-0">حذف</button>
+                            <button onclick="AdminApp.deleteLink(${safeLinkId})" class="text-red-400 hover:text-red-300 text-[11px] px-2 py-0.5 bg-red-500/10 hover:bg-red-500/20 rounded border border-red-500/20 shrink-0">حذف</button>
                         </div>
                     `;
                 }).join('');
@@ -1230,32 +1266,39 @@ window.AdminApp = {
                 linksHtml = '<p class="text-[11px] text-gray-500 py-1">لا توجد روابط مساعدة مضافة بعد.</p>';
             }
 
+            const safeSubId = parseInt(sub.id, 10) || 0;
+            const safeSubName = this.escapeHtml(sub.name);
+            const safeHours = this.escapeHtml(sub.hours || '0');
+            const safeMarks = this.escapeHtml(sub.marks || 'غير محدد');
+            const safeChapId = this.escapeHtml(sub.chapters_folder_id || 'غير مرتبط');
+            const safeMatId = this.escapeHtml(sub.materials_folder_id || 'غير مرتبط');
+
             html += `
                 <div class="bg-black/30 p-3 sm:p-4 rounded-xl border border-white/10 relative hover:border-white/20 transition">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 mb-3 border-b border-white/5 pb-2.5">
                         <div class="min-w-0 flex-1">
-                            <h3 class="text-base sm:text-lg font-bold text-white leading-snug mb-1 truncate">${sub.name}</h3>
+                            <h3 class="text-base sm:text-lg font-bold text-white leading-snug mb-1 truncate">${safeSubName}</h3>
                             <div class="flex flex-wrap items-center gap-2.5 text-[11px] text-gray-400">
-                                <span>⏱️ الساعات: <strong class="text-gray-200">${sub.hours || '0'}</strong></span>
+                                <span>⏱️ الساعات: <strong class="text-gray-200">${safeHours}</strong></span>
                                 <span class="text-gray-600">•</span>
-                                <span>📊 توزيع الدرجات: <strong class="text-gray-200">${sub.marks || 'غير محدد'}</strong></span>
+                                <span>📊 توزيع الدرجات: <strong class="text-gray-200">${safeMarks}</strong></span>
                             </div>
                         </div>
                         <div class="grid grid-cols-3 gap-1.5 w-full sm:w-auto shrink-0">
-                            <button onclick="AdminApp.openAddLinkModal(${sub.id})" class="btn btn-secondary text-xs py-1 px-2.5 flex items-center justify-center gap-1">+ رابط</button>
-                            <button onclick="AdminApp.openEditSubjectModal(${sub.id})" class="btn btn-primary text-xs py-1 px-2.5 flex items-center justify-center gap-1">تعديل</button>
-                            <button onclick="AdminApp.deleteSubject(${sub.id})" class="btn btn-danger text-xs py-1 px-2.5 flex items-center justify-center gap-1">حذف</button>
+                            <button onclick="AdminApp.openAddLinkModal(${safeSubId})" class="btn btn-secondary text-xs py-1 px-2.5 flex items-center justify-center gap-1">+ رابط</button>
+                            <button onclick="AdminApp.openEditSubjectModal(${safeSubId})" class="btn btn-primary text-xs py-1 px-2.5 flex items-center justify-center gap-1">تعديل</button>
+                            <button onclick="AdminApp.deleteSubject(${safeSubId})" class="btn btn-danger text-xs py-1 px-2.5 flex items-center justify-center gap-1">حذف</button>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2.5 text-xs">
                         <div class="bg-black/25 p-2 rounded-lg border border-white/5 flex items-center justify-between gap-2">
                             <span class="text-gray-400 text-[11px] shrink-0 font-medium">📁 الشباتر:</span>
-                            <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 flex-1 text-left" dir="ltr">${sub.chapters_folder_id || 'غير مرتبط'}</code>
+                            <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 flex-1 text-left" dir="ltr">${safeChapId}</code>
                         </div>
                         <div class="bg-black/25 p-2 rounded-lg border border-white/5 flex items-center justify-between gap-2">
                             <span class="text-gray-400 text-[11px] shrink-0 font-medium">📁 التجميعات:</span>
-                            <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 flex-1 text-left" dir="ltr">${sub.materials_folder_id || 'غير مرتبط'}</code>
+                            <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 flex-1 text-left" dir="ltr">${safeMatId}</code>
                         </div>
                     </div>
 
@@ -1565,19 +1608,28 @@ window.AdminApp = {
 
             let entriesHtml = '';
             if (dayClasses.length > 0) {
-                entriesHtml = dayClasses.map(c => `
-                    <div class="bg-black/40 p-3 rounded-lg border border-white/10 relative group hover:border-primary/50 transition">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="bg-white/10 text-gray-200 text-xs px-1.5 py-0.5 rounded font-mono">${c.start_time} - ${c.end_time}</span>
-                            <button onclick="AdminApp.deleteClass('${c.id}')" class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20" title="حذف الحصة">🗑️</button>
+                entriesHtml = dayClasses.map(c => {
+                    const safeClassId = this.escapeHtml(c.id);
+                    const safeStartTime = this.escapeHtml(c.start_time);
+                    const safeEndTime = this.escapeHtml(c.end_time);
+                    const safeSubject = this.escapeHtml(c.subject);
+                    const safeType = this.escapeHtml(c.type || 'نظري');
+                    const safeGroupName = this.escapeHtml(c.group_name || '');
+
+                    return `
+                        <div class="bg-black/40 p-3 rounded-lg border border-white/10 relative group hover:border-primary/50 transition">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="bg-white/10 text-gray-200 text-xs px-1.5 py-0.5 rounded font-mono">${safeStartTime} - ${safeEndTime}</span>
+                                <button onclick="AdminApp.deleteClass('${safeClassId}')" class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20" title="حذف الحصة">🗑️</button>
+                            </div>
+                            <h5 class="font-bold text-white text-sm mb-1">${safeSubject}</h5>
+                            <div class="flex items-center justify-between text-xs text-gray-400">
+                                <span class="bg-primary/10 text-accent px-1.5 py-0.5 rounded">${safeType}</span>
+                                <span class="text-gray-500">${safeGroupName}</span>
+                            </div>
                         </div>
-                        <h5 class="font-bold text-white text-sm mb-1">${c.subject}</h5>
-                        <div class="flex items-center justify-between text-xs text-gray-400">
-                            <span class="bg-primary/10 text-accent px-1.5 py-0.5 rounded">${c.type || 'نظري'}</span>
-                            <span class="text-gray-500">${c.group_name || ''}</span>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             } else {
                 entriesHtml = '<p class="text-xs text-gray-500 text-center py-4">لا يوجد محاضرات</p>';
             }
@@ -1739,24 +1791,29 @@ window.AdminApp = {
             if (yearFilter !== 'all' && String(ann.year) !== String(yearFilter)) return;
             if (semFilter !== 'all' && String(ann.semester) !== String(semFilter)) return;
             
-            if (searchFilter && !ann.content.toLowerCase().includes(searchFilter)) return;
+            if (searchFilter && !this.normalizeArabic(ann.content).includes(this.normalizeArabic(searchFilter))) return;
 
             hasActive = true;
             const d = new Date(ann.last_updated * 1000);
             const dateStr = d.toLocaleString('ar-SA');
-            const specLabel = specNames[ann.specialty] || ann.specialty;
+            const safeSpecLabel = this.escapeHtml(specNames[ann.specialty] || ann.specialty);
+            const safeSpec = this.escapeHtml(ann.specialty);
+            const safeYear = parseInt(ann.year, 10) || 0;
+            const safeSem = parseInt(ann.semester, 10) || 0;
+            const safeDateStr = this.escapeHtml(dateStr);
+            const safeIndex = parseInt(index, 10) || 0;
             
             html += `
                 <div class="glass p-5 rounded-xl border border-white/10 hover:border-white/20 transition relative group">
                     <div class="flex justify-between items-start mb-3 border-b border-white/5 pb-3">
                         <span class="bg-primary/20 text-accent px-3 py-1 rounded text-sm font-semibold flex items-center gap-2 border border-primary/30">
-                            ${specLabel} | سنة ${ann.year} | ترم ${ann.semester}
+                            ${safeSpecLabel} | سنة ${safeYear} | ترم ${safeSem}
                         </span>
                         <div class="flex items-center gap-3">
-                            <span class="text-xs text-gray-500 font-mono">${dateStr}</span>
+                            <span class="text-xs text-gray-500 font-mono">${safeDateStr}</span>
                             <div class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition flex gap-1.5 sm:gap-2">
-                                <button onclick="AdminApp.editAnnouncement(${index})" class="btn btn-secondary text-xs px-2.5 py-1">تعديل</button>
-                                <button onclick="AdminApp.deleteAnnouncement('${ann.specialty}', ${ann.year}, ${ann.semester})" class="btn btn-danger text-xs px-2.5 py-1">حذف</button>
+                                <button onclick="AdminApp.editAnnouncement(${safeIndex})" class="btn btn-secondary text-xs px-2.5 py-1">تعديل</button>
+                                <button onclick="AdminApp.deleteAnnouncement('${safeSpec}', ${safeYear}, ${safeSem})" class="btn btn-danger text-xs px-2.5 py-1">حذف</button>
                             </div>
                         </div>
                     </div>
@@ -3154,16 +3211,18 @@ window.AdminApp = {
         const input = document.getElementById('quizzes-search-input');
         if (!input || !this.quizzesData) return;
 
-        const query = input.value.toLowerCase().trim();
-        if (!query) {
+        const rawQuery = input.value.trim();
+        if (!rawQuery) {
             this.renderQuizzesTable(this.quizzesData);
             return;
         }
 
+        const query = this.normalizeArabic(rawQuery);
         const filtered = this.quizzesData.filter(q => {
-            return (q.quiz_name && q.quiz_name.toLowerCase().includes(query)) ||
-                   (q.chapter_name && q.chapter_name.toLowerCase().includes(query)) ||
-                   (q.subject_name && q.subject_name.toLowerCase().includes(query));
+            const nameNorm = this.normalizeArabic(q.quiz_name);
+            const chapNorm = this.normalizeArabic(q.chapter_name);
+            const subjNorm = this.normalizeArabic(q.subject_name);
+            return nameNorm.includes(query) || chapNorm.includes(query) || subjNorm.includes(query);
         });
 
         this.renderQuizzesTable(filtered);
