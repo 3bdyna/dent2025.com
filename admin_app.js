@@ -894,11 +894,11 @@ window.AdminApp = {
 
         // 4. Categorize Events
         const categories = {
-            global: { title: 'الأحداث العامة (Global Events)', events: [], icon: '🌐' },
-            'pre-med': { title: 'السنة التحضيرية (Pre-Med)', events: [], icon: '🧬' },
-            dentistry: { title: 'طب الأسنان (Dentistry)', events: [], icon: '🦷' },
-            medicine: { title: 'الطب البشري (Medicine)', events: [], icon: '🩺' },
-            other_batches: { title: 'أحداث الدفعات الأخرى', events: [], icon: '📌' }
+            global: { title: 'الأحداث العامة (Global Events)', events: [], icon: '' },
+            'pre-med': { title: 'السنة التحضيرية (Pre-Med)', events: [], icon: '' },
+            dentistry: { title: 'طب الأسنان (Dentistry)', events: [], icon: '' },
+            medicine: { title: 'الطب البشري (Medicine)', events: [], icon: '' },
+            other_batches: { title: 'أحداث الدفعات الأخرى', events: [], icon: '' }
         };
 
         filteredEvents.forEach(ev => {
@@ -996,8 +996,8 @@ window.AdminApp = {
                             </div>
                             <h4 class="text-base font-bold text-white mb-2">${safeTitle}</h4>
                             <div class="text-xs text-gray-400 space-y-1 mb-4">
-                                <div>التاريخ: <span class="text-gray-200 font-mono">${safeDateStr}${safeEndDateStr ? ' ⬅️ ' + safeEndDateStr : ''}</span></div>
-                                ${safeHijri ? `<div>🌙 الهجري: <span class="text-gray-300 font-mono">${safeHijri}</span></div>` : ''}
+                                <div>التاريخ: <span class="text-gray-200 font-mono">${safeDateStr}${safeEndDateStr ? ' ⬅ ' + safeEndDateStr : ''}</span></div>
+                                ${safeHijri ? `<div> الهجري: <span class="text-gray-300 font-mono">${safeHijri}</span></div>` : ''}
                             </div>
                         </div>
                         <div class="flex justify-end gap-2 border-t border-white/5 pt-3">
@@ -1227,7 +1227,7 @@ window.AdminApp = {
         if (!this.subjectsData || this.subjectsData.length === 0) {
             container.innerHTML = `
                 <div class="p-8 text-center text-gray-400">
-                    <span class="text-3xl block mb-2">📚</span>
+                    <span class="text-3xl block mb-2"></span>
                     <h3 class="text-lg font-bold mb-1 text-white">لا توجد مواد مسجلة</h3>
                     <p class="text-xs text-gray-400">انقر على "إضافة مادة جديدة" لإضافة أول مادة في هذا الترم.</p>
                 </div>
@@ -1243,10 +1243,10 @@ window.AdminApp = {
 
             if (links.length > 0) {
                 linksHtml = links.map(l => {
-                    let icon = '🔗';
-                    if (l.type === 'youtube') icon = '🎥';
-                    else if (l.type === 'drive') icon = '📁';
-                    else if (l.type === 'telegram') icon = '✈️';
+                    let icon = '';
+                    
+                    
+                    
 
                     const safeUrl = this.sanitizeUrl(l.url);
                     const safeTitle = this.escapeHtml(l.title || l.url);
@@ -1279,9 +1279,9 @@ window.AdminApp = {
                         <div class="min-w-0 flex-1">
                             <h3 class="text-base sm:text-lg font-bold text-white leading-snug mb-1 truncate">${safeSubName}</h3>
                             <div class="flex flex-wrap items-center gap-2.5 text-[11px] text-gray-400">
-                                <span>⏱️ الساعات: <strong class="text-gray-200">${safeHours}</strong></span>
+                                <span>الساعات: <strong class="text-gray-200">${safeHours}</strong></span>
                                 <span class="text-gray-600">•</span>
-                                <span>📊 توزيع الدرجات: <strong class="text-gray-200">${safeMarks}</strong></span>
+                                <span> توزيع الدرجات: <strong class="text-gray-200">${safeMarks}</strong></span>
                             </div>
                         </div>
                         <div class="grid grid-cols-3 gap-1.5 w-full sm:w-auto shrink-0">
@@ -1293,11 +1293,11 @@ window.AdminApp = {
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2.5 text-xs">
                         <div class="bg-black/25 p-2 rounded-lg border border-white/5 flex items-center justify-between gap-2">
-                            <span class="text-gray-400 text-[11px] shrink-0 font-medium">📁 الشباتر:</span>
+                            <span class="text-gray-400 text-[11px] shrink-0 font-medium"> الشباتر:</span>
                             <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 flex-1 text-left" dir="ltr">${safeChapId}</code>
                         </div>
                         <div class="bg-black/25 p-2 rounded-lg border border-white/5 flex items-center justify-between gap-2">
-                            <span class="text-gray-400 text-[11px] shrink-0 font-medium">📁 التجميعات:</span>
+                            <span class="text-gray-400 text-[11px] shrink-0 font-medium"> التجميعات:</span>
                             <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 flex-1 text-left" dir="ltr">${safeMatId}</code>
                         </div>
                     </div>
@@ -1620,7 +1620,7 @@ window.AdminApp = {
                         <div class="bg-black/40 p-3 rounded-lg border border-white/10 relative group hover:border-primary/50 transition">
                             <div class="flex justify-between items-start mb-1">
                                 <span class="bg-white/10 text-gray-200 text-xs px-1.5 py-0.5 rounded font-mono">${safeStartTime} - ${safeEndTime}</span>
-                                <button onclick="AdminApp.deleteClass('${safeClassId}')" class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20" title="حذف الحصة">🗑️</button>
+                                <button onclick="AdminApp.deleteClass('${safeClassId}')" class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20" title="حذف الحصة">حذف</button>
                             </div>
                             <h5 class="font-bold text-white text-sm mb-1">${safeSubject}</h5>
                             <div class="flex items-center justify-between text-xs text-gray-400">
@@ -2223,7 +2223,7 @@ window.AdminApp = {
         if (!items || items.length === 0) {
             container.innerHTML = `
                 <div class="text-center py-12 text-gray-400">
-                    <p class="text-3xl mb-2">📭</p>
+                    <p class="text-3xl mb-2"></p>
                     <p class="text-base font-semibold text-white">لا توجد سجلات تطابق الفلترة الحالية</p>
                     <p class="text-xs text-gray-500 mt-1">جرب تغيير معايير البحث أو اختيار "جميع الأقسام".</p>
                 </div>
@@ -2253,13 +2253,13 @@ window.AdminApp = {
             manual_save: { label: 'حفظ مرجعي', class: 'bg-purple-500/15 text-purple-300 border border-purple-500/30 font-bold' }
         };
 
-        const catIcons = { subjects: '📚', classes: '📅', announcements: '📢', events: '🗓', passkeys: '🔑', rollback: '⏪', manual: '📌' };
+        const catIcons = { subjects: '', classes: '', announcements: '', events: '', passkeys: '', rollback: '', manual: '' };
 
         let html = '';
         items.forEach((item) => {
             const cat = categoryBadges[item.category] || { label: item.category, class: 'bg-gray-500/20 text-gray-300 border-gray-500/30' };
             const act = actionBadges[item.action_type] || { label: item.action_type, class: 'bg-gray-500/20 text-gray-300' };
-            const icon = catIcons[item.category] || '📄';
+            const icon = catIcons[item.category] || '';
             const relTime = this.formatArabicRelativeTime(item.timestamp || item.date_formatted);
 
             // Special styling for rollback/safety entries
@@ -2286,11 +2286,11 @@ window.AdminApp = {
                                 <!-- Meta Row -->
                                 <div class="flex flex-wrap items-center gap-2.5 text-xs text-gray-400">
                                     <span class="flex items-center gap-1 font-mono text-[11px] text-gray-400">
-                                        <span>🕐</span> ${item.date_formatted}
+                                         ${item.date_formatted}
                                     </span>
                                     <span>•</span>
                                     <span class="flex items-center gap-1 text-sky-400 text-[11px]">
-                                        <span>👤</span> ${this.escapeHtml(item.passkey_label || 'الأدمن')}
+                                         ${this.escapeHtml(item.passkey_label || 'الأدمن')}
                                     </span>
                                     ${item.snapshot_id ? `
                                         <span>•</span>
@@ -2304,10 +2304,10 @@ window.AdminApp = {
                         <!-- Action Buttons -->
                         <div class="flex items-center gap-2 self-end md:self-center shrink-0">
                             <button onclick="AdminApp.copyAuditItemSummary(${JSON.stringify(item).replace(/"/g, '&quot;')})" class="btn bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white text-xs py-1.5 px-2.5 rounded-lg border border-white/10" title="نسخ ملخص السجل">
-                                📋 نسخ
+                                 نسخ
                             </button>
                             <button onclick="AdminApp.previewSnapshot('${item.snapshot_id}')" class="btn btn-secondary text-xs py-2 px-3.5 flex items-center gap-1.5 border-sky-500/30 text-sky-300 hover:bg-sky-500/15 font-semibold">
-                                <span>🔍</span> عرض ومقارنة حية
+                                 عرض ومقارنة حية
                             </button>
                         </div>
                     </div>
@@ -2363,7 +2363,7 @@ window.AdminApp = {
 
                     // Who did it
                     const actor = document.getElementById('snap-modal-actor');
-                    if (actor) actor.innerText = `👤 المنفِّذ: ${snapData.passkey_label || 'الأدمن'}`;
+                    if (actor) actor.innerText = ` المنفِّذ: ${snapData.passkey_label || 'الأدمن'}`;
 
                     // TAB 1: Metrics & Live Diff Grid
                     const grid = document.getElementById('snap-metrics-grid');
@@ -2384,12 +2384,12 @@ window.AdminApp = {
                         };
 
                         const metrics = [
-                            { icon: '📚', label: 'مادة دراسية', snapVal: sum.subjects_count, liveVal: subDiff.live_count ?? sum.subjects_count, delta: getDeltaBadge(subDiff) },
-                            { icon: '🔗', label: 'رابط مواد', snapVal: sum.links_count, liveVal: linkDiff.live_count ?? sum.links_count, delta: getDeltaBadge(linkDiff) },
-                            { icon: '📅', label: 'حصة بالجدول', snapVal: sum.classes_count, liveVal: clsDiff.live_count ?? sum.classes_count, delta: getDeltaBadge(clsDiff) },
-                            { icon: '📢', label: 'ملف إعلانات', snapVal: sum.announcements_count, liveVal: annDiff.live_count ?? sum.announcements_count, delta: getDeltaBadge(annDiff) },
-                            { icon: '🗓', label: 'ملف أحداث', snapVal: sum.events_files_count, liveVal: evtDiff.live_count ?? sum.events_files_count, delta: getDeltaBadge(evtDiff) },
-                            { icon: '🔑', label: 'مفتاح وصول', snapVal: sum.passwords_count, liveVal: pwdDiff.live_count ?? sum.passwords_count, delta: getDeltaBadge(pwdDiff) }
+                            { icon: '', label: 'مادة دراسية', snapVal: sum.subjects_count, liveVal: subDiff.live_count ?? sum.subjects_count, delta: getDeltaBadge(subDiff) },
+                            { icon: '', label: 'رابط مواد', snapVal: sum.links_count, liveVal: linkDiff.live_count ?? sum.links_count, delta: getDeltaBadge(linkDiff) },
+                            { icon: '', label: 'حصة بالجدول', snapVal: sum.classes_count, liveVal: clsDiff.live_count ?? sum.classes_count, delta: getDeltaBadge(clsDiff) },
+                            { icon: '', label: 'ملف إعلانات', snapVal: sum.announcements_count, liveVal: annDiff.live_count ?? sum.announcements_count, delta: getDeltaBadge(annDiff) },
+                            { icon: '', label: 'ملف أحداث', snapVal: sum.events_files_count, liveVal: evtDiff.live_count ?? sum.events_files_count, delta: getDeltaBadge(evtDiff) },
+                            { icon: '', label: 'مفتاح وصول', snapVal: sum.passwords_count, liveVal: pwdDiff.live_count ?? sum.passwords_count, delta: getDeltaBadge(pwdDiff) }
                         ];
 
                         grid.innerHTML = metrics.map(m => `
@@ -2420,7 +2420,7 @@ window.AdminApp = {
                         if (inLiveOnly.length > 0) {
                             diffHtml += `
                                 <div class="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30">
-                                    <p class="font-bold text-rose-300 mb-1.5">⚠️ مواد أُضيفت بعد هذا التاريخ (ستُحذف عند الاستعادة): <span class="text-white font-mono font-bold">${inLiveOnly.length}</span></p>
+                                    <p class="font-bold text-rose-300 mb-1.5"> مواد أُضيفت بعد هذا التاريخ (ستُحذف عند الاستعادة): <span class="text-white font-mono font-bold">${inLiveOnly.length}</span></p>
                                     <div class="flex flex-wrap gap-1.5">
                                         ${inLiveOnly.map(s => `<span class="px-2 py-0.5 rounded text-[11px] bg-rose-950/60 text-rose-200 border border-rose-500/30 font-medium">${this.escapeHtml(s.name)} <span class="text-[10px] text-rose-400">(${s.specialty} س${s.year} ت${s.semester})</span></span>`).join('')}
                                     </div>
@@ -2431,7 +2431,7 @@ window.AdminApp = {
                         if (inSnapOnly.length > 0) {
                             diffHtml += `
                                 <div class="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
-                                    <p class="font-bold text-emerald-300 mb-1.5">✨ مواد كانت موجودة وحُذفت لاحقاً (ستُسترجع): <span class="text-white font-mono font-bold">${inSnapOnly.length}</span></p>
+                                    <p class="font-bold text-emerald-300 mb-1.5"> مواد كانت موجودة وحُذفت لاحقاً (ستُسترجع): <span class="text-white font-mono font-bold">${inSnapOnly.length}</span></p>
                                     <div class="flex flex-wrap gap-1.5">
                                         ${inSnapOnly.map(s => `<span class="px-2 py-0.5 rounded text-[11px] bg-emerald-950/60 text-emerald-200 border border-emerald-500/30 font-medium">${this.escapeHtml(s.name)} <span class="text-[10px] text-emerald-400">(${s.specialty} س${s.year} ت${s.semester})</span></span>`).join('')}
                                     </div>
@@ -2442,14 +2442,14 @@ window.AdminApp = {
                         if (modified.length > 0) {
                             diffHtml += `
                                 <div class="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                                    <p class="font-bold text-amber-300 mb-1.5">✏️ مواد تم تعديل بياناتها لاحقاً (ستُعاد لقيم هذه اللحظة): <span class="text-white font-mono font-bold">${modified.length}</span></p>
+                                    <p class="font-bold text-amber-300 mb-1.5"> مواد تم تعديل بياناتها لاحقاً (ستُعاد لقيم هذه اللحظة): <span class="text-white font-mono font-bold">${modified.length}</span></p>
                                     <div class="space-y-1.5 mt-1">
                                         ${modified.map(m => `
                                             <div class="bg-black/30 p-2 rounded border border-amber-500/20 text-[11px]">
                                                 <strong class="text-white">${this.escapeHtml(m.name)}</strong>
                                                 <span class="text-gray-400 text-[10px] mr-1">(${m.specialty} س${m.year} ت${m.semester})</span>
                                                 <div class="flex flex-wrap gap-2 mt-1 text-gray-300">
-                                                    ${(m.changed_fields || []).map(f => `<span class="text-[10px] bg-amber-500/15 text-amber-200 px-1.5 py-0.5 rounded font-mono">${f.field}: ${this.escapeHtml(String(f.snap_value || '—'))} ⚡ حالي: ${this.escapeHtml(String(f.live_value || '—'))}</span>`).join('')}
+                                                    ${(m.changed_fields || []).map(f => `<span class="text-[10px] bg-amber-500/15 text-amber-200 px-1.5 py-0.5 rounded font-mono">${f.field}: ${this.escapeHtml(String(f.snap_value || '—'))}  حالي: ${this.escapeHtml(String(f.live_value || '—'))}</span>`).join('')}
                                                 </div>
                                             </div>
                                         `).join('')}
@@ -2461,7 +2461,7 @@ window.AdminApp = {
                         if (inLiveOnly.length === 0 && inSnapOnly.length === 0 && modified.length === 0) {
                             diffHtml = `
                                 <div class="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 flex items-center gap-2">
-                                    <span class="text-lg">✅</span>
+                                    <span class="text-lg"></span>
                                     <span><strong>حالة المواد والروابط متطابقة 100%</strong> مع الوضع الحالي المباشر بدون أي تغييرات مفقودة.</span>
                                 </div>
                             `;
@@ -2542,7 +2542,7 @@ window.AdminApp = {
         });
 
         // Group subjects by specialty
-        const specLabels = { dentistry: '🦷 طب الأسنان', medicine: '🩺 الطب البشري', 'pre-med': '🧬 المسار التحضيري' };
+        const specLabels = { dentistry: ' طب الأسنان', medicine: ' الطب البشري', 'pre-med': ' المسار التحضيري' };
 
         list.innerHTML = subjects.map(s => {
             const specLabel = specLabels[s.specialty] || s.specialty;
@@ -2558,16 +2558,16 @@ window.AdminApp = {
                             </div>
                             <h4 class="text-sm font-bold text-white leading-snug">${this.escapeHtml(s.name)}</h4>
                             <div class="flex flex-wrap items-center gap-3 text-xs text-gray-400 mt-1">
-                                <span>👨‍🏫 ${this.escapeHtml(s.doctor || 'غير محدد')}</span>
+                                <span>‍ ${this.escapeHtml(s.doctor || 'غير محدد')}</span>
                                 <span>•</span>
-                                <span>⏱ ${s.hours || 0} ساعات</span>
+                                <span>${s.hours || 0} ساعات</span>
                                 <span>•</span>
-                                <span>💯 ${s.marks || 100} درجة</span>
+                                <span> ${s.marks || 100} درجة</span>
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0 text-xs">
-                            ${s.chapters_folder_id ? `<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[10px]">📁 مجلد الشباتر</span>` : ''}
-                            ${s.materials_folder_id ? `<span class="px-2 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20 text-[10px]">📁 مجلد المراجع</span>` : ''}
+                            ${s.chapters_folder_id ? `<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[10px]"> مجلد الشباتر</span>` : ''}
+                            ${s.materials_folder_id ? `<span class="px-2 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20 text-[10px]"> مجلد المراجع</span>` : ''}
                         </div>
                     </div>
                 </div>
@@ -2628,7 +2628,7 @@ window.AdminApp = {
                     const contentText = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
                     return `
                         <div class="bg-black/30 border border-white/8 rounded-lg p-3 text-xs space-y-1">
-                            <p class="font-mono text-[11px] text-amber-300 font-bold">📢 ${k}</p>
+                            <p class="font-mono text-[11px] text-amber-300 font-bold"> ${k}</p>
                             <div class="text-gray-300 text-xs bg-black/40 p-2 rounded border border-white/5 max-h-32 overflow-y-auto">${contentText || 'إعلان فارغ'}</div>
                         </div>
                     `;
@@ -2658,7 +2658,7 @@ window.AdminApp = {
                         <div class="bg-black/30 border border-white/8 rounded-lg p-2.5 text-xs flex justify-between items-center gap-2">
                             <div>
                                 <h5 class="font-bold text-white">${this.escapeHtml(e.title || 'حدث')}</h5>
-                                <p class="text-[11px] text-gray-400 mt-0.5">🗓 ميلادي: ${e.date || '—'} | 🌙 هجري: ${e.hijri || '—'}</p>
+                                <p class="text-[11px] text-gray-400 mt-0.5"> ميلادي: ${e.date || '—'} |  هجري: ${e.hijri || '—'}</p>
                             </div>
                             <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-500/15 text-sky-300 border border-sky-500/25 shrink-0">${e.type || 'عام'}</span>
                         </div>
@@ -2733,7 +2733,7 @@ window.AdminApp = {
         .then(res => {
             this.showLoading(false);
             if (res.success) {
-                this.showToast('✅ ' + (res.message || 'تمت استعادة النظام بنجاح!'));
+                this.showToast(' ' + (res.message || 'تمت استعادة النظام بنجاح!'));
                 this.loadHistory();
             } else {
                 this.showToast(res.message || 'فشلت عملية الاستعادة', true);
@@ -2763,7 +2763,7 @@ window.AdminApp = {
         .then(res => {
             this.showLoading(false);
             if (res.success) {
-                this.showToast('↩ ' + (res.message || 'تم التراجع عن الاستعادة وإعادة النظام للحالة السابقة!'));
+                this.showToast('' + (res.message || 'تم التراجع عن الاستعادة وإعادة النظام للحالة السابقة!'));
                 this.loadHistory();
             } else {
                 this.showToast(res.message || 'فشلت عملية التراجع', true);
@@ -2846,8 +2846,8 @@ window.AdminApp = {
                                                 <h4 class="font-bold text-white text-base truncate">${this.escapeHtml(k.label)}</h4>
                                                 <div class="flex items-center gap-2 mt-1">
                                                     <span id="gemini-key-display-${k.index}" class="text-xs font-mono text-gray-400 select-all">${k.key_masked}</span>
-                                                    <button onclick="AdminApp.toggleGeminiKeyMask(${k.index})" class="text-gray-400 hover:text-white text-xs" title="إظهار / إخفاء المفتاح">👁️</button>
-                                                    <button onclick="AdminApp.copyGeminiKey(${k.index})" class="text-gray-400 hover:text-white text-xs" title="نسخ المفتاح">📋</button>
+                                                    <button onclick="AdminApp.toggleGeminiKeyMask(${k.index})" class="text-gray-400 hover:text-white text-xs" title="إظهار / إخفاء المفتاح"></button>
+                                                    <button onclick="AdminApp.copyGeminiKey(${k.index})" class="text-gray-400 hover:text-white text-xs" title="نسخ المفتاح"></button>
                                                 </div>
                                             </div>
                                             <div class="shrink-0 mr-2">${statusBadge}</div>
@@ -2871,13 +2871,13 @@ window.AdminApp = {
                                         </div>
                                         <div class="flex gap-1.5 pt-1">
                                             <button onclick="AdminApp.testGeminiKeys(${k.index})" class="btn btn-secondary text-xs px-2.5 py-1 flex-1 flex items-center justify-center gap-1">
-                                                <span>🔄</span><span>فحص</span>
+                                                <span>فحص</span>
                                             </button>
                                             <button onclick="AdminApp.openEditGeminiKeyModal(${k.index})" class="btn btn-secondary text-xs px-2.5 py-1 flex-1 flex items-center justify-center gap-1 border-white/10 hover:border-white/30 text-white">
-                                                <span>✏️</span><span>تعديل</span>
+                                                <span>تعديل</span>
                                             </button>
                                             <button onclick="AdminApp.deleteGeminiKey(${k.index})" class="btn btn-danger text-xs px-2.5 py-1 flex items-center justify-center" title="حذف المفتاح">
-                                                <span>🗑️</span>
+                                                
                                             </button>
                                         </div>
                                     </div>
@@ -3164,7 +3164,7 @@ window.AdminApp = {
 
         let html = '';
         list.forEach(q => {
-            let rawChap = (q.chapter_name || '').replace(/^[📌📁\s\-\-]+/, '').trim();
+            let rawChap = (q.chapter_name || '').replace(/^[\s\-\-]+/, '').trim();
             if (!rawChap || rawChap === 'المحاضرة العامة' || rawChap === 'عام') rawChap = 'ملف المحاضرة';
 
             let chapList = rawChap.split(/[,•+&\n|]/).map(s => s.trim()).filter(Boolean);
@@ -3726,7 +3726,7 @@ window.AdminApp = {
                 if (data.success) {
                     successCount++;
                     if (consoleEl) {
-                        consoleEl.innerHTML += `<div class="text-emerald-400 font-medium">[${new Date().toLocaleTimeString()}] ✓ (${num}/${uncached.length}) ${u.subject_name}: ${u.file_name}</div>`;
+                        consoleEl.innerHTML += `<div class="text-emerald-400 font-medium">[${new Date().toLocaleTimeString()}]  (${num}/${uncached.length}) ${u.subject_name}: ${u.file_name}</div>`;
                         consoleEl.scrollTop = consoleEl.scrollHeight;
                     }
                     if (data.data && data.data.stats) {
@@ -3735,14 +3735,14 @@ window.AdminApp = {
                 } else {
                     failCount++;
                     if (consoleEl) {
-                        consoleEl.innerHTML += `<div class="text-red-400">[${new Date().toLocaleTimeString()}] ⚠ (${num}/${uncached.length}) ${u.file_name}: ${data.message || 'خطأ'}</div>`;
+                        consoleEl.innerHTML += `<div class="text-red-400">[${new Date().toLocaleTimeString()}]  (${num}/${uncached.length}) ${u.file_name}: ${data.message || 'خطأ'}</div>`;
                         consoleEl.scrollTop = consoleEl.scrollHeight;
                     }
                 }
             } catch (err) {
                 failCount++;
                 if (consoleEl) {
-                    consoleEl.innerHTML += `<div class="text-red-400">[${new Date().toLocaleTimeString()}] ⚠ (${num}/${uncached.length}) ${u.file_name}: تعذر المعالجة (${err.message})</div>`;
+                    consoleEl.innerHTML += `<div class="text-red-400">[${new Date().toLocaleTimeString()}]  (${num}/${uncached.length}) ${u.file_name}: تعذر المعالجة (${err.message})</div>`;
                     consoleEl.scrollTop = consoleEl.scrollHeight;
                 }
             }
