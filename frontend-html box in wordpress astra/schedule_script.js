@@ -264,9 +264,9 @@ const ScheduleApp = {
 
                 let deleteBtn = '';
                 if (this.adminPassword) {
-                    if (!ev.is_global || this.scheduleId === 'global') {
-                        deleteBtn = `<button onclick="ScheduleApp.deleteEvent('${dentEscapeHtml(ev.id)}')" style="position: absolute; left: 15px; top: 15px; background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; width: 26px; height: 26px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; padding: 0; line-height: 1; transition: background 0.2s;" title="حذف الحدث">&times;</button>`;
-                    }
+                    const isGlobal = !!ev.is_global;
+                    const eventSchedId = ev.schedule_id || (isGlobal ? 'global' : this.scheduleId);
+                    deleteBtn = `<button onclick="ScheduleApp.deleteEvent('${dentEscapeHtml(ev.id)}', ${isGlobal ? 'true' : 'false'}, '${dentEscapeHtml(eventSchedId)}')" style="position: absolute; left: 12px; top: 12px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; padding: 0; line-height: 1; transition: all 0.2s; z-index: 10;" onmouseover="this.style.background='rgba(239,68,68,0.3)'; this.style.transform='scale(1.1)';" onmouseout="this.style.background='rgba(239,68,68,0.15)'; this.style.transform='none';" title="حذف هذا الحدث">&times;</button>`;
                 }
 
                 card.innerHTML = `
@@ -572,8 +572,9 @@ const ScheduleApp = {
             alert('تعذر الاتصال بالخادم لحفظ الحدث.');
         });
     },
-    deleteEvent: function(id) {
+    deleteEvent: function(id, isGlobal, targetScheduleId) {
         if(!confirm('هل أنت متأكد من حذف هذا الحدث؟')) return;
+        const schedId = (isGlobal || targetScheduleId === 'global') ? 'global' : (targetScheduleId || this.scheduleId);
         fetch(this.apiUrl, {
             method: 'DELETE',
             headers: {
@@ -581,15 +582,17 @@ const ScheduleApp = {
             },
             body: JSON.stringify({
                 password: this.adminPassword,
-                schedule_id: this.scheduleId,
+                schedule_id: schedId,
+                is_global: !!isGlobal,
                 id: id
             })
         }).then(r => r.json()).then(res => {
             if(res.success) {
                 sessionStorage.removeItem('dent2025_schedule_' + this.scheduleId);
+                sessionStorage.removeItem('dent2025_schedule_global');
                 this.init(); // Reload
             } else {
-                alert('فشل الحذف: ' + res.message);
+                alert('فشل الحذف: ' + (res.message || 'Unknown error'));
             }
         }).catch(err => {
             console.error('Schedule delete error:', err);

@@ -188,12 +188,33 @@ if ($method === 'POST') {
 
     if ($action === 'delete') {
         $deleteId = $input['id'] ?? '';
+        $deleted = false;
         if ($deleteId) {
-            $data = array_filter($data, function($ev) use ($deleteId) {
-                return $ev['id'] !== $deleteId;
-            });
-            $data = array_values($data); // re-index
-            file_put_contents($dataFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+            if (file_exists($dataFile)) {
+                $data = json_decode(file_get_contents($dataFile), true) ?: [];
+                $origCount = count($data);
+                $data = array_values(array_filter($data, function($ev) use ($deleteId) {
+                    return ($ev['id'] ?? '') !== $deleteId;
+                }));
+                if (count($data) < $origCount) {
+                    file_put_contents($dataFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+                    $deleted = true;
+                }
+            }
+
+            if (!$deleted && $dataFile !== $globalFile && file_exists($globalFile)) {
+                if (dent2025_check_rbac_permission($password, 'global_events')) {
+                    $gData = json_decode(file_get_contents($globalFile), true) ?: [];
+                    $origCount = count($gData);
+                    $gData = array_values(array_filter($gData, function($ev) use ($deleteId) {
+                        return ($ev['id'] ?? '') !== $deleteId;
+                    }));
+                    if (count($gData) < $origCount) {
+                        file_put_contents($globalFile, json_encode($gData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+                        $deleted = true;
+                    }
+                }
+            }
         }
         
         $pass_info = function_exists('dent2025_get_passkey_info') ? dent2025_get_passkey_info($password) : null;
@@ -242,16 +263,34 @@ if ($method === 'POST') {
 
 // 3. DELETE: Remove an event
 if ($method === 'DELETE') {
-    $data = file_exists($dataFile) ? json_decode(file_get_contents($dataFile), true) : [];
-    if (!is_array($data)) $data = [];
-
     $id = $input['id'] ?? '';
+    $deleted = false;
     if ($id) {
-        $data = array_filter($data, function($ev) use ($id) {
-            return $ev['id'] !== $id;
-        });
-        $data = array_values($data); // re-index
-        file_put_contents($dataFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+        if (file_exists($dataFile)) {
+            $data = json_decode(file_get_contents($dataFile), true) ?: [];
+            $origCount = count($data);
+            $data = array_values(array_filter($data, function($ev) use ($id) {
+                return ($ev['id'] ?? '') !== $id;
+            }));
+            if (count($data) < $origCount) {
+                file_put_contents($dataFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+                $deleted = true;
+            }
+        }
+
+        if (!$deleted && $dataFile !== $globalFile && file_exists($globalFile)) {
+            if (dent2025_check_rbac_permission($password, 'global_events')) {
+                $gData = json_decode(file_get_contents($globalFile), true) ?: [];
+                $origCount = count($gData);
+                $gData = array_values(array_filter($gData, function($ev) use ($id) {
+                    return ($ev['id'] ?? '') !== $id;
+                }));
+                if (count($gData) < $origCount) {
+                    file_put_contents($globalFile, json_encode($gData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+                    $deleted = true;
+                }
+            }
+        }
     }
     
     $pass_info = function_exists('dent2025_get_passkey_info') ? dent2025_get_passkey_info($password) : null;
