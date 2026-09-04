@@ -3,32 +3,32 @@
 
 /* Dent2025 AI Exam Portal - Unified Site Design System */
 .dent-quiz-container { max-width: 850px; margin: 20px auto; padding: 0 10px; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif; color: #e2e8f0; direction: rtl; }
-.dent-quiz-card { background: #1e1e1e; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 25px; }
-.dent-quiz-header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 15px; font-weight: 700; font-size: 1.35rem; background: linear-gradient(90deg, #e2e8f0, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.dent-quiz-card { background: #1e1e1e; padding: 20px 18px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 20px; }
+.dent-quiz-header { text-align: center; margin-bottom: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 10px; font-weight: 700; font-size: 1.25rem; background: linear-gradient(90deg, #e2e8f0, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-/* Main Mode Tabs - Identical to Site Tab Switcher */
-.dent-quiz-card .dent-tab-switcher, .dent-tab-switcher { display: flex; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 6px; gap: 6px; margin-bottom: 22px; }
-.dent-quiz-card .dent-tab-btn, .dent-tab-btn { flex: 1 1 auto; min-width: 0; padding: 10px 14px; background: transparent; border: 1px solid transparent; border-radius: 8px; color: #94a3b8; font-size: 0.88rem; font-weight: 600; line-height: 1.35; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; user-select: none; white-space: normal; word-break: normal; box-sizing: border-box; }
+/* Main Mode Tabs - Compact horizontal on all screens */
+.dent-quiz-card .dent-tab-switcher, .dent-tab-switcher { display: flex; flex-direction: row; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 4px; gap: 4px; margin-bottom: 14px; }
+.dent-quiz-card .dent-tab-btn, .dent-tab-btn { flex: 1 1 50%; min-width: 0; padding: 8px 10px; background: transparent; border: 1px solid transparent; border-radius: 6px; color: #94a3b8; font-size: 0.82rem; font-weight: 600; line-height: 1.35; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; user-select: none; box-sizing: border-box; }
 .dent-quiz-card .dent-tab-btn:hover, .dent-tab-btn:hover { color: #f8fafc; background: rgba(255, 255, 255, 0.04); }
 .dent-quiz-card .dent-tab-btn.active, .dent-tab-btn.active { color: #ffffff; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.12); }
 
-.dent-quiz-form-group { margin-bottom: 18px; }
-.dent-quiz-label { display: block; font-weight: 500; margin-bottom: 8px; color: #9ca3af; font-size: 0.85rem; }
-.dent-quiz-input { width: 100% !important; height: 44px !important; min-height: 44px !important; max-height: none !important; padding: 0 14px !important; line-height: 42px !important; background: #121212 !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: 10px !important; box-sizing: border-box !important; color: #fff !important; transition: all 0.2s !important; font-family: inherit !important; font-size: 0.9rem !important; vertical-align: middle !important; margin: 0 !important; }
-select.dent-quiz-input { appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important; background-repeat: no-repeat !important; background-position: left 18px center !important; background-size: 16px 16px !important; padding-top: 0 !important; padding-bottom: 0 !important; padding-left: 42px !important; padding-right: 16px !important; height: 44px !important; line-height: 42px !important; cursor: pointer !important; }
-select.dent-quiz-input option { background-color: #18181b !important; color: #f8fafc !important; padding: 10px !important; }
-textarea.dent-quiz-input { height: auto !important; min-height: 70px !important; padding: 10px 14px !important; line-height: 1.5 !important; }
-.dent-quiz-input:focus { border-color: rgba(255, 255, 255, 0.35) !important; outline: none !important; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05) !important; }
+.dent-quiz-form-group { margin-bottom: 12px; }
+.dent-quiz-label { display: block; font-weight: 500; margin-bottom: 5px; color: #9ca3af; font-size: 0.82rem; }
+.dent-quiz-input { width: 100% !important; height: 38px !important; min-height: 38px !important; max-height: none !important; padding: 0 12px !important; line-height: 36px !important; background: #121212 !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: 8px !important; box-sizing: border-box !important; color: #fff !important; transition: all 0.2s !important; font-family: inherit !important; font-size: 0.88rem !important; vertical-align: middle !important; margin: 0 !important; }
+select.dent-quiz-input { appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important; background-repeat: no-repeat !important; background-position: left 14px center !important; background-size: 14px 14px !important; padding-top: 0 !important; padding-bottom: 0 !important; padding-left: 36px !important; padding-right: 12px !important; height: 38px !important; line-height: 36px !important; cursor: pointer !important; }
+select.dent-quiz-input option { background-color: #18181b !important; color: #f8fafc !important; padding: 8px !important; }
+textarea.dent-quiz-input { height: auto !important; min-height: 60px !important; padding: 8px 12px !important; line-height: 1.4 !important; }
+.dent-quiz-input:focus { border-color: rgba(255, 255, 255, 0.35) !important; outline: none !important; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05) !important; }
 
 /* Sub-Segmented Control (Folder Switching) */
-.dent-sub-tabs { display: flex; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 4px; gap: 4px; margin-bottom: 12px; }
-.dent-sub-tab-btn { flex: 1; padding: 8px 12px; background: transparent; border: 1px solid transparent; border-radius: 6px; color: #94a3b8; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; text-align: center; }
+.dent-sub-tabs { display: flex; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 3px; gap: 3px; margin-bottom: 8px; }
+.dent-sub-tab-btn { flex: 1; padding: 5px 8px; background: transparent; border: 1px solid transparent; border-radius: 5px; color: #94a3b8; font-size: 0.78rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; text-align: center; }
 .dent-sub-tab-btn:hover { background: rgba(255, 255, 255, 0.04); color: #e2e8f0; }
 .dent-sub-tab-btn.active { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.12); color: #ffffff; font-weight: 600; }
 
 /* Difficulty Selector */
-.dent-difficulty-group { display: flex; gap: 8px; margin-top: 4px; }
-.dent-diff-btn { flex: 1; padding: 9px 10px; background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: #94a3b8; font-size: 0.83rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; }
+.dent-difficulty-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 3px; }
+.dent-diff-btn { padding: 7px 6px; background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: #94a3b8; font-size: 0.78rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; }
 .dent-diff-btn:hover { background: rgba(255, 255, 255, 0.05); color: #cbd5e1; }
 .dent-diff-btn.active { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); color: #ffffff; font-weight: 600; }
 .dent-diff-btn.active[data-diff="easy"] { border-color: rgba(34, 197, 94, 0.35); color: #a7f3d0; }
@@ -36,31 +36,31 @@ textarea.dent-quiz-input { height: auto !important; min-height: 70px !important;
 .dent-diff-btn.active[data-diff="hard"] { border-color: rgba(239, 68, 68, 0.35); color: #fecaca; }
 
 /* Upload Dropzone */
-.dent-upload-zone { border: 1px dashed rgba(255, 255, 255, 0.15); background: rgba(0, 0, 0, 0.25); border-radius: 8px; padding: 18px 14px; text-align: center; cursor: pointer; transition: all 0.2s ease; position: relative; }
+.dent-upload-zone { border: 1px dashed rgba(255, 255, 255, 0.15); background: rgba(0, 0, 0, 0.2); border-radius: 6px; padding: 9px 12px; text-align: center; cursor: pointer; transition: all 0.2s ease; position: relative; }
 .dent-upload-zone:hover, .dent-upload-zone.dragover { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.03); }
-.dent-upload-title { font-weight: 600; font-size: 0.88rem; color: #e2e8f0; margin-bottom: 3px; }
-.dent-upload-sub { font-size: 0.75rem; color: #64748b; }
-.dent-uploaded-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.dent-file-chip { display: flex; align-items: center; gap: 6px; background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; color: #cbd5e1; max-width: 100%; word-break: break-all; }
-.dent-chip-remove { cursor: pointer; color: #94a3b8; font-weight: bold; font-size: 0.9rem; line-height: 1; padding: 0 2px; }
+.dent-upload-title { font-weight: 600; font-size: 0.82rem; color: #e2e8f0; margin-bottom: 2px; }
+.dent-upload-sub { font-size: 0.72rem; color: #64748b; }
+.dent-uploaded-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.dent-file-chip { display: flex; align-items: center; gap: 6px; background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); padding: 4px 8px; border-radius: 5px; font-size: 0.74rem; color: #cbd5e1; max-width: 100%; word-break: break-all; }
+.dent-chip-remove { cursor: pointer; color: #94a3b8; font-weight: bold; font-size: 0.85rem; line-height: 1; padding: 0 2px; }
 .dent-chip-remove:hover { color: #f87171; }
 
-/* Checkbox Grid */
-.dent-quiz-checkbox-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; background: transparent; padding: 0; border: none; }
-.dent-quiz-checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 0.84rem; cursor: pointer; color: #cbd5e1; background: #121212; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.2s; user-select: none; }
+/* Checkbox Grid: 2 columns on all devices! */
+.dent-quiz-checkbox-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: transparent; padding: 0; border: none; }
+.dent-quiz-checkbox-label { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; cursor: pointer; color: #cbd5e1; background: #121212; padding: 6px 9px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.2s; user-select: none; box-sizing: border-box; margin: 0; }
 .dent-quiz-checkbox-label:hover { border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.03); }
-.dent-quiz-checkbox-label input { width: 15px; height: 15px; accent-color: #94a3b8; cursor: pointer; }
+.dent-quiz-checkbox-label input { width: 14px; height: 14px; accent-color: #94a3b8; cursor: pointer; margin: 0; flex-shrink: 0; }
 
 /* Standard Site Buttons */
-.dent-quiz-btn { width: 100%; padding: 12px; background: #27272a; color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; font-size: 0.95rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
+.dent-quiz-btn { width: 100%; height: 40px; padding: 0 14px; background: #27272a; color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; font-size: 0.9rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s; margin-top: 8px; display: flex; align-items: center; justify-content: center; }
 .dent-quiz-btn:hover { background: #3f3f46; border-color: rgba(255, 255, 255, 0.25); }
 .dent-quiz-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.dent-btn-secondary { background: rgba(255, 255, 255, 0.05); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.1); }
+.dent-btn-secondary { background: rgba(255, 255, 255, 0.05); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.1); height: auto; padding: 6px 10px; }
 .dent-btn-secondary:hover { background: rgba(255, 255, 255, 0.1); color: #ffffff; }
 
 /* Loader */
-.dent-quiz-loader { display: none; text-align: center; margin-top: 20px; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); }
-.dent-quiz-spinner { border: 3px solid rgba(255,255,255,0.08); border-top: 3px solid #cbd5e1; border-radius: 50%; width: 30px; height: 30px; animation: dent-spin 0.9s linear infinite; margin: 0 auto 10px; }
+.dent-quiz-loader { display: none; text-align: center; margin-top: 16px; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); }
+.dent-quiz-spinner { border: 3px solid rgba(255,255,255,0.08); border-top: 3px solid #cbd5e1; border-radius: 50%; width: 28px; height: 28px; animation: dent-spin 0.9s linear infinite; margin: 0 auto 8px; }
 @keyframes dent-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 /* Player Area */
@@ -68,26 +68,26 @@ textarea.dent-quiz-input { height: auto !important; min-height: 70px !important;
 .dent-player-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
 .dent-player-controls button { flex: 1; min-width: 140px; padding: 9px 12px; font-size: 0.85rem; }
 
-.dent-q-block { background: rgba(0, 0, 0, 0.2); padding: 20px; border-radius: 10px; margin-bottom: 18px; border: 1px solid rgba(255,255,255,0.06); }
-.dent-q-text { font-size: 1rem; font-weight: 600; margin-bottom: 14px; color: #f8fafc; line-height: 1.6; }
+.dent-q-block { background: rgba(0, 0, 0, 0.2); padding: 16px; border-radius: 8px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.06); }
+.dent-q-text { font-size: 0.96rem; font-weight: 600; margin-bottom: 12px; color: #f8fafc; line-height: 1.55; }
 .dent-q-badge-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
 .dent-q-tag { font-size: 0.74rem; padding: 2px 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.06); }
 
 .dent-opt-list { display: flex; flex-direction: column; gap: 8px; }
-.dent-opt-item { display: flex; align-items: center; padding: 10px 14px; background: #121212; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 0.92rem; color: #cbd5e1; }
+.dent-opt-item { display: flex; align-items: center; padding: 9px 12px; background: #121212; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 0.88rem; color: #cbd5e1; }
 .dent-opt-item:hover { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.15); }
-.dent-opt-item input[type="radio"] { margin-left: 10px; width: 15px; height: 15px; accent-color: #94a3b8; cursor: pointer; } 
+.dent-opt-item input[type="radio"] { margin-left: 10px; width: 14px; height: 14px; accent-color: #94a3b8; cursor: pointer; } 
 .dent-opt-item.selected { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.06); color: #fff; }
 
 /* Feedback Styles */
 .dent-opt-item.correct { border-color: rgba(34, 197, 94, 0.35) !important; background: rgba(34, 197, 94, 0.04) !important; color: #a7f3d0 !important; font-weight: 500; }
 .dent-opt-item.wrong { border-color: rgba(239, 68, 68, 0.3) !important; background: rgba(239, 68, 68, 0.03) !important; color: #fca5a5 !important; }
-.dent-explanation-box { display: none; margin-top: 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 12px; font-size: 0.86rem; color: #cbd5e1; line-height: 1.5; }
+.dent-explanation-box { display: none; margin-top: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 10px; font-size: 0.82rem; color: #cbd5e1; line-height: 1.5; }
 
-.dent-score-board { text-align: center; font-size: 1.1rem; font-weight: 600; color: #f8fafc; margin-bottom: 22px; display: none; padding: 18px; background: rgba(255, 255, 255, 0.02); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.06); }
+.dent-score-board { text-align: center; font-size: 1.05rem; font-weight: 600; color: #f8fafc; margin-bottom: 18px; display: none; padding: 14px; background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06); }
 
 /* Minimal Navigator Bar */
-.dent-nav-bar { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 18px; padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06); justify-content: center; align-items: center; }
+.dent-nav-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; padding: 8px; background: rgba(0, 0, 0, 0.2); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06); justify-content: center; align-items: center; }
 .dent-nav-pill { width: 11px; height: 11px; min-width: 11px; padding: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.15); cursor: pointer; transition: all 0.2s; position: relative; }
 .dent-nav-pill:hover { background: rgba(255, 255, 255, 0.3); border-color: rgba(255, 255, 255, 0.35); }
 .dent-nav-pill.answered { background: #475569 !important; border-color: #64748b !important; }
@@ -97,16 +97,16 @@ textarea.dent-quiz-input { height: auto !important; min-height: 70px !important;
 .dent-q-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 
 /* Saved Exams Bank Section */
-.dent-bank-header { font-size: 1.1rem; font-weight: 700; color: #f8fafc; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
-.dent-bank-filters { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
-.dent-bank-filters select, .dent-bank-filters input { flex: 1; min-width: 150px; }
+.dent-bank-header { font-size: 1.05rem; font-weight: 700; color: #f8fafc; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+.dent-bank-filters { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.dent-bank-filters select, .dent-bank-filters input { flex: 1; min-width: 140px; }
 
-.dent-bank-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
-.dent-bank-card { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s, border-color 0.2s; }
+.dent-bank-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.dent-bank-card { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s, border-color 0.2s; }
 .dent-bank-card:hover { border-color: rgba(255, 255, 255, 0.18); transform: translateY(-2px); }
-.dent-bank-title { font-weight: 700; font-size: 0.95rem; color: #f8fafc; margin-bottom: 5px; line-height: 1.4; }
-.dent-bank-sub { font-size: 0.78rem; color: #94a3b8; margin-bottom: 6px; font-weight: 500; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.dent-bank-tag { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
+.dent-bank-title { font-weight: 700; font-size: 0.92rem; color: #f8fafc; margin-bottom: 4px; line-height: 1.4; }
+.dent-bank-sub { font-size: 0.76rem; color: #94a3b8; margin-bottom: 6px; font-weight: 500; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.dent-bank-tag { font-size: 0.68rem; padding: 1px 6px; border-radius: 4px; font-weight: 500; }
 .dent-tag-pastexam { background: rgba(245, 158, 11, 0.1); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.2); }
 .dent-tag-ai { background: rgba(59, 130, 246, 0.1); color: #bfdbfe; border: 1px solid rgba(59, 130, 246, 0.2); }
 .dent-tag-diff-easy { background: rgba(34, 197, 94, 0.08); color: #a7f3d0; }
@@ -114,13 +114,17 @@ textarea.dent-quiz-input { height: auto !important; min-height: 70px !important;
 .dent-tag-diff-hard { background: rgba(239, 68, 68, 0.08); color: #fecaca; }
 .dent-q-converted-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.28); color: #fde047; font-size: 0.72rem; font-weight: 600; border-radius: 4px; }
 
-.dent-bank-meta { display: flex; align-items: center; justify-content: space-between; font-size: 0.76rem; color: #64748b; margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.04); }
-.dent-bank-actions { display: flex; gap: 6px; margin-top: 10px; }
-.dent-bank-actions button { padding: 7px 11px; font-size: 0.82rem; border-radius: 6px; }
+.dent-bank-meta { display: flex; align-items: center; justify-content: space-between; font-size: 0.74rem; color: #64748b; margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.04); }
+.dent-bank-actions { display: flex; gap: 6px; margin-top: 8px; }
+.dent-bank-actions button { padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; }
 
+/* Enhanced Chapters Dropdown Trigger */
+details.dent-chapters-details { margin-top: 8px; margin-bottom: 8px; background: #18181b; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; overflow: hidden; }
+details.dent-chapters-details summary { padding: 6px 10px; font-size: 0.76rem; font-weight: 500; color: #cbd5e1; cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; background: rgba(255, 255, 255, 0.02); transition: background 0.2s, border-color 0.2s; list-style: none; }
+details.dent-chapters-details summary:hover { background: rgba(255, 255, 255, 0.05); color: #ffffff; }
+details.dent-chapters-details[open] summary { border-bottom: 1px solid rgba(255, 255, 255, 0.06); background: rgba(255, 255, 255, 0.04); }
 details.dent-chapters-details[open] summary .dent-arrow { transform: rotate(180deg); }
 details.dent-chapters-details summary::-webkit-details-marker { display: none; }
-details.dent-chapters-details summary { list-style: none; }
 
 /* Scrollbars */
 .dent-chapters-details div::-webkit-scrollbar, #dq-chapters-container::-webkit-scrollbar, #dq-target-chaps-container::-webkit-scrollbar, #dq-pastexam-drive-container::-webkit-scrollbar {
@@ -140,11 +144,13 @@ details.dent-chapters-details summary { list-style: none; }
 }
 
 @media (max-width: 650px) {
-    .dent-quiz-card { padding: 16px 12px; }
-    .dent-quiz-checkbox-group { grid-template-columns: 1fr; }
-    .dent-bank-filters { flex-direction: column; }
-    .dent-quiz-card .dent-tab-switcher, .dent-tab-switcher { flex-direction: column; gap: 6px; }
-    .dent-quiz-card .dent-tab-btn, .dent-tab-btn { width: 100%; padding: 10px 12px; font-size: 0.85rem; }
+    .dent-quiz-card { padding: 14px 10px; }
+    .dent-quiz-header { font-size: 1.15rem; margin-bottom: 12px; padding-bottom: 8px; }
+    .dent-quiz-card .dent-tab-switcher, .dent-tab-switcher { gap: 4px; padding: 3px; flex-direction: row; }
+    .dent-quiz-card .dent-tab-btn, .dent-tab-btn { width: auto; flex: 1 1 50%; padding: 7px 6px; font-size: 0.78rem; }
+    .dent-quiz-checkbox-group { grid-template-columns: 1fr 1fr; gap: 5px; }
+    .dent-diff-btn { padding: 7px 4px; font-size: 0.75rem; }
+    .dent-bank-filters { flex-direction: column; gap: 6px; }
 }
 </style>
 
@@ -182,16 +188,16 @@ details.dent-chapters-details summary { list-style: none; }
                 </div>
 
                 <!-- Google Drive Files Container with Persistent Selection State -->
-                <div style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 12px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; flex-wrap: wrap;">
-                        <span id="dq-selection-summary" style="font-size: 0.84rem; color: #94a3b8;">لم يتم تحديد أي ملفات بعد</span>
-                        <div style="display: flex; gap: 6px;">
-                            <button type="button" id="dq-select-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 5px 10px; font-size: 0.78rem;" disabled>تحديد المعروض</button>
-                            <button type="button" id="dq-clear-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 5px 10px; font-size: 0.78rem;" disabled>إلغاء التحديد</button>
+                <div style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 6px; flex-wrap: wrap;">
+                        <span id="dq-selection-summary" style="font-size: 0.8rem; color: #94a3b8;">لم يتم تحديد أي ملفات بعد</span>
+                        <div style="display: flex; gap: 5px;">
+                            <button type="button" id="dq-select-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem;" disabled>تحديد المعروض</button>
+                            <button type="button" id="dq-clear-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem;" disabled>إلغاء التحديد</button>
                         </div>
                     </div>
-                    <div id="dq-chapters-container" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-left: 3px;">
-                        <div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 12px;">اختر المادة أولاً لتحميل الملفات...</div>
+                    <div id="dq-chapters-container" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-left: 2px;">
+                        <div style="color: #64748b; font-size: 0.82rem; text-align: center; padding: 10px;">اختر المادة أولاً لتحميل الملفات...</div>
                     </div>
                 </div>
             </div>
@@ -217,24 +223,26 @@ details.dent-chapters-details summary { list-style: none; }
                 </div>
             </div>
 
-            <div class="dent-quiz-form-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <div style="flex: 2; min-width: 160px;">
+            <div class="dent-quiz-form-group" style="display: grid; grid-template-columns: 2fr 1fr; gap: 6px; margin-bottom: 6px;">
+                <div>
                     <label class="dent-quiz-label">عنوان الاختبار:</label>
                     <input type="text" id="dq-quiz-name" class="dent-quiz-input" placeholder="مثال: اختبار الفاينل - شابتر 1">
                 </div>
-                <div style="flex: 1; min-width: 85px;">
+                <div>
                     <label class="dent-quiz-label">عدد الأسئلة:</label>
-                    <input type="number" id="dq-num-qs" class="dent-quiz-input" value="10" min="1" max="100" placeholder="10 إلى 100">
-                </div>
-                <div style="flex: 1.2; min-width: 120px;">
-                    <label class="dent-quiz-label">الصفحات / الوحدة (اختياري):</label>
-                    <input type="text" id="dq-page-range" class="dent-quiz-input" placeholder="مثال: 35-55 أو Unit 3">
+                    <input type="number" id="dq-num-qs" class="dent-quiz-input" value="10" min="1" max="100" placeholder="10 إلى 100" style="text-align: center;">
                 </div>
             </div>
 
-            <div class="dent-quiz-form-group">
-                <label class="dent-quiz-label">توجيهات مخصصة (اختياري):</label>
-                <input type="text" id="dq-focus" class="dent-quiz-input" placeholder="مثال: ركز على أسئلة القواعد والمفاهيم الأساسية">
+            <div class="dent-quiz-form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
+                <div>
+                    <label class="dent-quiz-label">الصفحات / الوحدة (اختياري):</label>
+                    <input type="text" id="dq-page-range" class="dent-quiz-input" placeholder="مثال: 35-55 أو Unit 3">
+                </div>
+                <div>
+                    <label class="dent-quiz-label">توجيهات مخصصة (اختياري):</label>
+                    <input type="text" id="dq-focus" class="dent-quiz-input" placeholder="مثال: ركز على أسئلة القواعد">
+                </div>
             </div>
 
             <div class="dent-quiz-form-group" style="margin-bottom: 6px;">
@@ -244,27 +252,27 @@ details.dent-chapters-details summary { list-style: none; }
                     <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-except" checked> أسئلة الاستثناء (Except)</label>
                     <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-cases"> حالات سريرية (Cases)</label>
                     <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-statements"> العبارتين (Statements)</label>
-                    <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-tf"> صح أم خطأ (True/False)</label>
+                    <label class="dent-quiz-checkbox-label" style="grid-column: 1 / -1;"><input type="checkbox" id="dq-type-tf"> صح أم خطأ (True/False)</label>
                 </div>
             </div>
         </div>
 
         <!-- ================= MODE 2: PAST EXAMS SMART FILTER ================= -->
         <div id="dq-panel-pastexam" style="display: none;">
-            <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.83rem; color: #cbd5e1; line-height: 1.5;">
+            <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; font-size: 0.78rem; color: #cbd5e1; line-height: 1.4;">
                 <strong>التصفية الذكية:</strong> حدد الشابترات المستهدفة التي تذاكرها، ثم اختر ملف الاختبار السابق من Google Drive أو ارفعه من جهازك. سيقوم الذكاء الاصطناعي بفرز واستخراج الأسئلة التابعة للشابترات المحددة فقط.
             </div>
 
             <!-- Target Chapters Selection -->
             <div class="dent-quiz-form-group">
                 <label class="dent-quiz-label">1. حدد الشابترات المستهدفة (التي تريد استخراج أسئلتها فقط):</label>
-                <div style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px;">
-                    <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-                        <button type="button" id="dq-target-select-all" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 5px 9px; font-size: 0.78rem; flex: 1;">تحديد الكل</button>
-                        <button type="button" id="dq-target-deselect-all" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 5px 9px; font-size: 0.78rem; flex: 1;">إلغاء التحديد</button>
+                <div style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 8px 10px;">
+                    <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                        <button type="button" id="dq-target-select-all" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem; flex: 1;">تحديد الكل</button>
+                        <button type="button" id="dq-target-deselect-all" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem; flex: 1;">إلغاء التحديد</button>
                     </div>
-                    <div id="dq-target-chaps-container" style="max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px;">
-                        <div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 8px;">اختر المادة أولاً لعرض الشابترات...</div>
+                    <div id="dq-target-chaps-container" style="max-height: 130px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;">
+                        <div style="color: #64748b; font-size: 0.82rem; text-align: center; padding: 6px;">اختر المادة أولاً لعرض الشابترات...</div>
                     </div>
                 </div>
             </div>
@@ -278,16 +286,16 @@ details.dent-chapters-details summary { list-style: none; }
                 </div>
 
                 <!-- Google Drive Selection View for Past Exam -->
-                <div id="dq-pastexam-drive-view" style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 6px;">
-                        <span style="font-size: 0.78rem; color: #94a3b8;">حدد ملف الاختبار السابق:</span>
+                <div id="dq-pastexam-drive-view" style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 8px 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 6px;">
+                        <span style="font-size: 0.76rem; color: #94a3b8;">حدد ملف الاختبار السابق:</span>
                         <div style="display: flex; gap: 4px;">
-                            <button type="button" class="dent-sub-tab-btn active dent-pastexam-folder-btn" data-folder="materials" style="padding: 3px 8px; font-size: 0.75rem;">الملازم</button>
-                            <button type="button" class="dent-sub-tab-btn dent-pastexam-folder-btn" data-folder="chapters" style="padding: 3px 8px; font-size: 0.75rem;">المحاضرات</button>
+                            <button type="button" class="dent-sub-tab-btn active dent-pastexam-folder-btn" data-folder="materials" style="padding: 2px 7px; font-size: 0.72rem;">الملازم</button>
+                            <button type="button" class="dent-sub-tab-btn dent-pastexam-folder-btn" data-folder="chapters" style="padding: 2px 7px; font-size: 0.72rem;">المحاضرات</button>
                         </div>
                     </div>
-                    <div id="dq-pastexam-drive-container" style="max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px;">
-                        <div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 8px;">اختر المادة أولاً لعرض الملفات...</div>
+                    <div id="dq-pastexam-drive-container" style="max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;">
+                        <div style="color: #64748b; font-size: 0.82rem; text-align: center; padding: 6px;">اختر المادة أولاً لعرض الملفات...</div>
                     </div>
                 </div>
 
@@ -302,17 +310,17 @@ details.dent-chapters-details summary { list-style: none; }
                 </div>
             </div>
 
-            <div class="dent-quiz-form-group" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 6px;">
-                <div style="flex: 2; min-width: 180px;">
+            <div class="dent-quiz-form-group" style="display: grid; grid-template-columns: 2fr 1fr; gap: 6px; margin-bottom: 6px;">
+                <div>
                     <label class="dent-quiz-label">عنوان بنك الأسئلة المصفّى:</label>
-                    <input type="text" id="dq-pastexam-quiz-name" class="dent-quiz-input" placeholder="مثال: تجميعات فاينل 2024 - شابتر 1 و 2">
+                    <input type="text" id="dq-pastexam-quiz-name" class="dent-quiz-input" placeholder="مثال: تجميعات فاينل 2024">
                 </div>
-                <div style="flex: 1; min-width: 120px;">
+                <div>
                     <label class="dent-quiz-label">الحد الأقصى للأسئلة:</label>
-                    <input type="number" id="dq-pastexam-num-qs" class="dent-quiz-input" value="200" min="1" max="200" placeholder="200 (تلقائي)">
+                    <input type="number" id="dq-pastexam-num-qs" class="dent-quiz-input" value="200" min="1" max="200" placeholder="200 (تلقائي)" style="text-align: center;">
                 </div>
             </div>
-            <div style="font-size: 0.78rem; color: #94a3b8; margin-bottom: 14px; line-height: 1.5;">
+            <div style="font-size: 0.76rem; color: #94a3b8; margin-bottom: 10px; line-height: 1.4;">
                 يستخرج الذكاء الاصطناعي كافة الأسئلة التابعة للشابترات المحددة حتى نهايتها دون توقف. أي أسئلة مقالية أو فراغات يتم تحويلها تلقائياً إلى خيارات مع وضع علامة (*) في بدايتها.
             </div>
         </div>
@@ -846,7 +854,7 @@ details.dent-chapters-details summary { list-style: none; }
             subjectChaptersFiles.forEach((opt) => {
                 const item = document.createElement('label');
                 item.className = 'dent-quiz-checkbox-label';
-                item.style.cssText = 'display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 10px; background: #18181b; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer; color: #cbd5e1; font-size: 0.82rem; box-sizing: border-box; margin: 0;';
+                item.style.cssText = 'display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; background: #18181b; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer; color: #cbd5e1; font-size: 0.78rem; box-sizing: border-box; margin: 0;';
                 item.innerHTML = `
                     <input type="checkbox" class="dq-target-chap-checkbox" value="${opt.name.replace(/"/g, '&quot;')}" checked>
                     <span style="line-height: 1.4; word-break: break-word;">${opt.name}</span>
@@ -874,7 +882,7 @@ details.dent-chapters-details summary { list-style: none; }
                 const isChecked = selectedDriveFilesMap.has(opt.id);
                 const item = document.createElement('label');
                 item.className = 'dent-quiz-checkbox-label';
-                item.style.cssText = 'display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; background: #18181b; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; cursor: pointer; color: #cbd5e1; font-size: 0.85rem; transition: 0.2s; box-sizing: border-box; margin: 0;';
+                item.style.cssText = 'display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 10px; background: #18181b; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; cursor: pointer; color: #cbd5e1; font-size: 0.8rem; transition: 0.2s; box-sizing: border-box; margin: 0;';
                 item.innerHTML = `
                     <input type="checkbox" class="dq-chap-checkbox" value="${opt.id.replace(/"/g, '&quot;')}" data-name="${opt.name.replace(/"/g, '&quot;')}" ${isChecked ? 'checked' : ''}>
                     <span style="line-height: 1.4; word-break: break-word; font-weight: 500;">${opt.name}</span>
@@ -949,7 +957,7 @@ details.dent-chapters-details summary { list-style: none; }
                 const isChecked = pastExamDriveFilesMap.has(opt.id);
                 const item = document.createElement('label');
                 item.className = 'dent-quiz-checkbox-label';
-                item.style.cssText = 'display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 10px; background: #18181b; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer; color: #cbd5e1; font-size: 0.82rem; box-sizing: border-box; margin: 0;';
+                item.style.cssText = 'display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; background: #18181b; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer; color: #cbd5e1; font-size: 0.78rem; box-sizing: border-box; margin: 0;';
                 item.innerHTML = `
                     <input type="checkbox" class="dq-pastexam-drive-checkbox" value="${opt.id.replace(/"/g, '&quot;')}" data-name="${opt.name.replace(/"/g, '&quot;')}" ${isChecked ? 'checked' : ''}>
                     <span style="line-height: 1.4; word-break: break-word;">${opt.name}</span>
@@ -1268,16 +1276,16 @@ details.dent-chapters-details summary { list-style: none; }
             let chapList = rawChap.split(/[,•+\n|]/).map(s => s.trim()).filter(Boolean);
             if (chapList.length === 0) chapList = ['ملف المحاضرة'];
 
-            let labelText = chapList.length === 1 ? '(شابتر واحد)' : `(${chapList.length} شابترات)`;
+            let labelText = chapList.length === 1 ? 'المحاضرة المشمولة (شابتر واحد)' : `المحاضرات المشمولة (${chapList.length} شابترات)`;
             let chaptersDropdownHTML = `
-                <details class="dent-chapters-details" style="margin-top: 8px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; overflow: hidden;" onclick="event.stopPropagation()">
-                    <summary style="padding: 7px 10px; font-size: 0.8rem; font-weight: 500; color: #cbd5e1; cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; background: rgba(255, 255, 255, 0.02); transition: background 0.2s;">
-                        <span><span style="color: #64748b; font-weight: 500;">المحتوى:</span> ${labelText}</span>
-                        <span class="dent-arrow" style="font-size: 0.68rem; color: #94a3b8; transition: transform 0.25s ease;">▼</span>
+                <details class="dent-chapters-details" onclick="event.stopPropagation()">
+                    <summary>
+                        <span>${labelText}</span>
+                        <span class="dent-arrow">▼</span>
                     </summary>
-                    <div style="padding: 8px 10px; display: flex; flex-direction: column; gap: 5px; border-top: 1px solid rgba(255, 255, 255, 0.06); max-height: 160px; overflow-y: auto; background: rgba(0, 0, 0, 0.2);">
+                    <div style="padding: 7px 10px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(255, 255, 255, 0.06); max-height: 140px; overflow-y: auto; background: #121212;">
                         ${chapList.map(c => `
-                            <div style="font-size: 0.78rem; color: #94a3b8; line-height: 1.4; word-break: break-word; padding-bottom: 4px; border-bottom: 1px dashed rgba(255, 255, 255, 0.05); display: flex; align-items: flex-start; gap: 6px;">
+                            <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4; word-break: break-word; padding-bottom: 3px; border-bottom: 1px dashed rgba(255, 255, 255, 0.04); display: flex; align-items: flex-start; gap: 6px;">
                                 <span style="color: #64748b; font-size: 0.8rem; flex-shrink: 0;">•</span>
                                 <span>${c}</span>
                             </div>
