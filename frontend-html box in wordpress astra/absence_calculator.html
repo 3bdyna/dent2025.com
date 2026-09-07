@@ -927,9 +927,9 @@
         if (clean.includes('313') || clean.includes('dig313') || clean.includes('تشخيص') || clean.includes('diagno') || clean.includes('diagnosis')) {
             return { weeklySessions: 1, totalSessions: 17.33, isYearly: false };
         }
-        // 5. PRO322 / 322عاض / 331صحح - Advanced Dental Biomaterials
+        // 5. PRO322 / 322عاض / 331صحح - Advanced Dental Biomaterials (Total: 18.0 contact hrs -> 1 absence = 5.56%)
         if (clean.includes('322') || clean.includes('pro322') || clean.includes('331') || clean.includes('مواد') || clean.includes('biomat')) {
-            return { weeklySessions: 2, totalSessions: 34.0, isYearly: false };
+            return { weeklySessions: 1, totalSessions: 18.0, isYearly: false };
         }
         // 6. DPH331 / 331صح / 371طبب - Dental Public Health
         if (clean.includes('dph') || clean.includes('dph331') || clean.includes('371') || clean.includes('صحه') || clean.includes('صح') || clean.includes('health') || clean.includes('publichealth')) {
@@ -1409,9 +1409,9 @@
                 }
             }
 
-            // Auto-heal legacy stale saved state for official catalog courses (e.g. 311, 313, 351, 321, 341, 352)
+            // Auto-heal legacy stale saved state for official catalog courses (e.g. 311, 313, 322, 351, 321, 341, 352)
             if (defaults && defaults.totalSessions) {
-                const isLegacyState = !savedState || savedState.version !== 5;
+                const isLegacyState = !savedState || savedState.version !== 6;
                 const isStaleTotal = customTotalSessions === 112 || customTotalSessions === 54 || customTotalSessions === 51 || customTotalSessions === 34 || customTotalSessions === 34.36 || customTotalSessions === null;
                 const isMismatchedYearly = (defaults.isYearly !== undefined && isYearly !== defaults.isYearly);
                 
@@ -1660,7 +1660,7 @@
         const yearlySyncKey = getYearlySyncStorageKey();
 
         const state = {
-            version: 5,
+            version: 6,
             weeks: dentAbsenceWeeks,
             subjects: {},
             customSubjects: []
