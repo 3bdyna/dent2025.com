@@ -56,4 +56,4 @@ __pycache__/
 *.swo
 
 # 7. Local Bots & Tools
-bot/
+blackboard_bot/

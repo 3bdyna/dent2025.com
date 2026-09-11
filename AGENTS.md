@@ -32,7 +32,6 @@ my website dent2025/
 ├── dent2025_passwords.json                     # ⭐ RBAC passkey store (gitignored)
 ├── dent2025-loader.php                         # WordPress Component Loader plugin (shortcode [dent_component])
 ├── purge_cache.php                             # Standalone cache purge diagnostic script
-├── logo of main page.webp                      # Main Portal Logo asset
 ├── dent2025_api.php                            # PRIMARY WordPress-Integrated Standalone API ($wpdb)
 ├── announcements_api.php                       # Announcements & Class Tasks Backend API (file-based JSON)
 ├── schedule_backend.php                        # Timeline Schedule Events API (file-based JSON)
@@ -66,7 +65,8 @@ my website dent2025/
 ├── logos/                                      # Specialty logos (deployed to server)
 │   ├── dentistry.webp                          # Dentistry specialty logo
 │   ├── medicine.webp                           # Medicine specialty logo
-│   └── pre-med.webp                            # Pre-Med specialty logo
+│   ├── pre-med.webp                            # Pre-Med specialty logo
+│   └── logo of main page.webp                  # Main Portal Logo asset
 ├── frontend-html box in wordpress astra/       # Local Source Frontend Components (FTP synced to /frontend_components/)
 │   ├── landing_page.html                       # Year/Specialty/Semester grid selection card template
 │   ├── chapters_dynamic.html                   # Subject chapters container & Google Drive folder embed layout
