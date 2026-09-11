@@ -105,7 +105,7 @@ const ScheduleApp = {
                 }
             } catch(e) {}
             const cacheKey = 'dent2025_schedule_' + this.scheduleId;
-            const cachedData = sessionStorage.getItem(cacheKey);
+            const cachedData = localStorage.getItem(cacheKey); // Persist across closed tabs
             const cacheBuster = '&nocache=1&_t=' + Date.now();
             
             if (cachedData) {
@@ -114,7 +114,16 @@ const ScheduleApp = {
                 // Background fetch to keep cache updated silently
                 fetch(this.apiUrl + '?schedule_id=' + this.scheduleId + cacheBuster)
                     .then(r => r.json())
-                    .then(res => { if(res.success && res.data) sessionStorage.setItem(cacheKey, JSON.stringify(res.data)); })
+                    .then(res => { 
+                        if(res.success && res.data) {
+                            const freshJson = JSON.stringify(res.data);
+                            if (freshJson !== cachedData) {
+                                localStorage.setItem(cacheKey, freshJson);
+                                this.eventsData = res.data;
+                                this.render(this.eventsData); // Re-render if data changed
+                            }
+                        }
+                    })
                     .catch(e => {});
                 return;
             }
@@ -126,7 +135,7 @@ const ScheduleApp = {
             const result = await response.json();
             if (result.success && result.data) {
                 this.eventsData = result.data; // Store events
-                sessionStorage.setItem(cacheKey, JSON.stringify(this.eventsData));
+                localStorage.setItem(cacheKey, JSON.stringify(this.eventsData));
                 this.render(this.eventsData);
             } else {
                 this.showError('لا توجد بيانات متاحة. (' + (result.message || 'Unknown error') + ')');
