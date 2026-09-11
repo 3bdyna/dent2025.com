@@ -236,9 +236,14 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 
 ### A. Main Dashboard Engine (`dashboard.js` — ~71 KB)
 - **API Base URL**: `const API_BASE_URL = API_BASE + '/dent2025_api.php'`.
-- **Immediate Selection Guard**: Immediately hides document and redirects to `/wolcome/` if `localStorage.getItem('dent2025_selection')` is invalid or missing. (Note: `wolcome` is an intentional hardcoded slug).
+- **Immediate Selection Guard (Currently Bypassed for Optimization)**: Originally, this immediately hid the document and redirected to `/wolcome/` if `localStorage.getItem('dent2025_selection')` was invalid. **As of Sept 2026, this is hardcoded to instantly inject the Dentistry Year 3 Semester 1 selection to bypass the welcome screen entirely.** 
+  - **HOW TO REVERT AND RESTORE THE WELCOME SCREEN**: If you want to allow students from other years to use the site again:
+    1. Open `dashboard.js`.
+    2. Remove the hardcoded `forcedSelection` overwrite block at the top (lines ~100-112).
+    3. Restore the old logic: `if (!isValidSelection) { sessionStorage.setItem('dent2025_redirect_after', window.location.pathname); document.documentElement.style.visibility = 'hidden'; window.location.replace(API_BASE + '/wolcome/'); }`
+    4. Uncomment `injectPathChanger(selectionData);` inside `dentInitDashboard()` to restore the interactive top pill bar.
 - **Sequential iFrame Queue**: `window.dentIframeQueue` loads Google Drive folder iframes sequentially with 1.0s delays to maintain fast browser performance.
-- **Path Changer Pill Bar**: Auto-minimizing pill bar showing current specialty/year/semester; double-click resets selection.
+- **Path Changer Pill Bar**: Auto-minimizing pill bar showing current specialty/year/semester; double-click resets selection. *(Currently disabled via commented-out code in dashboard.js as part of the optimization).*
 
 ### B. Study Timer & Tracker (`study_timer_banner_widget.html` — ~64 KB)
 - **Singleton Guard**: `if (window.dentTimerScriptLoaded) return; window.dentTimerScriptLoaded = true;` ensures only one script instance executes, avoiding duplicate `setInterval` loops.
@@ -324,3 +329,36 @@ All keys are strictly prefixed with `dent2025_`:
    - **Font Family**: `'Outfit'`, `'Noto Kufi Arabic'`, `sans-serif`.
    - **Glassmorphism & Micro-animations**: Use subtle backdrop blurs (`backdrop-filter: blur(12px)`), rounded corners (`border-radius: 12px` to `18px`), and smooth micro-interactions (`transition: all 0.25s ease`).
    - **RTL Layout First**: Design all UI components with native Right-to-Left (RTL) Arabic text alignment and clean English technical/medical labels.
+
+---
+
+### Azure Migration & Hosting Infrastructure (As of Sept 2026)
+
+### Hosting Migration
+The project was successfully migrated from a traditional shared hosting environment to a dedicated Azure Virtual Machine (`b-bot-vm`).
+
+**Old Hosting (Shared)**
+- Environment: LiteSpeed Web Server, cPanel/FTP based.
+- Limitations: Strict file count limits, slow database, rigid FTP access, and upload constraints.
+- DNS/CDN: QUIC.cloud was used as the CDN connecting to the shared host IP (`68.65.123.193`).
+
+**New Hosting (Azure VM)**
+- Environment: Nginx, PHP 8.3-FPM, MariaDB running on Ubuntu 24.04 LTS.
+- VM Specs: `Standard_B2ts_v2` (2 vCPUs, 2GB RAM, 32GB Standard SSD).
+- Cost & Schedule: Costs roughly `$4.05/month`. To afford this on the student credit, the VM sleeps daily from 2:00 AM to 7:00 AM (via Azure Logic Apps). The website is completely offline during these hours.
+- Deployment: Fully migrated from standard FTP to highly secure SFTP (via Paramiko in `deploy.py`) over SSH using an RSA key.
+- Shared Resources: The VM simultaneously hosts this WordPress website and the headless Blackboard scraper bot.
+
+### Essential Credentials & Paths
+- **VM IP Address**: `74.248.34.9`
+- **SSH Key**: `C:\Users\3bdyna\.ssh\id_rsa` (Used by deploy script automatically)
+- **Web Root**: `/var/www/dent2025/`
+- **Nginx Config**: `/etc/nginx/sites-available/dent2025`
+- **Database Name**: `wordpress`
+- **Database User**: `wpuser` (password: `wp_dent2025_sec!`)
+
+### Important System Changes
+1. **File Ownership**: The WordPress files in `/var/www/dent2025/` are owned by `www-data:www-data`. The `azureuser` is part of the `www-data` group.
+2. **FS_METHOD**: The `wp-config.php` has `define('FS_METHOD', 'direct');` forced to bypass FTP permission prompts when installing plugins.
+3. **Upload Limits**: `php.ini` and `nginx.conf` are configured to allow 2GB file uploads to facilitate large site imports.
+4. **Cache & CDN**: QUIC.cloud has been updated to point to `74.248.34.9`. Since Nginx is not a LiteSpeed server, QUIC.cloud acts as a standard CDN and proxy.
