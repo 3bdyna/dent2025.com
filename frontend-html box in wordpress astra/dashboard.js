@@ -97,29 +97,19 @@ function dentTrack(type, data) {
     } catch (e) {}
 }
 
-// IMMEDIATE CHECK: Redirect BEFORE the page even renders if no selection exists or selection is invalid
-// This prevents the ugly flash/glitch when visiting any page without choosing a specialty first
+// IMMEDIATE CHECK: Force default selection to Dentistry, Year 3, Semester 1
+// This entirely bypasses the welcome page and prevents unnecessary requests
 (function() {
+    const forcedSelection = { specialty: 'dentistry', year: 3, semester: 1 };
+    
+    // Always overwrite whatever is in localStorage to lock the user into this path
+    localStorage.setItem('dent2025_selection', JSON.stringify(forcedSelection));
+    
+    // If the user lands on the welcome page directly, instantly kick them to the main page
     const isWelcomePage = window.location.pathname.includes('wolcome') || window.location.pathname.includes('welcome');
-    if (isWelcomePage) return; // Don't redirect FROM the welcome page itself
-
-    let isValidSelection = false;
-    try {
-        const raw = localStorage.getItem('dent2025_selection');
-        if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed && parsed.specialty && parsed.semester !== undefined) {
-                isValidSelection = true;
-            }
-        }
-    } catch (e) {}
-
-    if (!isValidSelection) {
-        // Save the page the user was trying to visit so we can redirect back after selection
-        sessionStorage.setItem('dent2025_redirect_after', window.location.pathname);
-        // Hide everything instantly to prevent visual flash
+    if (isWelcomePage) {
         document.documentElement.style.visibility = 'hidden';
-        window.location.replace(API_BASE + '/wolcome/');
+        window.location.replace(API_BASE + '/');
         return;
     }
 })();
@@ -133,9 +123,9 @@ function dentInitDashboard() {
     } catch(e) {}
     
     // Always inject the path changer if we have a selection and we are not on the welcome page
-    if (!isWelcomePage && selectionData && selectionData.specialty) {
-        injectPathChanger(selectionData);
-    }
+    // if (!isWelcomePage && selectionData && selectionData.specialty) {
+    //     injectPathChanger(selectionData);
+    // }
 
     if (isWelcomePage) return; // Nothing to do on the welcome page
 
