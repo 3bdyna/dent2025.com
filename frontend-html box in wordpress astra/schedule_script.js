@@ -274,6 +274,10 @@ const ScheduleApp = {
                     badgeClass = 'today';
                 }
 
+                if (badgeClass === 'today') {
+                    card.classList.add('is-today');
+                }
+
                 const typeLabels = {
                     'exam': 'كويز / اختبار',
                     'holiday': 'إجازة رسمية',
@@ -284,7 +288,7 @@ const ScheduleApp = {
 
                 let adminNoticeBadge = '';
                 if (this.adminPassword && ev._isEndedPast3Days) {
-                    adminNoticeBadge = '<span style="font-size: 0.72rem; color: #ef4444; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); padding: 2px 6px; border-radius: 4px;">مخفي عن الطلاب</span>';
+                    adminNoticeBadge = '<span style="font-size: 0.72rem; color: #f87171; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); padding: 2px 6px; border-radius: 4px;">مخفي عن الطلاب</span>';
                 }
 
                 let deleteBtn = '';
@@ -358,7 +362,7 @@ const ScheduleApp = {
                 else if (diffDays >= 3 && diffDays <= 10) diffDaysText = `بعد ${diffDays} أيام`;
                 else diffDaysText = `بعد ${diffDays} يوماً`;
                 document.getElementById('val-exam').innerText = diffDaysText;
-                document.getElementById('val-exam').style.color = 'var(--color-exam)';
+                document.getElementById('val-exam').style.color = '';
             }
         } else {
             if (document.getElementById('val-exam')) {
