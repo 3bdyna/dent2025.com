@@ -181,11 +181,11 @@ function loadDashboardData(forceRefresh = false) {
     const cacheBuster = forceRefresh ? `&nocache=1&_t=${Date.now()}` : '';
 
     if (forceRefresh) {
-        sessionStorage.removeItem(cacheKey);
+        localStorage.removeItem(cacheKey);
     }
 
-    // Fetch data with sessionStorage caching unless the caller requested a hard refresh
-    const cachedData = forceRefresh ? null : sessionStorage.getItem(cacheKey);
+    // Fetch data with localStorage caching unless the caller requested a hard refresh
+    const cachedData = forceRefresh ? null : localStorage.getItem(cacheKey);
 
     const processData = (data) => {
         currentSubjectsData = data.subjects || [];
@@ -203,7 +203,7 @@ function loadDashboardData(forceRefresh = false) {
                 if (data.success && data.data && Array.isArray(data.data.subjects)) {
                     const freshJson = JSON.stringify(data.data);
                     if (freshJson !== cachedData) {
-                        sessionStorage.setItem(cacheKey, freshJson);
+                        localStorage.setItem(cacheKey, freshJson);
                         processData(data.data);
                     }
                 }
@@ -220,7 +220,7 @@ function loadDashboardData(forceRefresh = false) {
         .then(data => {
             if (data.success) {
                 if (data.data && Array.isArray(data.data.subjects)) {
-                    sessionStorage.setItem(cacheKey, JSON.stringify(data.data));
+                    localStorage.setItem(cacheKey, JSON.stringify(data.data));
                 }
                 processData(data.data);
             } else {
@@ -664,7 +664,7 @@ window.saveAdminModal = function() {
             if (selData) {
                 try {
                     const sel = JSON.parse(selData);
-                    sessionStorage.removeItem(`dent2025_dashboard_data_${sel.specialty}_${sel.year}_${sel.semester}`);
+                    localStorage.removeItem(`dent2025_dashboard_data_${sel.specialty}_${sel.year}_${sel.semester}`);
                 } catch(e) {}
             }
             loadDashboardData(true);

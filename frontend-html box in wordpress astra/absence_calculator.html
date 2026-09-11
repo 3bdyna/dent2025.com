@@ -1301,7 +1301,7 @@
             subjectsPromise = Promise.resolve(window.currentSubjectsData);
         } else if (dentAbsenceSelection) {
             const cacheKey = `dent2025_dashboard_data_${dentAbsenceSelection.specialty}_${dentAbsenceSelection.year}_${dentAbsenceSelection.semester}`;
-            const cached = sessionStorage.getItem(cacheKey);
+            const cached = localStorage.getItem(cacheKey);
             if (cached) {
                 try {
                     const parsed = JSON.parse(cached);

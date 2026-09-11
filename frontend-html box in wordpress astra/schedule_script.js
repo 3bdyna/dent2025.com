@@ -570,7 +570,7 @@ const ScheduleApp = {
             })
         }).then(r => r.json()).then(res => {
             if(res.success) {
-                sessionStorage.removeItem('dent2025_schedule_' + this.scheduleId);
+                localStorage.removeItem('dent2025_schedule_' + this.scheduleId);
                 document.getElementById('dent-admin-modal').remove();
                 this.init(); // Reload from server
             } else {
@@ -597,7 +597,7 @@ const ScheduleApp = {
             })
         }).then(r => r.json()).then(res => {
             if(res.success) {
-                sessionStorage.removeItem('dent2025_schedule_' + this.scheduleId);
+                localStorage.removeItem('dent2025_schedule_' + this.scheduleId);
                 sessionStorage.removeItem('dent2025_schedule_global');
                 this.init(); // Reload
             } else {
