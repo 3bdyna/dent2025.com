@@ -4,86 +4,142 @@
        Separated from logic to allow easy swapping of designs
        ========================================================= */
     :root {
-        /* Less saturated, darker colors that fit the premium theme */
-        --bg-color: #121212;
-        --card-bg: #1e1e1e;
-        --border-color: rgba(255, 255, 255, 0.05);
-        --text-primary: #f8fafc;
-        --text-secondary: #9ca3af;
+        --bg-color: #0f1013;
+        --card-bg: rgba(255, 255, 255, 0.035);
+        --card-hover-bg: rgba(255, 255, 255, 0.065);
+        --border-color: rgba(255, 255, 255, 0.08);
+        --text-primary: #ffffff;
+        --text-secondary: #94a3b8;
         
-        /* Event Type Colors (Muted) */
-        --color-start: #4b7a58;    /* Muted Green */
-        --color-payment: #8c773a;  /* Muted Gold */
-        --color-holiday: #456385;  /* Muted Blue */
-        --color-exam: #8c4545;     /* Muted Red */
-        --color-other: #5e5e5e;    /* Muted Gray */
+        /* Event Type Accent Colors */
+        --color-start: #10b981;    /* Emerald Green */
+        --color-payment: #f59e0b;  /* Warm Gold */
+        --color-holiday: #0284c7;  /* Sky Blue */
+        --color-exam: #f43f5e;     /* Coral / Rose Red */
+        --color-other: #64748b;    /* Slate Gray */
     }
 
     .dent-schedule-container {
         font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
         background-color: var(--bg-color);
         color: var(--text-primary);
-        padding: 20px;
-        border-radius: 16px;
+        padding: 24px;
+        border-radius: 18px;
         direction: rtl;
-        max-width: 600px;
+        max-width: 720px;
         margin: 0 auto;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
     }
 
     .dent-schedule-title {
         text-align: center;
-        font-size: 1.2rem;
-        margin-bottom: 15px;
-        color: var(--text-primary);
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 18px;
+        color: #ffffff;
         border-bottom: 1px solid var(--border-color);
-        padding-bottom: 10px;
+        padding-bottom: 14px;
     }
 
+    /* Stats Bar */
+    .stats-bar {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 8px;
+        margin-bottom: 22px;
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 10px 8px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+    .stat-title {
+        font-size: 0.82rem;
+        font-weight: 700;
+        margin-bottom: 2px;
+        color: #cbd5e1;
+    }
+    .stat-subtitle {
+        font-size: 0.58rem;
+        color: #64748b;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+        letter-spacing: 0.5px;
+    }
+    .stat-value {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+    .stat-subvalue {
+        font-size: 0.68rem;
+        color: #94a3b8;
+        margin-top: 2px;
+    }
+    #stat-exam .stat-value { color: var(--color-exam); }
+
+    /* Timeline Section */
     .timeline-month {
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
 
     .month-header {
-        font-size: 1rem;
-        color: var(--text-secondary);
-        margin-bottom: 12px;
+        font-size: 1.08rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 14px;
         display: flex;
         align-items: center;
+        gap: 12px;
     }
 
     .month-header::after {
         content: '';
         flex: 1;
         height: 1px;
-        background: var(--border-color);
-        margin-right: 15px;
+        background: rgba(255, 255, 255, 0.1);
     }
 
     .timeline-events {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 10px;
         position: relative;
-        padding-right: 20px;
-        border-right: 2px solid rgba(255, 255, 255, 0.05);
+        padding-right: 22px;
+        border-right: 2px solid rgba(255, 255, 255, 0.12);
     }
 
+    /* Event Card (Refined High-Contrast Architecture) */
     .event-card {
         background: var(--card-bg);
         border: 1px solid var(--border-color);
-        padding: 12px;
-        border-radius: 10px;
+        border-right: 4px solid var(--event-color);
+        padding: 14px 18px;
+        border-radius: 12px;
         position: relative;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
     }
 
     .event-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        transform: translateX(-3px);
+        background: var(--card-hover-bg);
+        box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
+        border-color: rgba(255, 255, 255, 0.16);
     }
 
-    /* The little dot on the timeline line */
+    /* Dot on timeline line */
     .event-card::before {
         content: '';
         position: absolute;
@@ -91,51 +147,113 @@
         height: 10px;
         border-radius: 50%;
         background-color: var(--event-color);
-        right: -26px;
-        top: 17px;
-        box-shadow: 0 0 8px var(--event-color);
-    }
-    
-    /* Countdown Badge */
-    .event-badge {
-        position: absolute;
-        left: 15px;
-        top: 15px;
-        background: rgba(255, 255, 255, 0.08);
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        color: var(--text-secondary);
-        font-weight: 600;
-    }
-    .event-badge.today {
-        background: var(--color-start);
-        color: white;
-    }
-    .event-badge.future {
-        background: rgba(255,255,255, 0.15);
-        color: white;
+        right: -28px;
+        top: 20px;
+        box-shadow: 0 0 10px var(--event-color);
     }
 
-    .event-date {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        margin-bottom: 6px;
+    .event-card-header {
         display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        gap: 10px;
         flex-wrap: wrap;
+    }
+
+    .event-dates-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .event-gregorian-date {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #e2e8f0;
+    }
+
+    .event-hijri-date {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2px 7px;
+        border-radius: 4px;
+        direction: rtl;
+    }
+
+    .event-badges-wrap {
+        display: flex;
         align-items: center;
         gap: 6px;
     }
 
-    .event-hijri {
-        opacity: 0.7;
+    .event-type-badge {
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--event-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        white-space: nowrap;
+    }
+
+    .event-countdown-pill {
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 5px;
+        white-space: nowrap;
+    }
+    .event-countdown-pill.future {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+    }
+    .event-countdown-pill.today {
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.45);
+    }
+    .event-countdown-pill.passed {
+        background: rgba(255, 255, 255, 0.03);
+        color: #64748b;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .event-delete-btn {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.35);
+        color: #ef4444;
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        padding: 0;
+        line-height: 1;
+        transition: all 0.2s ease;
+        margin-right: 4px;
+    }
+    .event-delete-btn:hover {
+        background: rgba(239, 68, 68, 0.35);
+        transform: scale(1.1);
     }
 
     .event-title {
-        font-size: 0.95rem;
-        font-weight: 600;
+        font-size: 1.08rem;
+        font-weight: 700;
         margin: 0;
-        color: var(--event-color);
+        color: #ffffff !important;
+        line-height: 1.5;
+        letter-spacing: -0.01em;
+        text-align: right;
+        word-break: break-word;
     }
 
     /* Empty state */
@@ -145,83 +263,26 @@
         color: var(--text-secondary);
     }
 
-    /* Stats Bar */
-    .stats-bar {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 6px;
-        margin-bottom: 15px;
-    }
-    
-    .stat-card {
-        background: #151515;
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        padding: 8px 4px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        transition: transform 0.2s ease;
-    }
-    .stat-card:hover {
-        transform: translateY(-2px);
-    }
-    .stat-title {
-        font-size: 0.8rem;
-        font-weight: 700;
-        margin-bottom: 2px;
-        color: var(--text-primary);
-    }
-    .stat-subtitle {
-        font-size: 0.55rem;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        margin-bottom: 4px;
-        letter-spacing: 0.5px;
-    }
-    .stat-value {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: var(--text-primary);
-    }
-    .stat-subvalue {
-        font-size: 0.65rem;
-        color: var(--text-secondary);
-        margin-top: 2px;
-    }
-    
-    /* Specific Colors for Stats */
-    #stat-exam .stat-value { color: var(--color-exam); }
-
     /* Mobile adjustments */
     @media (max-width: 600px) {
         .dent-schedule-container {
-            padding: 12px;
+            padding: 14px 12px;
             border-radius: 12px;
         }
         .event-card {
-            padding: 10px;
-        }
-        .stats-bar {
-            grid-template-columns: 1fr 1fr;
-        }
-        .stat-card:last-child {
-            grid-column: 1 / -1;
-        }
-        .event-date {
-            margin-bottom: 4px;
+            padding: 12px 14px;
         }
         .event-title {
-            font-size: 0.9rem;
+            font-size: 0.98rem;
         }
-        .event-badge {
-            position: relative;
-            left: 0;
-            top: 0;
-            display: inline-block;
-            margin-top: 8px;
-            width: max-content;
+        .event-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+        }
+        .event-dates-wrap, .event-badges-wrap {
+            width: 100%;
+            justify-content: space-between;
         }
     }
 </style>

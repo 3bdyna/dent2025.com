@@ -76,11 +76,11 @@ const ScheduleApp = {
         const options = { weekday: 'long', month: 'long', day: 'numeric' };
         const dateObj = this.parseLocalDate(dateString);
         if (!dateObj) return dateString;
-        let formatted = dateObj.toLocaleDateString('ar-SA-u-ca-gregory', options);
+        let formatted = dateObj.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', options);
         if (endDateString) {
             const endDateObj = this.parseLocalDate(endDateString);
             if (endDateObj) {
-                formatted += ' - ' + endDateObj.toLocaleDateString('ar-SA-u-ca-gregory', options);
+                formatted += ' - ' + endDateObj.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', options);
             }
         }
         return formatted;
@@ -241,7 +241,15 @@ const ScheduleApp = {
                 if (evDate && evDate > today) {
                     const diffTime = Math.abs(evDate - today);
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    badgeHtml = `بعد ${diffDays} يوم`;
+                    if (diffDays === 1) {
+                        badgeHtml = 'غداً';
+                    } else if (diffDays === 2) {
+                        badgeHtml = 'بعد يومين';
+                    } else if (diffDays >= 3 && diffDays <= 10) {
+                        badgeHtml = `بعد ${diffDays} أيام`;
+                    } else {
+                        badgeHtml = `بعد ${diffDays} يوماً`;
+                    }
                     badgeClass = 'future';
                 } else if (evDate && evDate < today) {
                     let isCurrent = false;
@@ -266,27 +274,40 @@ const ScheduleApp = {
                     badgeClass = 'today';
                 }
 
+                const typeLabels = {
+                    'exam': 'كويز / اختبار',
+                    'holiday': 'إجازة رسمية',
+                    'payment': 'مكافأة جامعية',
+                    'start': 'بداية دراسية',
+                    'other': 'حدث'
+                };
+
                 let adminNoticeBadge = '';
                 if (this.adminPassword && ev._isEndedPast3Days) {
-                    adminNoticeBadge = '<span style="font-size: 0.75em; color: #ef4444; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); padding: 2px 6px; border-radius: 4px; margin-right: 4px;">مخفي عن الطلاب</span>';
+                    adminNoticeBadge = '<span style="font-size: 0.72rem; color: #ef4444; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); padding: 2px 6px; border-radius: 4px;">مخفي عن الطلاب</span>';
                 }
 
                 let deleteBtn = '';
                 if (this.adminPassword) {
                     const isGlobal = !!ev.is_global;
                     const eventSchedId = ev.schedule_id || (isGlobal ? 'global' : this.scheduleId);
-                    deleteBtn = `<button onclick="ScheduleApp.deleteEvent('${dentEscapeHtml(ev.id)}', ${isGlobal ? 'true' : 'false'}, '${dentEscapeHtml(eventSchedId)}')" style="position: absolute; left: 12px; top: 12px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; padding: 0; line-height: 1; transition: all 0.2s; z-index: 10;" onmouseover="this.style.background='rgba(239,68,68,0.3)'; this.style.transform='scale(1.1)';" onmouseout="this.style.background='rgba(239,68,68,0.15)'; this.style.transform='none';" title="حذف هذا الحدث">&times;</button>`;
+                    deleteBtn = `<button type="button" class="event-delete-btn" onclick="ScheduleApp.deleteEvent('${dentEscapeHtml(ev.id)}', ${isGlobal ? 'true' : 'false'}, '${dentEscapeHtml(eventSchedId)}')" title="حذف هذا الحدث">&times;</button>`;
                 }
 
                 card.innerHTML = `
-                    ${deleteBtn}
-                    <div class="event-date">
-                        <span>${dateDisplay}</span>
-                        ${formattedHijri ? `<span style="opacity: 0.8;">- ${formattedHijri}</span>` : ''}
-                        <span style="font-size: 0.85em; color: var(--event-color); font-weight: bold; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-right: 4px;">${badgeHtml}</span>
-                        ${adminNoticeBadge}
+                    <div class="event-card-header">
+                        <div class="event-dates-wrap">
+                            <span class="event-gregorian-date">${dateDisplay}</span>
+                            ${formattedHijri ? `<span class="event-hijri-date">${formattedHijri}</span>` : ''}
+                        </div>
+                        <div class="event-badges-wrap">
+                            <span class="event-type-badge">${typeLabels[ev.type] || typeLabels['other']}</span>
+                            <span class="event-countdown-pill ${badgeClass}">${badgeHtml}</span>
+                            ${adminNoticeBadge}
+                            ${deleteBtn}
+                        </div>
                     </div>
-                    <h3 class="event-title">${dentEscapeHtml(ev.title)}</h3>
+                    <h3 class="event-title" dir="auto">${dentEscapeHtml(ev.title)}</h3>
                 `;
                 timelineEvents.appendChild(card);
             });
@@ -331,7 +352,12 @@ const ScheduleApp = {
             const diffTime = cDate ? Math.abs(cDate - today) : 0;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             if (document.getElementById('val-exam')) {
-                document.getElementById('val-exam').innerText = 'بعد ' + diffDays + ' يوم';
+                let diffDaysText = '';
+                if (diffDays === 1) diffDaysText = 'غداً';
+                else if (diffDays === 2) diffDaysText = 'بعد يومين';
+                else if (diffDays >= 3 && diffDays <= 10) diffDaysText = `بعد ${diffDays} أيام`;
+                else diffDaysText = `بعد ${diffDays} يوماً`;
+                document.getElementById('val-exam').innerText = diffDaysText;
                 document.getElementById('val-exam').style.color = 'var(--color-exam)';
             }
         } else {
