@@ -1,0 +1,98 @@
+[
+  {
+    "id": "evt_dent_y3_s1_patho_quiz",
+    "date": "2026-09-16",
+    "hijri": "1448/04/05",
+    "title": "Pathology Quiz (Chapters 1–5) — MCQs",
+    "type": "exam",
+    "schedule_id": "dentistry_y3_s1",
+    "is_global": false,
+    "specialty": "dentistry",
+    "year": 3,
+    "semester": 1
+  },
+  {
+    "id": "evt_dent_y3_s1_biom_quiz",
+    "date": "2026-09-17",
+    "hijri": "1448/04/06",
+    "title": "Biomaterials (BioM) Quiz — MCQs",
+    "type": "exam",
+    "schedule_id": "dentistry_y3_s1",
+    "is_global": false,
+    "specialty": "dentistry",
+    "year": 3,
+    "semester": 1
+  },
+  {
+    "id": "evt_dent_y3_s1_oper_quiz",
+    "date": "2026-09-20",
+    "hijri": "1448/04/09",
+    "title": "Operative Quiz (Short Essay) + Operative HW (Lab Manual)",
+    "type": "exam",
+    "schedule_id": "dentistry_y3_s1",
+    "is_global": false,
+    "specialty": "dentistry",
+    "year": 3,
+    "semester": 1
+  },
+  {
+    "id": "evt_dent_y3_s1_radio_quiz",
+    "date": "2026-09-22",
+    "hijri": "1448/04/11",
+    "title": "Radiology Quiz — Short Essay",
+    "type": "exam",
+    "schedule_id": "dentistry_y3_s1",
+    "is_global": false,
+    "specialty": "dentistry",
+    "year": 3,
+    "semester": 1
+  },
+  {
+    "id": "evt_dent_y3_s1_prostho_quiz",
+    "date": "2026-09-27",
+    "hijri": "1448/04/16",
+    "title": "Prosthodontics Quiz — Short Essay",
+    "type": "exam",
+    "schedule_id": "dentistry_y3_s1",
+    "is_global": false,
+    "specialty": "dentistry",
+    "year": 3,
+    "semester": 1
+  },
+  {
+    "id": "evt_dent_y3_s1_diag_quiz",
+    "date": "2026-09-29",
+    "hijri": "1448/04/18",
+    "title": "Diagnostic Quiz — Short Essay",
+    "type": "exam",
+    "schedule_id": "dentistry_y3_s1",
+    "is_global": false,
+    "specialty": "dentistry",
+    "year": 3,
+    "semester": 1
+  },
+  {
+    "id": "evt_dent_y3_s1_micro_quiz",
+    "date": "2026-10-01",
+    "hijri": "1448/04/20",
+    "title": "Microbiology Quiz (Chapters 1–4) — Short Essay",
+    "type": "exam",
+    "schedule_id": "dentistry_y3_s1",
+    "is_global": false,
+    "specialty": "dentistry",
+    "year": 3,
+    "semester": 1
+  },
+  {
+    "id": "evt_dent_y3_s1_pharma_quiz",
+    "date": "2026-10-04",
+    "hijri": "1448/04/23",
+    "title": "Pharmacology Quiz — Short Essay",
+    "type": "exam",
+    "schedule_id": "dentistry_y3_s1",
+    "is_global": false,
+    "specialty": "dentistry",
+    "year": 3,
+    "semester": 1
+  }
+]
