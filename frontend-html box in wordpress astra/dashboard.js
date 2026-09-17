@@ -97,20 +97,52 @@ function dentTrack(type, data) {
     } catch (e) {}
 }
 
-// IMMEDIATE CHECK: Force default selection to Dentistry, Year 3, Semester 1
-// This entirely bypasses the welcome page and prevents unnecessary requests
+// =========================================================================
+// 🔘 MULTI-SPECIALTY MASTER SWITCH (ON / OFF)
+// -------------------------------------------------------------------------
+// true  (ON)  -> Multi-Specialty Active: Pre-Med, Medicine & Dentistry.
+//                Redirects new students to /wolcome/ and shows Path Changer.
+// false (OFF) -> Single-Track Forced: Locks portal to Dentistry Year 3 Semester 1
+//                and instantly bypasses the welcome screen.
+// =========================================================================
+const DENT_MULTI_SPECIALTY_MODE = true; // <-- SET TO 'true' (ON) OR 'false' (OFF)
+
+// IMMEDIATE SELECTION CHECK:
 (function() {
-    const forcedSelection = { specialty: 'dentistry', year: 3, semester: 1 };
-    
-    // Always overwrite whatever is in localStorage to lock the user into this path
-    localStorage.setItem('dent2025_selection', JSON.stringify(forcedSelection));
-    
-    // If the user lands on the welcome page directly, instantly kick them to the main page
     const isWelcomePage = window.location.pathname.includes('wolcome') || window.location.pathname.includes('welcome');
-    if (isWelcomePage) {
-        document.documentElement.style.visibility = 'hidden';
-        window.location.replace(API_BASE + '/');
-        return;
+
+    if (!DENT_MULTI_SPECIALTY_MODE) {
+        // [OFF MODE]: Force default selection to Dentistry, Year 3, Semester 1
+        const forcedSelection = { specialty: 'dentistry', year: 3, semester: 1 };
+        localStorage.setItem('dent2025_selection', JSON.stringify(forcedSelection));
+        
+        // If user lands on welcome page directly, kick them to main page
+        if (isWelcomePage) {
+            document.documentElement.style.visibility = 'hidden';
+            window.location.replace(API_BASE + '/');
+            return;
+        }
+    } else {
+        // [ON MODE]: Full multi-specialty portal
+        if (isWelcomePage) return; // Don't redirect from welcome page itself
+
+        let isValidSelection = false;
+        try {
+            const raw = localStorage.getItem('dent2025_selection');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.specialty && parsed.semester !== undefined) {
+                    isValidSelection = true;
+                }
+            }
+        } catch (e) {}
+
+        if (!isValidSelection) {
+            // Save intended page to redirect back after selecting specialty
+            sessionStorage.setItem('dent2025_redirect_after', window.location.pathname);
+            document.documentElement.style.visibility = 'hidden';
+            window.location.replace(API_BASE + '/wolcome/');
+        }
     }
 })();
 
@@ -122,10 +154,10 @@ function dentInitDashboard() {
         if (raw) selectionData = JSON.parse(raw);
     } catch(e) {}
     
-    // Always inject the path changer if we have a selection and we are not on the welcome page
-    // if (!isWelcomePage && selectionData && selectionData.specialty) {
-    //     injectPathChanger(selectionData);
-    // }
+    // Inject the path changer only if multi-specialty mode is ON
+    if (DENT_MULTI_SPECIALTY_MODE && !isWelcomePage && selectionData && selectionData.specialty) {
+        injectPathChanger(selectionData);
+    }
 
     if (isWelcomePage) return; // Nothing to do on the welcome page
 

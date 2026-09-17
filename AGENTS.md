@@ -236,14 +236,16 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 
 ### A. Main Dashboard Engine (`dashboard.js` — ~71 KB)
 - **API Base URL**: `const API_BASE_URL = API_BASE + '/dent2025_api.php'`.
-- **Immediate Selection Guard (Currently Bypassed for Optimization)**: Originally, this immediately hid the document and redirected to `/wolcome/` if `localStorage.getItem('dent2025_selection')` was invalid. **As of Sept 2026, this is hardcoded to instantly inject the Dentistry Year 3 Semester 1 selection to bypass the welcome screen entirely.** 
-  - **HOW TO REVERT AND RESTORE THE WELCOME SCREEN**: If you want to allow students from other years to use the site again:
-    1. Open `dashboard.js`.
-    2. Remove the hardcoded `forcedSelection` overwrite block at the top (lines ~100-112).
-    3. Restore the old logic: `if (!isValidSelection) { sessionStorage.setItem('dent2025_redirect_after', window.location.pathname); document.documentElement.style.visibility = 'hidden'; window.location.replace(API_BASE + '/wolcome/'); }`
-    4. Uncomment `injectPathChanger(selectionData);` inside `dentInitDashboard()` to restore the interactive top pill bar.
+- **⭐ MULTI-SPECIALTY MASTER ON/OFF SWITCH (`DENT_MULTI_SPECIALTY_MODE`)**:
+  - **THE PORTAL HAS A SINGLE MASTER TOGGLE SWITCH AT LINE ~108 OF `frontend-html box in wordpress astra/dashboard.js`:**
+    - **`const DENT_MULTI_SPECIALTY_MODE = true;` -> [ON] MULTI-SPECIALTY PORTAL FULLY ACTIVE. ALLOWS PRE-MED, MEDICINE, AND DENTISTRY ACROSS ALL YEARS & SEMESTERS. USERS WITHOUT A SAVED PATH ARE PROMPTLY REDIRECTED TO THE WELCOME SELECTION SCREEN (`/wolcome/`), AND THE FLOATING PATH CHANGER PILL BAR IS INJECTED AT THE TOP SO STUDENTS CAN SWITCH SPECIALTIES AT ANY TIME.**
+    - **`const DENT_MULTI_SPECIALTY_MODE = false;` -> [OFF] FORCED SINGLE-TRACK MODE. LOCKS THE ENTIRE WEBSITE TO DENTISTRY YEAR 3 SEMESTER 1, INSTANTLY BYPASSES THE WELCOME SCREEN, AND HIDES THE PATH CHANGER PILL BAR.**
+  - **HOW TO TOGGLE BETWEEN MODES NEXT TIME**:
+    - **NEVER REWRITE CODE, REMOVE IIFES, OR COMMENT/UNCOMMENT CODE BLOCKS MANUALLY.**
+    - **SIMPLY OPEN `frontend-html box in wordpress astra/dashboard.js` AND TOGGLE `const DENT_MULTI_SPECIALTY_MODE = true;` (FOR ON) OR `false;` (FOR OFF).**
+    - **THEN DEPLOY: `python tools/deploy_safe.py --note "Toggle multi-specialty mode" "frontend-html box in wordpress astra/dashboard.js"`**
 - **Sequential iFrame Queue**: `window.dentIframeQueue` loads Google Drive folder iframes sequentially with 1.0s delays to maintain fast browser performance.
-- **Path Changer Pill Bar**: Auto-minimizing pill bar showing current specialty/year/semester; double-click resets selection. *(Currently disabled via commented-out code in dashboard.js as part of the optimization).*
+- **Path Changer Pill Bar**: Auto-minimizing pill bar showing current specialty/year/semester; click when expanded resets selection to allow switching tracks. Automatically controlled by `DENT_MULTI_SPECIALTY_MODE`.
 
 ### B. Study Timer & Tracker (`study_timer_banner_widget.html` — ~64 KB)
 - **Singleton Guard**: `if (window.dentTimerScriptLoaded) return; window.dentTimerScriptLoaded = true;` ensures only one script instance executes, avoiding duplicate `setInterval` loops.
@@ -332,33 +334,44 @@ All keys are strictly prefixed with `dent2025_`:
 
 ---
 
-### Azure Migration & Hosting Infrastructure (As of Sept 2026)
+### Azure & Cloudflare Tunnel Hosting Infrastructure (As of Sept 13, 2026)
 
-### Hosting Migration
-The project was successfully migrated from a traditional shared hosting environment to a dedicated Azure Virtual Machine (`b-bot-vm`).
+### Hosting Architecture & Cost Optimization
+The website and Telegram Blackboard scraper bot run on an Azure Virtual Machine (`bb-bot-vm`) in **Poland Central** (`polandcentral`) with **24/7 continuous uptime** and **zero Azure Public IP costs**.
 
-**Old Hosting (Shared)**
-- Environment: LiteSpeed Web Server, cPanel/FTP based.
-- Limitations: Strict file count limits, slow database, rigid FTP access, and upload constraints.
-- DNS/CDN: QUIC.cloud was used as the CDN connecting to the shared host IP (`68.65.123.193`).
+**Current Architecture (Cloudflare Tunnel + 24/7 Azure VM)**
+- **Operating System & Stack**: Nginx, PHP 8.3-FPM, MariaDB running on Ubuntu 24.04 LTS.
+- **VM Specs**: `Standard_B2ts_v2` (2 vCPUs, 1GB RAM, 32GB Standard SSD).
+- **DNS & CDN**: **Cloudflare** (`brady.ns.cloudflare.com`, `jasmine.ns.cloudflare.com`). Zone ID: `932a3c299ea8a7a5e0d27488ffa5f60e`.
+- **Cloudflare Tunnel (`dent2025-tunnel`)**:
+  - Tunnel ID: `9f371b67-9d95-40f4-b2b9-7fd0496d4019`
+  - Runs as an active systemd service on the VM (`cloudflared`) connecting outbound to Cloudflare's edge.
+  - Ingress routes: `dent2025.com` and `www.dent2025.com` ➔ `https://localhost:443` (No TLS Verify).
+- **Zero Public IP / Security**:
+  - The previous Azure Static Public IP (`74.248.34.9`) was **permanently deleted** to eliminate the \$3.60/month (\$0.12/day) Azure fee.
+  - The VM has **no open inbound public IP ports**. All web traffic arrives through the encrypted Cloudflare Tunnel.
+- **24/7 Continuous Operation**:
+  - Automated shutdown and startup Logic Apps (`bb-bot-auto-stop` and `bb-bot-auto-start`) have been **Disabled**.
+  - The server runs non-stop 24 hours a day, 7 days a week.
+- **Financial & Runway Status**:
+  - Net Daily Burn: **~$0.350 / day** (~**$10.50 / month**).
+  - Student Credit: Covers ~244 days (runway to **mid-May 2027**), easily surpassing the official **April 2, 2027** Azure for Students expiration date by +43 days with \$0 out-of-pocket.
+- **Deployment & Server Management**:
+  - Server commands and diagnostics can be executed directly via Azure CLI (`az vm run-command invoke`) or Cloudflare Zero Trust.
+  - Shared credentials and Cloudflare API tokens are securely persisted in untracked `passwords.txt` (gitignored).
 
-**New Hosting (Azure VM)**
-- Environment: Nginx, PHP 8.3-FPM, MariaDB running on Ubuntu 24.04 LTS.
-- VM Specs: `Standard_B2ts_v2` (2 vCPUs, 2GB RAM, 32GB Standard SSD).
-- Cost & Schedule: Costs roughly `$4.05/month`. To afford this on the student credit, the VM sleeps daily from 2:00 AM to 7:00 AM (via Azure Logic Apps). The website is completely offline during these hours.
-- Deployment: Fully migrated from standard FTP to highly secure SFTP (via Paramiko in `deploy.py`) over SSH using an RSA key.
-- Shared Resources: The VM simultaneously hosts this WordPress website and the headless Blackboard scraper bot.
-
-### Essential Credentials & Paths
-- **VM IP Address**: `74.248.34.9`
-- **SSH Key**: `C:\Users\3bdyna\.ssh\id_rsa` (Used by deploy script automatically)
+### Essential Server Paths & Local Configurations
+- **VM Name**: `bb-bot-vm` (Resource Group: `bb-bot-pl-rg`)
+- **VM Private IP**: `10.0.0.4` (Internal VNet)
 - **Web Root**: `/var/www/dent2025/`
 - **Nginx Config**: `/etc/nginx/sites-available/dent2025`
 - **Database Name**: `wordpress`
 - **Database User**: `wpuser` (password: `wp_dent2025_sec!`)
+- **Gitignored Secrets**: `passwords.txt`, `deploy_config.json`, `dent2025_passwords.json`
 
 ### Important System Changes
 1. **File Ownership**: The WordPress files in `/var/www/dent2025/` are owned by `www-data:www-data`. The `azureuser` is part of the `www-data` group.
 2. **FS_METHOD**: The `wp-config.php` has `define('FS_METHOD', 'direct');` forced to bypass FTP permission prompts when installing plugins.
 3. **Upload Limits**: `php.ini` and `nginx.conf` are configured to allow 2GB file uploads to facilitate large site imports.
-4. **Cache & CDN**: QUIC.cloud has been updated to point to `74.248.34.9`. Since Nginx is not a LiteSpeed server, QUIC.cloud acts as a standard CDN and proxy.
+4. **Cloudflare Tunnel Routing**: Traffic to `dent2025.com` is proxied via Cloudflare edge ➔ Cloudflare Tunnel ➔ local Nginx port 443 with TLS.
+
