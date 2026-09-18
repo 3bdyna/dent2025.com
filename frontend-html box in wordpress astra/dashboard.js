@@ -1216,6 +1216,14 @@ function renderClassesWidget() {
     // Inclusive filtering: match group or universal (الدفعة كاملة / empty)
     const weekClasses = currentClassesData.filter(c => isClassInGroup(c, savedGroup));
     
+    let selObj = {};
+    try { selObj = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
+    const specNamesAr = { 'dentistry': 'طب الأسنان', 'medicine': 'الطب البشري', 'pre-med': 'السنة التحضيرية' };
+    const yearNamesAr = { 0: 'السنة الأولى', 1: 'السنة الأولى', 2: 'السنة الثانية', 3: 'السنة الثالثة', 4: 'السنة الرابعة', 5: 'السنة الخامسة', 6: 'السنة السادسة' };
+    const subTitleText = (selObj.specialty && selObj.year) 
+        ? `${yearNamesAr[selObj.year] || ('السنة ' + selObj.year)} • ${specNamesAr[selObj.specialty] || selObj.specialty}`
+        : 'السنة الثالثة • طب الأسنان';
+
     let html = `
     <style>
         .dent-classes-widget {
@@ -1291,9 +1299,6 @@ function renderClassesWidget() {
         }
         .dent-day-name {
             font-size: 1.05rem; font-weight: 700; color: #f8fafc; margin: 0;
-        }
-        .dent-day-en {
-            font-size: 0.8rem; color: #64748b; font-weight: 500;
         }
         .dent-today-badge {
             background: rgba(255, 255, 255, 0.12); color: #ffffff; font-size: 0.72rem; font-weight: 600;
@@ -1390,8 +1395,8 @@ function renderClassesWidget() {
     <div class="dent-classes-widget">
         <div class="dent-classes-header">
             <div class="dent-classes-title-wrap">
-                <h2 class="dent-classes-title">الجدول الدراسي الأسبوعي (Class Schedule)</h2>
-                <div class="dent-classes-subtitle">السنة الثالثة • طب الأسنان (Dentistry - 3rd Year)</div>
+                <h2 class="dent-classes-title">الجدول الدراسي الأسبوعي</h2>
+                <div class="dent-classes-subtitle">${dentEscapeHtml(subTitleText)}</div>
             </div>
             <div class="dent-classes-controls">
                 ${isAdmin() ? `<button class="dent-admin-btn-small" onclick="openClassesAdminModal()" style="display:block;">إدارة الفصول</button>` : ''}
@@ -1406,7 +1411,6 @@ function renderClassesWidget() {
             ${daysAr.map((d, idx) => `
                 <div class="dent-classes-nav-pill ${currentDayOfWeek === idx ? 'is-today' : ''}" onclick="document.getElementById('dent-day-${idx}')?.scrollIntoView({behavior: 'smooth', block: 'start'})">
                     <span>${d}</span>
-                    <span style="font-size:0.7rem; opacity:0.65;">(${daysEn[idx]})</span>
                 </div>
             `).join('')}
         </div>
@@ -1428,8 +1432,7 @@ function renderClassesWidget() {
                 <div class="dent-day-header">
                     <div class="dent-day-title-wrap">
                         <h3 class="dent-day-name">${day}</h3>
-                        <span class="dent-day-en">(${daysEn[dIdx]})</span>
-                        ${isToday ? `<span class="dent-today-badge">اليوم (Today)</span>` : ''}
+                        ${isToday ? `<span class="dent-today-badge">اليوم</span>` : ''}
                     </div>
                     <span class="dent-day-count">${dayClasses.length > 0 ? countText : 'إجازة'}</span>
                 </div>
@@ -1450,12 +1453,13 @@ function renderClassesWidget() {
                         }
                     }
                     const rawSub = encodeURIComponent(c.subject || '');
+                    const cleanType = String(c.type || '').replace(/\s*\([^)]*\)/g, '').trim();
                     
                     html += `
                     <div class="dent-class-card dent-class-item ${isActive ? 'active-now' : ''}" data-subject="${rawSub}" onclick="toggleSubjectHighlight(decodeURIComponent('${rawSub}'))" title="انقر لتحديد هذه المادة وتتبعها خلال الأسبوع">
                         <div class="dent-class-info">
                             <h4 class="dent-class-subject">${dentEscapeHtml(c.subject)}</h4>
-                            <span class="dent-type-badge">${dentEscapeHtml(c.type)}</span>
+                            <span class="dent-type-badge">${dentEscapeHtml(cleanType)}</span>
                         </div>
                         <div class="dent-class-time-wrap">
                             ${isActive ? '<span class="dent-class-active-badge">جارية الآن</span>' : ''}
@@ -1470,7 +1474,7 @@ function renderClassesWidget() {
     }
 
     html += `
-        <div class="dent-classes-hint">انقر على أي مادة لتمييزها وتتبع مواعيدها في بقية أيام الأسبوع (Click to spotlight subject)</div>
+        <div class="dent-classes-hint">انقر على أي مادة لتمييزها وتتبع مواعيدها في بقية أيام الأسبوع</div>
     </div>`;
     
     container.innerHTML = html;
@@ -1507,10 +1511,11 @@ function buildClassesModals(group) {
                 </div>`;
             dayClasses.forEach(c => {
                 const rawSub = encodeURIComponent(c.subject || '');
+                const cleanType = String(c.type || '').replace(/\s*\([^)]*\)/g, '').trim();
                 weekHtml += `<div class="dent-class-item" data-subject="${rawSub}" onclick="toggleSubjectHighlight(decodeURIComponent('${rawSub}'))" title="انقر لتحديد هذه المادة وتتبعها خلال الأسبوع" style="background: rgba(0,0,0,0.25); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
                     <div class="dent-week-sub-title" style="font-size: 0.88rem; color: #f8fafc; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <span>${dentEscapeHtml(c.subject)}</span>
-                        <span style="font-size: 0.7rem; font-weight: 400; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 4px;">(${dentEscapeHtml(c.type)})</span>
+                        ${cleanType ? `<span style="font-size: 0.7rem; font-weight: 400; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 4px;">${dentEscapeHtml(cleanType)}</span>` : ''}
                     </div>
                     <div style="font-size: 0.78rem; color: #cbd5e1; direction: ltr; font-weight: 500; font-family: monospace;">${formatTime(c.start_time)} - ${formatTime(c.end_time)}</div>
                 </div>`;
@@ -1555,7 +1560,7 @@ function buildClassesModals(group) {
                 <div class="dent-modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
                     <div style="display:flex; align-items:center; gap: 10px;">
                         <h2 class="dent-classes-title" style="margin:0; font-size:1.1rem; color:#fff;">إدارة الفصول</h2>
-                        <button onclick="logoutClassesAdmin()" style="background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.2); padding:4px 8px; border-radius:6px; font-size:0.75rem; cursor:pointer; font-family:inherit;">تسجيل الخروج (Logout)</button>
+                        <button onclick="logoutClassesAdmin()" style="background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.2); padding:4px 8px; border-radius:6px; font-size:0.75rem; cursor:pointer; font-family:inherit;">تسجيل الخروج</button>
                     </div>
                     <button class="dent-modal-close" style="background:rgba(255,255,255,0.05); border:none; color:#9ca3af; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;" onclick="document.getElementById('classes-admin-modal').style.display='none'">×</button>
                 </div>
@@ -1578,12 +1583,12 @@ function buildClassesModals(group) {
                         <div style="flex: 1;"><label style="font-size:0.75rem; color:#9ca3af;">وقت الانتهاء</label><input type="time" id="adm-c-et" style="width: 100%; background: #121212; font-family: inherit; height: 38px; border: 1px solid rgba(255,255,255,0.1); color: #fff; -webkit-text-fill-color: #fff; padding: 8px; border-radius: 6px; box-sizing: border-box; -webkit-appearance: none; appearance: none;"></div>
                     </div>
                     <div style="display: flex; gap: 16px; margin-bottom: 15px; align-items: center;">
-                        <label style="color: #cbd5e1; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;"><input type="radio" name="adm-c-type" value="نظري (Theory)" checked style="accent-color: #94a3b8 !important; width: 16px; height: 16px; cursor: pointer;"> نظري</label>
-                        <label style="color: #cbd5e1; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;"><input type="radio" name="adm-c-type" value="عملي (Practical)" style="accent-color: #94a3b8 !important; width: 16px; height: 16px; cursor: pointer;"> عملي</label>
+                        <label style="color: #cbd5e1; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;"><input type="radio" name="adm-c-type" value="نظري" checked style="accent-color: #94a3b8 !important; width: 16px; height: 16px; cursor: pointer;"> نظري</label>
+                        <label style="color: #cbd5e1; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;"><input type="radio" name="adm-c-type" value="عملي" style="accent-color: #94a3b8 !important; width: 16px; height: 16px; cursor: pointer;"> عملي</label>
                     </div>
                     <button type="button" class="dent-classes-add-submit-btn" style="margin-top:0; width: 100% !important; background: #27272a !important; color: #f8fafc !important; border: 1px solid rgba(255,255,255,0.15) !important; padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 0.9rem; font-family: inherit; cursor: pointer; transition: all 0.2s; box-shadow: none;" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255,255,255,0.25)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255,255,255,0.15)';" onclick="saveClassEntry()">إضافة الفصل</button>
                 </div>
-                <div style="font-size: 0.75rem; color: #64748b; text-align: center; margin-bottom: 5px; margin-top: 10px;">(التمرير لأسفل لرؤية كل الفصول - Scroll to see more)</div>
+                <div style="font-size: 0.75rem; color: #64748b; text-align: center; margin-bottom: 5px; margin-top: 10px;">(مرر للأسفل لرؤية كل المحاضرات)</div>
                 <div style="max-height:150px; overflow-y:auto; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.2) transparent;">
                     ${adminListHtml}
                 </div>

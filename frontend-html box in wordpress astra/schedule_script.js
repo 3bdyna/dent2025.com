@@ -560,7 +560,7 @@ const ScheduleApp = {
             }
         } else if (startDate && today < startDate) {
             if (elDays) elDays.innerText = 'لم يبدأ';
-            if (elDaysSub) elDaysSub.innerText = 'في الفصل الدراسي / in semester';
+            if (elDaysSub) elDaysSub.innerText = 'في الفصل الدراسي';
         } else if (semesterEndDate && today > semesterEndDate) {
             if (elDays) elDays.innerText = '0';
         } else {
@@ -568,7 +568,7 @@ const ScheduleApp = {
                 const diffTime = Math.abs(semesterEndDate - today);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 if (elDays) elDays.innerText = diffDays;
-                if (elDaysSub) elDaysSub.innerText = 'في الترم / in semester';
+                if (elDaysSub) elDaysSub.innerText = 'في الفصل الدراسي';
             }
         }
 
@@ -585,7 +585,7 @@ const ScheduleApp = {
                 eDate.setHours(0,0,0,0);
                 const diffTime = Math.abs(eDate - today);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                if (elVacation) elVacation.innerText = diffDays + ' يوم / days';
+                if (elVacation) elVacation.innerText = diffDays + ' يوم';
             }
             if (elVacationName) elVacationName.innerText = currentVacation.title;
         } else if (nextVacation) {
@@ -595,12 +595,12 @@ const ScheduleApp = {
                 nDate.setHours(0,0,0,0);
                 const diffTime = Math.abs(nDate - today);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                if (elVacation) elVacation.innerText = diffDays + ' يوم / days';
+                if (elVacation) elVacation.innerText = diffDays + ' يوم';
             }
             if (elVacationName) elVacationName.innerText = '(' + nextVacation.title + ')';
         } else {
             if (elVacationTitle) elVacationTitle.innerText = 'الإجازة القادمة';
-            if (elVacation) elVacation.innerText = 'انتهت / Passed';
+            if (elVacation) elVacation.innerText = 'انتهت';
             if (elVacationName) elVacationName.innerText = '';
         }
     },
@@ -667,7 +667,7 @@ const ScheduleApp = {
         const endDateVal = isEdit ? (existingEvent.end_date || '') : '';
         const isGlobal = isEdit ? !!existingEvent.is_global : (this.scheduleId === 'global');
         const schedIdVal = isEdit ? (existingEvent.schedule_id || (isGlobal ? 'global' : this.scheduleId)) : this.scheduleId;
-        const scopeText = isGlobal ? 'عام (Global)' : schedIdVal;
+        const scopeText = isGlobal ? 'عام' : schedIdVal;
 
         const initialHijri = isEdit && existingEvent.hijri ? existingEvent.hijri : (dateVal ? this.hijriFromGregorian(dateVal) : '—');
 
@@ -728,11 +728,11 @@ const ScheduleApp = {
                 <div style="margin-bottom: 14px;">
                     <label style="font-size:0.8rem; color:#a1a1aa; font-weight:600; display:block; margin-bottom:5px;">نوع الحدث</label>
                     <select id="ev-type" style="width: 100%; height: 44px; padding: 0 14px; background: #121212; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 0.9rem; font-family: inherit; box-sizing: border-box; outline: none; transition: all 0.2s; color-scheme: dark;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)';">
-                        <option value="start"${typeVal === 'start' ? ' selected' : ''}>بداية دراسة (Start)</option>
-                        <option value="holiday"${typeVal === 'holiday' ? ' selected' : ''}>إجازة (Holiday)</option>
-                        <option value="exam"${typeVal === 'exam' ? ' selected' : ''}>اختبار (Exam)</option>
-                        <option value="payment"${typeVal === 'payment' ? ' selected' : ''}>مكافأة (Payment)</option>
-                        <option value="other"${typeVal === 'other' ? ' selected' : ''}>أخرى (Other)</option>
+                        <option value="start"${typeVal === 'start' ? ' selected' : ''}>بداية دراسة</option>
+                        <option value="holiday"${typeVal === 'holiday' ? ' selected' : ''}>إجازة</option>
+                        <option value="exam"${typeVal === 'exam' ? ' selected' : ''}>اختبار</option>
+                        <option value="payment"${typeVal === 'payment' ? ' selected' : ''}>مكافأة</option>
+                        <option value="other"${typeVal === 'other' ? ' selected' : ''}>أخرى</option>
                     </select>
                 </div>
 

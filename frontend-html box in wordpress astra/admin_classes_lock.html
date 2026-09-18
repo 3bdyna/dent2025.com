@@ -44,7 +44,7 @@
             return;
         }
 
-        const pass = prompt("Enter Admin Password:");
+        const pass = prompt("أدخل كلمة مرور إدارة الجدول:");
         if (!pass) return;
 
         // Verify password with the server
@@ -67,11 +67,11 @@
                 sessionStorage.setItem('dent2025_permissions', JSON.stringify(perms));
                 activateClassesAdminMode();
             } else {
-                alert("كلمة المرور غير صحيحة. (Incorrect Password)");
+                alert("كلمة المرور غير صحيحة.");
             }
         }).catch(err => {
             console.error(err);
-            alert("Network error while logging in.");
+            alert("تعذر الاتصال بالخادم لتسجيل الدخول.");
         });
     }
 
