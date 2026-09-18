@@ -366,8 +366,10 @@ const ScheduleApp = {
                 
                 eventWrapper.innerHTML = `
                     <div class="event-date">
-                        <span class="day-name">${dayName}</span>
-                        <span class="gregorian" dir="ltr">${gregDateStr}</span>
+                        <div class="date-main">
+                            <span class="day-name">${dayName}</span>
+                            <span class="gregorian" dir="ltr">${gregDateStr}</span>
+                        </div>
                         ${formattedHijri ? `<span class="hijri">${formattedHijri}</span>` : ''}
                     </div>
                     <div class="event-dot"></div>

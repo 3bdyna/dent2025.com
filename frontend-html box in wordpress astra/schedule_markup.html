@@ -121,7 +121,7 @@
     .timeline-events {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 24px;
     }
 
     /* Event Wrapper */
@@ -138,9 +138,10 @@
         width: 105px;
         text-align: left;
     }
-    .day-name { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 2px; display: block; }
+    .date-main { margin-bottom: 4px; display: flex; flex-direction: column; gap: 2px; }
+    .day-name { font-size: 0.8rem; color: var(--text-secondary); display: block; }
     .gregorian { font-weight: 500; font-size: 0.95rem; color: var(--text-primary); font-family: 'Outfit'; display: block; line-height: 1.2; }
-    .hijri { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; display: block; }
+    .hijri { font-size: 0.75rem; color: var(--text-muted); display: block; line-height: 1.3; }
     
     /* Timeline Dot */
     .event-dot {
