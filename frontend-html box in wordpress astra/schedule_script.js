@@ -225,10 +225,8 @@ const ScheduleApp = {
             const timelineEvents = document.createElement('div');
             timelineEvents.className = 'timeline-events';
             groupData.events.forEach(ev => {
-                const card = document.createElement('div');
-                card.className = 'event-card';
-                const color = this.typeColors[ev.type] || this.typeColors['other'];
-                card.style.setProperty('--event-color', color);
+                const eventWrapper = document.createElement('div');
+                eventWrapper.className = 'event';
                 const dateDisplay = this.formatDate(ev.date, ev.end_date);
                 const formattedHijri = this.formatHijriDate(ev.hijri);
                 
@@ -274,21 +272,15 @@ const ScheduleApp = {
                     badgeClass = 'today';
                 }
 
-                if (badgeClass === 'today') {
-                    card.classList.add('is-today');
+                if (badgeClass === 'passed') {
+                    eventWrapper.classList.add('passed');
+                } else if (badgeClass === 'today' || badgeHtml.includes('غداً') || badgeHtml.includes('يومين')) {
+                    eventWrapper.classList.add('highlight');
                 }
-
-                const typeLabels = {
-                    'exam': 'كويز / اختبار',
-                    'holiday': 'إجازة رسمية',
-                    'payment': 'مكافأة جامعية',
-                    'start': 'بداية دراسية',
-                    'other': 'حدث'
-                };
 
                 let adminNoticeBadge = '';
                 if (this.adminPassword && ev._isEndedPast3Days) {
-                    adminNoticeBadge = '<span style="font-size: 0.72rem; color: #f87171; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); padding: 2px 6px; border-radius: 4px;">مخفي عن الطلاب</span>';
+                    adminNoticeBadge = '<span style="font-size: 0.72rem; color: #f87171; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block;">مخفي عن الطلاب</span>';
                 }
 
                 let deleteBtn = '';
@@ -298,22 +290,38 @@ const ScheduleApp = {
                     deleteBtn = `<button type="button" class="event-delete-btn" onclick="ScheduleApp.deleteEvent('${dentEscapeHtml(ev.id)}', ${isGlobal ? 'true' : 'false'}, '${dentEscapeHtml(eventSchedId)}')" title="حذف هذا الحدث">&times;</button>`;
                 }
 
-                card.innerHTML = `
-                    <div class="event-card-header">
-                        <div class="event-dates-wrap">
-                            <span class="event-gregorian-date">${dateDisplay}</span>
-                            ${formattedHijri ? `<span class="event-hijri-date">${formattedHijri}</span>` : ''}
+                const dateObj = this.parseLocalDate(ev.date) || new Date();
+                const dayName = dateObj.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { weekday: 'long' });
+                const dayNum = dateObj.getDate();
+                const monthShort = this.gregorianMonthsEN[dateObj.getMonth()].substring(0, 3);
+                let gregDateStr = `${dayNum} ${monthShort}`;
+                
+                if (ev.end_date) {
+                    const eDate = this.parseLocalDate(ev.end_date);
+                    if (eDate) gregDateStr += `-${eDate.getDate()} ${this.gregorianMonthsEN[eDate.getMonth()].substring(0,3)}`;
+                }
+
+                let extraBadgeClass = (badgeClass === 'passed') ? 'passed-badge' : ((badgeClass === 'future' || badgeClass === 'today') && eventWrapper.classList.contains('highlight') ? 'highlight-badge' : '');
+
+                eventWrapper.innerHTML = `
+                    <div class="event-date">
+                        <span class="day-name">${dayName}</span>
+                        <span class="gregorian">${gregDateStr}</span>
+                        ${formattedHijri ? `<span class="hijri">${formattedHijri}</span>` : ''}
+                    </div>
+                    <div class="event-dot"></div>
+                    <div class="event-card">
+                        <div class="event-info">
+                            <h3 class="event-title" dir="auto">${dentEscapeHtml(ev.title)}</h3>
                         </div>
-                        <div class="event-badges-wrap">
-                            <span class="event-type-badge">${typeLabels[ev.type] || typeLabels['other']}</span>
-                            <span class="event-countdown-pill ${badgeClass}">${badgeHtml}</span>
+                        <div class="event-badges">
+                            <span class="badge ${extraBadgeClass}">${badgeHtml}</span>
                             ${adminNoticeBadge}
                             ${deleteBtn}
                         </div>
                     </div>
-                    <h3 class="event-title" dir="auto">${dentEscapeHtml(ev.title)}</h3>
                 `;
-                timelineEvents.appendChild(card);
+                timelineEvents.appendChild(eventWrapper);
             });
             monthSection.appendChild(timelineEvents);
             container.appendChild(monthSection);

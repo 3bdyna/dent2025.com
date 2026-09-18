@@ -1,25 +1,22 @@
 <style>
     /* =========================================================
-       DENT2025 ACADEMIC TIMELINE
+       DENT2025 ACADEMIC TIMELINE (MONOCHROME VERTICAL)
        Strictly adhering to AGENTS.md Section 11 Design System:
-       - Curated, muted dark-mode palette (#121212 canvas, #1e1e1e card, #27272a zinc border)
-       - High-contrast readable slate/white typography (#f8fafc / #e2e8f0 / #94a3b8)
-       - Restrained, soft accents (#60a5fa soft blue, subtle active indicators)
+       - Curated, muted dark-mode palette (#121212 canvas, #18181b card, #27272a border)
+       - High-contrast readable slate/white typography (#f8fafc / #a1a1aa / #71717a)
        - NO loud popping saturated colors or neon glows
        - NO decorative emojis
        - RTL first, Outfit & Noto Kufi Arabic typography
        ========================================================= */
     :root {
         --bg-color: #121212;
-        --card-bg: #1e1e1e;
-        --card-hover-bg: #26262a;
+        --card-bg: #18181b;
+        --card-hover-bg: #27272a;
         --border-color: #27272a;
         --border-hover: #3f3f46;
         --text-primary: #f8fafc;
-        --text-secondary: #94a3b8;
-        --text-muted: #64748b;
-        --accent-soft: #60a5fa;
-        --accent-active: rgba(34, 197, 94, 0.5);
+        --text-secondary: #a1a1aa;
+        --text-muted: #71717a;
     }
 
     .dent-schedule-container {
@@ -29,7 +26,7 @@
         padding: 24px;
         border-radius: 16px;
         direction: rtl;
-        max-width: 720px;
+        max-width: 760px;
         margin: 0 auto;
         border: 1px solid var(--border-color);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -38,32 +35,28 @@
     .dent-schedule-title {
         text-align: center;
         font-size: 1.2rem;
-        font-weight: 700;
-        margin-bottom: 18px;
+        font-weight: 600;
+        margin-bottom: 32px;
         color: var(--text-primary);
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 14px;
+        border-bottom: none;
         letter-spacing: -0.01em;
     }
 
-    /* Stats Bar (Muted Dark-Mode Architecture) */
-    .stats-bar {
+    /* Stats Grid */
+    .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-        gap: 8px;
-        margin-bottom: 22px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 40px;
     }
     
     .stat-card {
         background: var(--card-bg);
         border: 1px solid var(--border-color);
-        border-radius: 10px;
-        padding: 12px 10px;
+        border-radius: 12px;
+        padding: 16px;
         text-align: center;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        transition: border-color 0.2s ease, transform 0.2s ease;
+        transition: transform 0.2s ease, border-color 0.2s ease;
     }
     .stat-card:hover {
         transform: translateY(-2px);
@@ -71,162 +64,163 @@
     }
     .stat-title {
         font-size: 0.8rem;
-        font-weight: 600;
-        margin-bottom: 2px;
-        color: #cbd5e1;
-    }
-    .stat-subtitle {
-        font-size: 0.58rem;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        margin-bottom: 4px;
-        letter-spacing: 0.5px;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+        font-weight: 500;
+        display: block;
     }
     .stat-value {
-        font-size: 1.05rem;
-        font-weight: 700;
+        font-size: 0.95rem;
+        font-weight: 600;
         color: var(--text-primary);
+        display: block;
     }
     .stat-subvalue {
-        font-size: 0.68rem;
-        color: var(--text-secondary);
-        margin-top: 2px;
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        margin-top: 4px;
+        display: block;
     }
 
-    /* Timeline Section */
+    /* Timeline Container */
+    .timeline {
+        position: relative;
+        padding-right: 120px;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        right: 100px;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: var(--border-color);
+    }
+
+    /* Month Header */
     .timeline-month {
-        margin-bottom: 26px;
+        /* Wrapper for the month text and its events */
     }
-
     .month-header {
         font-size: 1.05rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: 14px;
+        font-weight: 600;
+        margin: 32px 0 20px 0;
+        color: var(--text-secondary);
         display: flex;
         align-items: center;
         gap: 12px;
     }
-
+    .timeline-month:first-child .month-header { margin-top: 0; }
     .month-header::after {
         content: '';
         flex: 1;
         height: 1px;
         background: var(--border-color);
     }
-
+    
     .timeline-events {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
+    }
+
+    /* Event Wrapper */
+    .event {
         position: relative;
-        padding-right: 20px;
-        border-right: 2px solid var(--border-color);
     }
-
-    /* Event Card (Muted, High-Contrast Architecture) */
-    .event-card {
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        padding: 14px 18px;
-        border-radius: 12px;
-        position: relative;
-        transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
-    }
-
-    .event-card:hover {
-        transform: translateX(-3px);
-        background: var(--card-hover-bg);
-        border-color: var(--border-hover);
-    }
-
-    /* Subtle, restrained dot on timeline line */
-    .event-card::before {
-        content: '';
+    
+    /* Date Area (Right side of timeline) */
+    .event-date {
         position: absolute;
+        right: -120px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 90px;
+        text-align: left;
+    }
+    .day-name { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 2px; display: block; }
+    .gregorian { font-weight: 500; font-size: 0.95rem; color: var(--text-primary); font-family: 'Outfit'; display: block; line-height: 1.2; }
+    .hijri { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; display: block; }
+    
+    /* Timeline Dot */
+    .event-dot {
+        position: absolute;
+        right: -24px;
+        top: 50%;
+        transform: translateY(-50%);
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background-color: #52525b;
-        right: -25px;
-        top: 20px;
+        background: var(--text-muted);
         border: 2px solid var(--bg-color);
+        z-index: 2;
+        transition: all 0.2s ease;
     }
-    .event-card.is-today::before {
-        background-color: var(--accent-soft);
-    }
-
-    .event-card-header {
+    .event.highlight .event-dot { background: var(--text-primary); border-color: #27272a; box-shadow: 0 0 0 2px var(--bg-color); }
+    .event.passed .event-dot { background: transparent; border-color: var(--border-color); }
+    
+    /* Event Card (Left side of timeline) */
+    .event-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 16px;
+        position: relative;
+        transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 8px;
-        gap: 10px;
-        flex-wrap: wrap;
+        gap: 16px;
     }
-
-    .event-dates-wrap {
+    .event-card:hover {
+        border-color: var(--border-hover);
+        background-color: var(--card-hover-bg);
+        transform: translateX(-3px);
+    }
+    .event.highlight .event-card { border-color: rgba(255,255,255,0.15); }
+    .event.passed .event-card { opacity: 0.6; }
+    .event.passed .event-card:hover { opacity: 0.8; }
+    
+    .event-info {
+        flex: 1;
+    }
+    .event-title { 
+        font-weight: 500; 
+        font-size: 1.05rem; 
+        line-height: 1.4; 
+        color: var(--text-primary) !important; 
+        margin: 0; 
+        text-align: right;
+    }
+    
+    .event-badges {
         display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-
-    .event-gregorian-date {
-        font-size: 0.86rem;
-        font-weight: 600;
-        color: #e2e8f0;
-    }
-
-    .event-hijri-date {
-        font-size: 0.78rem;
-        color: var(--text-secondary);
-        background: rgba(255, 255, 255, 0.05);
-        padding: 2px 7px;
-        border-radius: 4px;
-        direction: rtl;
-    }
-
-    .event-badges-wrap {
-        display: flex;
-        align-items: center;
+        flex-direction: column;
         gap: 6px;
+        align-items: flex-end;
+        min-width: 90px;
     }
-
-    .event-type-badge {
-        font-size: 0.72rem;
-        font-weight: 500;
-        padding: 2px 8px;
-        border-radius: 5px;
-        background: rgba(255, 255, 255, 0.05);
-        color: #cbd5e1;
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.03);
         border: 1px solid var(--border-color);
+        color: var(--text-secondary);
         white-space: nowrap;
     }
-
-    .event-countdown-pill {
-        font-size: 0.72rem;
-        font-weight: 600;
-        padding: 2px 8px;
-        border-radius: 5px;
-        white-space: nowrap;
-    }
-    .event-countdown-pill.future {
-        background: rgba(255, 255, 255, 0.1);
+    .badge.highlight-badge {
         color: var(--text-primary);
-        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-color: rgba(255,255,255,0.2);
+        font-weight: 500;
     }
-    .event-countdown-pill.today {
-        background: rgba(96, 165, 250, 0.15);
-        color: #93c5fd;
-        border: 1px solid rgba(96, 165, 250, 0.3);
-    }
-    .event-countdown-pill.passed {
+    .badge.passed-badge {
         background: transparent;
-        color: var(--text-muted);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-style: dashed;
     }
-
+    
+    /* Admin controls inside badges */
     .event-delete-btn {
         background: rgba(239, 68, 68, 0.12);
         border: 1px solid rgba(239, 68, 68, 0.3);
@@ -242,23 +236,9 @@
         padding: 0;
         line-height: 1;
         transition: all 0.2s ease;
-        margin-right: 4px;
+        margin-top: 4px;
     }
-    .event-delete-btn:hover {
-        background: rgba(239, 68, 68, 0.25);
-        color: #ffffff;
-    }
-
-    .event-title {
-        font-size: 1.05rem;
-        font-weight: 600;
-        margin: 0;
-        color: var(--text-primary) !important;
-        line-height: 1.5;
-        letter-spacing: -0.01em;
-        text-align: right;
-        word-break: break-word;
-    }
+    .event-delete-btn:hover { background: rgba(239, 68, 68, 0.25); color: #ffffff; }
 
     /* Empty state */
     .schedule-loading, .schedule-error {
@@ -270,23 +250,37 @@
     /* Mobile adjustments */
     @media (max-width: 600px) {
         .dent-schedule-container {
-            padding: 14px 12px;
-            border-radius: 12px;
+            padding: 16px 12px;
+        }
+        .stats-grid {
+            grid-template-columns: repeat(1, 1fr);
+            gap: 8px;
+        }
+        .timeline {
+            padding-right: 80px;
+        }
+        .timeline::before {
+            right: 70px;
+        }
+        .event-date {
+            right: -80px;
+            width: 60px;
+        }
+        .gregorian { font-size: 0.8rem; }
+        .day-name, .hijri { font-size: 0.65rem; }
+        .event-dot {
+            right: -24px; /* relative to padding edge of timeline */
         }
         .event-card {
-            padding: 12px 14px;
-        }
-        .event-title {
-            font-size: 0.98rem;
-        }
-        .event-card-header {
+            padding: 12px;
             flex-direction: column;
             align-items: flex-start;
-            gap: 6px;
+            gap: 10px;
         }
-        .event-dates-wrap, .event-badges-wrap {
-            width: 100%;
-            justify-content: space-between;
+        .event-badges {
+            flex-direction: row;
+            align-items: center;
+            flex-wrap: wrap;
         }
     }
 </style>
@@ -295,28 +289,25 @@
 <div class="dent-schedule-container" id="dent-schedule-app">
     <h2 class="dent-schedule-title">التقويم الدراسي</h2>
     
-    <div class="stats-bar" id="schedule-stats" style="display: none;">
+    <div class="stats-grid" id="schedule-stats" style="display: none;">
         <div class="stat-card" id="stat-exam">
-            <span class="stat-title">أقرب اختبار</span>
-            <span class="stat-subtitle">CLOSEST EXAM</span>
-            <span class="stat-value" id="val-exam">لا يوجد / None</span>
-            <span class="stat-subvalue">حتى الآن</span>
+            <span class="stat-title">أقرب حدث</span>
+            <span class="stat-value" id="val-exam">لا يوجد</span>
+            <span class="stat-subvalue">في التقويم</span>
         </div>
         <div class="stat-card">
             <span class="stat-title">الأيام المتبقية للترم</span>
-            <span class="stat-subtitle">DAYS LEFT</span>
             <span class="stat-value" id="val-days">0</span>
-            <span class="stat-subvalue">in semester / في الترم</span>
+            <span class="stat-subvalue">في الترم</span>
         </div>
         <div class="stat-card">
             <span class="stat-title">الإجازة القادمة</span>
-            <span class="stat-subtitle">NEXT VACATION</span>
-            <span class="stat-value" id="val-vacation">انتهت / Passed</span>
+            <span class="stat-value" id="val-vacation">انتهت</span>
             <span class="stat-subvalue" id="val-vacation-name"></span>
         </div>
     </div>
 
-    <div id="schedule-content">
+    <div class="timeline" id="schedule-content">
         <div class="schedule-loading">جاري تحميل التقويم...</div>
     </div>
 </div>
