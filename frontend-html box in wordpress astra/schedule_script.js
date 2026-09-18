@@ -390,9 +390,11 @@ const ScheduleApp = {
                     }
 
                     let extraBadgeClass = badgeClass ? `badge-${badgeClass}` : '';
+                    const isNationalDay = ev.id === 'evt_hol_national' || (ev.title && ev.title.includes('اليوم الوطني'));
+                    const nationalDayCardClass = isNationalDay ? ' event-card-national-day' : '';
                     
                     cardsHtml += `
-                        <div class="event-card">
+                        <div class="event-card${nationalDayCardClass}">
                             <div class="event-info" style="flex: 1; min-width: 0;">
                                 <h3 class="event-title" dir="auto">${dentEscapeHtml(ev.title)}</h3>
                             </div>
@@ -407,6 +409,8 @@ const ScheduleApp = {
                 
                 if (allPassed) eventWrapper.classList.add('passed');
                 if (hasHighlight) eventWrapper.classList.add('highlight');
+                const isDayNationalDay = dayData.events.some(e => e.id === 'evt_hol_national' || (e.title && e.title.includes('اليوم الوطني')));
+                if (isDayNationalDay) eventWrapper.classList.add('event-national-day');
                 
                 eventWrapper.innerHTML = `
                     <div class="event-date">
