@@ -3,10 +3,10 @@
     .dent-tomorrow-calendar-alert {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         width: 100%;
         margin: 0 0 14px;
-        padding: 10px 12px;
+        padding: 12px 14px;
         box-sizing: border-box;
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 12px;
@@ -21,9 +21,9 @@
     }
 
     .dent-tomorrow-calendar-icon {
-        width: 32px;
-        height: 32px;
-        flex: 0 0 32px;
+        width: 36px;
+        height: 36px;
+        flex: 0 0 36px;
         display: grid;
         place-items: center;
         box-sizing: border-box;
@@ -34,8 +34,8 @@
     }
 
     .dent-tomorrow-calendar-icon svg {
-        width: 16px;
-        height: 16px;
+        width: 18px;
+        height: 18px;
     }
 
     .dent-tomorrow-calendar-content {
@@ -47,7 +47,7 @@
         display: block;
         margin: 0 0 1px;
         color: #8f8f96;
-        font-size: 0.62rem;
+        font-size: 0.72rem;
         line-height: 1.5;
     }
 
@@ -55,7 +55,7 @@
         margin: 0;
         overflow: hidden;
         color: #eeeeef;
-        font-size: 0.78rem;
+        font-size: 0.96rem;
         font-weight: 600;
         line-height: 1.6;
         text-overflow: ellipsis;
@@ -65,8 +65,8 @@
     .dent-tomorrow-calendar-meta {
         margin: 1px 0 0;
         overflow: hidden;
-        color: #707078;
-        font-size: 0.62rem;
+        color: #85858d;
+        font-size: 0.72rem;
         line-height: 1.5;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -77,7 +77,7 @@
         padding-right: 10px;
         border-right: 1px solid rgba(255, 255, 255, 0.08);
         color: #b8b8be;
-        font-size: 0.65rem;
+        font-size: 0.78rem;
         line-height: 1.5;
         white-space: nowrap;
     }
@@ -89,7 +89,7 @@
         border-radius: 7px;
         background: rgba(255, 255, 255, 0.04);
         color: #bdbdc3;
-        font-size: 0.62rem;
+        font-size: 0.70rem;
         line-height: 1.5;
         text-decoration: none;
         white-space: nowrap;
@@ -100,6 +100,10 @@
         background: rgba(255, 255, 255, 0.09);
         color: #ffffff;
         outline: none;
+    }
+
+    .dent-tomorrow-calendar-meta[hidden] {
+        display: none !important;
     }
 
     @media (max-width: 650px) {
@@ -162,14 +166,6 @@
     var alertId = 'dent-tomorrow-calendar-alert';
     var scheduleEndpoint = window.location.origin + '/schedule_backend.php';
     var selectionKey = 'dent2025_selection';
-
-    var typeLabels = {
-        start: 'بداية الفصل',
-        holiday: 'إجازة',
-        payment: 'رسوم دراسية',
-        exam: 'اختبار',
-        other: 'حدث دراسي'
-    };
 
     function getElement(id) {
         return document.getElementById(id);
@@ -253,17 +249,15 @@
         }
 
         var firstEvent = events[0] || {};
-        var eventType = typeLabels[firstEvent.type] || typeLabels.other;
         var title = String(firstEvent.title || 'حدث دراسي');
-        var meta = eventType;
-
-        if (events.length > 1) {
-            meta += ' · ' + events.length + ' أحداث مجدولة';
-        }
+        var meta = events.length > 1
+            ? 'يوجد أكثر من حدث في هذا اليوم'
+            : '';
 
         getElement('dent-tomorrow-calendar-label').textContent = eventsCountLabel(events.length);
         getElement('dent-tomorrow-calendar-title').textContent = title;
         getElement('dent-tomorrow-calendar-meta').textContent = meta;
+        getElement('dent-tomorrow-calendar-meta').hidden = !meta;
         getElement('dent-tomorrow-calendar-date').textContent = formatTomorrowDate(tomorrow);
 
         alert.hidden = false;
