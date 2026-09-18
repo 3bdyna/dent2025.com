@@ -8,8 +8,8 @@
        - Clean, distraction-free RTL typography
        ========================================================= */
     :root {
-        --bg-color: rgba(255, 255, 255, 0.03);
-        --card-bg: rgba(0, 0, 0, 0.25);
+        --bg-color: rgba(14, 14, 18, 0.78);
+        --card-bg: rgba(0, 0, 0, 0.48);
         --card-hover-bg: rgba(255, 255, 255, 0.08);
         --border-color: rgba(255, 255, 255, 0.08);
         --border-hover: rgba(255, 255, 255, 0.22);
@@ -21,14 +21,16 @@
     .dent-schedule-container {
         font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
         background-color: var(--bg-color);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         color: var(--text-primary);
         padding: 24px;
         border-radius: 16px;
         direction: rtl;
         max-width: 760px;
-        margin: 0 auto;
+        margin: 36px auto 30px auto;
         border: 1px solid var(--border-color);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
     }
 
     .dent-schedule-title {

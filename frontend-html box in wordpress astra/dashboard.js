@@ -1227,11 +1227,13 @@ function renderClassesWidget() {
     let html = `
     <style>
         .dent-classes-widget {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(14, 14, 18, 0.78);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px; padding: 24px; margin-bottom: 30px;
+            border-radius: 16px; padding: 24px; margin-top: 36px; margin-bottom: 30px;
             direction: rtl; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.45);
         }
         .dent-classes-header {
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;
@@ -1279,7 +1281,7 @@ function renderClassesWidget() {
         
         /* Vertical Day Blocks (Monochrome) */
         .dent-day-block {
-            background: rgba(0, 0, 0, 0.22);
+            background: rgba(0, 0, 0, 0.38);
             border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 14px; padding: 18px 20px; margin-bottom: 18px;
             transition: all 0.25s ease;
@@ -1342,7 +1344,7 @@ function renderClassesWidget() {
         .dent-class-card {
             display: flex; justify-content: space-between; align-items: center;
             padding: 12px 16px; border-radius: 10px; margin-bottom: 9px;
-            background: rgba(0, 0, 0, 0.25);
+            background: rgba(0, 0, 0, 0.48);
             border: 1px solid rgba(255, 255, 255, 0.06);
             gap: 12px;
         }
@@ -1512,7 +1514,7 @@ function buildClassesModals(group) {
             dayClasses.forEach(c => {
                 const rawSub = encodeURIComponent(c.subject || '');
                 const cleanType = String(c.type || '').replace(/\s*\([^)]*\)/g, '').trim();
-                weekHtml += `<div class="dent-class-item" data-subject="${rawSub}" onclick="toggleSubjectHighlight(decodeURIComponent('${rawSub}'))" title="انقر لتحديد هذه المادة وتتبعها خلال الأسبوع" style="background: rgba(0,0,0,0.25); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
+                weekHtml += `<div class="dent-class-item" data-subject="${rawSub}" onclick="toggleSubjectHighlight(decodeURIComponent('${rawSub}'))" title="انقر لتحديد هذه المادة وتتبعها خلال الأسبوع" style="background: rgba(0,0,0,0.48); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
                     <div class="dent-week-sub-title" style="font-size: 0.88rem; color: #f8fafc; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <span>${dentEscapeHtml(c.subject)}</span>
                         ${cleanType ? `<span style="font-size: 0.7rem; font-weight: 400; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 4px;">${dentEscapeHtml(cleanType)}</span>` : ''}
