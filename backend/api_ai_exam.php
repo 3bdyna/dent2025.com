@@ -217,10 +217,13 @@ function getGeminiKeyEntries() {
 function saveGeminiKeyEntries($entries) {
     $dataDir = __DIR__ . '/gemini_keys_data';
     if (!is_dir($dataDir)) {
-        @mkdir($dataDir, 0777, true);
+        @mkdir($dataDir, 0775, true);
     }
     $keysFile = $dataDir . '/gemini_keys.json';
-    return file_put_contents($keysFile, json_encode($entries, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    $encoded = json_encode(array_values($entries), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    if ($encoded === false) return false;
+    $res = @file_put_contents($keysFile, $encoded, LOCK_EX);
+    return ($res !== false);
 }
 
 function getGeminiRawApiKeys() {
@@ -1932,6 +1935,7 @@ if ($action === 'gemini_status') {
             'index' => $index,
             'label' => $label,
             'key_masked' => $maskedKey,
+            'key_raw' => $apiKey,
             'status' => $status,
             'requests_today' => $keyStats['requests'],
             'tokens_today' => $keyStats['total_tokens'],
@@ -2054,7 +2058,9 @@ if ($action === 'add_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
 
     $entries[] = $newEntry;
-    saveGeminiKeyEntries($entries);
+    if (!saveGeminiKeyEntries($entries)) {
+        sendResponse(false, "فشل حفظ المفتاح على الخادم. يرجى التحقق من أذونات مجلد gemini_keys_data.");
+    }
 
     // Update health cache
     $dataDir = __DIR__ . '/gemini_keys_data';
@@ -2120,7 +2126,9 @@ if ($action === 'edit_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $entries[$targetIndex]['updated_at'] = date('Y-m-d H:i:s');
-    saveGeminiKeyEntries($entries);
+    if (!saveGeminiKeyEntries($entries)) {
+        sendResponse(false, "فشل حفظ التعديلات على الخادم. يرجى التحقق من أذونات مجلد gemini_keys_data.");
+    }
 
     // Re-test edited key
     global $GEMINI_MODELS;
@@ -2185,7 +2193,9 @@ if ($action === 'delete_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $deleted = array_splice($entries, $targetIndex, 1);
-    saveGeminiKeyEntries($entries);
+    if (!saveGeminiKeyEntries($entries)) {
+        sendResponse(false, "فشل حفظ التغييرات بعد الحذف على الخادم. يرجى التحقق من أذونات مجلد gemini_keys_data.");
+    }
 
     // Rebuild health cache indices
     $dataDir = __DIR__ . '/gemini_keys_data';
