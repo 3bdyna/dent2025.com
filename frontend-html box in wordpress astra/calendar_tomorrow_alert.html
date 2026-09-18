@@ -1,0 +1,329 @@
+<style>
+    /* Dent2025 compact next-day academic event alert */
+    .dent-tomorrow-calendar-alert {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        margin: 0 0 14px;
+        padding: 10px 12px;
+        box-sizing: border-box;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.045);
+        color: #f1f1f3;
+        direction: rtl;
+        font-family: 'Noto Kufi Arabic', 'Outfit', sans-serif;
+    }
+
+    .dent-tomorrow-calendar-alert[hidden] {
+        display: none !important;
+    }
+
+    .dent-tomorrow-calendar-icon {
+        width: 32px;
+        height: 32px;
+        flex: 0 0 32px;
+        display: grid;
+        place-items: center;
+        box-sizing: border-box;
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        border-radius: 9px;
+        background: #242428;
+        color: #c4c4c9;
+    }
+
+    .dent-tomorrow-calendar-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .dent-tomorrow-calendar-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .dent-tomorrow-calendar-label {
+        display: block;
+        margin: 0 0 1px;
+        color: #8f8f96;
+        font-size: 0.62rem;
+        line-height: 1.5;
+    }
+
+    .dent-tomorrow-calendar-title {
+        margin: 0;
+        overflow: hidden;
+        color: #eeeeef;
+        font-size: 0.78rem;
+        font-weight: 600;
+        line-height: 1.6;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .dent-tomorrow-calendar-meta {
+        margin: 1px 0 0;
+        overflow: hidden;
+        color: #707078;
+        font-size: 0.62rem;
+        line-height: 1.5;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .dent-tomorrow-calendar-date {
+        flex: 0 0 auto;
+        padding-right: 10px;
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        color: #b8b8be;
+        font-size: 0.65rem;
+        line-height: 1.5;
+        white-space: nowrap;
+    }
+
+    .dent-tomorrow-calendar-action {
+        flex: 0 0 auto;
+        padding: 5px 8px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.04);
+        color: #bdbdc3;
+        font-size: 0.62rem;
+        line-height: 1.5;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .dent-tomorrow-calendar-action:hover,
+    .dent-tomorrow-calendar-action:focus-visible {
+        background: rgba(255, 255, 255, 0.09);
+        color: #ffffff;
+        outline: none;
+    }
+
+    @media (max-width: 650px) {
+        .dent-tomorrow-calendar-alert {
+            flex-wrap: wrap;
+        }
+
+        .dent-tomorrow-calendar-content {
+            flex: 1 1 calc(100% - 52px);
+        }
+
+        .dent-tomorrow-calendar-date {
+            width: 100%;
+            padding: 8px 0 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            border-right: 0;
+        }
+
+        .dent-tomorrow-calendar-action {
+            margin-right: 42px;
+        }
+    }
+</style>
+
+<section
+    id="dent-tomorrow-calendar-alert"
+    class="dent-tomorrow-calendar-alert"
+    role="status"
+    aria-live="polite"
+    hidden
+>
+    <div class="dent-tomorrow-calendar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="3.5" y="5" width="17" height="15.5" rx="2.5"></rect>
+            <path d="M7.5 3.5v4M16.5 3.5v4M3.5 9h17"></path>
+            <path d="M8 13h.01M12 13h.01M16 13h.01"></path>
+        </svg>
+    </div>
+
+    <div class="dent-tomorrow-calendar-content">
+        <span id="dent-tomorrow-calendar-label" class="dent-tomorrow-calendar-label"></span>
+        <h2 id="dent-tomorrow-calendar-title" class="dent-tomorrow-calendar-title"></h2>
+        <p id="dent-tomorrow-calendar-meta" class="dent-tomorrow-calendar-meta"></p>
+    </div>
+
+    <div id="dent-tomorrow-calendar-date" class="dent-tomorrow-calendar-date"></div>
+
+    <a class="dent-tomorrow-calendar-action" href="/التقويم-الأكاديمي/">
+        عرض التقويم
+    </a>
+</section>
+
+<script>
+(function () {
+    'use strict';
+
+    if (window.dentTomorrowCalendarAlertLoaded) return;
+    window.dentTomorrowCalendarAlertLoaded = true;
+
+    var alertId = 'dent-tomorrow-calendar-alert';
+    var scheduleEndpoint = window.location.origin + '/schedule_backend.php';
+    var selectionKey = 'dent2025_selection';
+
+    var typeLabels = {
+        start: 'بداية الفصل',
+        holiday: 'إجازة',
+        payment: 'رسوم دراسية',
+        exam: 'اختبار',
+        other: 'حدث دراسي'
+    };
+
+    function getElement(id) {
+        return document.getElementById(id);
+    }
+
+    function hideAlert() {
+        var alert = getElement(alertId);
+        if (alert) alert.hidden = true;
+    }
+
+    function readSelection() {
+        try {
+            var raw = localStorage.getItem(selectionKey);
+            var selection = raw ? JSON.parse(raw) : null;
+
+            if (!selection || !selection.specialty || !selection.year || !selection.semester) {
+                return null;
+            }
+
+            return selection;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function parseLocalDate(dateString) {
+        if (!dateString || typeof dateString !== 'string') return null;
+
+        var match = dateString.slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!match) return null;
+
+        var date = new Date(
+            Number(match[1]),
+            Number(match[2]) - 1,
+            Number(match[3])
+        );
+
+        date.setHours(0, 0, 0, 0);
+        return isNaN(date.getTime()) ? null : date;
+    }
+
+    function getTomorrow() {
+        var tomorrow = new Date();
+        tomorrow.setHours(0, 0, 0, 0);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow;
+    }
+
+    function isEventTomorrow(event, tomorrow) {
+        var startDate = parseLocalDate(event.date);
+        if (!startDate) return false;
+
+        var endDate = parseLocalDate(event.end_date || event.date) || startDate;
+        return tomorrow >= startDate && tomorrow <= endDate;
+    }
+
+    function formatTomorrowDate(date) {
+        try {
+            return new Intl.DateTimeFormat('ar-SA', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'short'
+            }).format(date);
+        } catch (error) {
+            return 'غداً';
+        }
+    }
+
+    function eventsCountLabel(count) {
+        if (count === 1) return 'حدث غداً في التقويم الدراسي';
+        if (count === 2) return 'لديك حدثان غداً';
+        if (count >= 3 && count <= 10) return 'لديك ' + count + ' أحداث غداً';
+        return 'لديك ' + count + ' حدثاً غداً';
+    }
+
+    function render(events, tomorrow) {
+        var alert = getElement(alertId);
+        if (!alert || !Array.isArray(events) || events.length === 0) {
+            hideAlert();
+            return;
+        }
+
+        var firstEvent = events[0] || {};
+        var eventType = typeLabels[firstEvent.type] || typeLabels.other;
+        var title = String(firstEvent.title || 'حدث دراسي');
+        var meta = eventType;
+
+        if (events.length > 1) {
+            meta += ' · ' + events.length + ' أحداث مجدولة';
+        }
+
+        getElement('dent-tomorrow-calendar-label').textContent = eventsCountLabel(events.length);
+        getElement('dent-tomorrow-calendar-title').textContent = title;
+        getElement('dent-tomorrow-calendar-meta').textContent = meta;
+        getElement('dent-tomorrow-calendar-date').textContent = formatTomorrowDate(tomorrow);
+
+        alert.hidden = false;
+    }
+
+    function loadTomorrowEvent() {
+        var selection = readSelection();
+        if (!selection) {
+            hideAlert();
+            return;
+        }
+
+        var scheduleId = selection.specialty + '_y' + selection.year + '_s' + selection.semester;
+        var url = scheduleEndpoint
+            + '?schedule_id=' + encodeURIComponent(scheduleId)
+            + '&_t=' + Date.now();
+
+        var tomorrow = getTomorrow();
+
+        fetch(url, {
+            method: 'GET',
+            cache: 'no-store',
+            headers: { 'Accept': 'application/json' }
+        })
+            .then(function (response) {
+                if (!response.ok) throw new Error('Calendar request failed');
+                return response.json();
+            })
+            .then(function (result) {
+                var events = result && result.success && Array.isArray(result.data)
+                    ? result.data
+                    : [];
+
+                events = events
+                    .filter(function (event) {
+                        return event && isEventTomorrow(event, tomorrow);
+                    })
+                    .sort(function (a, b) {
+                        return String(a.date || '').localeCompare(String(b.date || ''));
+                    });
+
+                render(events, tomorrow);
+            })
+            .catch(function () {
+                hideAlert();
+            });
+    }
+
+    function init() {
+        loadTomorrowEvent();
+
+        window.addEventListener('storage', function (event) {
+            if (event.key === selectionKey) loadTomorrowEvent();
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
