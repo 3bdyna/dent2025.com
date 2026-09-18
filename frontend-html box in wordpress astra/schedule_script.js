@@ -403,7 +403,7 @@ const ScheduleApp = {
                     const nationalDayCardClass = isNationalDay ? ' event-card-national-day' : '';
                     
                     cardsHtml += `
-                        <div class="event-card${nationalDayCardClass}">
+                        <div class="event-card${nationalDayCardClass}" id="event-${ev.id}">
                             <div class="event-info" style="flex: 1; min-width: 0;">
                                 <h3 class="event-title" dir="auto">${dentEscapeHtml(ev.title)}</h3>
                             </div>
@@ -453,6 +453,16 @@ const ScheduleApp = {
         let finalsEvent = null;
         let startEvent = null;
         
+        const isQuiz = (ev) => {
+            if (!ev || !ev.title) return false;
+            const t = ev.title.toLowerCase();
+            const id = (ev.id || '').toLowerCase();
+            if (t.includes('واجب') || t.includes('تكليف') || t.includes('مشروع') || t.includes('تقرير') || t.includes('نهائ') || t.includes('فاينل')) {
+                return false;
+            }
+            return t.includes('كويز') || t.includes('quiz') || id.includes('quiz') || t.includes('اختبار قصير') || (ev.type === 'exam' && !t.includes('نهائ') && !t.includes('فاينل'));
+        };
+
         events.forEach(ev => {
             const evDate = this.parseLocalDate(ev.date);
             if (evDate) evDate.setHours(0, 0, 0, 0);
@@ -461,7 +471,7 @@ const ScheduleApp = {
             if (ev.type === 'exam') finalsEvent = ev;
             
             if (evDate && evDate >= today) {
-                if (ev.type === 'exam' && !closestExam) closestExam = ev;
+                if (isQuiz(ev) && !closestExam) closestExam = ev;
                 if (ev.type === 'holiday' && !nextVacation) nextVacation = ev;
             }
             
@@ -472,23 +482,55 @@ const ScheduleApp = {
             }
         });
 
+        const elExam = document.getElementById('val-exam');
+        const elExamName = document.getElementById('val-exam-name');
+        const statExamCard = document.getElementById('stat-exam');
+        const elExamTitle = statExamCard ? statExamCard.querySelector('.stat-title') : null;
+        if (elExamTitle) elExamTitle.innerText = 'أقرب كويز';
+
         if (closestExam) {
             const cDate = this.parseLocalDate(closestExam.date);
             const diffTime = cDate ? Math.abs(cDate - today) : 0;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            if (document.getElementById('val-exam')) {
+            if (elExam) {
                 let diffDaysText = '';
-                if (diffDays === 1) diffDaysText = 'غداً';
+                if (diffDays === 0) diffDaysText = 'اليوم';
+                else if (diffDays === 1) diffDaysText = 'غداً';
                 else if (diffDays === 2) diffDaysText = 'بعد يومين';
                 else if (diffDays >= 3 && diffDays <= 10) diffDaysText = `بعد ${diffDays} أيام`;
                 else diffDaysText = `بعد ${diffDays} يوماً`;
-                document.getElementById('val-exam').innerText = diffDaysText;
-                document.getElementById('val-exam').style.color = '';
+                elExam.innerText = diffDaysText;
+                elExam.style.color = '';
+            }
+            if (elExamName) {
+                elExamName.innerText = `(${closestExam.title})`;
+                elExamName.title = closestExam.title;
+            }
+            if (statExamCard) {
+                statExamCard.style.cursor = 'pointer';
+                statExamCard.title = `انقر للانتقال إلى: ${closestExam.title}`;
+                statExamCard.onclick = () => {
+                    const targetCard = document.getElementById(`event-${closestExam.id}`);
+                    if (targetCard) {
+                        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        targetCard.classList.add('highlight');
+                        setTimeout(() => targetCard.classList.remove('highlight'), 2500);
+                    }
+                };
             }
         } else {
-            if (document.getElementById('val-exam')) {
-                document.getElementById('val-exam').innerText = 'لا يوجد / None';
-                document.getElementById('val-exam').style.color = '';
+            if (elExam) {
+                elExam.innerText = 'لا يوجد';
+                elExam.style.color = '';
+            }
+            if (elExamName) {
+                elExamName.innerText = 'لا توجد كويزات قادمة';
+                elExamName.title = '';
+            }
+            if (statExamCard) {
+                statExamCard.onclick = null;
+                statExamCard.style.cursor = 'default';
+                statExamCard.title = '';
             }
         }
 
