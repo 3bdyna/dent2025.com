@@ -283,14 +283,19 @@ const ScheduleApp = {
                 
                 const dDate = this.parseLocalDate(ev.date) || new Date();
                 const dayName = dDate.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { weekday: 'long' });
-                let gregDateStr = `${dDate.getDate()}`;
+                
+                const monthShort = this.gregorianMonthsEN[dDate.getMonth()].substring(0,3);
+                let gregDateStr = `${dDate.getDate()} ${monthShort}`;
                 
                 if (ev.end_date) {
                     const eDate = this.parseLocalDate(ev.end_date);
                     if (eDate) {
-                        gregDateStr += ` - ${eDate.getDate()}`;
+                        const eMonthShort = this.gregorianMonthsEN[eDate.getMonth()].substring(0,3);
+                        gregDateStr += ` - ${eDate.getDate()} ${eMonthShort}`;
                     }
                 }
+                
+                const formattedHijri = this.formatHijriDate(ev.hijri);
                 
                 // Calculate countdown badge
                 let badgeHtml = '';
@@ -358,11 +363,12 @@ const ScheduleApp = {
                 }
 
                 let extraBadgeClass = badgeClass ? `badge-${badgeClass}` : '';
-
+                
                 eventWrapper.innerHTML = `
                     <div class="event-date">
                         <span class="day-name">${dayName}</span>
                         <span class="gregorian" dir="ltr">${gregDateStr}</span>
+                        ${formattedHijri ? `<span class="hijri">${formattedHijri}</span>` : ''}
                     </div>
                     <div class="event-dot"></div>
                     <div class="event-card">
