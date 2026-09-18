@@ -1257,26 +1257,6 @@ function renderClassesWidget() {
         }
         .dent-classes-group-select:focus {
             border-color: rgba(255,255,255,0.35);
-        }
-        
-        /* Quick Day Navigation Pills (Monochrome) */
-        .dent-classes-nav-pills {
-            display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 20px;
-            scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
-        }
-        .dent-classes-nav-pill {
-            padding: 7px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
-            background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.08);
-            cursor: pointer; white-space: nowrap; transition: all 0.2s ease;
-            display: inline-flex; align-items: center; gap: 6px; user-select: none;
-        }
-        .dent-classes-nav-pill:hover {
-            background: rgba(255,255,255,0.1); color: #ffffff; border-color: rgba(255,255,255,0.2);
-        }
-        .dent-classes-nav-pill.is-today {
-            background: rgba(255, 255, 255, 0.12); color: #ffffff; border-color: rgba(255, 255, 255, 0.25);
-        }
-        
         /* Vertical Day Blocks (Monochrome) */
         .dent-day-block {
             background: rgba(0, 0, 0, 0.22);
@@ -1404,15 +1384,6 @@ function renderClassesWidget() {
                     ${groups.map(g => `<option value="${g}" ${g===savedGroup?'selected':''}>${g}</option>`).join('')}
                 </select>` : ''}
             </div>
-        </div>
-        
-        <!-- Quick Day Navigation Pills -->
-        <div class="dent-classes-nav-pills">
-            ${daysAr.map((d, idx) => `
-                <div class="dent-classes-nav-pill ${currentDayOfWeek === idx ? 'is-today' : ''}" onclick="document.getElementById('dent-day-${idx}')?.scrollIntoView({behavior: 'smooth', block: 'start'})">
-                    <span>${d}</span>
-                </div>
-            `).join('')}
         </div>
     `;
     
