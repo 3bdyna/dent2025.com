@@ -1229,7 +1229,7 @@ function renderClassesWidget() {
         .dent-classes-widget {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px; padding: 24px; margin-top: 36px; margin-bottom: 30px;
+            border-radius: 16px; padding: 24px; margin-top: 0; margin-bottom: 30px;
             direction: rtl; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
             box-shadow: 0 10px 30px rgba(0,0,0,0.25);
         }
@@ -1265,7 +1265,7 @@ function renderClassesWidget() {
             scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
         }
         .dent-classes-nav-pill {
-            padding: 7px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
+            padding: 7px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
             background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.08);
             cursor: pointer; white-space: nowrap; transition: all 0.2s ease;
             display: inline-flex; align-items: center; gap: 6px; user-select: none;
@@ -1395,7 +1395,7 @@ function renderClassesWidget() {
     <div class="dent-classes-widget">
         <div class="dent-classes-header">
             <div class="dent-classes-title-wrap">
-                <h2 class="dent-classes-title">الجدول الدراسي الأسبوعي</h2>
+                <h2 class="dent-classes-title">الجدول الدراسي</h2>
                 <div class="dent-classes-subtitle">${dentEscapeHtml(subTitleText)}</div>
             </div>
             <div class="dent-classes-controls">
@@ -1549,7 +1549,7 @@ function buildClassesModals(group) {
         <div class="dent-modal-overlay" id="week-modal" onclick="if(event.target === this) this.style.display='none'" style="display:none; align-items:center; justify-content:center; z-index:999999; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(10,10,15,0.8); backdrop-filter:blur(8px);">
             <div class="dent-modal" style="background:#1e1e1e; border:1px solid rgba(255,255,255,0.1); border-radius:16px; width:90%; max-width:550px; padding:30px; max-height:85vh; overflow-y:auto; box-shadow:0 20px 50px rgba(0,0,0,0.5);">
                 <div class="dent-modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2 class="dent-classes-title" style="margin:0; font-size:1.1rem; color:#fff;">الجدول الأسبوعي${group && group !== 'الدفعة كاملة' ? ` (${group})` : ''}</h2>
+                    <h2 class="dent-classes-title" style="margin:0; font-size:1.1rem; color:#fff;">الجدول الدراسي${group && group !== 'الدفعة كاملة' ? ` (${group})` : ''}</h2>
                     <button class="dent-modal-close" style="background:rgba(255,255,255,0.05); border:none; color:#9ca3af; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;" onclick="document.getElementById('week-modal').style.display='none'">×</button>
                 </div>
                 ${weekHtml}
