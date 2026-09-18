@@ -135,22 +135,12 @@ def rollback_git(target_ref=None):
         print(f"  - {f}")
 
     # Upload to FTP
-    shared_ftp = None
-    cfg = None
     try:
-        shared_ftp, cfg = deploy.get_ftp_connection()
-        deploy.upload_files(changed_files, ftp=shared_ftp, config=cfg)
-        purge_remote_cache(cfg)
-        print("FTP Rollback upload completed successfully.")
+        deploy.upload_files(changed_files)
+        print("Rollback upload completed successfully.")
     except Exception as e:
-        print(f"FTP Rollback upload failed: {e}")
+        print(f"Rollback upload failed: {e}")
         return False
-    finally:
-        if shared_ftp is not None:
-            try:
-                shared_ftp.quit()
-            except Exception:
-                pass
 
     # Push revert to GitHub if remote exists
     push_to_github()
@@ -234,22 +224,12 @@ def run_safe_deployment(files, note, dry_run=False):
     # Stage 4: FTP Live Sync & Remote Cache Purge
     t3 = time.time()
     print("\n[Stage 3/4] Live FTP Upload & LiteSpeed Cache Purge...", flush=True)
-    shared_ftp = None
-    cfg = None
     try:
-        shared_ftp, cfg = deploy.get_ftp_connection()
-        deploy.upload_files(ordered_files, ftp=shared_ftp, config=cfg)
-        print(f"FTP upload completed in {time.time() - t3:.2f}s.")
-        purge_remote_cache(cfg)
+        deploy.upload_files(ordered_files)
+        print(f"Live upload & cache purge completed in {time.time() - t3:.2f}s.")
     except Exception as upload_err:
-        print(f"FTP Upload encountered an error: {str(upload_err)}")
+        print(f"Upload encountered an error: {str(upload_err)}")
         sys.exit(1)
-    finally:
-        if shared_ftp is not None:
-            try:
-                shared_ftp.quit()
-            except Exception:
-                pass
 
     # Stage 5: Concurrent Health Probe
     t4 = time.time()

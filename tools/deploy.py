@@ -59,9 +59,9 @@ def get_ftp_connection(config=None):
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     
     if ssh_key and os.path.exists(ssh_key):
-        ssh.connect(host, username=user, key_filename=ssh_key)
+        ssh.connect(host, username=user, key_filename=ssh_key, timeout=4)
     else:
-        ssh.connect(host, username=user, password=password)
+        ssh.connect(host, username=user, password=password, timeout=4)
         
     sftp = ssh.open_sftp()
     
@@ -70,14 +70,76 @@ def get_ftp_connection(config=None):
     
     return sftp, config
 
+def purge_remote_cache(config):
+    token = config.get('health_passkey', '') if isinstance(config, dict) else ''
+    if not token:
+        token = os.environ.get('DENT2025_PURGE_KEY', '')
+    if token:
+        import urllib.request, urllib.parse
+        url = f"https://dent2025.com/purge_cache.php?token={urllib.parse.quote(token)}"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Dent2025-Deploy/2.0'})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            resp_text = resp.read().decode('utf-8', errors='ignore').strip()
+            print(f"[CACHE PURGE] {resp_text}", flush=True)
+
+def upload_via_openssh(file_paths, config):
+    import subprocess
+    root_dir = PROJECT_ROOT
+    ssh_host = 'ssh.dent2025.com'
+    base_remote_dir = config.get('remote_dir', '/var/www/dent2025')
+    print(f"Connecting via OpenSSH/Cloudflare ({ssh_host})...", flush=True)
+
+    for input_path in file_paths:
+        abs_path = os.path.abspath(input_path)
+        if not os.path.exists(abs_path):
+            print(f"Error: Local file does not exist: {abs_path}")
+            continue
+
+        try:
+            rel_path = os.path.relpath(abs_path, root_dir).replace('\\', '/')
+        except ValueError:
+            rel_path = os.path.basename(abs_path)
+
+        dir_name, file_name = get_remote_destination(rel_path)
+        target_dir = base_remote_dir
+        if dir_name and dir_name != '.':
+            target_dir = f"{base_remote_dir}/{dir_name}"
+
+        # Ensure remote dir
+        subprocess.run(['ssh', '-o', 'BatchMode=yes', f"azureuser@{ssh_host}", f"mkdir -p '{target_dir}'"],
+                       stdin=subprocess.DEVNULL, capture_output=True, timeout=15)
+        # SCP file
+        remote_dest = f"azureuser@{ssh_host}:{target_dir}/{file_name}"
+        print(f"Uploading '{rel_path}' -> SCP '{remote_dest}'...", flush=True)
+        res = subprocess.run(['scp', '-o', 'BatchMode=yes', abs_path, remote_dest],
+                             stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=30)
+        if res.returncode != 0:
+            raise RuntimeError(f"SCP failed: {res.stderr}")
+        print(f"Successfully uploaded: {rel_path}", flush=True)
+
+    try:
+        purge_remote_cache(config)
+    except Exception as e:
+        print(f"[CACHE PURGE] Notice: {e}", flush=True)
+    print("Deployment finished cleanly via OpenSSH.", flush=True)
+
 def upload_files(file_paths, ftp=None, config=None):
     root_dir = PROJECT_ROOT
     should_close = False
     
     if ftp is None or config is None:
-        ftp, config = get_ftp_connection(config)
-        should_close = True
-        print(f"SFTP connection established to {config.get('host')}.", flush=True)
+        try:
+            ftp, config = get_ftp_connection(config)
+            should_close = True
+            print(f"SFTP connection established to {config.get('host')}.", flush=True)
+        except Exception as conn_err:
+            print(f"Direct SFTP connection unavailable ({conn_err}), using OpenSSH/SCP fallback...", flush=True)
+            if config is None:
+                config_path = os.path.join(root_dir, 'deploy_config.json')
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+            upload_via_openssh(file_paths, config)
+            return
 
     base_remote_dir = config.get('remote_dir', '/')
 
