@@ -294,7 +294,7 @@ const ScheduleApp = {
                 }
                 const formattedHijri = this.formatHijriDate(ev.hijri);
                 
-                const dayKey = `${gregDateStr}|${dayName}|${formattedHijri}`;
+                const dayKey = `${gregDateStr}|${dayName}`;
                 if (!daysInWeek[dayKey]) {
                     daysInWeek[dayKey] = {
                         dayName, gregDateStr, formattedHijri,
