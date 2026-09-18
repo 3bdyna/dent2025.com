@@ -381,10 +381,8 @@ const ScheduleApp = {
 
                     let extraBadgeClass = badgeClass ? `badge-${badgeClass}` : '';
                     
-                    const borderStyle = index < dayData.events.length - 1 ? 'border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px;' : '';
-
                     cardsHtml += `
-                        <div style="${borderStyle} display: flex; justify-content: space-between; align-items: center; gap: 16px; width: 100%;">
+                        <div class="event-card">
                             <div class="event-info" style="flex: 1;">
                                 <h3 class="event-title" dir="auto">${dentEscapeHtml(ev.title)}</h3>
                             </div>
@@ -409,7 +407,7 @@ const ScheduleApp = {
                         ${dayData.formattedHijri ? `<span class="hijri">${dayData.formattedHijri}</span>` : ''}
                     </div>
                     <div class="event-dot"></div>
-                    <div class="event-card" style="display: flex; flex-direction: column; align-items: stretch; gap: 0;">
+                    <div class="event-cards-group" style="display: flex; flex-direction: column; gap: 10px;">
                         ${cardsHtml}
                     </div>
                 `;
