@@ -2,7 +2,7 @@
     /* Dent2025 compact next-day academic event alert */
     .dent-tomorrow-calendar-alert {
         display: grid;
-        grid-template-columns: 62px minmax(0, 1fr) auto;
+        grid-template-columns: 74px minmax(0, 1fr) auto;
         grid-template-areas: "date content action";
         align-items: center;
         gap: 12px;
@@ -26,8 +26,8 @@
     /* The date intentionally occupies the former icon position. */
     .dent-tomorrow-calendar-date {
         grid-area: date;
-        width: 62px;
-        min-height: 42px;
+        width: 74px;
+        min-height: 48px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -41,18 +41,18 @@
         text-align: center;
     }
 
-    .dent-tomorrow-calendar-date-label {
-        color: #85858d;
-        font-size: 0.58rem;
-        line-height: 1.35;
-    }
-
-    .dent-tomorrow-calendar-date-value {
+    .dent-tomorrow-calendar-date-day {
         color: #eeeeef;
         font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
-        font-size: 0.78rem;
-        font-weight: 600;
-        line-height: 1.35;
+        font-size: 1.05rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+
+    .dent-tomorrow-calendar-date-month {
+        color: #9b9ba3;
+        font-size: 0.62rem;
+        line-height: 1.3;
         white-space: nowrap;
     }
 
@@ -120,15 +120,15 @@
 
     @media (max-width: 650px) {
         .dent-tomorrow-calendar-alert {
-            grid-template-columns: 58px minmax(0, 1fr) auto;
+            grid-template-columns: 68px minmax(0, 1fr) auto;
             grid-template-areas: "date content action";
             gap: 8px;
             padding: 10px 11px;
         }
 
         .dent-tomorrow-calendar-date {
-            width: 58px;
-            min-height: 42px;
+            width: 68px;
+            min-height: 46px;
         }
 
         .dent-tomorrow-calendar-label {
@@ -158,9 +158,9 @@
     aria-live="polite"
     hidden
 >
-    <div id="dent-tomorrow-calendar-date" class="dent-tomorrow-calendar-date">
-        <span class="dent-tomorrow-calendar-date-label">غداً</span>
-        <strong id="dent-tomorrow-calendar-date-value" class="dent-tomorrow-calendar-date-value"></strong>
+    <div id="dent-tomorrow-calendar-date" class="dent-tomorrow-calendar-date" aria-label="تاريخ الحدث">
+        <strong id="dent-tomorrow-calendar-date-day" class="dent-tomorrow-calendar-date-day"></strong>
+        <span id="dent-tomorrow-calendar-date-month" class="dent-tomorrow-calendar-date-month"></span>
     </div>
 
     <div class="dent-tomorrow-calendar-content">
@@ -248,9 +248,9 @@
             var month = new Intl.DateTimeFormat('ar-SA', {
                 month: 'short'
             }).format(date);
-            return day + ' ' + month;
+            return { day: day, month: month };
         } catch (error) {
-            return '';
+            return { day: '', month: '' };
         }
     }
 
@@ -278,7 +278,9 @@
         getElement('dent-tomorrow-calendar-title').textContent = title;
         getElement('dent-tomorrow-calendar-meta').textContent = meta;
         getElement('dent-tomorrow-calendar-meta').hidden = !meta;
-        getElement('dent-tomorrow-calendar-date-value').textContent = formatTomorrowDate(tomorrow);
+        var dateParts = formatTomorrowDate(tomorrow);
+        getElement('dent-tomorrow-calendar-date-day').textContent = dateParts.day;
+        getElement('dent-tomorrow-calendar-date-month').textContent = dateParts.month;
 
         alert.hidden = false;
     }
