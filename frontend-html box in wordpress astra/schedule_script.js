@@ -277,10 +277,8 @@ const ScheduleApp = {
             monthSection.appendChild(monthHeader);
             const timelineEvents = document.createElement('div');
             timelineEvents.className = 'timeline-events';
+            const daysInWeek = {};
             groupData.events.forEach(ev => {
-                const eventWrapper = document.createElement('div');
-                eventWrapper.className = 'event';
-                
                 const dDate = this.parseLocalDate(ev.date) || new Date();
                 const dayName = dDate.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { weekday: 'long' });
                 
@@ -294,94 +292,125 @@ const ScheduleApp = {
                         gregDateStr += ` - ${eDate.getDate()} ${eMonthShort}`;
                     }
                 }
-                
                 const formattedHijri = this.formatHijriDate(ev.hijri);
                 
-                // Calculate countdown badge
-                let badgeHtml = '';
-                let badgeClass = '';
+                const dayKey = `${gregDateStr}|${dayName}|${formattedHijri}`;
+                if (!daysInWeek[dayKey]) {
+                    daysInWeek[dayKey] = {
+                        dayName, gregDateStr, formattedHijri,
+                        events: []
+                    };
+                }
+                daysInWeek[dayKey].events.push(ev);
+            });
+            
+            Object.values(daysInWeek).forEach(dayData => {
+                const eventWrapper = document.createElement('div');
+                eventWrapper.className = 'event';
                 
-                // ... same badge logic ...
-                if (ev.end_date) {
-                    const eDate = this.parseLocalDate(ev.end_date);
-                    if (eDate) {
-                        eDate.setHours(23, 59, 59, 999);
-                        const daysLeft = Math.ceil((eDate - today) / (1000 * 60 * 60 * 24));
-                        if (daysLeft < 0) {
-                            badgeHtml = 'انتهى';
-                            eventWrapper.classList.add('passed');
-                        } else if (daysLeft === 0) {
-                            badgeHtml = 'اليوم';
-                            badgeClass = 'urgent';
-                            eventWrapper.classList.add('highlight');
-                        } else if (daysLeft === 1) {
-                            badgeHtml = 'غداً';
-                            badgeClass = 'warning';
-                        } else if (daysLeft === 2) {
-                            badgeHtml = 'بعد يومين';
-                            badgeClass = 'warning';
-                        } else {
-                            badgeHtml = `بعد ${daysLeft} أيام`;
+                let cardsHtml = '';
+                let allPassed = true;
+                let hasHighlight = false;
+                
+                dayData.events.forEach((ev, index) => {
+                    // Calculate countdown badge
+                    let badgeHtml = '';
+                    let badgeClass = '';
+                    
+                    if (ev.end_date) {
+                        const eDate = this.parseLocalDate(ev.end_date);
+                        if (eDate) {
+                            eDate.setHours(23, 59, 59, 999);
+                            const daysLeft = Math.ceil((eDate - today) / (1000 * 60 * 60 * 24));
+                            if (daysLeft < 0) {
+                                badgeHtml = 'انتهى';
+                            } else if (daysLeft === 0) {
+                                badgeHtml = 'اليوم';
+                                badgeClass = 'urgent';
+                                hasHighlight = true;
+                            } else if (daysLeft === 1) {
+                                badgeHtml = 'غداً';
+                                badgeClass = 'warning';
+                            } else if (daysLeft === 2) {
+                                badgeHtml = 'بعد يومين';
+                                badgeClass = 'warning';
+                            } else {
+                                badgeHtml = `بعد ${daysLeft} أيام`;
+                            }
+                        }
+                    } else {
+                        const d = this.parseLocalDate(ev.date);
+                        if (d) {
+                            d.setHours(23, 59, 59, 999);
+                            const daysLeft = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+                            if (daysLeft < 0) {
+                                badgeHtml = 'انتهى';
+                            } else if (daysLeft === 0) {
+                                badgeHtml = 'اليوم';
+                                badgeClass = 'urgent';
+                                hasHighlight = true;
+                            } else if (daysLeft === 1) {
+                                badgeHtml = 'غداً';
+                                badgeClass = 'warning';
+                            } else if (daysLeft === 2) {
+                                badgeHtml = 'بعد يومين';
+                                badgeClass = 'warning';
+                            } else {
+                                badgeHtml = `بعد ${daysLeft} يوماً`;
+                            }
                         }
                     }
-                } else {
-                    const d = this.parseLocalDate(ev.date);
-                    if (d) {
-                        d.setHours(23, 59, 59, 999);
-                        const daysLeft = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
-                        if (daysLeft < 0) {
-                            badgeHtml = 'انتهى';
-                            eventWrapper.classList.add('passed');
-                        } else if (daysLeft === 0) {
-                            badgeHtml = 'اليوم';
-                            badgeClass = 'urgent';
-                            eventWrapper.classList.add('highlight');
-                        } else if (daysLeft === 1) {
-                            badgeHtml = 'غداً';
-                            badgeClass = 'warning';
-                        } else if (daysLeft === 2) {
-                            badgeHtml = 'بعد يومين';
-                            badgeClass = 'warning';
-                        } else {
-                            badgeHtml = `بعد ${daysLeft} يوماً`;
-                        }
+                    
+                    if (badgeHtml !== 'انتهى') {
+                        allPassed = false;
                     }
-                }
 
-                let adminNoticeBadge = '';
-                if (ev._isEndedPast3Days && this.adminPassword) {
-                    adminNoticeBadge = `<span class="badge" style="background:rgba(239,68,64,0.15); color:var(--color-exam);">مخفي للطلاب</span>`;
-                }
+                    let adminNoticeBadge = '';
+                    if (ev._isEndedPast3Days && this.adminPassword) {
+                        adminNoticeBadge = `<span class="badge" style="background:rgba(239,68,64,0.15); color:var(--color-exam);">مخفي للطلاب</span>`;
+                    }
 
-                let deleteBtn = '';
-                if (this.adminPassword) {
-                    const isGlobal = !!ev.is_global;
-                    const eventSchedId = ev.schedule_id || (isGlobal ? 'global' : this.scheduleId);
-                    deleteBtn = `<button class="event-delete-btn" onclick="ScheduleApp.deleteEvent('${ev.id}', ${isGlobal ? 'true' : 'false'}, '${eventSchedId}')">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
-                                 </button>`;
-                }
+                    let deleteBtn = '';
+                    if (this.adminPassword) {
+                        const isGlobal = !!ev.is_global;
+                        const eventSchedId = ev.schedule_id || (isGlobal ? 'global' : this.scheduleId);
+                        deleteBtn = `<button class="event-delete-btn" onclick="ScheduleApp.deleteEvent('${ev.id}', ${isGlobal ? 'true' : 'false'}, '${eventSchedId}')">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+                                     </button>`;
+                    }
 
-                let extraBadgeClass = badgeClass ? `badge-${badgeClass}` : '';
+                    let extraBadgeClass = badgeClass ? `badge-${badgeClass}` : '';
+                    
+                    const borderStyle = index < dayData.events.length - 1 ? 'border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px;' : '';
+
+                    cardsHtml += `
+                        <div style="${borderStyle} display: flex; justify-content: space-between; align-items: center; gap: 16px; width: 100%;">
+                            <div class="event-info" style="flex: 1;">
+                                <h3 class="event-title" dir="auto">${dentEscapeHtml(ev.title)}</h3>
+                            </div>
+                            <div class="event-badges" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end;">
+                                <span class="badge ${extraBadgeClass}">${badgeHtml}</span>
+                                ${adminNoticeBadge}
+                                ${deleteBtn}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                if (allPassed) eventWrapper.classList.add('passed');
+                if (hasHighlight) eventWrapper.classList.add('highlight');
                 
                 eventWrapper.innerHTML = `
                     <div class="event-date">
                         <div class="date-main">
-                            <span class="day-name">${dayName}</span>
-                            <span class="gregorian" dir="ltr">${gregDateStr}</span>
+                            <span class="day-name">${dayData.dayName}</span>
+                            <span class="gregorian" dir="ltr">${dayData.gregDateStr}</span>
                         </div>
-                        ${formattedHijri ? `<span class="hijri">${formattedHijri}</span>` : ''}
+                        ${dayData.formattedHijri ? `<span class="hijri">${dayData.formattedHijri}</span>` : ''}
                     </div>
                     <div class="event-dot"></div>
-                    <div class="event-card">
-                        <div class="event-info">
-                            <h3 class="event-title" dir="auto">${dentEscapeHtml(ev.title)}</h3>
-                        </div>
-                        <div class="event-badges">
-                            <span class="badge ${extraBadgeClass}">${badgeHtml}</span>
-                            ${adminNoticeBadge}
-                            ${deleteBtn}
-                        </div>
+                    <div class="event-card" style="display: flex; flex-direction: column; align-items: stretch; gap: 0;">
+                        ${cardsHtml}
                     </div>
                 `;
                 timelineEvents.appendChild(eventWrapper);
