@@ -367,7 +367,7 @@ const ScheduleApp = {
             });
             monthSection.appendChild(timelineEvents);
             container.appendChild(monthSection);
-        }
+        });
     },
     calculateStats: function(events) {
         const statsEl = document.getElementById('schedule-stats');
