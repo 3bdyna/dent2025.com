@@ -177,22 +177,68 @@ const ScheduleApp = {
                 }
             }
 
-            // Hide from regular users if ended more than 3 days ago
-            if (!isAdmin && isEndedPast3Days) {
-                return;
+            
+            if (ev.end_date) {
+                const ed = this.parseLocalDate(ev.end_date);
+                if (ed) {
+                    ed.setHours(23, 59, 59, 999);
+                    const daysSinceEnd = (today - ed) / (1000 * 60 * 60 * 24);
+                    if (daysSinceEnd > 3) {
+                        isEndedPast3Days = true;
+                        if (!this.adminPassword) {
+                            isVisible = false;
+                        }
+                    }
+                }
+            } else {
+                const d = this.parseLocalDate(ev.date);
+                if (d) {
+                    d.setHours(23, 59, 59, 999);
+                    const daysSince = (today - d) / (1000 * 60 * 60 * 24);
+                    if (daysSince > 3) {
+                        isEndedPast3Days = true;
+                        if (!this.adminPassword) {
+                            isVisible = false;
+                        }
+                    }
+                }
             }
 
-            totalVisibleEvents++;
+            if (isVisible) totalVisibleEvents++;
+            
+            if (!this.adminPassword && isEndedPast3Days) return;
 
-            const monthName = this.getMonthName(ev.date);
-            if (!groupedEvents[monthName]) {
-                groupedEvents[monthName] = { events: [], hijriLabel: '' };
+            const dateObj = this.parseLocalDate(ev.date) || new Date();
+            
+            // Calculate Week (Sunday to Saturday)
+            const dayOfWeek = dateObj.getDay(); // 0 = Sunday, 6 = Saturday
+            const sundayDate = new Date(dateObj);
+            sundayDate.setDate(dateObj.getDate() - dayOfWeek);
+            
+            const sunDay = sundayDate.getDate();
+            const sunMonth = this.gregorianMonthsEN[sundayDate.getMonth()].substring(0,3);
+            const sunYear = sundayDate.getFullYear();
+            
+            const satDate = new Date(sundayDate);
+            satDate.setDate(sundayDate.getDate() + 6);
+            const satDay = satDate.getDate();
+            const satMonth = this.gregorianMonthsEN[satDate.getMonth()].substring(0,3);
+            
+            const weekKey = `${sunYear}-${String(sundayDate.getMonth()).padStart(2, '0')}-${String(sunDay).padStart(2, '0')}`;
+            const weekName = `الأسبوع: ${sunDay} ${sunMonth} — ${satDay} ${satMonth}`;
+            
+            if (!groupedEvents[weekKey]) {
+                groupedEvents[weekKey] = {
+                    events: [],
+                    headerLabel: weekName,
+                    hijriLabel: ''
+                };
             }
 
             ev._isEndedPast3Days = isEndedPast3Days;
-            groupedEvents[monthName].events.push(ev);
+            groupedEvents[weekKey].events.push(ev);
             
-            if (!groupedEvents[monthName].hijriLabel && ev.hijri) {
+            if (!groupedEvents[weekKey].hijriLabel && ev.hijri) {
                 const rawParts = ev.hijri.split(/[\/\-]/);
                 if (rawParts.length >= 2) {
                     let hYear = rawParts[0];
@@ -203,7 +249,7 @@ const ScheduleApp = {
                     }
                     const mIndex = parseInt(mStr, 10) - 1;
                     if (mIndex >= 0 && mIndex < 12) {
-                        groupedEvents[monthName].hijriLabel = `${this.hijriMonths[mIndex]} ${hYear}`;
+                        groupedEvents[weekKey].hijriLabel = `${this.hijriMonths[mIndex]} ${hYear}`;
                     }
                 }
             }
@@ -214,13 +260,21 @@ const ScheduleApp = {
             return;
         }
 
-        for (const [month, groupData] of Object.entries(groupedEvents)) {
-            if (!groupData.events || groupData.events.length === 0) continue;
+        // Object.keys(groupedEvents) is naturally sorted if we use YYYY-MM-DD string format
+        const sortedWeeks = Object.keys(groupedEvents).sort();
+
+        sortedWeeks.forEach(weekKey => {
+            const groupData = groupedEvents[weekKey];
+            if (!groupData.events || groupData.events.length === 0) return;
             const monthSection = document.createElement('div');
             monthSection.className = 'timeline-month';
             const monthHeader = document.createElement('div');
             monthHeader.className = 'month-header';
-            monthHeader.innerText = groupData.hijriLabel ? `${month} - ${groupData.hijriLabel}` : month;
+            if (groupData.hijriLabel) {
+                monthHeader.innerHTML = `<span dir="ltr">${groupData.headerLabel}</span> - <span>${groupData.hijriLabel}</span>`;
+            } else {
+                monthHeader.innerHTML = `<span dir="ltr">${groupData.headerLabel}</span>`;
+            }
             monthSection.appendChild(monthHeader);
             const timelineEvents = document.createElement('div');
             timelineEvents.className = 'timeline-events';
@@ -306,7 +360,7 @@ const ScheduleApp = {
                 eventWrapper.innerHTML = `
                     <div class="event-date">
                         <span class="day-name">${dayName}</span>
-                        <span class="gregorian">${gregDateStr}</span>
+                        <span class="gregorian" dir="ltr">${gregDateStr}</span>
                         ${formattedHijri ? `<span class="hijri">${formattedHijri}</span>` : ''}
                     </div>
                     <div class="event-dot"></div>
