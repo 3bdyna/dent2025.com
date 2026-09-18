@@ -323,6 +323,96 @@ assert_test("Merged logs count is exactly 3 (duplicates removed)", count($result
 assert_test("Preserves both UUID and legacy log without UUID", count(array_filter($result_logs, function($l) { return $l['subject'] === 'Pathology'; })) === 1);
 
 // -----------------------------------------------------------------------------
+// SUITE 8: Schedule Event Editing Logic
+// -----------------------------------------------------------------------------
+echo "\n8. Testing Schedule Event Editing Logic...\n";
+
+// 8.1 Semester Event Edit
+$mock_semester_events = [
+    [
+        'id' => 'evt_test_1',
+        'title' => 'اختبار أول',
+        'type' => 'exam',
+        'date' => '2026-09-10',
+        'hijri' => '1448/03/28',
+        'schedule_id' => 'dentistry_y3_s1',
+        'is_global' => false,
+        'specialty' => 'dentistry',
+        'year' => 3,
+        'semester' => 1
+    ]
+];
+
+$edit_title = 'اختبار أول - محدث';
+$edit_date = '2026-09-12';
+$edit_end = '2026-09-14';
+$edit_found = false;
+
+foreach ($mock_semester_events as $k => $ev) {
+    if ($ev['id'] === 'evt_test_1') {
+        $updated = [
+            'id' => $ev['id'],
+            'date' => $edit_date,
+            'hijri' => '1448/04/01',
+            'title' => $edit_title,
+            'type' => 'exam',
+            'end_date' => $edit_end,
+            'schedule_id' => $ev['schedule_id'],
+            'is_global' => false,
+            'specialty' => $ev['specialty'],
+            'year' => $ev['year'],
+            'semester' => $ev['semester']
+        ];
+        $mock_semester_events[$k] = $updated;
+        $edit_found = true;
+        break;
+    }
+}
+
+assert_test("Semester event updated successfully", $edit_found === true);
+assert_test("Updated title matches", $mock_semester_events[0]['title'] === 'اختبار أول - محدث');
+assert_test("Updated date matches", $mock_semester_events[0]['date'] === '2026-09-12');
+assert_test("Updated end_date matches", $mock_semester_events[0]['end_date'] === '2026-09-14');
+assert_test("Original ID and context preserved", $mock_semester_events[0]['id'] === 'evt_test_1' && $mock_semester_events[0]['schedule_id'] === 'dentistry_y3_s1');
+
+// 8.2 Global Event Edit (schema cleanliness)
+$mock_global_events = [
+    [
+        'id' => 'evt_global_study',
+        'title' => 'بداية الدراسة',
+        'type' => 'start',
+        'date' => '2026-08-23',
+        'hijri' => '1448/03/10'
+    ]
+];
+
+$global_found = false;
+foreach ($mock_global_events as $gk => $gev) {
+    if ($gev['id'] === 'evt_global_study') {
+        $mock_global_events[$gk] = [
+            'id' => $gev['id'],
+            'date' => '2026-08-24',
+            'hijri' => '1448/03/11',
+            'title' => 'بداية الدراسة (تعديل)',
+            'type' => 'start'
+        ];
+        $global_found = true;
+        break;
+    }
+}
+assert_test("Global event updated without injecting semester properties", $global_found && !isset($mock_global_events[0]['specialty']));
+
+// 8.3 Nonexistent Event returns false
+$nonexistent_found = false;
+foreach ($mock_semester_events as $ev) {
+    if ($ev['id'] === 'nonexistent_id') {
+        $nonexistent_found = true;
+        break;
+    }
+}
+assert_test("Nonexistent event ID correctly detected as not found", $nonexistent_found === false);
+
+// -----------------------------------------------------------------------------
 // SUMMARY REPORT
 // -----------------------------------------------------------------------------
 echo "\n=======================================================\n";

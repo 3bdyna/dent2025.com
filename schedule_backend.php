@@ -226,38 +226,131 @@ if ($method === 'POST') {
         exit;
     }
 
-    $newEvent = [
-        'id' => $id,
-        'date' => $input['date'] ?? '',
-        'end_date' => $input['end_date'] ?? null,
-        'hijri' => $input['hijri'] ?? '',
-        'title' => $input['title'] ?? '',
-        'type' => $input['type'] ?? 'other',
-        'schedule_id' => $is_global ? 'global' : ($scheduleId ?: 'global'),
-        'is_global' => $is_global,
-        'specialty' => $is_global ? null : ($input['specialty'] ?? null),
-        'year' => $is_global ? null : (isset($input['year']) ? intval($input['year']) : null),
-        'semester' => $is_global ? null : (isset($input['semester']) ? intval($input['semester']) : null)
-    ];
+    $title = trim($input['title'] ?? '');
+    $date = trim($input['date'] ?? '');
+    $endDate = !empty($input['end_date']) ? trim($input['end_date']) : null;
+    $hijri = trim($input['hijri'] ?? '');
+    $type = !empty($input['type']) ? trim($input['type']) : 'other';
+
+    if (empty($title) || empty($date)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'العنوان وتاريخ البداية مطلوبان (Title and start date are required)']);
+        exit;
+    }
 
     if ($action === 'edit') {
-        foreach ($data as $key => $ev) {
-            if ($ev['id'] === $id) {
-                $data[$key] = $newEvent;
-                break;
+        $editId = trim($input['id'] ?? '');
+        if (empty($editId)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'معرّف الحدث مطلوب (Event ID is required)']);
+            exit;
+        }
+
+        $found = false;
+        $targetFileToSave = $dataFile;
+
+        if (file_exists($dataFile)) {
+            $data = json_decode(file_get_contents($dataFile), true) ?: [];
+            foreach ($data as $key => $ev) {
+                if (($ev['id'] ?? '') === $editId) {
+                    $evIsGlobal = !empty($ev['is_global']) || ($dataFile === $globalFile);
+                    $updatedEvent = [
+                        'id' => $editId,
+                        'date' => $date,
+                        'hijri' => $hijri,
+                        'title' => $title,
+                        'type' => $type
+                    ];
+                    if ($endDate !== null) {
+                        $updatedEvent['end_date'] = $endDate;
+                    }
+                    if (!$evIsGlobal) {
+                        $updatedEvent['schedule_id'] = $ev['schedule_id'] ?? ($scheduleId ?: 'global');
+                        $updatedEvent['is_global'] = false;
+                        $updatedEvent['specialty'] = $ev['specialty'] ?? ($specialty ?? ($input['specialty'] ?? null));
+                        $updatedEvent['year'] = $ev['year'] ?? (isset($year) ? $year : (isset($input['year']) ? intval($input['year']) : null));
+                        $updatedEvent['semester'] = $ev['semester'] ?? (isset($semester) ? $semester : (isset($input['semester']) ? intval($input['semester']) : null));
+                    } else {
+                        $updatedEvent['schedule_id'] = 'global';
+                        $updatedEvent['is_global'] = true;
+                    }
+                    $data[$key] = $updatedEvent;
+                    $found = true;
+                    break;
+                }
+            }
+            if ($found) {
+                file_put_contents($dataFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
             }
         }
-    } else {
-        $data[] = $newEvent;
+
+        // Fallback: If not found in dataFile and dataFile is not globalFile, check globalFile
+        if (!$found && $dataFile !== $globalFile && file_exists($globalFile)) {
+            if (dent2025_check_rbac_permission($password, 'global_events')) {
+                $gData = json_decode(file_get_contents($globalFile), true) ?: [];
+                foreach ($gData as $key => $ev) {
+                    if (($ev['id'] ?? '') === $editId) {
+                        $updatedEvent = [
+                            'id' => $editId,
+                            'date' => $date,
+                            'hijri' => $hijri,
+                            'title' => $title,
+                            'type' => $type
+                        ];
+                        if ($endDate !== null) {
+                            $updatedEvent['end_date'] = $endDate;
+                        }
+                        $gData[$key] = $updatedEvent;
+                        $found = true;
+                        break;
+                    }
+                }
+                if ($found) {
+                    file_put_contents($globalFile, json_encode($gData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+                }
+            }
+        }
+
+        if (!$found) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'الحدث غير موجود (Event not found)']);
+            exit;
+        }
+
+        $pass_info = function_exists('dent2025_get_passkey_info') ? dent2025_get_passkey_info($password) : null;
+        if (function_exists('dent2025_record_audit_event')) {
+            dent2025_record_audit_event('events', 'edit', 'تعديل حدث بالتقويم: ' . $title, $pass_info['label'] ?? '');
+        }
+        echo json_encode(['success' => true, 'message' => 'تم تعديل الحدث بنجاح!']);
+        exit;
     }
+
+    $newEvent = [
+        'id' => $id,
+        'date' => $date,
+        'hijri' => $hijri,
+        'title' => $title,
+        'type' => $type,
+        'schedule_id' => $is_global ? 'global' : ($scheduleId ?: 'global'),
+        'is_global' => $is_global
+    ];
+    if ($endDate !== null) {
+        $newEvent['end_date'] = $endDate;
+    }
+    if (!$is_global) {
+        $newEvent['specialty'] = $specialty ?? ($input['specialty'] ?? null);
+        $newEvent['year'] = isset($year) ? $year : (isset($input['year']) ? intval($input['year']) : null);
+        $newEvent['semester'] = isset($semester) ? $semester : (isset($input['semester']) ? intval($input['semester']) : null);
+    }
+
+    $data[] = $newEvent;
 
     file_put_contents($dataFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
     $pass_info = function_exists('dent2025_get_passkey_info') ? dent2025_get_passkey_info($password) : null;
     if (function_exists('dent2025_record_audit_event')) {
-        $act_label = ($action === 'edit') ? 'تعديل حدث بالتقويم: ' : 'إضافة حدث جديد بالتقويم: ';
-        dent2025_record_audit_event('events', $action === 'edit' ? 'edit' : 'add', $act_label . ($input['title'] ?? ''), $pass_info['label'] ?? '');
+        dent2025_record_audit_event('events', 'add', 'إضافة حدث جديد بالتقويم: ' . $title, $pass_info['label'] ?? '');
     }
-    echo json_encode(['success' => true, 'message' => 'Event saved!']);
+    echo json_encode(['success' => true, 'message' => 'تمت إضافة الحدث بنجاح!']);
     exit;
 }
 

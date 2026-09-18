@@ -243,10 +243,8 @@
     }
     
     /* Admin controls inside badges */
+    .event-edit-btn,
     .event-delete-btn {
-        background: rgba(239, 68, 68, 0.12);
-        border: 1px solid rgba(239, 68, 68, 0.3);
-        color: #f87171;
         width: 24px;
         height: 24px;
         border-radius: 6px;
@@ -254,13 +252,34 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 16px;
         padding: 0;
         line-height: 1;
         transition: all 0.2s ease;
         margin-top: 4px;
     }
-    .event-delete-btn:hover { background: rgba(239, 68, 68, 0.25); color: #ffffff; }
+    .event-edit-btn {
+        background: rgba(59, 130, 246, 0.12);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        color: #60a5fa;
+    }
+    .event-edit-btn:hover {
+        background: rgba(59, 130, 246, 0.25);
+        color: #ffffff;
+    }
+    .event-delete-btn {
+        background: rgba(239, 68, 68, 0.12);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171;
+    }
+    .event-delete-btn:hover {
+        background: rgba(239, 68, 68, 0.25);
+        color: #ffffff;
+    }
+    .event-edit-btn svg,
+    .event-delete-btn svg {
+        width: 14px;
+        height: 14px;
+    }
 
     /* Empty state */
     .schedule-loading, .schedule-error {
