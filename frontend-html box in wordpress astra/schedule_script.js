@@ -33,19 +33,33 @@ const ScheduleApp = {
     formatHijriDate: function(hijriString) {
         if (!hijriString) return '';
         const parts = hijriString.split(' - ');
-        const formattedParts = parts.map(part => {
-            const dateParts = part.trim().split('/');
-            if (dateParts.length === 3) {
-                const year = dateParts[0];
-                const monthIndex = parseInt(dateParts[1], 10) - 1;
-                const day = parseInt(dateParts[2], 10);
+        
+        let parsedDates = [];
+        parts.forEach(part => {
+            const dateParts = part.trim().split(/[\/\-]/);
+            if (dateParts.length >= 2) {
+                let monthIndex = parseInt(dateParts[1], 10) - 1;
+                let day = parseInt(dateParts[2], 10) || parseInt(dateParts[0], 10);
+                // Sometimes format is YYYY/MM/DD, sometimes DD/MM/YYYY
+                if (dateParts.length === 3) {
+                    if (parseInt(dateParts[0], 10) > 1000) {
+                        day = parseInt(dateParts[2], 10);
+                    } else {
+                        day = parseInt(dateParts[0], 10);
+                    }
+                }
+                
                 if (monthIndex >= 0 && monthIndex < 12) {
-                    return `${day} ${this.hijriMonths[monthIndex]}`;
+                    parsedDates.push({ day, monthStr: this.hijriMonths[monthIndex] });
                 }
             }
-            return part;
         });
-        return formattedParts.join(' - ');
+        
+        if (parsedDates.length === 2 && parsedDates[0].monthStr === parsedDates[1].monthStr) {
+            return `${parsedDates[0].day} - ${parsedDates[1].day} ${parsedDates[0].monthStr}`;
+        }
+        
+        return parsedDates.map(d => `${d.day} ${d.monthStr}`).join(' - ');
     },
     parseLocalDate: function(dateString) {
         if (!dateString) return null;
@@ -289,9 +303,14 @@ const ScheduleApp = {
                     const eDate = this.parseLocalDate(ev.end_date);
                     if (eDate) {
                         const eMonthShort = this.gregorianMonthsEN[eDate.getMonth()].substring(0,3);
-                        gregDateStr += ` - ${eDate.getDate()} ${eMonthShort}`;
+                        if (monthShort === eMonthShort) {
+                            gregDateStr = `${dDate.getDate()} - ${eDate.getDate()} ${monthShort}`;
+                        } else {
+                            gregDateStr += ` - ${eDate.getDate()} ${eMonthShort}`;
+                        }
                     }
                 }
+                
                 const formattedHijri = this.formatHijriDate(ev.hijri);
                 
                 const dayKey = `${gregDateStr}|${dayName}`;
@@ -381,8 +400,10 @@ const ScheduleApp = {
 
                     let extraBadgeClass = badgeClass ? `badge-${badgeClass}` : '';
                     
+                    const borderStyle = index < dayData.events.length - 1 ? 'border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px;' : '';
+
                     cardsHtml += `
-                        <div class="event-card">
+                        <div style="${borderStyle} display: flex; justify-content: space-between; align-items: center; gap: 16px; width: 100%;">
                             <div class="event-info" style="flex: 1;">
                                 <h3 class="event-title" dir="auto">${dentEscapeHtml(ev.title)}</h3>
                             </div>
@@ -407,7 +428,7 @@ const ScheduleApp = {
                         ${dayData.formattedHijri ? `<span class="hijri">${dayData.formattedHijri}</span>` : ''}
                     </div>
                     <div class="event-dot"></div>
-                    <div class="event-cards-group" style="display: flex; flex-direction: column; gap: 10px;">
+                    <div class="event-card" style="display: flex; flex-direction: column; align-items: stretch; gap: 0;">
                         ${cardsHtml}
                     </div>
                 `;
