@@ -176,19 +176,10 @@ const ScheduleApp = {
         const groupedEvents = {};
         let totalVisibleEvents = 0;
         
-        let minDate = null;
-        events.forEach(ev => {
-            const d = this.parseLocalDate(ev.date);
-            if (d && (!minDate || d < minDate)) minDate = d;
-        });
-        
-        let startSunday = new Date();
-        if (minDate) {
-            const startDayOfWeek = minDate.getDay();
-            startSunday = new Date(minDate);
-            startSunday.setDate(minDate.getDate() - startDayOfWeek);
-            startSunday.setHours(0,0,0,0);
-        }
+        // Anchor semester start to Sunday 2026-08-30 (Week 1), ensuring consistent week numbering
+        // across all views regardless of past events expiration (Week 4 begins Sunday 2026-09-20).
+        let startSunday = new Date(2026, 7, 30);
+        startSunday.setHours(0, 0, 0, 0);
 
         events.forEach(ev => {
             let isVisible = true;
