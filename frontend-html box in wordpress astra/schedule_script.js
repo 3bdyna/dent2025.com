@@ -400,14 +400,12 @@ const ScheduleApp = {
 
                     let extraBadgeClass = badgeClass ? `badge-${badgeClass}` : '';
                     
-                    const borderStyle = index < dayData.events.length - 1 ? 'border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px;' : '';
-
                     cardsHtml += `
-                        <div style="${borderStyle} display: flex; justify-content: space-between; align-items: center; gap: 16px; width: 100%;">
-                            <div class="event-info" style="flex: 1;">
-                                <h3 class="event-title" dir="auto">${dentEscapeHtml(ev.title)}</h3>
+                        <div style="display: flex; flex-direction: column; gap: 12px; justify-content: space-between; min-width: 0;">
+                            <div class="event-info">
+                                <h3 class="event-title" dir="auto" style="margin: 0; font-size: 1rem; line-height: 1.4;">${dentEscapeHtml(ev.title)}</h3>
                             </div>
-                            <div class="event-badges" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end;">
+                            <div class="event-badges" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                                 <span class="badge ${extraBadgeClass}">${badgeHtml}</span>
                                 ${adminNoticeBadge}
                                 ${deleteBtn}
@@ -428,7 +426,7 @@ const ScheduleApp = {
                         ${dayData.formattedHijri ? `<span class="hijri">${dayData.formattedHijri}</span>` : ''}
                     </div>
                     <div class="event-dot"></div>
-                    <div class="event-card" style="display: flex; flex-direction: column; align-items: stretch; gap: 0;">
+                    <div class="event-card" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; padding: 16px;">
                         ${cardsHtml}
                     </div>
                 `;
