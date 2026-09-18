@@ -1147,6 +1147,7 @@ function loadClassesData(selection) {
 }
 
 // Interactive Subject Spotlight for Weekly Schedule
+// Interactive Subject Spotlight for Weekly Schedule
 window.dentHighlightedClassSubject = null;
 
 window.toggleSubjectHighlight = function(subjectName) {
@@ -1163,11 +1164,10 @@ function updateClassHighlights() {
     const cards = document.querySelectorAll('.dent-class-item');
     
     cards.forEach(card => {
-        const rawAttr = card.getAttribute('data-subject') || '';
-        const cardSub = decodeURIComponent(rawAttr);
+        const subName = card.getAttribute('data-subject-name') || decodeURIComponent(card.getAttribute('data-subject') || '');
         if (!selectedSub) {
             card.classList.remove('dent-spotlight-active', 'dent-spotlight-dimmed');
-        } else if (cardSub === selectedSub) {
+        } else if (subName.trim() === selectedSub.trim()) {
             card.classList.add('dent-spotlight-active');
             card.classList.remove('dent-spotlight-dimmed');
         } else {
@@ -1175,6 +1175,46 @@ function updateClassHighlights() {
             card.classList.remove('dent-spotlight-active');
         }
     });
+
+    const widgetBar = document.getElementById('dent-widget-spotlight-container');
+    const modalBar = document.getElementById('dent-week-spotlight-container');
+
+    if (!selectedSub) {
+        if (widgetBar) widgetBar.innerHTML = '';
+        if (modalBar) modalBar.innerHTML = '';
+        return;
+    }
+
+    const savedGroup = localStorage.getItem('dent2025_selected_group') || 'المجموعة A';
+    const matches = currentClassesData
+        .filter(c => c && c.subject === selectedSub && isClassInGroup(c, savedGroup))
+        .sort((a, b) => {
+            const dayOrder = { "الأحد": 1, "الإثنين": 2, "الثلاثاء": 3, "الأربعاء": 4, "الخميس": 5 };
+            const dDiff = (dayOrder[a.day] || 9) - (dayOrder[b.day] || 9);
+            if (dDiff !== 0) return dDiff;
+            return String(a.start_time || '').localeCompare(String(b.start_time || ''));
+        });
+
+    const countText = matches.length === 1 ? 'محاضرة واحدة أسبوعياً' : 
+                     (matches.length === 2 ? 'محاضرتين أسبوعياً' : `${matches.length} محاضرات أسبوعياً`);
+
+    const daysFormatted = matches.map(m => `<b>${dentEscapeHtml(m.day)}</b> (${formatTime(m.start_time)} - ${formatTime(m.end_time)})`).join(' <span style="color:rgba(255,255,255,0.25); margin:0 5px;">•</span> ');
+
+    const barHtml = `
+    <div class="dent-spotlight-bar">
+        <div class="dent-spotlight-bar-info">
+            <div class="dent-spotlight-bar-title">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="opacity: 0.9;"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+                <span>${dentEscapeHtml(selectedSub)}</span>
+                <span class="dent-spotlight-count-badge">${countText}</span>
+            </div>
+            <div class="dent-spotlight-bar-days">${daysFormatted || 'لا توجد أوقات مسجلة'}</div>
+        </div>
+        <button type="button" class="dent-spotlight-clear-btn" onclick="toggleSubjectHighlight(null)">إلغاء التحديد ✕</button>
+    </div>`;
+
+    if (widgetBar) widgetBar.innerHTML = barHtml;
+    if (modalBar) modalBar.innerHTML = barHtml;
 }
 
 // Helper: Check if a class belongs to the specified group (inclusive of universal batch classes)
@@ -1257,6 +1297,78 @@ function renderClassesWidget() {
         }
         .dent-classes-group-select:focus {
             border-color: rgba(255,255,255,0.35);
+        }
+
+        /* Spotlight Bar */
+        .dent-spotlight-bar {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+            animation: dentSlideDown 0.22s ease-out;
+        }
+        @keyframes dentSlideDown {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .dent-spotlight-bar-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-align: right;
+        }
+        .dent-spotlight-bar-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .dent-spotlight-count-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+        .dent-spotlight-bar-days {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            line-height: 1.45;
+        }
+        .dent-spotlight-bar-days b {
+            color: #f8fafc;
+            font-weight: 600;
+        }
+        .dent-spotlight-clear-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #f8fafc;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .dent-spotlight-clear-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+        }
+        
         /* Vertical Day Blocks (Monochrome) */
         .dent-day-block {
             background: rgba(0, 0, 0, 0.22);
@@ -1275,7 +1387,7 @@ function renderClassesWidget() {
             border-bottom: 1px solid rgba(255, 255, 255, 0.06); padding-bottom: 10px;
         }
         .dent-day-title-wrap {
-            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
         }
         .dent-day-name {
             font-size: 1.05rem; font-weight: 700; color: #f8fafc; margin: 0;
@@ -1285,8 +1397,9 @@ function renderClassesWidget() {
             padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.15);
         }
         .dent-day-count {
-            font-size: 0.78rem; font-weight: 500; color: #94a3b8;
-            background: rgba(255,255,255,0.05); padding: 3px 9px; border-radius: 6px;
+            font-size: 0.75rem; font-weight: 500; color: #94a3b8;
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 2px 8px; border-radius: 6px;
         }
         
         /* Class Items (Monochrome) */
@@ -1314,7 +1427,7 @@ function renderClassesWidget() {
             text-shadow: 0 0 10px rgba(255,255,255,0.3);
         }
         .dent-class-item.dent-spotlight-dimmed {
-            opacity: 0.18 !important;
+            opacity: 0.22 !important;
             filter: grayscale(0.9) !important;
             transform: scale(0.99) !important;
         }
@@ -1385,6 +1498,7 @@ function renderClassesWidget() {
                 </select>` : ''}
             </div>
         </div>
+        <div id="dent-widget-spotlight-container"></div>
     `;
     
     if (!weekClasses || weekClasses.length === 0) {
@@ -1404,8 +1518,8 @@ function renderClassesWidget() {
                     <div class="dent-day-title-wrap">
                         <h3 class="dent-day-name">${day}</h3>
                         ${isToday ? `<span class="dent-today-badge">اليوم</span>` : ''}
+                        <span class="dent-day-count">${dayClasses.length > 0 ? countText : 'إجازة'}</span>
                     </div>
-                    <span class="dent-day-count">${dayClasses.length > 0 ? countText : 'إجازة'}</span>
                 </div>
             `;
 
@@ -1427,7 +1541,7 @@ function renderClassesWidget() {
                     const cleanType = String(c.type || '').replace(/\s*\([^)]*\)/g, '').trim();
                     
                     html += `
-                    <div class="dent-class-card dent-class-item ${isActive ? 'active-now' : ''}" data-subject="${rawSub}" onclick="toggleSubjectHighlight(decodeURIComponent('${rawSub}'))" title="انقر لتحديد هذه المادة وتتبعها خلال الأسبوع">
+                    <div class="dent-class-card dent-class-item ${isActive ? 'active-now' : ''}" data-subject="${rawSub}" data-subject-name="${dentEscapeHtml(c.subject)}" onclick="toggleSubjectHighlight(this.getAttribute('data-subject-name'))" title="انقر لتحديد هذه المادة وتتبعها خلال الأسبوع">
                         <div class="dent-class-info">
                             <h4 class="dent-class-subject">${dentEscapeHtml(c.subject)}</h4>
                             <span class="dent-type-badge">${dentEscapeHtml(cleanType)}</span>
@@ -1483,7 +1597,7 @@ function buildClassesModals(group) {
             dayClasses.forEach(c => {
                 const rawSub = encodeURIComponent(c.subject || '');
                 const cleanType = String(c.type || '').replace(/\s*\([^)]*\)/g, '').trim();
-                weekHtml += `<div class="dent-class-item" data-subject="${rawSub}" onclick="toggleSubjectHighlight(decodeURIComponent('${rawSub}'))" title="انقر لتحديد هذه المادة وتتبعها خلال الأسبوع" style="background: rgba(0,0,0,0.25); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
+                weekHtml += `<div class="dent-class-item" data-subject="${rawSub}" data-subject-name="${dentEscapeHtml(c.subject)}" onclick="toggleSubjectHighlight(this.getAttribute('data-subject-name'))" title="انقر لتحديد هذه المادة وتتبعها خلال الأسبوع" style="background: rgba(0,0,0,0.25); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
                     <div class="dent-week-sub-title" style="font-size: 0.88rem; color: #f8fafc; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <span>${dentEscapeHtml(c.subject)}</span>
                         ${cleanType ? `<span style="font-size: 0.7rem; font-weight: 400; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 4px;">${dentEscapeHtml(cleanType)}</span>` : ''}
@@ -1523,6 +1637,7 @@ function buildClassesModals(group) {
                     <h2 class="dent-classes-title" style="margin:0; font-size:1.1rem; color:#fff;">الجدول الدراسي${group && group !== 'الدفعة كاملة' ? ` (${group})` : ''}</h2>
                     <button class="dent-modal-close" style="background:rgba(255,255,255,0.05); border:none; color:#9ca3af; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;" onclick="document.getElementById('week-modal').style.display='none'">×</button>
                 </div>
+                <div id="dent-week-spotlight-container"></div>
                 ${weekHtml}
             </div>
         </div>
