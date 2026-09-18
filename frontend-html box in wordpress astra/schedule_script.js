@@ -163,20 +163,8 @@ const ScheduleApp = {
         let totalVisibleEvents = 0;
 
         events.forEach(ev => {
-            // Determine if event ended more than 3 days ago
+            let isVisible = true;
             let isEndedPast3Days = false;
-            const endStr = ev.end_date || ev.date;
-            const endDate = this.parseLocalDate(endStr);
-            if (endDate) {
-                endDate.setHours(0, 0, 0, 0);
-                if (today > endDate) {
-                    const diffDays = Math.floor((today.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24));
-                    if (diffDays > 3) {
-                        isEndedPast3Days = true;
-                    }
-                }
-            }
-
             
             if (ev.end_date) {
                 const ed = this.parseLocalDate(ev.end_date);
