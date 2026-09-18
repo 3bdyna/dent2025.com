@@ -344,8 +344,10 @@ const ScheduleApp = {
                             } else if (daysLeft === 2) {
                                 badgeHtml = 'بعد يومين';
                                 badgeClass = 'warning';
-                            } else {
+                            } else if (daysLeft >= 3 && daysLeft <= 10) {
                                 badgeHtml = `بعد ${daysLeft} أيام`;
+                            } else {
+                                badgeHtml = `بعد ${daysLeft} يوماً`;
                             }
                         }
                     } else {
@@ -365,6 +367,8 @@ const ScheduleApp = {
                             } else if (daysLeft === 2) {
                                 badgeHtml = 'بعد يومين';
                                 badgeClass = 'warning';
+                            } else if (daysLeft >= 3 && daysLeft <= 10) {
+                                badgeHtml = `بعد ${daysLeft} أيام`;
                             } else {
                                 badgeHtml = `بعد ${daysLeft} يوماً`;
                             }
