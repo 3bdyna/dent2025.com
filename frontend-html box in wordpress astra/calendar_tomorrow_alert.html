@@ -1,7 +1,9 @@
 <style>
     /* Dent2025 compact next-day academic event alert */
     .dent-tomorrow-calendar-alert {
-        display: flex;
+        display: grid;
+        grid-template-columns: 62px minmax(0, 1fr) auto;
+        grid-template-areas: "date content action";
         align-items: center;
         gap: 12px;
         width: 100%;
@@ -16,30 +18,46 @@
         font-family: 'Noto Kufi Arabic', 'Outfit', sans-serif;
     }
 
-    .dent-tomorrow-calendar-alert[hidden] {
+    .dent-tomorrow-calendar-alert[hidden],
+    .dent-tomorrow-calendar-meta[hidden] {
         display: none !important;
     }
 
-    .dent-tomorrow-calendar-icon {
-        width: 36px;
-        height: 36px;
-        flex: 0 0 36px;
-        display: grid;
-        place-items: center;
+    /* The date intentionally occupies the former icon position. */
+    .dent-tomorrow-calendar-date {
+        grid-area: date;
+        width: 62px;
+        min-height: 42px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 6px;
         box-sizing: border-box;
         border: 1px solid rgba(255, 255, 255, 0.10);
-        border-radius: 9px;
+        border-radius: 10px;
         background: #242428;
         color: #c4c4c9;
+        text-align: center;
     }
 
-    .dent-tomorrow-calendar-icon svg {
-        width: 18px;
-        height: 18px;
+    .dent-tomorrow-calendar-date-label {
+        color: #85858d;
+        font-size: 0.58rem;
+        line-height: 1.35;
+    }
+
+    .dent-tomorrow-calendar-date-value {
+        color: #eeeeef;
+        font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
+        font-size: 0.78rem;
+        font-weight: 600;
+        line-height: 1.35;
+        white-space: nowrap;
     }
 
     .dent-tomorrow-calendar-content {
-        flex: 1;
+        grid-area: content;
         min-width: 0;
     }
 
@@ -72,18 +90,11 @@
         white-space: nowrap;
     }
 
-    .dent-tomorrow-calendar-date {
-        flex: 0 0 auto;
-        padding-right: 10px;
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
-        color: #b8b8be;
-        font-size: 0.78rem;
-        line-height: 1.5;
-        white-space: nowrap;
-    }
-
     .dent-tomorrow-calendar-action {
-        flex: 0 0 auto;
+        grid-area: action;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         padding: 5px 8px;
         border: 1px solid rgba(255, 255, 255, 0.09);
         border-radius: 7px;
@@ -102,47 +113,40 @@
         outline: none;
     }
 
-    .dent-tomorrow-calendar-meta[hidden] {
-        display: none !important;
+    .dent-tomorrow-calendar-action:focus-visible {
+        outline: 1px solid rgba(255, 255, 255, 0.35);
+        outline-offset: 2px;
     }
 
     @media (max-width: 650px) {
         .dent-tomorrow-calendar-alert {
-            display: grid;
-            grid-template-columns: 36px minmax(0, 1fr) auto;
-            grid-template-areas:
-                "icon content action"
-                "date date date";
-            align-items: center;
-            gap: 8px 10px;
-            padding: 10px 12px;
+            grid-template-columns: 58px minmax(0, 1fr) auto;
+            grid-template-areas: "date content action";
+            gap: 8px;
+            padding: 10px 11px;
         }
 
-        .dent-tomorrow-calendar-icon {
-            grid-area: icon;
+        .dent-tomorrow-calendar-date {
+            width: 58px;
+            min-height: 42px;
         }
 
-        .dent-tomorrow-calendar-content {
-            grid-area: content;
-            min-width: 0;
+        .dent-tomorrow-calendar-label {
+            font-size: 0.64rem;
         }
 
         .dent-tomorrow-calendar-title {
             font-size: 0.88rem;
+            white-space: normal;
         }
 
-        .dent-tomorrow-calendar-date {
-            grid-area: date;
-            width: 100%;
-            padding: 7px 0 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            border-right: 0;
+        .dent-tomorrow-calendar-meta {
+            font-size: 0.66rem;
         }
 
         .dent-tomorrow-calendar-action {
-            grid-area: action;
-            margin: 0;
-            padding: 6px 8px;
+            padding: 6px 7px;
+            font-size: 0.64rem;
         }
     }
 </style>
@@ -154,12 +158,9 @@
     aria-live="polite"
     hidden
 >
-    <div class="dent-tomorrow-calendar-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <rect x="3.5" y="5" width="17" height="15.5" rx="2.5"></rect>
-            <path d="M7.5 3.5v4M16.5 3.5v4M3.5 9h17"></path>
-            <path d="M8 13h.01M12 13h.01M16 13h.01"></path>
-        </svg>
+    <div id="dent-tomorrow-calendar-date" class="dent-tomorrow-calendar-date">
+        <span class="dent-tomorrow-calendar-date-label">غداً</span>
+        <strong id="dent-tomorrow-calendar-date-value" class="dent-tomorrow-calendar-date-value"></strong>
     </div>
 
     <div class="dent-tomorrow-calendar-content">
@@ -167,8 +168,6 @@
         <h2 id="dent-tomorrow-calendar-title" class="dent-tomorrow-calendar-title"></h2>
         <p id="dent-tomorrow-calendar-meta" class="dent-tomorrow-calendar-meta"></p>
     </div>
-
-    <div id="dent-tomorrow-calendar-date" class="dent-tomorrow-calendar-date"></div>
 
     <a class="dent-tomorrow-calendar-action" href="/التقويم-الأكاديمي/">
         عرض التقويم
@@ -243,13 +242,15 @@
 
     function formatTomorrowDate(date) {
         try {
-            return new Intl.DateTimeFormat('ar-SA', {
-                weekday: 'long',
-                day: 'numeric',
+            var day = new Intl.DateTimeFormat('ar-SA', {
+                day: 'numeric'
+            }).format(date);
+            var month = new Intl.DateTimeFormat('ar-SA', {
                 month: 'short'
             }).format(date);
+            return day + ' ' + month;
         } catch (error) {
-            return 'غداً';
+            return '';
         }
     }
 
@@ -277,7 +278,7 @@
         getElement('dent-tomorrow-calendar-title').textContent = title;
         getElement('dent-tomorrow-calendar-meta').textContent = meta;
         getElement('dent-tomorrow-calendar-meta').hidden = !meta;
-        getElement('dent-tomorrow-calendar-date').textContent = formatTomorrowDate(tomorrow);
+        getElement('dent-tomorrow-calendar-date-value').textContent = formatTomorrowDate(tomorrow);
 
         alert.hidden = false;
     }
