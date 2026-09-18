@@ -161,6 +161,20 @@ const ScheduleApp = {
 
         const groupedEvents = {};
         let totalVisibleEvents = 0;
+        
+        let minDate = null;
+        events.forEach(ev => {
+            const d = this.parseLocalDate(ev.date);
+            if (d && (!minDate || d < minDate)) minDate = d;
+        });
+        
+        let startSunday = new Date();
+        if (minDate) {
+            const startDayOfWeek = minDate.getDay();
+            startSunday = new Date(minDate);
+            startSunday.setDate(minDate.getDate() - startDayOfWeek);
+            startSunday.setHours(0,0,0,0);
+        }
 
         events.forEach(ev => {
             let isVisible = true;
@@ -198,22 +212,19 @@ const ScheduleApp = {
 
             const dateObj = this.parseLocalDate(ev.date) || new Date();
             
-            // Calculate Week (Sunday to Saturday)
-            const dayOfWeek = dateObj.getDay(); // 0 = Sunday, 6 = Saturday
+            const dayOfWeek = dateObj.getDay();
             const sundayDate = new Date(dateObj);
             sundayDate.setDate(dateObj.getDate() - dayOfWeek);
+            sundayDate.setHours(0,0,0,0);
+            
+            const weekNum = Math.floor((sundayDate - startSunday) / (1000 * 60 * 60 * 24 * 7)) + 1;
             
             const sunDay = sundayDate.getDate();
-            const sunMonth = this.gregorianMonthsEN[sundayDate.getMonth()].substring(0,3);
+            const sunMonth = this.gregorianMonthsAR[sundayDate.getMonth()];
             const sunYear = sundayDate.getFullYear();
             
-            const satDate = new Date(sundayDate);
-            satDate.setDate(sundayDate.getDate() + 6);
-            const satDay = satDate.getDate();
-            const satMonth = this.gregorianMonthsEN[satDate.getMonth()].substring(0,3);
-            
             const weekKey = `${sunYear}-${String(sundayDate.getMonth()).padStart(2, '0')}-${String(sunDay).padStart(2, '0')}`;
-            const weekName = `الأسبوع: ${sunDay} ${sunMonth} — ${satDay} ${satMonth}`;
+            const weekName = `الأسبوع ${weekNum} — ${sunMonth}`;
             
             if (!groupedEvents[weekKey]) {
                 groupedEvents[weekKey] = {
@@ -269,87 +280,89 @@ const ScheduleApp = {
             groupData.events.forEach(ev => {
                 const eventWrapper = document.createElement('div');
                 eventWrapper.className = 'event';
-                const dateDisplay = this.formatDate(ev.date, ev.end_date);
-                const formattedHijri = this.formatHijriDate(ev.hijri);
+                
+                const dDate = this.parseLocalDate(ev.date) || new Date();
+                const dayName = dDate.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { weekday: 'long' });
+                let gregDateStr = `${dDate.getDate()}`;
+                
+                if (ev.end_date) {
+                    const eDate = this.parseLocalDate(ev.end_date);
+                    if (eDate) {
+                        gregDateStr += ` - ${eDate.getDate()}`;
+                    }
+                }
                 
                 // Calculate countdown badge
                 let badgeHtml = '';
                 let badgeClass = '';
-                const evDate = this.parseLocalDate(ev.date);
-                if (evDate) evDate.setHours(0,0,0,0);
                 
-                if (evDate && evDate > today) {
-                    const diffTime = Math.abs(evDate - today);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    if (diffDays === 1) {
-                        badgeHtml = 'غداً';
-                    } else if (diffDays === 2) {
-                        badgeHtml = 'بعد يومين';
-                    } else if (diffDays >= 3 && diffDays <= 10) {
-                        badgeHtml = `بعد ${diffDays} أيام`;
-                    } else {
-                        badgeHtml = `بعد ${diffDays} يوماً`;
-                    }
-                    badgeClass = 'future';
-                } else if (evDate && evDate < today) {
-                    let isCurrent = false;
-                    if (ev.end_date) {
-                        const endDate = this.parseLocalDate(ev.end_date);
-                        if (endDate) {
-                            endDate.setHours(0,0,0,0);
-                            if (today <= endDate) {
-                                isCurrent = true;
-                            }
+                // ... same badge logic ...
+                if (ev.end_date) {
+                    const eDate = this.parseLocalDate(ev.end_date);
+                    if (eDate) {
+                        eDate.setHours(23, 59, 59, 999);
+                        const daysLeft = Math.ceil((eDate - today) / (1000 * 60 * 60 * 24));
+                        if (daysLeft < 0) {
+                            badgeHtml = 'انتهى';
+                            eventWrapper.classList.add('passed');
+                        } else if (daysLeft === 0) {
+                            badgeHtml = 'اليوم';
+                            badgeClass = 'urgent';
+                            eventWrapper.classList.add('highlight');
+                        } else if (daysLeft === 1) {
+                            badgeHtml = 'غداً';
+                            badgeClass = 'warning';
+                        } else if (daysLeft === 2) {
+                            badgeHtml = 'بعد يومين';
+                            badgeClass = 'warning';
+                        } else {
+                            badgeHtml = `بعد ${daysLeft} أيام`;
                         }
                     }
-                    if (isCurrent) {
-                        badgeHtml = 'جارية الآن';
-                        badgeClass = 'today';
-                    } else {
-                        badgeHtml = 'انتهى';
-                        badgeClass = 'passed';
-                    }
                 } else {
-                    badgeHtml = 'اليوم';
-                    badgeClass = 'today';
-                }
-
-                if (badgeClass === 'passed') {
-                    eventWrapper.classList.add('passed');
-                } else if (badgeClass === 'today' || badgeHtml.includes('غداً') || badgeHtml.includes('يومين')) {
-                    eventWrapper.classList.add('highlight');
+                    const d = this.parseLocalDate(ev.date);
+                    if (d) {
+                        d.setHours(23, 59, 59, 999);
+                        const daysLeft = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+                        if (daysLeft < 0) {
+                            badgeHtml = 'انتهى';
+                            eventWrapper.classList.add('passed');
+                        } else if (daysLeft === 0) {
+                            badgeHtml = 'اليوم';
+                            badgeClass = 'urgent';
+                            eventWrapper.classList.add('highlight');
+                        } else if (daysLeft === 1) {
+                            badgeHtml = 'غداً';
+                            badgeClass = 'warning';
+                        } else if (daysLeft === 2) {
+                            badgeHtml = 'بعد يومين';
+                            badgeClass = 'warning';
+                        } else {
+                            badgeHtml = `بعد ${daysLeft} يوماً`;
+                        }
+                    }
                 }
 
                 let adminNoticeBadge = '';
-                if (this.adminPassword && ev._isEndedPast3Days) {
-                    adminNoticeBadge = '<span style="font-size: 0.72rem; color: #f87171; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block;">مخفي عن الطلاب</span>';
+                if (ev._isEndedPast3Days && this.adminPassword) {
+                    adminNoticeBadge = `<span class="badge" style="background:rgba(239,68,64,0.15); color:var(--color-exam);">مخفي للطلاب</span>`;
                 }
 
                 let deleteBtn = '';
                 if (this.adminPassword) {
                     const isGlobal = !!ev.is_global;
                     const eventSchedId = ev.schedule_id || (isGlobal ? 'global' : this.scheduleId);
-                    deleteBtn = `<button type="button" class="event-delete-btn" onclick="ScheduleApp.deleteEvent('${dentEscapeHtml(ev.id)}', ${isGlobal ? 'true' : 'false'}, '${dentEscapeHtml(eventSchedId)}')" title="حذف هذا الحدث">&times;</button>`;
+                    deleteBtn = `<button class="event-delete-btn" onclick="ScheduleApp.deleteEvent('${ev.id}', ${isGlobal ? 'true' : 'false'}, '${eventSchedId}')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+                                 </button>`;
                 }
 
-                const dateObj = this.parseLocalDate(ev.date) || new Date();
-                const dayName = dateObj.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { weekday: 'long' });
-                const dayNum = dateObj.getDate();
-                const monthShort = this.gregorianMonthsEN[dateObj.getMonth()].substring(0, 3);
-                let gregDateStr = `${dayNum} ${monthShort}`;
-                
-                if (ev.end_date) {
-                    const eDate = this.parseLocalDate(ev.end_date);
-                    if (eDate) gregDateStr += `-${eDate.getDate()} ${this.gregorianMonthsEN[eDate.getMonth()].substring(0,3)}`;
-                }
-
-                let extraBadgeClass = (badgeClass === 'passed') ? 'passed-badge' : ((badgeClass === 'future' || badgeClass === 'today') && eventWrapper.classList.contains('highlight') ? 'highlight-badge' : '');
+                let extraBadgeClass = badgeClass ? `badge-${badgeClass}` : '';
 
                 eventWrapper.innerHTML = `
                     <div class="event-date">
                         <span class="day-name">${dayName}</span>
                         <span class="gregorian" dir="ltr">${gregDateStr}</span>
-                        ${formattedHijri ? `<span class="hijri">${formattedHijri}</span>` : ''}
                     </div>
                     <div class="event-dot"></div>
                     <div class="event-card">
