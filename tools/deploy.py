@@ -111,8 +111,8 @@ def upload_via_openssh(file_paths, config):
         # SCP file
         remote_dest = f"azureuser@{ssh_host}:{target_dir}/{file_name}"
         print(f"Uploading '{rel_path}' -> SCP '{remote_dest}'...", flush=True)
-        res = subprocess.run(['scp', '-o', 'BatchMode=yes', abs_path, remote_dest],
-                             stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=30)
+        res = subprocess.run(['scp', '-O', '-o', 'BatchMode=yes', abs_path, remote_dest],
+                             stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=60)
         if res.returncode != 0:
             raise RuntimeError(f"SCP failed: {res.stderr}")
         print(f"Successfully uploaded: {rel_path}", flush=True)
