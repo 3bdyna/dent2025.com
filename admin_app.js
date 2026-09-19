@@ -555,7 +555,7 @@ window.AdminApp = {
     // --- UNIVERSAL FOCUS MODE (ACTIVE TRACK) METHODS ---
 
     initFocusMode() {
-        const STORAGE_KEY = 'dent2025_admin_focus';
+        const STORAGE_KEY = 'dent2025_admin_focus_v2';
         let saved = null;
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
@@ -592,16 +592,16 @@ window.AdminApp = {
         } else if (urlFocus === '0' || urlFocus === 'false') {
             this.focusMode = {
                 enabled: false,
-                specialty: saved && saved.specialty ? saved.specialty : 'dentistry',
-                year: saved && saved.year ? String(saved.year) : '3',
-                semester: saved && saved.semester ? String(saved.semester) : '1'
+                specialty: (saved && saved.specialty) ? saved.specialty : 'dentistry',
+                year: (saved && saved.year) ? String(saved.year) : '3',
+                semester: (saved && saved.semester) ? String(saved.semester) : '1'
             };
-        } else if (saved) {
+        } else if (saved && saved.specialty && saved.year && saved.semester) {
             this.focusMode = {
                 enabled: saved.enabled !== undefined ? !!saved.enabled : true,
-                specialty: saved.specialty || 'dentistry',
-                year: String(saved.year || '3'),
-                semester: String(saved.semester || '1')
+                specialty: saved.specialty,
+                year: String(saved.year),
+                semester: String(saved.semester)
             };
         } else {
             // Default on entry: Dentistry Year 3 Semester 1, enabled = true
@@ -641,7 +641,7 @@ window.AdminApp = {
 
     saveFocusMode() {
         try {
-            localStorage.setItem('dent2025_admin_focus', JSON.stringify(this.focusMode));
+            localStorage.setItem('dent2025_admin_focus_v2', JSON.stringify(this.focusMode));
         } catch(e) {
             console.warn('Failed to save focusMode to localStorage:', e);
         }
@@ -651,7 +651,7 @@ window.AdminApp = {
         this.focusMode.enabled = !this.focusMode.enabled;
         this.saveFocusMode();
         this.renderFocusBar();
-        this.showToast(this.focusMode.enabled ? 'تم تفعيل وضع التركيز الأكاديمي' : 'تم تفعيل العرض الشامل لجميع التخصصات');
+        this.showToast(this.focusMode.enabled ? 'تم تفعيل وضع التركيز الأكاديمي' : 'تم تفعيل عرض الكل');
         this.refreshCurrentTab();
     },
 
@@ -679,13 +679,10 @@ window.AdminApp = {
     },
 
     renderFocusBar() {
-        const dot = document.getElementById('focus-pulse-dot');
         const trackBtn = document.getElementById('focus-track-btn');
         const trackText = document.getElementById('focus-track-text');
-        const trackIcon = document.getElementById('focus-track-icon');
         const toggleBtn = document.getElementById('focus-toggle-btn');
         const toggleText = document.getElementById('focus-toggle-text');
-        const toggleIcon = document.getElementById('focus-toggle-icon');
         const barLabel = document.getElementById('focus-bar-label');
 
         if (!trackText || !toggleBtn) return;
@@ -694,33 +691,21 @@ window.AdminApp = {
         const label = this.getTrackLabel(this.focusMode.specialty, this.focusMode.year, this.focusMode.semester);
 
         if (isEnabled) {
-            if (dot) {
-                dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)] animate-pulse';
-            }
-            if (barLabel) barLabel.innerText = 'وضع التركيز الأكاديمي:';
+            if (barLabel) barLabel.innerText = 'التركيز:';
             trackText.innerText = label;
-            if (trackIcon) trackIcon.innerText = '🎯';
             if (trackBtn) {
-                trackBtn.className = 'px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/20 to-sky-500/20 border border-emerald-500/40 hover:border-emerald-300 text-white font-semibold text-xs sm:text-sm flex items-center gap-2 shadow-sm transition active:scale-95';
+                trackBtn.className = 'px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white font-medium flex items-center gap-1.5 transition text-xs';
             }
-            
-            toggleText.innerText = 'عرض الكل';
-            if (toggleIcon) toggleIcon.innerText = '🌐';
-            toggleBtn.className = 'px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-gray-300 hover:text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm';
+            if (toggleText) toggleText.innerText = 'عرض الكل';
+            toggleBtn.className = 'px-2.5 py-1 rounded-lg bg-transparent hover:bg-white/5 border border-white/10 text-gray-400 hover:text-white text-xs transition';
         } else {
-            if (dot) {
-                dot.className = 'w-2.5 h-2.5 rounded-full bg-gray-500';
-            }
-            if (barLabel) barLabel.innerText = 'نطاق العرض:';
-            trackText.innerText = 'عرض شامل (جميع التخصصات)';
-            if (trackIcon) trackIcon.innerText = '🌐';
+            if (barLabel) barLabel.innerText = 'التركيز:';
+            trackText.innerText = 'عرض شامل (الكل)';
             if (trackBtn) {
-                trackBtn.className = 'px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 hover:border-white/30 text-gray-300 hover:text-white font-semibold text-xs sm:text-sm flex items-center gap-2 shadow-sm transition active:scale-95';
+                trackBtn.className = 'px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 font-medium flex items-center gap-1.5 transition text-xs';
             }
-
-            toggleText.innerText = `تفعيل التركيز (${label})`;
-            if (toggleIcon) toggleIcon.innerText = '🎯';
-            toggleBtn.className = 'px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 hover:text-emerald-200 text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm';
+            if (toggleText) toggleText.innerText = `تفعيل التركيز (${label})`;
+            toggleBtn.className = 'px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-gray-200 hover:text-white text-xs transition';
         }
     },
 
@@ -731,11 +716,55 @@ window.AdminApp = {
         } else if (this.currentTab === 'classes') {
             this.loadClasses();
         } else if (this.currentTab === 'events') {
-            this.loadEvents();
+            if (this.eventsData && Array.isArray(this.eventsData)) {
+                if (this.focusMode && this.focusMode.enabled) {
+                    const scopeEl = document.getElementById('evt-filter-scope');
+                    const yearEl = document.getElementById('evt-filter-year');
+                    if (scopeEl) scopeEl.value = this.focusMode.specialty;
+                    if (yearEl) yearEl.value = this.focusMode.year;
+                } else {
+                    const scopeEl = document.getElementById('evt-filter-scope');
+                    const yearEl = document.getElementById('evt-filter-year');
+                    if (scopeEl) scopeEl.value = 'all';
+                    if (yearEl) yearEl.value = 'all';
+                }
+                this.renderEvents();
+            } else {
+                this.loadEvents();
+            }
         } else if (this.currentTab === 'announcements') {
-            this.loadAnnouncements();
+            if (this.announcementsData && Array.isArray(this.announcementsData)) {
+                if (this.focusMode && this.focusMode.enabled) {
+                    const filterSpec = document.getElementById('ann-filter-spec');
+                    const filterYear = document.getElementById('ann-filter-year');
+                    const filterSem = document.getElementById('ann-filter-sem');
+                    if (filterSpec) {
+                        filterSpec.value = this.focusMode.specialty;
+                        this.updateYearOptions('ann-filter-spec', 'ann-filter-year');
+                    }
+                    if (filterYear) filterYear.value = this.focusMode.year;
+                    if (filterSem) filterSem.value = this.focusMode.semester;
+                } else {
+                    const filterSpec = document.getElementById('ann-filter-spec');
+                    const filterYear = document.getElementById('ann-filter-year');
+                    const filterSem = document.getElementById('ann-filter-sem');
+                    if (filterSpec) {
+                        filterSpec.value = 'all';
+                        this.updateYearOptions('ann-filter-spec', 'ann-filter-year');
+                    }
+                    if (filterYear) filterYear.value = 'all';
+                    if (filterSem) filterSem.value = 'all';
+                }
+                this.renderAnnouncements();
+            } else {
+                this.loadAnnouncements();
+            }
         } else if (this.currentTab === 'quizzes') {
-            this.loadQuizzes();
+            if (this.quizzesData && Array.isArray(this.quizzesData)) {
+                this.renderQuizzesTable(this.quizzesData);
+            } else {
+                this.loadQuizzes();
+            }
         }
     },
 
@@ -1084,6 +1113,11 @@ window.AdminApp = {
             const yearEl = document.getElementById('evt-filter-year');
             if (scopeEl) scopeEl.value = this.focusMode.specialty;
             if (yearEl) yearEl.value = this.focusMode.year;
+        } else {
+            const scopeEl = document.getElementById('evt-filter-scope');
+            const yearEl = document.getElementById('evt-filter-year');
+            if (scopeEl) scopeEl.value = 'all';
+            if (yearEl) yearEl.value = 'all';
         }
         this.showLoading(true);
         fetch(`${API_BASE}/schedule_backend.php?schedule_id=all&_t=${Date.now()}`)
@@ -1541,23 +1575,33 @@ window.AdminApp = {
     // --- TAB 3: SUBJECTS & LINKS ---
 
     loadSubjects() {
+        let spec = 'dentistry';
+        let year = '3';
+        let sem = '1';
+
         if (this.focusMode && this.focusMode.enabled) {
+            spec = this.focusMode.specialty;
+            year = String(this.focusMode.year);
+            sem = String(this.focusMode.semester);
+
             const specEl = document.getElementById('sub-spec');
             const yearEl = document.getElementById('sub-year');
             const semEl = document.getElementById('sub-sem');
             if (specEl) {
-                specEl.value = this.focusMode.specialty;
+                specEl.value = spec;
                 this.updateYearOptions('sub-spec', 'sub-year');
             }
-            if (yearEl) yearEl.value = this.focusMode.year;
-            if (semEl) semEl.value = this.focusMode.semester;
+            if (yearEl) yearEl.value = year;
+            if (semEl) semEl.value = sem;
         } else {
             this.updateYearOptions('sub-spec', 'sub-year');
+            const specEl = document.getElementById('sub-spec');
+            const yearEl = document.getElementById('sub-year');
+            const semEl = document.getElementById('sub-sem');
+            if (specEl) spec = specEl.value;
+            if (yearEl) year = yearEl.value;
+            if (semEl) sem = semEl.value;
         }
-
-        const spec = document.getElementById('sub-spec').value;
-        const year = document.getElementById('sub-year').value;
-        const sem = document.getElementById('sub-sem').value;
 
         this.showLoading(true);
         fetch(`${API_BASE}/dent2025_api.php?action=data&specialty=${spec}&year=${year}&semester=${sem}&nocache=1`)
@@ -1944,23 +1988,33 @@ window.AdminApp = {
     // --- TAB 4: CLASSES TIMETABLE ---
 
     loadClasses() {
+        let spec = 'dentistry';
+        let year = '3';
+        let sem = '1';
+
         if (this.focusMode && this.focusMode.enabled) {
+            spec = this.focusMode.specialty;
+            year = String(this.focusMode.year);
+            sem = String(this.focusMode.semester);
+
             const specEl = document.getElementById('cls-spec');
             const yearEl = document.getElementById('cls-year');
             const semEl = document.getElementById('cls-sem');
             if (specEl) {
-                specEl.value = this.focusMode.specialty;
+                specEl.value = spec;
                 this.updateYearOptions('cls-spec', 'cls-year');
             }
-            if (yearEl) yearEl.value = this.focusMode.year;
-            if (semEl) semEl.value = this.focusMode.semester;
+            if (yearEl) yearEl.value = year;
+            if (semEl) semEl.value = sem;
         } else {
             this.updateYearOptions('cls-spec', 'cls-year');
+            const specEl = document.getElementById('cls-spec');
+            const yearEl = document.getElementById('cls-year');
+            const semEl = document.getElementById('cls-sem');
+            if (specEl) spec = specEl.value;
+            if (yearEl) year = yearEl.value;
+            if (semEl) sem = semEl.value;
         }
-
-        const spec = document.getElementById('cls-spec').value;
-        const year = document.getElementById('cls-year').value;
-        const sem = document.getElementById('cls-sem').value;
 
         this.showLoading(true);
         fetch(`${API_BASE}/dent2025_api.php?action=get_classes&specialty=${spec}&year=${year}&semester=${sem}`)
@@ -2182,6 +2236,16 @@ window.AdminApp = {
             }
             if (filterYear) filterYear.value = this.focusMode.year;
             if (filterSem) filterSem.value = this.focusMode.semester;
+        } else {
+            const filterSpec = document.getElementById('ann-filter-spec');
+            const filterYear = document.getElementById('ann-filter-year');
+            const filterSem = document.getElementById('ann-filter-sem');
+            if (filterSpec) {
+                filterSpec.value = 'all';
+                this.updateYearOptions('ann-filter-spec', 'ann-filter-year');
+            }
+            if (filterYear) filterYear.value = 'all';
+            if (filterSem) filterSem.value = 'all';
         }
 
         this.showLoading(true);
