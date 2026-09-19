@@ -22,15 +22,8 @@ if (!$pdo) {
 }
 
 try {
-    $table_subs = 'subjects';
-    $table_links = 'subject_links';
-    try {
-        $check = $pdo->query("SELECT 1 FROM wpr9_subjects LIMIT 1");
-        if ($check !== false) {
-            $table_subs = 'wpr9_subjects';
-            $table_links = 'wpr9_subject_links';
-        }
-    } catch(Throwable $e) {}
+    $table_subs = get_dent2025_table($pdo, 'subjects');
+    $table_links = get_dent2025_table($pdo, 'subject_links');
 
     $stmt = $pdo->prepare("SELECT * FROM {$table_subs} WHERE specialty = ? AND year = ? AND semester = ? ORDER BY created_at ASC");
     $stmt->execute([$specialty, $year, $semester]);

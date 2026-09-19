@@ -145,27 +145,43 @@ header('X-LiteSpeed-Abort-On-Done: 0');
 header('X-LiteSpeed-No-Abort: 1');
 
 function getAiExamSubjectsTable($pdo) {
+    if (function_exists('get_dent2025_table')) {
+        return get_dent2025_table($pdo, 'subjects');
+    }
     static $tableName = null;
     if ($tableName !== null) return $tableName;
-    $tableName = 'subjects';
+    $tableName = 'wp_subjects';
     if ($pdo) {
-        try {
-            $check = $pdo->query("SELECT 1 FROM wpr9_subjects LIMIT 1");
-            if ($check !== false) $tableName = 'wpr9_subjects';
-        } catch (Throwable $e) {}
+        foreach (['wp_subjects', 'wpr9_subjects', 'subjects'] as $cand) {
+            try {
+                $check = $pdo->query("SELECT 1 FROM `{$cand}` LIMIT 1");
+                if ($check !== false) {
+                    $tableName = $cand;
+                    break;
+                }
+            } catch (Throwable $e) {}
+        }
     }
     return $tableName;
 }
 
 function getAiExamSubjectLinksTable($pdo) {
+    if (function_exists('get_dent2025_table')) {
+        return get_dent2025_table($pdo, 'subject_links');
+    }
     static $tableName = null;
     if ($tableName !== null) return $tableName;
-    $tableName = 'subject_links';
+    $tableName = 'wp_subject_links';
     if ($pdo) {
-        try {
-            $check = $pdo->query("SELECT 1 FROM wpr9_subject_links LIMIT 1");
-            if ($check !== false) $tableName = 'wpr9_subject_links';
-        } catch (Throwable $e) {}
+        foreach (['wp_subject_links', 'wpr9_subject_links', 'subject_links'] as $cand) {
+            try {
+                $check = $pdo->query("SELECT 1 FROM `{$cand}` LIMIT 1");
+                if ($check !== false) {
+                    $tableName = $cand;
+                    break;
+                }
+            } catch (Throwable $e) {}
+        }
     }
     return $tableName;
 }
@@ -2953,12 +2969,7 @@ if ($action === 'prewarm_cache' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // --- BACKGROUND EXECUTION ---
     try {
-        $table_subs = 'subjects';
-        try {
-            $check = $pdo->query("SELECT 1 FROM wpr9_subjects LIMIT 1");
-            if ($check !== false) $table_subs = 'wpr9_subjects';
-        } catch(Throwable $e) {}
-
+        $table_subs = getAiExamSubjectsTable($pdo);
         $stmt = $pdo->query("SELECT id, name, specialty, year, semester, chapters_folder_id FROM {$table_subs} WHERE chapters_folder_id IS NOT NULL AND chapters_folder_id != ''");
         $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -3067,16 +3078,16 @@ if ($action === 'check_prewarm_job') {
 if ($action === 'get_prewarm_subjects') {
     if (!$pdo) sendResponse(false, "Database connection unavailable.");
 
-    $table_subs = 'subjects';
     try {
-        $check = $pdo->query("SELECT 1 FROM wpr9_subjects LIMIT 1");
-        if ($check !== false) $table_subs = 'wpr9_subjects';
-    } catch(Throwable $e) {}
+        $table_subs = getAiExamSubjectsTable($pdo);
+        $stmt = $pdo->query("SELECT id, name, specialty, year, semester, chapters_folder_id FROM {$table_subs} WHERE chapters_folder_id IS NOT NULL AND chapters_folder_id != '' ORDER BY specialty, year, semester, id ASC");
+        $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $stmt = $pdo->query("SELECT id, name, specialty, year, semester, chapters_folder_id FROM {$table_subs} WHERE chapters_folder_id IS NOT NULL AND chapters_folder_id != '' ORDER BY specialty, year, semester, id ASC");
-    $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    sendResponse(true, ['subjects' => $subjects, 'total' => count($subjects)]);
+        sendResponse(true, ['subjects' => $subjects, 'total' => count($subjects)]);
+    } catch (Throwable $e) {
+        error_log("get_prewarm_subjects error: " . $e->getMessage());
+        sendResponse(false, "Failed to load subjects: " . $e->getMessage());
+    }
 }
 
 // --- ACTION 13.7: PRE-WARM A SINGLE SUBJECT ---
@@ -3095,11 +3106,7 @@ if ($action === 'prewarm_subject') {
     }
 
     if (empty($folderId) && !empty($subjectId) && $pdo) {
-        $table_subs = 'subjects';
-        try {
-            $check = $pdo->query("SELECT 1 FROM wpr9_subjects LIMIT 1");
-            if ($check !== false) $table_subs = 'wpr9_subjects';
-        } catch(Throwable $e) {}
+        $table_subs = getAiExamSubjectsTable($pdo);
 
         try {
             $stmt = $pdo->prepare("SELECT id, name, chapters_folder_id FROM {$table_subs} WHERE id = ?");

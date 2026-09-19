@@ -6,6 +6,7 @@ $host = 'localhost';
 $dbname = 'dentqsoa_wp366';
 $user = 'dentqsoa_wp366';
 $pass = '';
+$db_table_prefix = 'wp_';
 
 // Check defined constants first
 if (defined('DB_NAME') && defined('DB_USER') && defined('DB_PASSWORD')) {
@@ -33,6 +34,9 @@ if (defined('DB_NAME') && defined('DB_USER') && defined('DB_PASSWORD')) {
             }
             if (preg_match("/define\s*\(\s*['\"]DB_HOST['\"]\s*,\s*['\"](.*?)['\"]\s*\)/", $content, $m)) {
                 $host = $m[1];
+            }
+            if (preg_match("/\\\$table_prefix\s*=\s*['\"](.*?)['\"]\s*;/", $content, $m)) {
+                $db_table_prefix = $m[1];
             }
             if (!empty($pass)) break;
         }
@@ -83,6 +87,38 @@ try {
 } catch(PDOException $e) {
     // Database unavailable, keep $pdo null for non-DB endpoints
     $pdo = null;
+}
+
+// Helper function to resolve dynamic table prefix safely across all environments
+if (!function_exists('get_dent2025_table')) {
+    function get_dent2025_table($pdo, $baseName) {
+        static $resolved = [];
+        if (isset($resolved[$baseName])) return $resolved[$baseName];
+        if (!$pdo) return $baseName;
+
+        global $db_table_prefix;
+        $prefix = !empty($db_table_prefix) ? $db_table_prefix : 'wp_';
+
+        $candidates = [
+            $prefix . $baseName,
+            'wp_' . $baseName,
+            'wpr9_' . $baseName,
+            $baseName
+        ];
+
+        foreach ($candidates as $cand) {
+            try {
+                $check = $pdo->query("SELECT 1 FROM `{$cand}` LIMIT 1");
+                if ($check !== false) {
+                    $resolved[$baseName] = $cand;
+                    return $cand;
+                }
+            } catch (Throwable $e) {}
+        }
+
+        $resolved[$baseName] = $prefix . $baseName;
+        return $resolved[$baseName];
+    }
 }
 
 // Helper function to respond with JSON

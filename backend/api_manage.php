@@ -7,26 +7,13 @@ if (file_exists(__DIR__ . '/../history_helpers.php')) {
 }
 
 // Dynamic table prefix resolution
-$table_subs = 'subjects';
-$table_links = 'subject_links';
-if (isset($pdo) && $pdo) {
-    try {
-        $check = $pdo->query("SELECT 1 FROM wpr9_subjects LIMIT 1");
-        if ($check !== false) {
-            $table_subs = 'wpr9_subjects';
-            $table_links = 'wpr9_subject_links';
-        }
-    } catch(Throwable $e) {}
-}
+$table_subs = get_dent2025_table($pdo, 'subjects');
+$table_links = get_dent2025_table($pdo, 'subject_links');
 
 function dent2025_pdo_clear_cache($pdo) {
     if (!$pdo) return;
     try {
-        $optTable = 'wp_options';
-        try {
-            $c = $pdo->query("SELECT 1 FROM wpr9_options LIMIT 1");
-            if ($c !== false) $optTable = 'wpr9_options';
-        } catch (Throwable $t) {}
+        $optTable = get_dent2025_table($pdo, 'options');
         $pdo->exec("DELETE FROM {$optTable} WHERE option_name LIKE '_transient_dent2025_data_%'");
         $pdo->exec("DELETE FROM {$optTable} WHERE option_name LIKE '_transient_timeout_dent2025_data_%'");
     } catch(Throwable $e) {}
