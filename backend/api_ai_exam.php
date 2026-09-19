@@ -216,13 +216,13 @@ function getGeminiKeyEntries() {
     $defaultEntries = [
         [
             'id' => 'gem_key_1',
-            'label' => 'مفتاح Gemini الأساسي #1',
+            'label' => 'مفتاح المعالجة الذكية الأساسي #1',
             'key' => 'AIzaSyDap8UYkbp71Z0C51UI5md8QwozKRmsHtw',
             'created_at' => date('Y-m-d H:i:s')
         ],
         [
             'id' => 'gem_key_2',
-            'label' => 'مفتاح Gemini الاحتياطي #2',
+            'label' => 'مفتاح المعالجة الذكية الاحتياطي #2',
             'key' => 'AIzaSyCAlmt06IIVQkMlnDmm7X4m-PK3ighhGvY',
             'created_at' => date('Y-m-d H:i:s')
         ]
@@ -934,7 +934,7 @@ function uploadPdfToGeminiFileApi($filePath, $apiKey, $displayName = 'Textbook D
     curl_close($ch);
 
     if ($httpCode !== 200 || empty($response)) {
-        return ['success' => false, 'message' => "Failed to initiate Gemini upload (HTTP $httpCode)."];
+        return ['success' => false, 'message' => "فشل بدء رفع الملف للمعالجة (HTTP $httpCode)."];
     }
 
     $uploadUrl = '';
@@ -948,7 +948,7 @@ function uploadPdfToGeminiFileApi($filePath, $apiKey, $displayName = 'Textbook D
     }
 
     if (empty($uploadUrl)) {
-        return ['success' => false, 'message' => "Could not extract Gemini upload URL."];
+        return ['success' => false, 'message' => "تعذر تجهيز رابط رفع الملف للمعالجة."];
     }
 
     // Step 2: Upload file in 8MB chunks
@@ -993,7 +993,7 @@ function uploadPdfToGeminiFileApi($filePath, $apiKey, $displayName = 'Textbook D
     fclose($handle);
 
     if (empty($finalJson) || empty($finalJson['file']['uri'])) {
-        return ['success' => false, 'message' => 'Upload to Gemini completed but received invalid file info.'];
+        return ['success' => false, 'message' => 'اكتمل رفع الملف لكن تعذر التحقق من بياناته.'];
     }
 
     $fileUri = $finalJson['file']['uri'];
@@ -1864,12 +1864,12 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
     recordGeminiUsage($usedKeyIndex, $usedApiKey, $httpCode, $response, $latencyMs, $numQuestions);
 
     if ($httpCode !== 200 || empty($response)) {
-        return ['success' => false, 'message' => "Gemini API Error: " . $lastErrorMsg];
+        return ['success' => false, 'message' => "حدث خطأ في خدمة المعالجة الذكية: " . $lastErrorMsg];
     }
 
     $jsonRes = json_decode($response, true);
     if (isset($jsonRes['error'])) {
-        return ['success' => false, 'message' => "Gemini Error: " . $jsonRes['error']['message']];
+        return ['success' => false, 'message' => "حدث خطأ في المعالجة الذكية: " . $jsonRes['error']['message']];
     }
 
     $rawContent = $jsonRes['candidates'][0]['content']['parts'][0]['text'] ?? '';
@@ -2196,7 +2196,7 @@ if ($action === 'gemini_status') {
     foreach ($entries as $index => $entry) {
         $apiKey = $entry['key'] ?? '';
         $keyId = $entry['id'] ?? ('gem_key_' . ($index + 1));
-        $label = $entry['label'] ?? ('مفتاح Gemini #' . ($index + 1));
+        $label = $entry['label'] ?? ('مفتاح المعالجة الذكية #' . ($index + 1));
         $maskedKey = !empty($apiKey) ? (substr($apiKey, 0, 8) . '...' . substr($apiKey, -4)) : 'N/A';
 
         $keyStats = $todayStats['by_key'][$index] ?? [
@@ -2287,7 +2287,7 @@ if ($action === 'test_keys') {
         $health[$index] = [
             'id' => $entry['id'] ?? ('gem_key_' . ($index + 1)),
             'index' => $index,
-            'label' => $entry['label'] ?? ('مفتاح Gemini #' . ($index + 1)),
+            'label' => $entry['label'] ?? ('مفتاح المعالجة الذكية #' . ($index + 1)),
             'key_masked' => substr($apiKey, 0, 8) . '...' . substr($apiKey, -4),
             'http_code' => $httpCode,
             'status' => $status,
@@ -2310,10 +2310,10 @@ if ($action === 'add_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $label = trim($data['label'] ?? '');
 
     if (empty($key)) {
-        sendResponse(false, "يرجى إدخال رمز مفتاح Gemini API.");
+        sendResponse(false, "يرجى إدخال رمز مفتاح المعالجة الذكية.");
     }
     if (strlen($key) < 15) {
-        sendResponse(false, "رمز مفتاح Gemini قصير جداً وغير صالح.");
+        sendResponse(false, "رمز مفتاح المعالجة الذكية قصير جداً وغير صالح.");
     }
 
     $entries = getGeminiKeyEntries();
@@ -2324,7 +2324,7 @@ if ($action === 'add_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($label)) {
-        $label = 'مفتاح Gemini #' . (count($entries) + 1);
+        $label = 'مفتاح المعالجة الذكية #' . (count($entries) + 1);
     }
 
     // Quick verification ping
@@ -2347,7 +2347,7 @@ if ($action === 'add_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $entries[] = $newEntry;
     if (!saveGeminiKeyEntries($entries)) {
-        sendResponse(false, "فشل حفظ المفتاح على الخادم. يرجى التحقق من أذونات مجلد gemini_keys_data.");
+        sendResponse(false, "فشل حفظ المفتاح على الخادم. يرجى التحقق من أذونات التخزين.");
     }
 
     // Update health cache
@@ -2404,7 +2404,7 @@ if ($action === 'edit_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($key !== null && $key !== '' && strpos($key, '...') === false) {
         if (strlen($key) < 15) {
-            sendResponse(false, "رمز مفتاح Gemini قصير جداً وغير صالح.");
+            sendResponse(false, "رمز مفتاح المعالجة الذكية قصير جداً وغير صالح.");
         }
         $entries[$targetIndex]['key'] = $key;
     }
@@ -2415,7 +2415,7 @@ if ($action === 'edit_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $entries[$targetIndex]['updated_at'] = date('Y-m-d H:i:s');
     if (!saveGeminiKeyEntries($entries)) {
-        sendResponse(false, "فشل حفظ التعديلات على الخادم. يرجى التحقق من أذونات مجلد gemini_keys_data.");
+        sendResponse(false, "فشل حفظ التعديلات على الخادم. يرجى التحقق من أذونات التخزين.");
     }
 
     // Re-test edited key
@@ -2437,7 +2437,7 @@ if ($action === 'edit_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $health[$targetIndex] = [
         'id' => $entries[$targetIndex]['id'] ?? ('gem_key_' . ($targetIndex + 1)),
         'index' => $targetIndex,
-        'label' => $entries[$targetIndex]['label'] ?? ('مفتاح Gemini #' . ($targetIndex + 1)),
+        'label' => $entries[$targetIndex]['label'] ?? ('مفتاح المعالجة الذكية #' . ($targetIndex + 1)),
         'key_masked' => substr($testedKey, 0, 8) . '...' . substr($testedKey, -4),
         'http_code' => $httpCode,
         'status' => ($httpCode === 200) ? 'active' : (($httpCode === 429) ? 'quota_exhausted' : 'invalid'),
@@ -2482,7 +2482,7 @@ if ($action === 'delete_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $deleted = array_splice($entries, $targetIndex, 1);
     if (!saveGeminiKeyEntries($entries)) {
-        sendResponse(false, "فشل حفظ التغييرات بعد الحذف على الخادم. يرجى التحقق من أذونات مجلد gemini_keys_data.");
+        sendResponse(false, "فشل حفظ التغييرات بعد الحذف على الخادم. يرجى التحقق من أذونات التخزين.");
     }
 
     // Rebuild health cache indices
@@ -2959,7 +2959,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                         $partialContent = true;
                     } elseif ($isScanned && !empty($localPdf) && file_exists($localPdf)) {
                         $tempLocalFilesToClean[] = $localPdf;
-                        $jobStatusData['message'] = "(1/3) مستند/كتاب شامل: جاري الرفع والمعالجة بـ Gemini File API (" . ($i + 1) . " من $totalItems): $chapName";
+                        $jobStatusData['message'] = "(1/3) مستند/كتاب شامل: جاري الرفع والمعالجة (" . ($i + 1) . " من $totalItems): $chapName";
                         file_put_contents($jobFile, json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 
                         $apiKeys = getGeminiRawApiKeys();
@@ -2974,7 +2974,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                             ];
                             $partialContent = true;
                         } else {
-                            $extractionErrors[] = $chapName . ': ' . ($upRes['message'] ?? 'فشل الرفع لـ Gemini File API');
+                            $extractionErrors[] = $chapName . ': ' . ($upRes['message'] ?? 'فشل رفع الملف للمعالجة');
                         }
                     } elseif ($t && $t !== 'IMAGE_SLIDES_EXTRACTED') {
                         $condensed = cleanAndCondenseExtractedText($t, $maxPerItemChars);
@@ -3013,7 +3013,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     if ($isScanned && !empty($localPdf) && file_exists($localPdf)) {
                         $tempLocalFilesToClean[] = $localPdf;
-                        $jobStatusData['message'] = "(1/3) ملف مرفوع: جاري الرفع والمعالجة بـ Gemini File API: $upName";
+                        $jobStatusData['message'] = "(1/3) ملف مرفوع: جاري الرفع والمعالجة: $upName";
                         file_put_contents($jobFile, json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 
                         $apiKeys = getGeminiRawApiKeys();
@@ -3028,7 +3028,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                             ];
                             $partialContent = true;
                         } else {
-                            $extractionErrors[] = $upName . ': ' . ($upRes['message'] ?? 'فشل الرفع لـ Gemini File API');
+                            $extractionErrors[] = $upName . ': ' . ($upRes['message'] ?? 'فشل رفع الملف للمعالجة');
                         }
                     } elseif ($t && $t !== 'IMAGE_SLIDES_EXTRACTED') {
                         $condensed = cleanAndCondenseExtractedText($t, $maxPerItemChars);
@@ -3055,15 +3055,15 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $combinedText = cleanAndCondenseExtractedText($combinedText, 800000);
 
-        // Step 2: Generate via Gemini Flash
+        // Step 2: Generate via the AI service
         $jobStatusData['step'] = 'generating';
         $jobStatusData['progress_pct'] = 70;
         if (!empty($geminiFileUris)) {
-            $jobStatusData['message'] = "(2/3) الذكاء الاصطناعي (Gemini Flash) يحلل صفحات الكتاب/المستند بالكامل ويصيغ الأسئلة...";
+            $jobStatusData['message'] = "(2/3) الذكاء الاصطناعي يحلل صفحات الكتاب/المستند بالكامل ويصيغ الأسئلة...";
         } elseif ($isPastExamFilter) {
-            $jobStatusData['message'] = "(2/3) الذكاء الاصطناعي (Gemini Flash) يصنف الأسئلة ويستخرج الخاصة بالشابترات المحددة فقط...";
+            $jobStatusData['message'] = "(2/3) الذكاء الاصطناعي يصنف الأسئلة ويستخرج الخاصة بالشابترات المحددة فقط...";
         } else {
-            $jobStatusData['message'] = "(2/3) الذكاء الاصطناعي (Gemini Flash) يصيغ الأسئلة بحسب الصعوبة ($difficulty)...";
+            $jobStatusData['message'] = "(2/3) الذكاء الاصطناعي يصيغ الأسئلة بحسب الصعوبة ($difficulty)...";
         }
         file_put_contents($jobFile, json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 

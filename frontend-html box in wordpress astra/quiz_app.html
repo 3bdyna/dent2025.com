@@ -1663,7 +1663,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         btn.style.display = 'none';
         loader.style.display = 'block';
         if (progressBar) progressBar.style.width = '15%';
-        status.innerHTML = "جاري رفع ومعالجة الملفات...<br><small style='color:#94a3b8; font-size:0.8rem;'>معالجة ذكية وسريعة بـ Gemini Flash</small>";
+        status.innerHTML = "جاري رفع ومعالجة الملفات...<br><small style='color:#94a3b8; font-size:0.8rem;'>معالجة ذكية وسريعة</small>";
 
         try {
             const startRes = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?action=start_job`, {

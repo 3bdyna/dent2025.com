@@ -272,7 +272,7 @@ window.AdminApp = {
             'announcements': 'الإعلانات',
             'quizzes': 'بنك الاختبارات الذكية',
             'cache': 'ذاكرة الكاش والتجهيز',
-            'gemini': 'مراقبة مفاتيح Gemini',
+            'gemini': 'مراقبة مفاتيح المعالجة الذكية',
             'passwords': 'الصلاحيات والمفاتيح',
             'history': 'سجل التغييرات والاستعادة'
         };
@@ -3433,13 +3433,13 @@ window.AdminApp = {
                     }
                 }
             } else {
-                this.showToast(res.message || 'فشل في تحميل حالة مفاتيح Gemini', true);
+                this.showToast(res.message || 'فشل في تحميل حالة مفاتيح المعالجة الذكية', true);
             }
         })
         .catch(e => {
             this.showLoading(false);
             console.error('Error loading Gemini status:', e);
-            this.showToast('خطأ بالاتصال أثناء جلب حالة Gemini (' + (e.message || '') + ')', true);
+            this.showToast('خطأ بالاتصال أثناء جلب حالة المعالجة الذكية (' + (e.message || '') + ')', true);
         });
     },
 
@@ -3454,7 +3454,7 @@ window.AdminApp = {
         .then(res => {
             this.showLoading(false);
             if (res.success && res.data) {
-                this.showToast('تم اختبار مفاتيح Gemini بنجاح');
+                this.showToast('تم اختبار مفاتيح المعالجة الذكية بنجاح');
                 this.loadGeminiStatus();
             } else {
                 this.showToast(res.message || 'فشل اختبار المفاتيح', true);
@@ -3469,7 +3469,7 @@ window.AdminApp = {
 
     openAddGeminiKeyModal() {
         const titleEl = document.getElementById('gemini-key-modal-title');
-        if (titleEl) titleEl.innerText = 'إضافة مفتاح Gemini جديد';
+        if (titleEl) titleEl.innerText = 'إضافة مفتاح معالجة ذكية جديد';
 
         document.getElementById('gemini-key-index').value = '-1';
         document.getElementById('gemini-key-id').value = '';
@@ -3490,7 +3490,7 @@ window.AdminApp = {
         const k = this.geminiKeysData[index];
 
         const titleEl = document.getElementById('gemini-key-modal-title');
-        if (titleEl) titleEl.innerText = 'تعديل: ' + (k.label || 'مفتاح Gemini');
+        if (titleEl) titleEl.innerText = 'تعديل: ' + (k.label || 'مفتاح المعالجة الذكية');
 
         document.getElementById('gemini-key-index').value = index;
         document.getElementById('gemini-key-id').value = k.id || '';
