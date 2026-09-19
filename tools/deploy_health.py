@@ -14,17 +14,31 @@ if hasattr(sys.stdout, 'reconfigure'):
         pass
 
 def _load_health_passkey():
-    """Read a passkey for authenticated probes from env or deploy_config.json (not hardcoded)."""
+    """Read a passkey for authenticated probes from env, dent2025_passwords.json, or deploy_config.json."""
     env = os.environ.get('DENT2025_HEALTH_PASS', '')
     if env:
         return env
     try:
+        pw_path = os.path.join(_toolkit.PROJECT_ROOT, 'dent2025_passwords.json')
+        if os.path.exists(pw_path):
+            with open(pw_path, 'r', encoding='utf-8') as f:
+                pws = json.load(f)
+            if isinstance(pws, list):
+                for p in pws:
+                    if p.get('id') == 'pass_master' or p.get('permissions', {}).get('manage_passwords'):
+                        return p.get('passkey', '')
+    except Exception:
+        pass
+    try:
         cfg_path = os.path.join(_toolkit.PROJECT_ROOT, 'deploy_config.json')
         with open(cfg_path, 'r', encoding='utf-8') as f:
             cfg = json.load(f)
-        return cfg.get('health_passkey', '')
+        token = cfg.get('health_passkey', '')
+        if token:
+            return token
     except Exception:
-        return ''
+        pass
+    return ''
 
 # List of core active endpoints to probe
 ENDPOINTS_TO_PROBE = [
