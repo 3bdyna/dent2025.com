@@ -1444,8 +1444,8 @@ const ScheduleApp = {
         let announcementHtml = '';
         if (announcementText) {
             announcementHtml = `
-                <div style="margin-top: 10px; border: 1px solid #cbd5e1; border-right: 3px solid #334155; border-radius: 6px; padding: 7px 12px; background: #f8fafc; page-break-inside: avoid;">
-                    <div class="print-ann-body" style="font-size: 0.70rem; color: #1e293b; line-height: 1.45;">${announcementText}</div>
+                <div style="margin-top: 12px; border: 1px solid #cbd5e1; border-right: 3px solid #334155; border-radius: 8px; padding: 9px 14px; background: #f8fafc; page-break-inside: avoid;">
+                    <div class="print-ann-body" style="font-size: 0.72rem; color: #1e293b; line-height: 1.5;">${announcementText}</div>
                 </div>
             `;
         }
@@ -1454,9 +1454,9 @@ const ScheduleApp = {
         let notesHtml = '';
         if (customNotes) {
             notesHtml = `
-                <div style="margin-top: 10px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 7px 12px; background: #fafafa; page-break-inside: avoid;">
-                    <strong style="font-size: 0.70rem; color: #334155; display: block; margin-bottom: 3px;">ملاحظات وتذكيرات شخصية:</strong>
-                    <div style="font-size: 0.70rem; color: #1e293b; line-height: 1.45; white-space: pre-wrap;">${dentEscapeHtml(customNotes)}</div>
+                <div style="margin-top: 12px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 9px 14px; background: #fafafa; page-break-inside: avoid;">
+                    <strong style="font-size: 0.72rem; color: #334155; display: block; margin-bottom: 4px;">ملاحظات وتذكيرات شخصية:</strong>
+                    <div style="font-size: 0.72rem; color: #1e293b; line-height: 1.5; white-space: pre-wrap;">${dentEscapeHtml(customNotes)}</div>
                 </div>
             `;
         }
@@ -1484,9 +1484,9 @@ const ScheduleApp = {
 
         @media screen {
             body {
-                background: ${isMobile ? '#0b0f17' : '#ffffff'};
-                padding: ${isMobile ? '12px 12px 40px 12px' : '10mm 12mm'};
-                max-width: 840px;
+                background: ${isMobile ? '#0b0f17' : '#f8fafc'};
+                padding: ${isMobile ? '14px 12px 40px 12px' : '28px 16px'};
+                max-width: 860px;
                 margin: 0 auto;
             }
             .dent-mobile-toolbar {
@@ -1536,19 +1536,23 @@ const ScheduleApp = {
             }
             .a4-print-sheet {
                 background: #ffffff;
-                ${isMobile ? 'padding: 18px 14px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);' : ''}
+                padding: ${isMobile ? '20px 16px' : '16mm 18mm'};
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+                border: 1px solid #e2e8f0;
             }
         }
 
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 8mm 10mm;
+                margin: 15mm 16mm 14mm 16mm;
             }
-            body {
+            html, body {
                 background: #ffffff !important;
-                padding: 0 !important;
+                padding: ${isMobile ? '12mm 14mm' : '0'} !important;
                 margin: 0 !important;
+                width: 100% !important;
             }
             .no-print, .dent-mobile-toolbar {
                 display: none !important;
@@ -1558,6 +1562,8 @@ const ScheduleApp = {
                 box-shadow: none !important;
                 border: none !important;
                 border-radius: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
             }
         }
 
@@ -1565,21 +1571,21 @@ const ScheduleApp = {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding-bottom: 8px;
+            padding-bottom: 10px;
             border-bottom: 2px solid #0f172a;
-            margin-bottom: 10px;
+            margin-bottom: 14px;
         }
         .doc-titles h1 {
-            font-size: 1.15rem;
+            font-size: 1.20rem;
             font-weight: 800;
             color: #0f172a;
-            line-height: 1.2;
+            line-height: 1.25;
         }
         .doc-titles p {
-            font-size: 0.74rem;
+            font-size: 0.76rem;
             color: #64748b;
-            font-weight: 500;
-            margin-top: 2px;
+            font-weight: 600;
+            margin-top: 3px;
         }
         .doc-meta-badge {
             text-align: left;
@@ -1589,25 +1595,25 @@ const ScheduleApp = {
             display: inline-block;
             background: #f1f5f9;
             border: 1px solid #cbd5e1;
-            padding: 3px 9px;
+            padding: 4px 10px;
             border-radius: 6px;
-            font-size: 0.72rem;
+            font-size: 0.74rem;
             font-weight: 700;
             color: #1e293b;
             font-family: 'Outfit', sans-serif;
         }
         .doc-meta-badge .subperiod {
             display: block;
-            font-size: 0.68rem;
+            font-size: 0.70rem;
             color: #64748b;
             margin-top: 3px;
             text-align: right;
             direction: rtl;
         }
         .m1-week-block {
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             border: 1px solid #cbd5e1;
-            border-radius: 6px;
+            border-radius: 8px;
             overflow: hidden;
             page-break-inside: avoid;
             break-inside: avoid;
@@ -1615,8 +1621,8 @@ const ScheduleApp = {
         .m1-week-header {
             background: #1e293b;
             color: #f8fafc;
-            padding: 4px 10px;
-            font-size: 0.74rem;
+            padding: 5px 12px;
+            font-size: 0.76rem;
             font-weight: 700;
             display: flex;
             justify-content: space-between;
@@ -1625,7 +1631,7 @@ const ScheduleApp = {
         .m1-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.70rem;
+            font-size: 0.72rem;
         }
         .m1-table tr {
             page-break-inside: avoid;
@@ -1636,13 +1642,13 @@ const ScheduleApp = {
             color: #475569;
             font-weight: 700;
             text-align: right;
-            padding: 4px 8px;
+            padding: 5px 10px;
             border-bottom: 1px solid #cbd5e1;
-            font-size: 0.66rem;
+            font-size: 0.68rem;
             white-space: nowrap;
         }
         .m1-table td {
-            padding: 4px 8px;
+            padding: 5px 10px;
             border-bottom: 1px solid #e2e8f0;
             vertical-align: middle;
             color: #1e293b;
@@ -1667,7 +1673,7 @@ const ScheduleApp = {
             font-size: 0.70rem;
         }
         .m1-date-col {
-            width: 115px;
+            width: 120px;
             vertical-align: middle;
             line-height: 1.3;
         }
@@ -1691,20 +1697,20 @@ const ScheduleApp = {
             unicode-bidi: isolate;
         }
         .m1-title-col { font-weight: 600; line-height: 1.3; }
-        .m1-status-col { width: 70px; text-align: center; }
+        .m1-status-col { width: 75px; text-align: center; }
         .m1-countdown-urgent { color: #991b1b; font-weight: 700; }
         .m1-countdown-soon { color: #c2410c; font-weight: 700; }
         .m1-countdown-normal { color: #475569; font-weight: 600; }
         .print-ann-body p { margin: 0 0 3px 0; }
         .print-ann-body p:last-child { margin-bottom: 0; }
         .doc-footer {
-            margin-top: 8px;
-            padding-top: 6px;
+            margin-top: 12px;
+            padding-top: 8px;
             border-top: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.66rem;
+            font-size: 0.68rem;
             color: #64748b;
             page-break-inside: avoid;
             break-inside: avoid;
