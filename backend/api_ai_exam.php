@@ -88,7 +88,7 @@ function ai_exam_check_daily_rate_limit($maxExamsPerDay = 3) {
         }
     }
 
-    $dataDir = __DIR__ . '/../dent2025_analytics_data';
+    $dataDir = __DIR__ . '/../quizzes_data';
     if (!is_dir($dataDir)) @mkdir($dataDir, 0777, true);
     $limitFile = $dataDir . '/exam_generation_limits.json';
 

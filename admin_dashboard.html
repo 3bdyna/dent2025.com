@@ -66,33 +66,6 @@
  /* Mobile horizontal pill scroll without scrollbar */
  #mobile-pill-bar::-webkit-scrollbar { display: none; }
  #mobile-pill-bar { -ms-overflow-style: none; scrollbar-width: none; }
-
- /* Analytics Tab Styles */
- .ana-range-btn { font-size: 0.78rem; padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: #a1a1aa; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
- .ana-range-btn:hover { background: rgba(255,255,255,0.1); color: #e2e8f0; }
- .ana-range-btn.on { background: rgba(96,165,250,0.15); border-color: #60a5fa; color: #f8fafc; }
- .ana-stat { background: #18181b; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px; }
- .ana-stat .lbl { font-size: 0.74rem; color: #a1a1aa; margin-bottom: 6px; }
- .ana-stat .num { font-size: 1.5rem; font-weight: 700; color: #f8fafc; }
- .ana-stat .note { font-size: 0.7rem; color: #71717a; margin-top: 8px; }
- .ana-cell { background: #18181b; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; text-align: center; }
- .ana-cell .t { font-size: 0.7rem; color: #a1a1aa; margin-bottom: 4px; }
- .ana-cell .n { font-size: 1.25rem; font-weight: 700; color: #f8fafc; }
- .ana-cell .c { font-size: 0.66rem; color: #71717a; margin-top: 3px; direction: ltr; }
- .ana-fstep { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
- .ana-fstep .fnum { width: 24px; height: 24px; border-radius: 8px; background: rgba(96,165,250,0.15); color: #60a5fa; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
- .ana-fstep .finfo { flex: 1; min-width: 0; }
- .ana-fstep .fname { font-size: 0.82rem; color: #f8fafc; word-break: break-word; }
- .ana-fstep .fmeta { font-size: 0.7rem; color: #71717a; margin-top: 2px; }
- .ana-fstep .b-trk { flex: 0 0 30%; background: rgba(255,255,255,0.05); border-radius: 6px; height: 10px; overflow: hidden; }
- .ana-fstep .b-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, rgba(96,165,250,0.6), rgba(96,165,250,0.3)); min-width: 2px; display: block; }
- .ana-fstep .b-val { min-width: 40px; text-align: left; color: #e2e8f0; font-size: 0.78rem; font-variant-numeric: tabular-nums; direction: ltr; }
- .ana-ret-chip { background: #18181b; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; text-align: center; margin-bottom: 10px; }
- .ana-ret-chip .lbl { font-size: 0.7rem; color: #a1a1aa; margin-bottom: 4px; }
- .ana-ret-chip .num { font-size: 1.3rem; font-weight: 700; color: #4ade80; }
- .ana-no-data { text-align: center; color: #71717a; padding: 28px 0; font-size: 0.82rem; }
- .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.15); border-top-color: #60a5fa; border-radius: 50%; animation: ana-spin 0.8s linear infinite; display: inline-block; }
- @keyframes ana-spin { to { transform: rotate(360deg); } }
  </style>
 </head>
 <body class="min-h-screen md:h-screen flex flex-col md:flex-row md:overflow-hidden bg-dark text-slate-100 font-sans">
@@ -209,11 +182,9 @@
  <button onclick="AdminApp.switchTab('announcements')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="announcements">الإعلانات</button>
  <button onclick="AdminApp.switchTab('quizzes')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="quizzes">بنك الاختبارات</button>
  <button onclick="AdminApp.switchTab('cache')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="cache">الكاش</button>
- <button onclick="AdminApp.switchTab('analytics')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="analytics">التحليلات</button>
  <button onclick="AdminApp.switchTab('gemini')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="gemini">Gemini</button>
  <button onclick="AdminApp.switchTab('passwords')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="passwords">الصلاحيات</button>
  <button onclick="AdminApp.switchTab('history')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="history">سجل التغييرات</button>
- <button onclick="AdminApp.switchTab('safedeploy')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="safedeploy">SafeDeploy</button>
  </div>
 
  <!-- Mobile Drawer Overlay -->
@@ -255,9 +226,6 @@
  <button onclick="AdminApp.switchTab('cache')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="cache">
  ذاكرة الكاش والتجهيز
  </button>
- <button onclick="AdminApp.switchTab('analytics')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="analytics">
- لوحة التحليلات
- </button>
  <button onclick="AdminApp.switchTab('gemini')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="gemini">
  مراقبة مفاتيح Gemini
  </button>
@@ -266,9 +234,6 @@
  </button>
  <button onclick="AdminApp.switchTab('history')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="history">
  سجل التغييرات والاستعادة
- </button>
- <button onclick="AdminApp.switchTab('safedeploy')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="safedeploy">
- الأمان واللقطات SafeDeploy
  </button>
  </nav>
  </div>
@@ -304,9 +269,6 @@
  <button onclick="AdminApp.switchTab('cache')" class="tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="cache" title="إدارة الذاكرة السريعة والتجهيز المسبق">
  ذاكرة الكاش والتجهيز
  </button>
- <button onclick="AdminApp.switchTab('analytics')" class="tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="analytics" title="لوحة تحليلات استخدام الموقع">
- لوحة التحليلات
- </button>
  <button onclick="AdminApp.switchTab('gemini')" class="tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="gemini">
  مراقبة مفاتيح Gemini
  </button>
@@ -315,9 +277,6 @@
  </button>
  <button onclick="AdminApp.switchTab('history')" class="tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="history">
  سجل التغييرات والاستعادة
- </button>
- <button onclick="AdminApp.switchTab('safedeploy')" class="tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="safedeploy">
- الأمان واللقطات SafeDeploy
  </button>
  </nav>
  </div>
@@ -358,94 +317,6 @@
  </div>
  </template>
 
- <template id="tpl-analytics">
- <div class="space-y-3 sm:space-y-4">
- <!-- Header -->
- <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
- <div>
- <h2 class="text-2xl sm:text-3xl font-bold">لوحة التحليلات</h2>
- <p class="text-gray-400 text-xs sm:text-sm mt-1">إحصائيات استخدام الموقع (بيانات مجهولة الهوية)</p>
- </div>
- <div class="flex items-center gap-2 self-end sm:self-auto" id="ana-toolbar">
- <span class="spinner hidden" id="ana-spin"></span>
- <button class="btn btn-secondary text-xs sm:text-sm" onclick="AdminAnalytics.render()">تحديث</button>
- </div>
- </div>
-
- <!-- Filters -->
- <div class="glass p-3.5 sm:p-4 rounded-2xl flex flex-wrap items-center gap-2.5 sm:gap-3">
- <div class="flex items-center gap-1 overflow-x-auto" id="ana-range-btns">
- <button class="ana-range-btn" data-days="7" onclick="AdminAnalytics.setRange(7)">7 أيام</button>
- <button class="ana-range-btn" data-days="30" onclick="AdminAnalytics.setRange(30)">30 يوم</button>
- <button class="ana-range-btn" data-days="90" onclick="AdminAnalytics.setRange(90)">90 يوم</button>
- </div>
- <span class="text-gray-500 text-sm hidden sm:inline">|</span>
- <div class="flex items-center gap-1.5 w-full sm:w-auto">
- <span class="text-gray-400 text-xs shrink-0">من</span>
- <input type="date" id="ana-from" class="input-field text-xs flex-1 sm:w-auto" onchange="AdminAnalytics.customRange()">
- <span class="text-gray-400 text-xs shrink-0">إلى</span>
- <input type="date" id="ana-to" class="input-field text-xs flex-1 sm:w-auto" onchange="AdminAnalytics.customRange()">
- </div>
- <div class="flex items-center gap-1.5 w-full sm:w-auto">
- <span class="text-gray-400 text-xs shrink-0">الفترة</span>
- <select id="ana-period" class="input-field text-xs w-full sm:w-auto" onchange="AdminAnalytics.periodChanged()">
- <option value="day">يومي</option>
- <option value="week">أسبوعي</option>
- <option value="month">شهري</option>
- <option value="hour">ساعي</option>
- </select>
- </div>
- </div>
-
- <!-- Overview Stats -->
- <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4" id="ana-stats"></div>
-
- <!-- Heatmap + Funnel -->
- <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
- <div class="glass p-4 sm:p-5 rounded-2xl border border-white/10">
- <h3 class="font-semibold mb-3 text-sm sm:text-base text-gray-200"><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>خريطة التخصص × السنة × الفصل</h3>
- <div id="ana-ctx"></div>
- </div>
- <div class="glass p-4 sm:p-5 rounded-2xl border border-white/10">
- <h3 class="font-semibold mb-3 text-sm sm:text-base text-gray-200"><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>المسار التفاعلي (Funnel)</h3>
- <div id="ana-funnel"></div>
- </div>
- </div>
-
- <!-- Trend -->
- <div class="glass p-4 sm:p-5 rounded-2xl border border-white/10">
- <h3 class="font-semibold mb-3 text-sm sm:text-base text-gray-200"><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>اتجاه الأحداث</h3>
- <div id="ana-trend" style="overflow-x:auto;"></div>
- </div>
-
- <!-- Subjects + Retention -->
- <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
- <div class="glass p-4 sm:p-5 rounded-2xl border border-white/10 lg:col-span-2">
- <h3 class="font-semibold mb-3 text-sm sm:text-base text-gray-200"><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>تفاعل المواد</h3>
- <div class="overflow-x-auto -mx-2 sm:mx-0">
- <table class="w-full text-right text-xs sm:text-sm min-w-[480px]">
- <thead class="text-gray-400 text-xs">
- <tr>
- <th class="py-2 px-2">المادة</th>
- <th class="py-2 px-2 text-center">فتح المادة</th>
- <th class="py-2 px-2 text-center">فتح المصادر</th>
- <th class="py-2 px-2 text-center">اختبارات</th>
- <th class="py-2 px-2 text-center">ساعات</th>
- <th class="py-2 px-2 text-center">الهجر</th>
- </tr>
- </thead>
- <tbody id="ana-subjects"></tbody>
- </table>
- </div>
- <p class="text-xs text-gray-500 mt-2">معدل الهجر = نسبة فتح المادة دون فتح أي مصدر خلال نفس المدة.</p>
- </div>
- <div class="glass p-4 sm:p-5 rounded-2xl border border-white/10">
- <h3 class="font-semibold mb-3 text-sm sm:text-base text-gray-200"><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>الاحتفاظ (Retention)</h3>
- <div id="ana-retention"></div>
- </div>
- </div>
- </div>
- </template>
 
  <template id="tpl-passwords">
  <div class="space-y-3 sm:space-y-4">
@@ -857,82 +728,6 @@
  </div>
  </template>
 
- <template id="tpl-safedeploy">
- <div class="space-y-3 sm:space-y-4">
- <div class="flex justify-between items-center gap-2 shrink-0">
- <div>
- <h2 class="text-base sm:text-2xl font-bold text-white flex items-center gap-2">
- نظام SafeDeploy واللقطات
- </h2>
- <p class="text-gray-400 text-xs hidden sm:block mt-0.5">مراقبة صحة النظام والتحديثات واللقطات الاحتياطية</p>
- </div>
- <button onclick="AdminApp.loadSafeDeployTab()" class="btn btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0">
- تحديث
- </button>
- </div>
-
- <!-- Urgent Alert Banner if error detected -->
- <div id="sd-urgent-alert" class="hidden p-3 sm:p-4 rounded-xl bg-red-950/80 border border-red-500/80 text-red-100 shadow-xl animate-pulse shrink-0">
- <div class="flex flex-col sm:flex-row items-start justify-between gap-2.5">
- <div>
- <h3 class="text-sm sm:text-base font-bold text-white mb-0.5">تنبيه: تم اكتشاف مشكلة بالنظام!</h3>
- <p id="sd-alert-summary" class="text-red-200 text-xs mb-2">التحديث الأخير يحتوي على خطأ أو تعذر الوصول لبعض APIs.</p>
- <pre id="sd-alert-trace" class="p-2 bg-black/60 rounded-lg text-[11px] font-mono text-red-300 max-h-24 overflow-y-auto border border-red-900/60"></pre>
- </div>
- <button id="sd-alert-rollback-btn" class="btn btn-danger text-xs font-bold whitespace-nowrap w-full sm:w-auto py-1.5 px-3">
- استعادة فورية (Rollback)
- </button>
- </div>
- </div>
-
- <!-- Health Status Cards -->
- <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 shrink-0">
- <div class="glass p-2 sm:p-3 rounded-xl border border-white/10">
- <span class="text-[10px] sm:text-[11px] text-gray-400 block mb-0.5">WP Integrated API</span>
- <span id="sd-health-wp" class="text-xs sm:text-sm font-bold text-emerald-400 font-mono">جاري الفحص...</span>
- </div>
- <div class="glass p-2 sm:p-3 rounded-xl border border-white/10">
- <span class="text-[10px] sm:text-[11px] text-gray-400 block mb-0.5">Announcements API</span>
- <span id="sd-health-ann" class="text-xs sm:text-sm font-bold text-emerald-400 font-mono">جاري الفحص...</span>
- </div>
- <div class="glass p-2 sm:p-3 rounded-xl border border-white/10">
- <span class="text-[10px] sm:text-[11px] text-gray-400 block mb-0.5">Schedule API</span>
- <span id="sd-health-sch" class="text-xs sm:text-sm font-bold text-emerald-400 font-mono">جاري الفحص...</span>
- </div>
- <div class="glass p-2 sm:p-3 rounded-xl border border-white/10">
- <span class="text-[10px] sm:text-[11px] text-gray-400 block mb-0.5">Drive Snapshot</span>
- <span class="text-xs sm:text-sm font-bold text-sky-400 font-mono">مفعل تلقائياً</span>
- </div>
- </div>
-
- <!-- Deployments History Table -->
- <div class="glass rounded-xl p-3 sm:p-4">
- <h3 class="font-semibold mb-2.5 text-gray-300 border-b border-white/10 pb-1.5 flex items-center justify-between text-xs sm:text-sm">
- <span>سجل التحديثات واللقطات</span>
- <span id="sd-total-count" class="text-xs font-mono text-gray-400">0 تحديثات</span>
- </h3>
- <div class="overflow-x-auto -mx-1 sm:mx-0">
- <table class="w-full text-right text-xs text-gray-300 min-w-[500px]">
- <thead class="bg-black/40 text-gray-400 text-xs">
- <tr>
- <th class="py-2 px-2.5 rounded-r-lg">التاريخ</th>
- <th class="py-2 px-2.5">ملاحظة التحديث</th>
- <th class="py-2 px-2.5">الملفات</th>
- <th class="py-2 px-2.5">الحالة</th>
- <th class="py-2 px-2.5">الأرشيف</th>
- <th class="py-2 px-2.5 rounded-l-lg text-center">الإجراء</th>
- </tr>
- </thead>
- <tbody id="sd-deployments-list" class="divide-y divide-white/5">
- <tr>
- <td colspan="6" class="text-center py-6 text-gray-500">جاري تحميل سجلات التحديثات...</td>
- </tr>
- </tbody>
- </table>
- </div>
- </div>
- </div>
- </template>
 
  <!-- Gemini AI Monitoring Template -->
  <template id="tpl-gemini">
@@ -1709,6 +1504,5 @@
  </style>
 
  <script src="admin_app.js?v=20260830_01"></script>
- <script src="admin_analytics.js?v=4"></script>
 </body>
 </html>

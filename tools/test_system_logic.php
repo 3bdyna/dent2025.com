@@ -244,46 +244,9 @@ assert_test("Event ended 4 days ago (>3 days) is hidden", is_event_hidden_for_us
 assert_test("Event ended 10 days ago is hidden", is_event_hidden_for_user('2026-08-23', $test_today));
 
 // -----------------------------------------------------------------------------
-// SUITE 5: Analytics Validation & Classification Logic
+// SUITE 5: Announcement HTML Sanitization
 // -----------------------------------------------------------------------------
-echo "\n5. Testing Analytics Validation & Identity Classification...\n";
-
-$EVENT_TYPES = ['page_view', 'context_select', 'subject_open', 'materials_open', 'quiz_start', 'quiz_finish', 'timer_start', 'timer_finish'];
-$SPECIALTIES = ['dentistry' => true, 'medicine' => true, 'pre-med' => true];
-
-function validate_analytics_event($ev) {
-    global $EVENT_TYPES, $SPECIALTIES;
-    if (!is_array($ev)) return null;
-    $type = $ev['type'] ?? '';
-    if (!in_array($type, $EVENT_TYPES, true)) return null;
-    
-    $ctx = $ev['ctx'] ?? null;
-    $valid_ctx = null;
-    if (is_array($ctx)) {
-        $spec = strtolower($ctx['specialty'] ?? '');
-        $year = isset($ctx['year']) ? intval($ctx['year']) : -1;
-        $sem = isset($ctx['semester']) ? intval($ctx['semester']) : -1;
-        if (isset($SPECIALTIES[$spec]) && $year >= 0 && $year <= 6 && $sem >= 1 && $sem <= 2) {
-            $valid_ctx = ['specialty' => $spec, 'year' => $year, 'semester' => $sem];
-        }
-    }
-    return [
-        'type' => $type,
-        'ctx' => $valid_ctx,
-        'ts' => isset($ev['ts']) ? intval($ev['ts']) : time()
-    ];
-}
-
-$valid_ev = validate_analytics_event(['type' => 'page_view', 'ctx' => ['specialty' => 'dentistry', 'year' => 2, 'semester' => 1]]);
-assert_test("Valid analytics event accepted with parsed context", $valid_ev !== null && $valid_ev['ctx']['specialty'] === 'dentistry');
-
-$invalid_type_ev = validate_analytics_event(['type' => 'malicious_event']);
-assert_test("Invalid analytics event type rejected", $invalid_type_ev === null);
-
-// -----------------------------------------------------------------------------
-// SUITE 6: Announcement HTML Sanitization
-// -----------------------------------------------------------------------------
-echo "\n6. Testing Announcement HTML Sanitizer (XSS Prevention)...\n";
+echo "\n5. Testing Announcement HTML Sanitizer (XSS Prevention)...\n";
 require_once __DIR__ . '/../announcements_api.php';
 
 $xss_payload = '<p>Important notice <script>alert("xss")</script><b onclick="bad()">Click here</b><a href="javascript:steal()">link</a></p>';
@@ -295,9 +258,9 @@ assert_test("Sanitizer neutralizes javascript: URLs", strpos($clean_output, 'jav
 assert_test("Sanitizer preserves safe formatting (<p>, <b>, <a>)", strpos($clean_output, '<p>') !== false && strpos($clean_output, '<b>') !== false);
 
 // -----------------------------------------------------------------------------
-// SUITE 7: Study Log Deduplication on PIN Migration
+// SUITE 6: Study Log Deduplication on PIN Migration
 // -----------------------------------------------------------------------------
-echo "\n7. Testing Study Log Migration Logic...\n";
+echo "\n6. Testing Study Log Migration Logic...\n";
 $target_existing_logs = [
     ['id' => 'uuid_1', 'subject' => 'Anatomy', 'durationSeconds' => 1800, 'dateStr' => '2026-08-20'],
     ['subject' => 'Pathology', 'durationSeconds' => 2400, 'dateStr' => '2026-08-21'] // legacy log without id
@@ -323,9 +286,9 @@ assert_test("Merged logs count is exactly 3 (duplicates removed)", count($result
 assert_test("Preserves both UUID and legacy log without UUID", count(array_filter($result_logs, function($l) { return $l['subject'] === 'Pathology'; })) === 1);
 
 // -----------------------------------------------------------------------------
-// SUITE 8: Schedule Event Editing Logic
+// SUITE 7: Schedule Event Editing Logic
 // -----------------------------------------------------------------------------
-echo "\n8. Testing Schedule Event Editing Logic...\n";
+echo "\n7. Testing Schedule Event Editing Logic...\n";
 
 // 8.1 Semester Event Edit
 $mock_semester_events = [

@@ -214,7 +214,7 @@ window.AdminApp = {
 
     applyPermissionsUI() {
         const canManageMaster = !!(this.permissions && this.permissions.manage_passwords);
-        const masterOnlyTabs = ['passwords', 'analytics', 'gemini', 'cache', 'history', 'safedeploy'];
+        const masterOnlyTabs = ['passwords', 'gemini', 'cache', 'history'];
         masterOnlyTabs.forEach(tabName => {
             document.querySelectorAll(`[data-tab="${tabName}"]`).forEach(el => {
                 if (canManageMaster) {
@@ -232,7 +232,7 @@ window.AdminApp = {
     },
 
     switchTab(tabId) {
-        const masterOnlyTabs = ['passwords', 'analytics', 'gemini', 'cache', 'history', 'safedeploy'];
+        const masterOnlyTabs = ['passwords', 'gemini', 'cache', 'history'];
         if (masterOnlyTabs.includes(tabId)) {
             const canManageMaster = !!(this.permissions && this.permissions.manage_passwords);
             if (!canManageMaster) {
@@ -250,11 +250,9 @@ window.AdminApp = {
             'announcements': 'الإعلانات',
             'quizzes': 'بنك الاختبارات الذكية',
             'cache': 'ذاكرة الكاش والتجهيز',
-            'analytics': 'لوحة التحليلات',
             'gemini': 'مراقبة مفاتيح Gemini',
             'passwords': 'الصلاحيات والمفاتيح',
-            'history': 'سجل التغييرات والاستعادة',
-            'safedeploy': 'الأمان واللقطات SafeDeploy'
+            'history': 'سجل التغييرات والاستعادة'
         };
 
         const badge = document.getElementById('mobile-active-tab-badge');
@@ -338,24 +336,12 @@ window.AdminApp = {
                 this.loadQuizzes();
             } else if (tabId === 'cache') {
                 this.loadCacheStats();
-            } else if (tabId === 'safedeploy') {
-                this.loadSafeDeployTab();
-            } else if (tabId === 'analytics') {
-                this.loadAnalytics();
             }
         } else {
             contentDiv.innerHTML = `<div class="p-8 text-center text-gray-400 glass rounded-2xl">
                 <h2 class="text-2xl mb-2">قريباً</h2>
                 <p>هذا القسم قيد التطوير...</p>
             </div>`;
-        }
-    },
-
-    loadAnalytics() {
-        if (window.AdminAnalytics && typeof window.AdminAnalytics.render === 'function') {
-            window.AdminAnalytics.render();
-        } else {
-            this.showToast('وحدة التحليلات غير محملة', true);
         }
     },
 
@@ -3346,121 +3332,6 @@ window.AdminApp = {
             console.error('Error deleting quiz:', e);
             this.showToast('خطأ في حذف الاختبار: ' + e.message, true);
         });
-    },
-
-    loadSafeDeployTab() {
-        const url = (API_BASE ? API_BASE : '.') + '/history_api.php?action=get_deployments';
-        fetch(url, { headers: { 'X-Admin-Pass': this.pass || '' } })
-            .then(r => r.json())
-            .then(res => {
-                const tbody = document.getElementById('sd-deployments-list');
-                const totalEl = document.getElementById('sd-total-count');
-                const alertBox = document.getElementById('sd-urgent-alert');
-
-                if (!tbody) return;
-                const records = res.success ? (res.data || []) : [];
-                if (totalEl) totalEl.textContent = `${records.length} تحديثات مسجلة`;
-
-                if (records.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-500">لا يوجد تحديثات مسجلة بعد.</td></tr>`;
-                    if (alertBox) alertBox.classList.add('hidden');
-                    return;
-                }
-
-                let hasAlert = false;
-                let alertDiag = '';
-                let latestSnapId = '';
-
-                const html = records.map((rec, idx) => {
-                    const isAlert = rec.status === 'ALERT_REQUIRES_ATTENTION';
-                    if (isAlert && idx === 0) {
-                        hasAlert = true;
-                        latestSnapId = rec.snapshot_id;
-                        alertDiag = JSON.stringify(rec.probe_diagnostics || [], null, 2);
-                    }
-
-                    const dateStr = rec.created_at ? new Date(rec.created_at).toLocaleString('ar-SA') : '—';
-                    const filesStr = (rec.files_changed || []).map(f => `<span class="inline-block bg-white/5 text-sky-300 px-2 py-0.5 rounded text-xs border border-sky-500/20 m-0.5 font-mono">${f}</span>`).join(' ');
-                    
-                    let statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">سليم (SUCCESS)</span>`;
-                    if (isAlert) {
-                        statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40">تنبيه خطأ (ALERT)</span>`;
-                    }
-
-                    const targetDriveUrl = rec.gdrive_url || 'https://drive.google.com/drive/folders/1KGKB6-FF9VNkqVr9FoJv1BfcKYX0baSp';
-                    const driveBtn = `<a href="${targetDriveUrl}" target="_blank" class="text-sky-400 hover:text-sky-300 underline font-medium text-xs">عرض بـ Drive</a>`;
-                    const zipBtn = rec.zip_download_url 
-                        ? `<a href="${rec.zip_download_url}" target="_blank" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/30 hover:bg-sky-500/20 transition-all flex items-center gap-1 inline-flex">تحميل ملفات الموقع (.ZIP)</a>`
-                        : driveBtn;
-
-                    return `
-                        <tr class="hover:bg-white/5 transition-colors">
-                            <td class="py-4 px-4 font-mono text-xs text-gray-400">${dateStr}<br><span class="text-gray-600">${rec.snapshot_id || ''}</span></td>
-                            <td class="py-4 px-4 font-medium text-gray-200">${rec.ai_note || 'بدون ملاحظة'}</td>
-                            <td class="py-4 px-4 max-w-xs overflow-x-auto">${filesStr}</td>
-                            <td class="py-4 px-4">${statusBadge}</td>
-                            <td class="py-4 px-4">${zipBtn}</td>
-                            <td class="py-4 px-4 text-center">
-                                <button onclick="AdminApp.promptRollback('${rec.snapshot_id}')" class="btn btn-danger text-xs py-1 px-3">
-                                    استعادة (Rollback)
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-
-                tbody.innerHTML = html;
-
-                if (hasAlert && alertBox) {
-                    alertBox.classList.remove('hidden');
-                    const traceEl = document.getElementById('sd-alert-trace');
-                    if (traceEl) traceEl.textContent = alertDiag;
-                    const btn = document.getElementById('sd-alert-rollback-btn');
-                    if (btn) btn.onclick = () => AdminApp.promptRollback(latestSnapId);
-                } else if (alertBox) {
-                    alertBox.classList.add('hidden');
-                }
-            })
-            .catch(() => {
-                const tbody = document.getElementById('sd-deployments-list');
-                if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-rose-400">خطأ في جلب بيانات SafeDeploy</td></tr>`;
-            });
-
-        this.checkSafeDeployHealth();
-    },
-
-    checkSafeDeployHealth() {
-        const apis = [
-            { id: 'sd-health-wp', url: (API_BASE ? API_BASE : '.') + '/dent2025_api.php?action=data&specialty=dentistry&year=1&semester=1' },
-            { id: 'sd-health-ann', url: (API_BASE ? API_BASE : '.') + '/announcements_api.php?action=get&specialty=dentistry&year=1&semester=1' },
-            { id: 'sd-health-sch', url: (API_BASE ? API_BASE : '.') + '/schedule_backend.php' }
-        ];
-
-        apis.forEach(api => {
-            const el = document.getElementById(api.id);
-            if (!el) return;
-            fetch(api.url)
-                .then(res => {
-                    if (res.ok) {
-                        el.textContent = 'شغال (200 OK)';
-                        el.className = 'text-sm font-bold text-emerald-400 font-mono';
-                    } else {
-                        el.textContent = `خطأ (${res.status})`;
-                        el.className = 'text-sm font-bold text-rose-400 font-mono';
-                    }
-                })
-                .catch(() => {
-                    el.textContent = 'تعذر الاتصال';
-                    el.className = 'text-sm font-bold text-rose-400 font-mono';
-                });
-        });
-    },
-
-    promptRollback(snapId) {
-        if (!snapId) return;
-        if (confirm(`هل أنت متأكد من استعادة حالة النظام إلى اللقطة (${snapId})؟`)) {
-            alert(`لتنفيذ الاستعادة في بيئة الاستضافة، قم بتشغيل الأمر:\n\npython tools/deploy_safe.py --rollback ${snapId}`);
-        }
     },
 
     // --- CACHE & PRE-WARM MANAGEMENT METHODS ---

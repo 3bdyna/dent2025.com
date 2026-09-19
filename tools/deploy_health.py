@@ -50,9 +50,9 @@ ENDPOINTS_TO_PROBE = [
         'require_json_key': 'success'
     },
     {
-        'name': 'Audit History & SafeDeploy API (history_api.php)',
+        'name': 'Audit History API (history_api.php)',
         'urls': [
-            'https://dent2025.com/history_api.php?action=get_deployments'
+            'https://dent2025.com/history_api.php?action=get_history'
         ],
         'require_json_key': 'success',
         'auth': True

@@ -40,11 +40,6 @@ my website dent2025/
 ├── dent2025_rbac.php                           # ⭐ Shared RBAC permission engine (ALL backends use this)
 ├── admin_app.js                                # Admin Dashboard standalone client-side logic
 ├── admin_dashboard.html                        # Standalone Admin Dashboard HTML page
-├── admin_analytics.js                          # Admin Analytics client-side engine
-├── analytics_api.php                           # Analytics aggregation and ingestion API
-├── analytics_dashboard.html                    # Standalone Analytics visual dashboard
-├── analytics_dashboard.js                      # Analytics visual dashboard script
-├── deploy_dashboard.html                       # SafeDeploy visual dashboard
 ├── schedule_events.json                        # Global timeline schedule events data
 ├── tools/                                      # Local deployment toolchain (NOT deployed to server)
 │   ├── _toolkit.py                             # Shared bootstrap: PROJECT_ROOT + tools/ sys.path helper
@@ -80,11 +75,9 @@ my website dent2025/
 │   ├── admin_classes_lock.html                 # Class schedule lock trigger & group management modal
 │   ├── schedule_markup.html                    # Academic calendar timeline container template & stats cards
 │   ├── schedule_script.js                      # Academic calendar timeline engine (~30 KB)
-│   ├── analytics_tracker.js                    # Client-side analytics tracker
 │   ├── fonts/                                  # Self-hosted web fonts
 │   └── dashboard.js                            # Core Student Dashboard JS engine (~71 KB)
 ├── announcements_data/                         # AUTO-CREATED at runtime by announcements_api.php (gitignored)
-├── dent2025_analytics_data/                    # AUTO-CREATED at runtime by analytics_api.php (gitignored)
 ├── dent2025_study_data/                        # AUTO-CREATED at runtime by dent2025_api.php (gitignored)
 ├── quizzes_data/                               # AUTO-CREATED at runtime by api_ai_exam.php (gitignored)
 └── history_data/                               # Runtime audit/deployment history (local + server, gitignored)

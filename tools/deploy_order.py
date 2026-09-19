@@ -15,7 +15,7 @@ def get_file_tier(file_path):
         return 2
         
     # Tier 3: Admin Dashboard & Loader Infrastructure
-    if 'loader' in base_name or 'admin_app' in base_name or 'admin_dashboard' in base_name or 'deploy_dashboard' in base_name:
+    if 'loader' in base_name or 'admin_app' in base_name or 'admin_dashboard' in base_name:
         return 3
         
     # Tier 4: Frontend HTML/JS/CSS components & everything else

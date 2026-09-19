@@ -169,8 +169,8 @@ if ($method === 'GET') {
     $action = $_GET['action'] ?? 'get_history';
 
     // Sensitive read actions (snapshots contain full system state incl. passkeys;
-    // history/deployments leak audit trails) require a valid admin passkey.
-    $AUTH_GET_ACTIONS = ['get_history', 'get_deployments', 'get_snapshot', 'get_manual_snapshots'];
+    // history leaks audit trails) require a valid admin passkey.
+    $AUTH_GET_ACTIONS = ['get_history', 'get_snapshot', 'get_manual_snapshots'];
     if (in_array($action, $AUTH_GET_ACTIONS, true)) {
         $get_pass = $_GET['password'] ?? ($_SERVER['HTTP_X_ADMIN_PASS'] ?? '');
         $get_info = !empty($get_pass) ? dent2025_get_passkey_info($get_pass) : null;
@@ -205,17 +205,6 @@ if ($method === 'GET') {
         }
 
         echo json_encode(['success' => true, 'data' => $logs]);
-        exit;
-    }
-
-    if ($action === 'get_deployments') {
-        $deploy_file = "{$history_dir}/deployments.json";
-        $deployments = [];
-        if (file_exists($deploy_file)) {
-            $json = @file_get_contents($deploy_file);
-            $deployments = $json ? (json_decode($json, true) ?: []) : [];
-        }
-        echo json_encode(['success' => true, 'data' => array_reverse($deployments)]);
         exit;
     }
 

@@ -142,16 +142,6 @@ add_action('wp_footer', function() {
     }
 });
 
-// Load first-party analytics tracker sitewide (including welcome page) so selection
-// actions can be captured before redirect. Non-blocking, defensive script.
-add_action('wp_footer', function() {
-    $tracker = ABSPATH . 'frontend_components/analytics_tracker.js';
-    if (file_exists($tracker)) {
-        $mtime = (string) @filemtime($tracker);
-        echo '<script async src="/frontend_components/analytics_tracker.js?v=' . esc_attr($mtime) . '"></script>';
-    }
-});
-
 // Force LiteSpeed Cache purge when requested via ?purge=1 with admin auth
 add_action('init', function() {
     if (isset($_GET['purge']) || isset($_GET['nocache'])) {
