@@ -156,18 +156,45 @@
         /* Wrapper for the month text and its events */
     }
     .month-header {
-        font-size: 1.05rem;
+        font-size: 1rem;
         font-weight: 600;
         margin: 32px 0 20px 0;
         color: var(--text-secondary);
         display: flex;
         align-items: center;
         gap: 12px;
+        white-space: nowrap;
+        overflow: hidden;
     }
     .timeline-month:first-child .month-header { margin-top: 0; }
+    .month-header-content {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        direction: rtl;
+    }
+    .month-header-title {
+        color: var(--text-primary);
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .month-header-sep {
+        color: var(--text-muted);
+        opacity: 0.5;
+        font-size: 0.8rem;
+    }
+    .month-header-hijri {
+        color: var(--text-muted);
+        font-size: 0.88rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
     .month-header::after {
         content: '';
         flex: 1;
+        min-width: 15px;
         height: 1px;
         background: var(--border-color);
     }
@@ -405,6 +432,36 @@
             flex-direction: row;
             align-items: center;
             flex-wrap: wrap;
+        }
+        .month-header {
+            font-size: 0.84rem;
+            margin: 22px 0 14px 0;
+            gap: 8px;
+            white-space: nowrap !important;
+        }
+        .month-header-content {
+            gap: 5px;
+            white-space: nowrap !important;
+        }
+        .month-header-title {
+            white-space: nowrap !important;
+        }
+        .month-header-hijri {
+            font-size: 0.74rem;
+            white-space: nowrap !important;
+        }
+        .month-header-sep {
+            font-size: 0.70rem;
+        }
+    }
+
+    @media (max-width: 390px) {
+        .month-header {
+            font-size: 0.76rem;
+            gap: 5px;
+        }
+        .month-header-hijri {
+            font-size: 0.68rem;
         }
     }
 </style>

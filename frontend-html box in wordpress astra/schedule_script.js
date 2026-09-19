@@ -314,18 +314,32 @@ const ScheduleApp = {
             ev._isEndedPast3Days = isEndedPast3Days;
             groupedEvents[weekKey].events.push(ev);
             
-            if (!groupedEvents[weekKey].hijriLabel && ev.hijri) {
-                const rawParts = ev.hijri.split(/[\/\-]/);
-                if (rawParts.length >= 2) {
-                    let hYear = rawParts[0];
-                    let mStr = rawParts[1];
-                    if (parseInt(rawParts[0], 10) < 100 && parseInt(rawParts[2] || '0', 10) > 1000) {
-                        hYear = rawParts[2];
-                        mStr = rawParts[1];
+            if (!groupedEvents[weekKey].hijriLabel) {
+                if (ev.hijri) {
+                    const rawParts = ev.hijri.split(/[\/\-]/);
+                    if (rawParts.length >= 2) {
+                        let hYear = rawParts[0];
+                        let mStr = rawParts[1];
+                        if (parseInt(rawParts[0], 10) < 100 && parseInt(rawParts[2] || '0', 10) > 1000) {
+                            hYear = rawParts[2];
+                            mStr = rawParts[1];
+                        }
+                        const mIndex = parseInt(mStr, 10) - 1;
+                        if (mIndex >= 0 && mIndex < 12) {
+                            groupedEvents[weekKey].hijriLabel = `${this.hijriMonths[mIndex]} ${hYear}هـ`;
+                        }
                     }
-                    const mIndex = parseInt(mStr, 10) - 1;
-                    if (mIndex >= 0 && mIndex < 12) {
-                        groupedEvents[weekKey].hijriLabel = `${this.hijriMonths[mIndex]} ${hYear}`;
+                }
+                if (!groupedEvents[weekKey].hijriLabel) {
+                    const hDateStr = this.hijriFromGregorian(sundayDate.toISOString().substring(0, 10));
+                    if (hDateStr) {
+                        const parts = hDateStr.split('/');
+                        if (parts.length >= 2) {
+                            const mIndex = parseInt(parts[1], 10) - 1;
+                            if (mIndex >= 0 && mIndex < 12) {
+                                groupedEvents[weekKey].hijriLabel = `${this.hijriMonths[mIndex]} ${parts[0]}هـ`;
+                            }
+                        }
                     }
                 }
             }
@@ -347,9 +361,9 @@ const ScheduleApp = {
             const monthHeader = document.createElement('div');
             monthHeader.className = 'month-header';
             if (groupData.hijriLabel) {
-                monthHeader.innerHTML = `<span dir="ltr">${groupData.headerLabel}</span> - <span>${groupData.hijriLabel}</span>`;
+                monthHeader.innerHTML = `<div class="month-header-content" dir="rtl"><span class="month-header-title">${dentEscapeHtml(groupData.headerLabel)}</span><span class="month-header-sep">•</span><span class="month-header-hijri">${dentEscapeHtml(groupData.hijriLabel)}</span></div>`;
             } else {
-                monthHeader.innerHTML = `<span dir="ltr">${groupData.headerLabel}</span>`;
+                monthHeader.innerHTML = `<div class="month-header-content" dir="rtl"><span class="month-header-title">${dentEscapeHtml(groupData.headerLabel)}</span></div>`;
             }
             monthSection.appendChild(monthHeader);
             const timelineEvents = document.createElement('div');
