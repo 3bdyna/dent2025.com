@@ -1014,9 +1014,50 @@ const ScheduleApp = {
     },
 
     // 2-WEEK PRINT FEATURE
+    _prefetchedAnnouncements: null,
+
+    prefetchPrintAnnouncements: async function() {
+        try {
+            let sel = {};
+            try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
+            let spec = sel.specialty;
+            let yr = sel.year;
+            let sem = sel.semester;
+            if (!spec && this.scheduleId && this.scheduleId !== 'global') {
+                const parts = this.scheduleId.match(/^([a-z\-]+)_y(\d+)_s(\d+)$/);
+                if (parts) {
+                    spec = parts[1];
+                    yr = parts[2];
+                    sem = parts[3];
+                }
+            }
+            if (!spec) {
+                spec = 'dentistry'; yr = 3; sem = 1;
+            }
+            const apiBase = (typeof API_BASE !== 'undefined' ? API_BASE : window.location.origin);
+            const res = await fetch(`${apiBase}/announcements_api.php?specialty=${encodeURIComponent(spec)}&year=${encodeURIComponent(yr)}&semester=${encodeURIComponent(sem)}&_t=${Date.now()}`);
+            const data = await res.json();
+            if (data && data.success && data.data && data.data.content) {
+                const raw = String(data.data.content).trim();
+                if (raw && raw !== 'لا يوجد إعلانات حالياً.' && raw !== '<p></p>' && raw !== '<br>') {
+                    this._prefetchedAnnouncements = raw;
+                    return raw;
+                }
+            }
+            this._prefetchedAnnouncements = '';
+        } catch(e) {
+            this._prefetchedAnnouncements = '';
+        }
+        return '';
+    },
+
     openPrintModal: function() {
         let modal = document.getElementById('dent-print-schedule-modal');
         if (modal) modal.remove();
+
+        // Start prefetching announcements immediately in background
+        this._prefetchedAnnouncements = null;
+        this.prefetchPrintAnnouncements();
 
         modal = document.createElement('div');
         modal.id = 'dent-print-schedule-modal';
@@ -1052,6 +1093,24 @@ const ScheduleApp = {
     },
 
     executePrint: async function() {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                         (window.matchMedia && window.matchMedia('(max-width: 768px)').matches && 'ontouchstart' in window);
+
+        // On mobile browsers (iOS Safari / Android Chrome), iframe printing delegates to the full webpage.
+        // Opening a blank tab synchronously inside the user touch handler guarantees no popup-blocking.
+        let mobileWindow = null;
+        if (isMobile) {
+            try {
+                mobileWindow = window.open('', '_blank');
+                if (mobileWindow) {
+                    mobileWindow.document.write('<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Dent2025 • تقويم الأسبوعين</title><style>body{background:#0b0f17;color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:90vh;margin:0;text-align:center;direction:rtl;}.card{background:#18181b;padding:26px 20px;border-radius:14px;border:1px solid rgba(255,255,255,0.12);max-width:320px;box-shadow:0 10px 30px rgba(0,0,0,0.4);}.spinner{width:38px;height:38px;border:3px solid rgba(255,255,255,0.15);border-top-color:#38bdf8;border-radius:50%;animation:dentSpin 0.8s linear infinite;margin:0 auto 16px auto;}@keyframes dentSpin{to{transform:rotate(360deg);}}</style></head><body><div class="card"><div class="spinner"></div><div style="font-weight:700;font-size:1.05rem;margin-bottom:6px;">جاري تجهيز تقويم الأسبوعين للطباعة...</div><div style="font-size:0.8rem;color:#94a3b8;">يرجى الانتظار ثانية واحدة</div></div></body></html>');
+                    mobileWindow.document.close();
+                }
+            } catch(e) {
+                console.warn('Could not open mobile window synchronously:', e);
+            }
+        }
+
         const printBtn = document.getElementById('dent-exec-print-btn');
         if (printBtn) {
             printBtn.disabled = true;
@@ -1063,39 +1122,30 @@ const ScheduleApp = {
 
         let announcementText = '';
         if (incAnnouncements) {
-            try {
-                let sel = {};
-                try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
-                let spec = sel.specialty;
-                let yr = sel.year;
-                let sem = sel.semester;
-                if (!spec && this.scheduleId && this.scheduleId !== 'global') {
-                    const parts = this.scheduleId.match(/^([a-z\-]+)_y(\d+)_s(\d+)$/);
-                    if (parts) {
-                        spec = parts[1];
-                        yr = parts[2];
-                        sem = parts[3];
-                    }
-                }
-                if (!spec) {
-                    spec = 'dentistry'; yr = 3; sem = 1;
-                }
-                const apiBase = (typeof API_BASE !== 'undefined' ? API_BASE : window.location.origin);
-                const res = await fetch(`${apiBase}/announcements_api.php?specialty=${encodeURIComponent(spec)}&year=${encodeURIComponent(yr)}&semester=${encodeURIComponent(sem)}&_t=${Date.now()}`);
-                const data = await res.json();
-                if (data && data.success && data.data && data.data.content) {
-                    const raw = String(data.data.content).trim();
-                    if (raw && raw !== 'لا يوجد إعلانات حالياً.' && raw !== '<p></p>' && raw !== '<br>') {
-                        announcementText = raw;
-                    }
-                }
-            } catch(e) {
-                console.warn('Could not fetch announcements for print:', e);
+            if (this._prefetchedAnnouncements !== null && this._prefetchedAnnouncements !== undefined) {
+                announcementText = this._prefetchedAnnouncements;
+            } else {
+                announcementText = await this.prefetchPrintAnnouncements();
             }
         }
 
-        const printHtml = this.generateTwoWeeksPrintHtml(notes, announcementText);
+        const printHtml = this.generateTwoWeeksPrintHtml(notes, announcementText, isMobile);
 
+        const modal = document.getElementById('dent-print-schedule-modal');
+        if (modal) modal.remove();
+
+        if (isMobile && mobileWindow) {
+            try {
+                mobileWindow.document.open();
+                mobileWindow.document.write(printHtml);
+                mobileWindow.document.close();
+                return;
+            } catch(err) {
+                console.error('Error writing to mobile print window, falling back to iframe:', err);
+            }
+        }
+
+        // Desktop / PC workflow: use seamless hidden iframe
         let iframe = document.getElementById('dent-schedule-print-iframe');
         if (iframe) iframe.remove();
 
@@ -1114,20 +1164,23 @@ const ScheduleApp = {
         doc.write(printHtml);
         doc.close();
 
-        const modal = document.getElementById('dent-print-schedule-modal');
-        if (modal) modal.remove();
-
-        setTimeout(() => {
+        const doPrint = () => {
             try {
                 iframe.contentWindow.focus();
                 iframe.contentWindow.print();
             } catch(err) {
                 console.error('Print iframe error:', err);
             }
-        }, 400);
+        };
+
+        if (doc.fonts && doc.fonts.ready) {
+            doc.fonts.ready.then(() => setTimeout(doPrint, 250)).catch(() => setTimeout(doPrint, 400));
+        } else {
+            setTimeout(doPrint, 400);
+        }
     },
 
-    generateTwoWeeksPrintHtml: function(customNotes, announcementText) {
+    generateTwoWeeksPrintHtml: function(customNotes, announcementText, isMobile = false) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const twoWeeksLater = new Date(today);
@@ -1356,38 +1409,116 @@ const ScheduleApp = {
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dent2025 • تقويم الأسبوعين القادمين</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Cairo', sans-serif;
+            font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #ffffff;
             color: #0f172a;
-            padding: 10mm 12mm;
             direction: rtl;
             font-size: 12px;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
-        @page {
-            size: A4 portrait;
-            margin: 10mm 12mm;
+
+        @media screen {
+            body {
+                background: ${isMobile ? '#0b0f17' : '#ffffff'};
+                padding: ${isMobile ? '12px 12px 40px 12px' : '10mm 12mm'};
+                max-width: 840px;
+                margin: 0 auto;
+            }
+            .dent-mobile-toolbar {
+                position: sticky;
+                top: 8px;
+                z-index: 999999;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                background: rgba(24, 24, 27, 0.95);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                padding: 10px 14px;
+                border-radius: 12px;
+                margin-bottom: 14px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            }
+            .dent-mobile-toolbar button {
+                font-family: inherit;
+                cursor: pointer;
+                border-radius: 8px;
+                font-weight: 700;
+                transition: all 0.2s;
+            }
+            .dent-mobile-btn-print {
+                flex: 1;
+                height: 42px;
+                background: #2563eb;
+                color: #ffffff;
+                border: none;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                font-size: 0.90rem;
+                box-shadow: 0 3px 10px rgba(37, 99, 235, 0.35);
+            }
+            .dent-mobile-btn-close {
+                height: 42px;
+                padding: 0 16px;
+                background: rgba(255, 255, 255, 0.1);
+                color: #e2e8f0;
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                font-size: 0.85rem;
+            }
+            .a4-print-sheet {
+                background: #ffffff;
+                ${isMobile ? 'padding: 18px 14px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);' : ''}
+            }
         }
+
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 8mm 10mm;
+            }
+            body {
+                background: #ffffff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .no-print, .dent-mobile-toolbar {
+                display: none !important;
+            }
+            .a4-print-sheet {
+                padding: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+            }
+        }
+
         .doc-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding-bottom: 12px;
+            padding-bottom: 10px;
             border-bottom: 2px solid #0f172a;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
         .doc-titles h1 {
-            font-size: 1.25rem;
+            font-size: 1.20rem;
             font-weight: 800;
             color: #0f172a;
             line-height: 1.2;
         }
         .doc-titles p {
-            font-size: 0.78rem;
+            font-size: 0.76rem;
             color: #64748b;
             font-weight: 500;
             margin-top: 2px;
@@ -1402,7 +1533,7 @@ const ScheduleApp = {
             border: 1px solid #cbd5e1;
             padding: 4px 10px;
             border-radius: 6px;
-            font-size: 0.75rem;
+            font-size: 0.74rem;
             font-weight: 700;
             color: #1e293b;
             font-family: 'Outfit', sans-serif;
@@ -1416,11 +1547,12 @@ const ScheduleApp = {
             direction: rtl;
         }
         .m1-week-block {
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
             overflow: hidden;
             page-break-inside: avoid;
+            break-inside: avoid;
         }
         .m1-week-header {
             background: #1e293b;
@@ -1437,18 +1569,22 @@ const ScheduleApp = {
             border-collapse: collapse;
             font-size: 0.72rem;
         }
+        .m1-table tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
         .m1-table th {
             background: #f8fafc;
             color: #475569;
             font-weight: 700;
             text-align: right;
-            padding: 6px 10px;
+            padding: 5px 8px;
             border-bottom: 1px solid #cbd5e1;
             font-size: 0.68rem;
             white-space: nowrap;
         }
         .m1-table td {
-            padding: 6px 10px;
+            padding: 5px 8px;
             border-bottom: 1px solid #e2e8f0;
             vertical-align: middle;
             color: #1e293b;
@@ -1473,7 +1609,7 @@ const ScheduleApp = {
             font-size: 0.72rem;
         }
         .m1-date-col {
-            width: 125px;
+            width: 120px;
             vertical-align: middle;
             line-height: 1.35;
         }
@@ -1497,14 +1633,14 @@ const ScheduleApp = {
             unicode-bidi: isolate;
         }
         .m1-title-col { font-weight: 600; line-height: 1.35; }
-        .m1-status-col { width: 80px; text-align: center; }
+        .m1-status-col { width: 75px; text-align: center; }
         .m1-countdown-urgent { color: #991b1b; font-weight: 700; }
         .m1-countdown-soon { color: #c2410c; font-weight: 700; }
         .m1-countdown-normal { color: #475569; font-weight: 600; }
         .print-ann-body p { margin: 0 0 3px 0; }
         .print-ann-body p:last-child { margin-bottom: 0; }
         .doc-footer {
-            margin-top: 14px;
+            margin-top: 12px;
             padding-top: 8px;
             border-top: 1px solid #e2e8f0;
             display: flex;
@@ -1513,6 +1649,7 @@ const ScheduleApp = {
             font-size: 0.68rem;
             color: #64748b;
             page-break-inside: avoid;
+            break-inside: avoid;
         }
         .doc-footer-right {
             font-family: 'Outfit', sans-serif;
@@ -1532,27 +1669,65 @@ const ScheduleApp = {
     </style>
 </head>
 <body>
-    <div class="doc-header">
-        <div class="doc-titles">
-            <h1>Dent2025 • جدول الأسبوعين القادمين</h1>
-            <p>${dentEscapeHtml(subTitle)}</p>
+    ${isMobile ? `
+        <div class="dent-mobile-toolbar no-print">
+            <button type="button" class="dent-mobile-btn-print" onclick="window.print()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                <span>طباعة / حفظ PDF</span>
+            </button>
+            <button type="button" class="dent-mobile-btn-close" onclick="window.close()">✕ إغلاق</button>
         </div>
-        <div class="doc-meta-badge">
-            <span class="period" dir="ltr">${dentEscapeHtml(rangeStr)}</span>
-            <span class="subperiod">${dentEscapeHtml(weeksBadgeText)}</span>
+    ` : ''}
+
+    <div class="a4-print-sheet">
+        <div class="doc-header">
+            <div class="doc-titles">
+                <h1>Dent2025 • جدول الأسبوعين القادمين</h1>
+                <p>${dentEscapeHtml(subTitle)}</p>
+            </div>
+            <div class="doc-meta-badge">
+                <span class="period" dir="ltr">${dentEscapeHtml(rangeStr)}</span>
+                <span class="subperiod">${dentEscapeHtml(weeksBadgeText)}</span>
+            </div>
+        </div>
+
+        ${weeksHtml}
+
+        ${announcementHtml}
+
+        ${notesHtml}
+
+        <div class="doc-footer">
+            <span class="doc-footer-right">dent2025.com</span>
+            <span class="doc-footer-left">${dentEscapeHtml(todayFormatted)}</span>
         </div>
     </div>
 
-    ${weeksHtml}
-
-    ${announcementHtml}
-
-    ${notesHtml}
-
-    <div class="doc-footer">
-        <span class="doc-footer-right">dent2025.com</span>
-        <span class="doc-footer-left">${dentEscapeHtml(todayFormatted)}</span>
-    </div>
+    ${isMobile ? `
+    <script>
+        (function() {
+            function autoPrint() {
+                try {
+                    window.focus();
+                    window.print();
+                } catch(e) {
+                    console.error('Auto print error:', e);
+                }
+            }
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(function() {
+                    setTimeout(autoPrint, 250);
+                }).catch(function() {
+                    setTimeout(autoPrint, 400);
+                });
+            } else {
+                window.addEventListener('load', function() {
+                    setTimeout(autoPrint, 400);
+                });
+            }
+        })();
+    <\/script>
+    ` : ''}
 </body>
 </html>`;
     }
