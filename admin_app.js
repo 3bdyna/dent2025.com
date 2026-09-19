@@ -4053,7 +4053,6 @@ window.AdminApp = {
         const uncachedTableCount = document.getElementById('uncached-table-count');
         const cachedTbody = document.getElementById('cached-files-list');
         const uncachedTbody = document.getElementById('uncached-files-list');
-        const focusIndicatorEl = document.getElementById('cache-focus-indicator');
 
         const summary = data.catalog_summary || {};
         const rawCachedFiles = data.cached_files || [];
@@ -4084,24 +4083,6 @@ window.AdminApp = {
 
         if (cachedTableCount) cachedTableCount.innerText = cachedFiles.length;
         if (uncachedTableCount) uncachedTableCount.innerText = uncachedFiles.length;
-
-        // Render Focus Indicator Pill
-        if (focusIndicatorEl) {
-            if (isFocused) {
-                const label = this.getTrackLabel(this.focusMode.specialty, this.focusMode.year, this.focusMode.semester);
-                focusIndicatorEl.innerHTML = `
-                    <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-300 text-xs font-medium">
-                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                        <span>وضع التركيز نشط: <strong>${label}</strong></span>
-                        <span class="text-gray-400 text-[11px]">— يتم عرض وفحص وتجهيز ملفات هذا المسار فقط (${cachedFiles.length} مخزن، ${uncachedFiles.length} معلق)</span>
-                    </div>
-                `;
-                focusIndicatorEl.classList.remove('hidden');
-            } else {
-                focusIndicatorEl.innerHTML = '';
-                focusIndicatorEl.classList.add('hidden');
-            }
-        }
 
         const settings = data.settings || {};
         if (autoCheck) autoCheck.checked = (settings.auto_prewarm_on_upload !== false);
