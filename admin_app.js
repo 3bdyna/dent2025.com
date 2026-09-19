@@ -29,6 +29,8 @@ window.AdminApp = {
     visibleKeys: {}, // To track visible passkeys in passwords tab
     portalMultiSpecialtyMode: null,
 
+    selectedClassDay: 'الأحد',
+
     // Universal Focus Mode (Active Academic Track)
     focusMode: {
         enabled: true,
@@ -327,6 +329,26 @@ window.AdminApp = {
             }
         });
 
+        // Mobile bottom navigation bar items
+        document.querySelectorAll('#mobile-bottom-nav .mobile-nav-item').forEach(btn => {
+            if (btn.dataset.tab === tabId) {
+                btn.className = 'mobile-nav-item flex flex-col items-center justify-center gap-0.5 py-1 text-white font-medium';
+            } else if (btn.dataset.tab) {
+                btn.className = 'mobile-nav-item flex flex-col items-center justify-center gap-0.5 py-1 text-gray-400 hover:text-white';
+            }
+        });
+
+        // Mobile FAB visibility
+        const fab = document.getElementById('mobile-fab');
+        if (fab) {
+            const tabsWithFab = ['subjects', 'classes', 'events', 'announcements', 'quizzes'];
+            if (tabsWithFab.includes(tabId)) {
+                fab.classList.remove('hidden');
+            } else {
+                fab.classList.add('hidden');
+            }
+        }
+
         this.closeMobileDrawer();
 
         const contentDiv = document.getElementById('tab-content');
@@ -373,6 +395,29 @@ window.AdminApp = {
                 <h2 class="text-2xl mb-2">قريباً</h2>
                 <p>هذا القسم قيد التطوير...</p>
             </div>`;
+        }
+    },
+
+    onFabClick() {
+        if (this.currentTab === 'subjects') {
+            this.openAddSubjectModal();
+        } else if (this.currentTab === 'classes') {
+            this.openClassModal();
+        } else if (this.currentTab === 'events') {
+            this.openEventModal();
+        } else if (this.currentTab === 'announcements') {
+            const editor = document.getElementById('ann-editor-container');
+            if (editor) {
+                editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        } else if (this.currentTab === 'quizzes') {
+            const searchInput = document.getElementById('quizzes-search-input');
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        } else {
+            this.toggleMobileDrawer();
         }
     },
 
@@ -793,10 +838,30 @@ window.AdminApp = {
         const toggleText = document.getElementById('focus-toggle-text');
         const barLabel = document.getElementById('focus-bar-label');
 
-        if (!trackText || !toggleBtn) return;
+        // Mobile header elements
+        const mobileTrackText = document.getElementById('mobile-header-track-text');
+        const mobileSheetToggleText = document.getElementById('mobile-sheet-toggle-text');
 
         const isEnabled = this.focusMode && this.focusMode.enabled;
         const label = this.getTrackLabel(this.focusMode.specialty, this.focusMode.year, this.focusMode.semester);
+
+        if (mobileTrackText) {
+            if (isEnabled) {
+                const spec = this.focusMode.specialty;
+                const shortSpec = spec === 'dentistry' ? 'طب الأسنان' : (spec === 'medicine' ? 'الطب البشري' : 'تحضيري');
+                if (spec === 'pre-med') {
+                    mobileTrackText.innerText = `تحضيري - ت${this.focusMode.semester}`;
+                } else {
+                    mobileTrackText.innerText = `${shortSpec} - س${this.focusMode.year} - ت${this.focusMode.semester}`;
+                }
+            } else {
+                mobileTrackText.innerText = 'عرض شامل (الكل)';
+            }
+        }
+        if (mobileSheetToggleText) {
+            mobileSheetToggleText.innerText = isEnabled ? 'عرض شامل (الكل)' : `تفعيل (${label})`;
+        }
+        if (!trackText || !toggleBtn) return;
 
         if (isEnabled) {
             if (barLabel) barLabel.innerText = 'التركيز:';
@@ -934,6 +999,50 @@ window.AdminApp = {
         const sem = semEl.value;
         this.setFocusTrack(spec, year, sem);
         this.closeFocusPopover();
+    },
+
+    openMobileTrackSheet() {
+        const sheet = document.getElementById('mobile-track-sheet');
+        if (!sheet) return;
+        const specEl = document.getElementById('mobile-sheet-spec');
+        const semEl = document.getElementById('mobile-sheet-sem');
+        if (specEl) specEl.value = this.focusMode.specialty;
+        this.updateYearOptions('mobile-sheet-spec', 'mobile-sheet-year');
+        const yearEl = document.getElementById('mobile-sheet-year');
+        if (yearEl) yearEl.value = this.focusMode.year;
+        if (semEl) semEl.value = this.focusMode.semester;
+
+        const toggleText = document.getElementById('mobile-sheet-toggle-text');
+        if (toggleText) {
+            const isEnabled = this.focusMode && this.focusMode.enabled;
+            const label = this.getTrackLabel(this.focusMode.specialty, this.focusMode.year, this.focusMode.semester);
+            toggleText.innerText = isEnabled ? 'عرض شامل (الكل)' : `تفعيل (${label})`;
+        }
+
+        sheet.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    },
+
+    closeMobileTrackSheet() {
+        const sheet = document.getElementById('mobile-track-sheet');
+        if (sheet) sheet.classList.add('hidden');
+        const hasOpenModal = document.querySelector('[id$="-modal"]:not(.hidden)');
+        if (!hasOpenModal && !document.getElementById('mobile-drawer')?.classList.contains('translate-x-0')) {
+            document.body.classList.remove('overflow-hidden');
+        }
+    },
+
+    onMobileTrackSheetSpecChange() {
+        this.updateYearOptions('mobile-sheet-spec', 'mobile-sheet-year');
+    },
+
+    applyMobileTrackSheet() {
+        const specEl = document.getElementById('mobile-sheet-spec');
+        const yearEl = document.getElementById('mobile-sheet-year');
+        const semEl = document.getElementById('mobile-sheet-sem');
+        if (!specEl || !yearEl || !semEl) return;
+        this.setFocusTrack(specEl.value, yearEl.value, semEl.value);
+        this.closeMobileTrackSheet();
     },
 
     // --- TAB 1: PASSWORDS & ACCESS ---
@@ -1809,26 +1918,51 @@ window.AdminApp = {
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2.5 text-xs">
-                        <div class="bg-black/25 p-2 rounded-lg border border-white/5 flex items-center justify-between gap-2">
-                            <span class="text-gray-400 text-[11px] shrink-0 font-medium"> الشباتر:</span>
-                            <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 flex-1 text-left" dir="ltr">${safeChapId}</code>
-                        </div>
-                        <div class="bg-black/25 p-2 rounded-lg border border-white/5 flex items-center justify-between gap-2">
-                            <span class="text-gray-400 text-[11px] shrink-0 font-medium"> التجميعات:</span>
-                            <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 flex-1 text-left" dir="ltr">${safeMatId}</code>
-                        </div>
-                    </div>
+                    <!-- Mobile Details Accordion Toggle Button -->
+                    <button type="button" onclick="AdminApp.toggleSubjectDetails(${safeSubId})" class="text-[11px] text-gray-400 hover:text-white flex items-center justify-between sm:hidden w-full pt-1.5 transition select-none" aria-label="عرض التفاصيل والروابط">
+                        <span class="font-medium">التفاصيل والروابط (${links.length})</span>
+                        <svg class="w-3.5 h-3.5 transform transition-transform" id="sub-arrow-${safeSubId}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
 
-                    <div>
-                        <h4 class="text-[11px] font-semibold text-gray-400 mb-1.5">الروابط المساعدة والمصادر:</h4>
-                        <div class="space-y-1.5">${linksHtml}</div>
+                    <!-- Details Container: Collapsible on phone, always visible on tablet/desktop -->
+                    <div id="sub-details-${safeSubId}" class="hidden sm:block space-y-2.5 mt-2.5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <div class="bg-black/25 p-2 rounded-lg border border-white/5 flex items-center justify-between gap-2">
+                                <span class="text-gray-400 text-[11px] shrink-0 font-medium"> الشباتر:</span>
+                                <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 flex-1 text-left" dir="ltr">${safeChapId}</code>
+                            </div>
+                            <div class="bg-black/25 p-2 rounded-lg border border-white/5 flex items-center justify-between gap-2">
+                                <span class="text-gray-400 text-[11px] shrink-0 font-medium"> التجميعات:</span>
+                                <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 flex-1 text-left" dir="ltr">${safeMatId}</code>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-[11px] font-semibold text-gray-400 mb-1.5">الروابط المساعدة والمصادر:</h4>
+                            <div class="space-y-1.5">${linksHtml}</div>
+                        </div>
                     </div>
                 </div>
             `;
         });
 
         container.innerHTML = html;
+    },
+
+    toggleSubjectDetails(id) {
+        const el = document.getElementById(`sub-details-${id}`);
+        const arrow = document.getElementById(`sub-arrow-${id}`);
+        if (!el) return;
+        const isHidden = el.classList.contains('hidden');
+        if (isHidden) {
+            el.classList.remove('hidden');
+            if (arrow) arrow.classList.add('rotate-180');
+        } else {
+            el.classList.add('hidden');
+            if (arrow) arrow.classList.remove('rotate-180');
+        }
     },
 
     openAddSubjectModal() {
@@ -2155,6 +2289,19 @@ window.AdminApp = {
         const container = document.getElementById('classes-timetable');
         if (!container) return;
 
+        if (!this.selectedClassDay) {
+            this.selectedClassDay = 'الأحد';
+        }
+
+        // Sync mobile 5-day tab buttons
+        document.querySelectorAll('#classes-mobile-day-tabs .day-tab-btn').forEach(btn => {
+            if (btn.dataset.day === this.selectedClassDay) {
+                btn.className = 'day-tab-btn py-1.5 rounded-lg text-xs font-semibold bg-white/15 text-white shadow';
+            } else {
+                btn.className = 'day-tab-btn py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white';
+            }
+        });
+
         const groupFilter = document.getElementById('cls-group') ? document.getElementById('cls-group').value : 'all';
 
         const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
@@ -2195,8 +2342,11 @@ window.AdminApp = {
                 entriesHtml = '<p class="text-xs text-gray-500 text-center py-4">لا يوجد محاضرات</p>';
             }
 
+            const isDayActive = (day === this.selectedClassDay);
+            const mobileVisibilityClass = isDayActive ? 'flex' : 'hidden md:flex';
+
             html += `
-                <div class="bg-black/20 rounded-xl p-3 border border-white/5 flex flex-col">
+                <div class="day-column bg-black/20 rounded-xl p-3 border border-white/5 flex-col ${mobileVisibilityClass}" data-day="${day}">
                     <h4 class="text-sm font-bold text-center text-primary bg-primary/10 py-2 rounded-lg mb-3 border border-primary/20">${day}</h4>
                     <div class="space-y-3 flex-1">${entriesHtml}</div>
                 </div>
@@ -2204,6 +2354,28 @@ window.AdminApp = {
         });
 
         container.innerHTML = html;
+    },
+
+    switchClassDay(day) {
+        this.selectedClassDay = day;
+        document.querySelectorAll('#classes-mobile-day-tabs .day-tab-btn').forEach(btn => {
+            if (btn.dataset.day === day) {
+                btn.className = 'day-tab-btn py-1.5 rounded-lg text-xs font-semibold bg-white/15 text-white shadow';
+            } else {
+                btn.className = 'day-tab-btn py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white';
+            }
+        });
+
+        const dayColumns = document.querySelectorAll('#classes-timetable .day-column');
+        dayColumns.forEach(col => {
+            if (col.dataset.day === day) {
+                col.classList.remove('hidden');
+                col.classList.add('flex');
+            } else {
+                col.classList.remove('flex');
+                col.classList.add('hidden', 'md:flex');
+            }
+        });
     },
 
     openClassModal() {
@@ -3793,17 +3965,19 @@ window.AdminApp = {
             });
         }
         const tbody = document.getElementById('quizzes-table-body');
+        const mobileCards = document.getElementById('quizzes-mobile-cards');
         const countSpan = document.getElementById('quizzes-count');
 
         if (countSpan) countSpan.innerText = displayList.length;
-        if (!tbody) return;
 
         if (displayList.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-gray-400">لا توجد اختبارات محفوظة حالياً في هذا النطاق.</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-gray-400">لا توجد اختبارات محفوظة حالياً في هذا النطاق.</td></tr>';
+            if (mobileCards) mobileCards.innerHTML = '<div class="p-8 text-center text-xs text-gray-400">لا توجد اختبارات محفوظة حالياً في هذا النطاق.</div>';
             return;
         }
 
         let html = '';
+        let cardsHtml = '';
         displayList.forEach(q => {
             let rawChap = (q.chapter_name || '').replace(/^[\s\-\-]+/, '').trim();
             if (!rawChap || rawChap === 'المحاضرة العامة' || rawChap === 'عام') rawChap = 'ملف المحاضرة';
@@ -3843,9 +4017,31 @@ window.AdminApp = {
                     </td>
                 </tr>
             `;
+
+            cardsHtml += `
+                <div class="bg-black/30 border border-white/10 rounded-xl p-3 space-y-2">
+                    <div class="flex items-start justify-between gap-2">
+                        <h5 class="text-white font-semibold text-sm leading-snug">${this.escapeHtml(q.quiz_name)}</h5>
+                        <span class="text-[11px] font-mono font-bold bg-primary/10 text-accent px-2 py-0.5 rounded-full shrink-0">${q.num_questions} س</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1.5 text-xs text-gray-400">
+                        <span class="text-gray-300">${this.escapeHtml(q.subject_name || 'مادة دراسية')}</span>
+                        <span>•</span>
+                        <span class="text-gray-400">${this.escapeHtml(scopeLabel)}</span>
+                    </div>
+                    <div class="pt-1.5 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
+                        <span class="text-gray-500 font-mono text-[11px]">${q.created_at || ''}</span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="AdminApp.openRenameQuizModal('${q.id}')" class="btn btn-secondary text-xs px-2.5 py-1">تعديل الاسم</button>
+                            <button onclick="AdminApp.deleteQuiz('${q.id}')" class="btn btn-danger text-xs px-2.5 py-1">حذف</button>
+                        </div>
+                    </div>
+                </div>
+            `;
         });
 
-        tbody.innerHTML = html;
+        if (tbody) tbody.innerHTML = html;
+        if (mobileCards) mobileCards.innerHTML = cardsHtml;
     },
 
     filterQuizzesTable() {
