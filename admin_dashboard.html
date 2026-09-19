@@ -66,6 +66,69 @@
  /* Mobile horizontal pill scroll without scrollbar */
  #mobile-pill-bar::-webkit-scrollbar { display: none; }
  #mobile-pill-bar { -ms-overflow-style: none; scrollbar-width: none; }
+
+ /* Muted admin palette: preserve status meaning without saturated accents. */
+ :root {
+ --muted-lilac: #aaa6b6;
+ --muted-lilac-bg: rgba(142, 136, 158, 0.14);
+ --muted-lilac-border: rgba(142, 136, 158, 0.32);
+ --muted-rose: #c09a9a;
+ --muted-rose-bg: rgba(158, 111, 111, 0.14);
+ --muted-rose-border: rgba(158, 111, 111, 0.32);
+ --muted-sage: #9ab5a6;
+ --muted-sage-bg: rgba(111, 146, 128, 0.14);
+ --muted-sage-border: rgba(111, 146, 128, 0.32);
+ --muted-sand: #b9a987;
+ --muted-sand-bg: rgba(154, 132, 89, 0.14);
+ --muted-sand-border: rgba(154, 132, 89, 0.32);
+ --muted-blue: #9eb1c2;
+ --muted-blue-bg: rgba(113, 135, 158, 0.14);
+ --muted-blue-border: rgba(113, 135, 158, 0.32);
+ }
+
+ /* Color groups are intentionally desaturated while remaining distinguishable. */
+ [class*="text-purple-"], [class*="text-indigo-"], [class*="text-pink-"],
+ [class*="text-violet-"], [class*="text-fuchsia-"] { color: var(--muted-lilac) !important; }
+ [class*="bg-purple-"], [class*="bg-indigo-"], [class*="bg-pink-"],
+ [class*="bg-violet-"], [class*="bg-fuchsia-"] { background-color: var(--muted-lilac-bg) !important; }
+ [class*="border-purple-"], [class*="border-indigo-"], [class*="border-pink-"],
+ [class*="border-violet-"], [class*="border-fuchsia-"] { border-color: var(--muted-lilac-border) !important; }
+
+ [class*="text-red-"], [class*="text-rose-"] { color: var(--muted-rose) !important; }
+ [class*="bg-red-"], [class*="bg-rose-"] { background-color: var(--muted-rose-bg) !important; }
+ [class*="border-red-"], [class*="border-rose-"] { border-color: var(--muted-rose-border) !important; }
+
+ [class*="text-emerald-"], [class*="text-green-"], [class*="text-teal-"] { color: var(--muted-sage) !important; }
+ [class*="bg-emerald-"], [class*="bg-green-"], [class*="bg-teal-"] { background-color: var(--muted-sage-bg) !important; }
+ [class*="border-emerald-"], [class*="border-green-"], [class*="border-teal-"] { border-color: var(--muted-sage-border) !important; }
+
+ [class*="text-amber-"], [class*="text-yellow-"], [class*="text-orange-"] { color: var(--muted-sand) !important; }
+ [class*="bg-amber-"], [class*="bg-yellow-"], [class*="bg-orange-"] { background-color: var(--muted-sand-bg) !important; }
+ [class*="border-amber-"], [class*="border-yellow-"], [class*="border-orange-"] { border-color: var(--muted-sand-border) !important; }
+
+ [class*="text-blue-"], [class*="text-sky-"], [class*="text-cyan-"] { color: var(--muted-blue) !important; }
+ [class*="bg-blue-"], [class*="bg-sky-"], [class*="bg-cyan-"] { background-color: var(--muted-blue-bg) !important; }
+ [class*="border-blue-"], [class*="border-sky-"], [class*="border-cyan-"] { border-color: var(--muted-blue-border) !important; }
+
+ /* Keep hover states in the same restrained palette. */
+ [class*="hover:bg-purple-"]:hover, [class*="hover:bg-indigo-"]:hover,
+ [class*="hover:bg-pink-"]:hover, [class*="hover:bg-violet-"]:hover,
+ [class*="hover:bg-fuchsia-"]:hover { background-color: var(--muted-lilac-bg) !important; }
+ [class*="hover:bg-red-"]:hover, [class*="hover:bg-rose-"]:hover { background-color: var(--muted-rose-bg) !important; }
+ [class*="hover:bg-emerald-"]:hover, [class*="hover:bg-green-"]:hover,
+ [class*="hover:bg-teal-"]:hover { background-color: var(--muted-sage-bg) !important; }
+ [class*="hover:bg-amber-"]:hover, [class*="hover:bg-yellow-"]:hover,
+ [class*="hover:bg-orange-"]:hover { background-color: var(--muted-sand-bg) !important; }
+ [class*="hover:bg-blue-"]:hover, [class*="hover:bg-sky-"]:hover,
+ [class*="hover:bg-cyan-"]:hover { background-color: var(--muted-blue-bg) !important; }
+ [class*="hover:text-red-"]:hover, [class*="hover:text-rose-"]:hover { color: var(--muted-rose) !important; }
+ [class*="hover:text-emerald-"]:hover, [class*="hover:text-green-"]:hover,
+ [class*="hover:text-teal-"]:hover { color: var(--muted-sage) !important; }
+ [class*="hover:text-blue-"]:hover, [class*="hover:text-sky-"]:hover,
+ [class*="hover:text-cyan-"]:hover { color: var(--muted-blue) !important; }
+
+ /* Current-event badges should communicate state without drawing attention. */
+ .animate-pulse { animation: none !important; }
  </style>
 </head>
 <body class="min-h-screen md:h-screen flex flex-col md:flex-row md:overflow-hidden bg-dark text-slate-100 font-sans">
