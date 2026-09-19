@@ -81,7 +81,9 @@ textarea.dent-quiz-input { height: auto !important; min-height: 60px !important;
 .dent-opt-item .dent-opt-text { flex: 1 1 auto; min-width: 0; text-align: right; }
 .dent-q-block[data-language="en"] { direction: ltr; }
 .dent-q-block[data-language="en"] .dent-q-text { direction: ltr; text-align: left; }
-.dent-q-block[data-language="en"] .dent-opt-item { direction: rtl; }
+.dent-q-block[data-language="en"] .dent-opt-item { direction: ltr; }
+.dent-q-block[data-language="en"] .dent-opt-item input[type="radio"] { margin-left: 0; margin-right: 10px; }
+.dent-q-block[data-language="en"] .dent-opt-letter { margin-left: 0; margin-right: 6px; }
 .dent-q-block[data-language="en"] .dent-opt-text { direction: ltr; text-align: left; }
 .dent-q-block[data-language="en"] .dent-explanation-box { direction: ltr; text-align: left; }
 .dent-q-block[data-language="ar"] { direction: rtl; }
@@ -2090,6 +2092,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             qBlock.dataset.index = index;
             const questionLanguage = detectQuestionLanguage(q);
             qBlock.dataset.language = questionLanguage;
+            qBlock.setAttribute('dir', questionLanguage);
 
             const isConverted = (typeof q.question === 'string' && q.question.trim().startsWith('*'));
             const convertedBadge = isConverted ? `<span class="dent-q-converted-badge" title="تم تحويل هذا السؤال من سؤال مقالي أو فراغات إلى اختيار من متعدد">* سؤال محوّل لخيارات</span>` : '';
@@ -2126,7 +2129,10 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 const optItem = document.createElement('label');
                 optItem.className = 'dent-opt-item';
                 const optionMatch = String(opt).match(/^\s*([A-Ha-h]|[أإآابجدههـوزح])(?:[.)\-:\s]+)([\s\S]*)$/u);
-                const optionLetter = '.' + String.fromCharCode(65 + optIndex);
+                const optionLetters = questionLanguage === 'ar'
+                    ? ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح']
+                    : ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+                const optionLetter = optionLetters[optIndex] ? '.' + optionLetters[optIndex] : '';
                 const optionText = optionMatch ? optionMatch[2] : String(opt);
                 optItem.innerHTML = `
                     <input type="radio" name="q_${index}" value="${escapeHtml(opt)}" data-option-index="${optIndex}">
