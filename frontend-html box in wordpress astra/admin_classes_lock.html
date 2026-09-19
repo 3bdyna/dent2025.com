@@ -37,6 +37,7 @@
     </div>
 </div>
 
+<script src="/frontend_components/dent_pin_modal.js"></script>
 <script>
     function promptClassesAdminLogin() {
         if (sessionStorage.getItem('dent2025_admin_pass')) {
@@ -44,18 +45,30 @@
             return;
         }
 
-        const pass = prompt("أدخل كلمة مرور إدارة الجدول:");
+        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        if (window.dentPromptPin) {
+            window.dentPromptPin({
+                title: 'تسجيل دخول المشرف',
+                subtitle: 'أدخل رمز PIN لتعديل جدول المحاضرات والمجموعات',
+                context: sel,
+                onSuccess: function() {
+                    activateClassesAdminMode();
+                }
+            });
+            return;
+        }
+
+        const pass = prompt("أدخل رمز PIN لإدارة الجدول:");
         if (!pass) return;
 
         // Verify password with the server
         const apiBase = window.location.pathname.startsWith('/dev') ? '/dev' : '';
-        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
         fetch(apiBase + '/dent2025_api.php?action=check_auth', {
             method: 'POST',
             body: JSON.stringify({ 
                 password: pass, 
                 specialty: sel.specialty || 'dentistry', 
-                year: (sel.year !== undefined && sel.year !== null) ? sel.year : 2, 
+                year: (sel.year !== undefined && sel.year !== null) ? sel.year : 3, 
                 semester: sel.semester || 1 
             })
         })
@@ -63,11 +76,12 @@
         .then(res => {
             if (res.success) {
                 sessionStorage.setItem('dent2025_admin_pass', pass);
+                sessionStorage.setItem('dent2025_schedule_admin_pass', pass);
                 const perms = (res.data && res.data.permissions) ? res.data.permissions : {};
                 sessionStorage.setItem('dent2025_permissions', JSON.stringify(perms));
                 activateClassesAdminMode();
             } else {
-                alert("كلمة المرور غير صحيحة.");
+                alert(res.message || "رمز PIN غير صحيح.");
             }
         }).catch(err => {
             console.error(err);

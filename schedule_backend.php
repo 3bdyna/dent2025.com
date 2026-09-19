@@ -231,6 +231,7 @@ if ($method === 'POST') {
     $endDate = !empty($input['end_date']) ? trim($input['end_date']) : null;
     $hijri = trim($input['hijri'] ?? '');
     $type = !empty($input['type']) ? trim($input['type']) : 'other';
+    $typeLabel = !empty($input['type_label']) ? trim($input['type_label']) : null;
 
     if (empty($title) || empty($date)) {
         http_response_code(400);
@@ -261,6 +262,11 @@ if ($method === 'POST') {
                         'title' => $title,
                         'type' => $type
                     ];
+                    if ($typeLabel !== null) {
+                        $updatedEvent['type_label'] = $typeLabel;
+                    } elseif (isset($ev['type_label'])) {
+                        $updatedEvent['type_label'] = $ev['type_label'];
+                    }
                     if ($endDate !== null) {
                         $updatedEvent['end_date'] = $endDate;
                     }
@@ -297,6 +303,11 @@ if ($method === 'POST') {
                             'title' => $title,
                             'type' => $type
                         ];
+                        if ($typeLabel !== null) {
+                            $updatedEvent['type_label'] = $typeLabel;
+                        } elseif (isset($ev['type_label'])) {
+                            $updatedEvent['type_label'] = $ev['type_label'];
+                        }
                         if ($endDate !== null) {
                             $updatedEvent['end_date'] = $endDate;
                         }
@@ -334,6 +345,9 @@ if ($method === 'POST') {
         'schedule_id' => $is_global ? 'global' : ($scheduleId ?: 'global'),
         'is_global' => $is_global
     ];
+    if ($typeLabel !== null) {
+        $newEvent['type_label'] = $typeLabel;
+    }
     if ($endDate !== null) {
         $newEvent['end_date'] = $endDate;
     }

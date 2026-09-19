@@ -26,6 +26,77 @@ const ScheduleApp = {
         'exam': 'var(--color-exam)',
         'other': 'var(--color-other)'
     },
+    getEventTypeMeta: function(ev) {
+        if (!ev) return { label: 'حدث', badgeClass: 'badge-type-other', printClass: 'm1-badge-exam' };
+        
+        const map = {
+            'quiz': { label: 'كويز', badgeClass: 'badge-type-quiz', printClass: 'm1-badge-exam' },
+            'assessment': { label: 'اسسمنت', badgeClass: 'badge-type-assessment', printClass: 'm1-badge-exam' },
+            'research': { label: 'بحث / مشروع', badgeClass: 'badge-type-research', printClass: 'm1-badge-exam' },
+            'homework': { label: 'واجب', badgeClass: 'badge-type-homework', printClass: 'm1-badge-exam' },
+            'exam': { label: 'اختبار', badgeClass: 'badge-type-exam', printClass: 'm1-badge-exam' },
+            'midterm': { label: 'اختبار نصفي', badgeClass: 'badge-type-midterm', printClass: 'm1-badge-exam' },
+            'final': { label: 'اختبار نهائي', badgeClass: 'badge-type-final', printClass: 'm1-badge-exam' },
+            'holiday': { label: 'إجازة رسمية', badgeClass: 'badge-type-holiday', printClass: 'm1-badge-holiday' },
+            'payment': { label: 'مكافأة', badgeClass: 'badge-type-payment', printClass: 'm1-badge-payment' },
+            'start': { label: 'بداية دراسة', badgeClass: 'badge-type-start', printClass: 'm1-badge-holiday' },
+            'other': { label: 'أخرى', badgeClass: 'badge-type-other', printClass: 'm1-badge-exam' }
+        };
+
+        const typeKey = (ev.type || '').toLowerCase();
+
+        if (ev.type_label && String(ev.type_label).trim()) {
+            const customBadgeClass = map[typeKey] ? map[typeKey].badgeClass : 'badge-type-custom';
+            const customPrintClass = map[typeKey] ? map[typeKey].printClass : 'm1-badge-exam';
+            return {
+                label: String(ev.type_label).trim(),
+                badgeClass: customBadgeClass,
+                printClass: customPrintClass
+            };
+        }
+
+        if (map[typeKey]) {
+            return map[typeKey];
+        }
+
+        const title = (ev.title || '').toLowerCase();
+        if (title.includes('كويز') || title.includes('quiz')) {
+            return map['quiz'];
+        }
+        if (title.includes('واجب') || title.includes('رسم') || title.includes('homework')) {
+            return map['homework'];
+        }
+        if (title.includes('اسسمنت') || title.includes('تقييم') || title.includes('assessment')) {
+            return map['assessment'];
+        }
+        if (title.includes('بحث') || title.includes('مشروع') || title.includes('research')) {
+            return map['research'];
+        }
+        if (title.includes('نهائ') || title.includes('فاينل') || title.includes('final')) {
+            return map['final'];
+        }
+        if (title.includes('نصفي') || title.includes('ميد') || title.includes('midterm')) {
+            return map['midterm'];
+        }
+
+        if (typeKey && typeKey !== 'other') {
+            return { label: ev.type, badgeClass: 'badge-type-custom', printClass: 'm1-badge-exam' };
+        }
+
+        return { label: 'حدث', badgeClass: 'badge-type-other', printClass: 'm1-badge-exam' };
+    },
+    toggleCustomTypeInput: function(val) {
+        const wrap = document.getElementById('ev-custom-type-wrap');
+        const input = document.getElementById('ev-custom-type');
+        if (wrap) {
+            if (val === 'custom') {
+                wrap.style.display = 'block';
+                if (input) input.focus();
+            } else {
+                wrap.style.display = 'none';
+            }
+        }
+    },
     hijriMonths: [
         "محرم", "صفر", "ربيع الأول", "ربيع الآخر", "جمادى الأولى", "جمادى الآخرة",
         "رجب", "شعبان", "رمضان", "شوال", "ذو القعدة", "ذو الحجة"
@@ -111,7 +182,7 @@ const ScheduleApp = {
     init: async function() {
         try {
             if (!this.adminPassword) {
-                this.adminPassword = sessionStorage.getItem('dent2025_schedule_admin_pass') || null;
+                this.adminPassword = sessionStorage.getItem('dent2025_schedule_admin_pass') || sessionStorage.getItem('dent2025_admin_pass') || null;
             }
             try {
                 if (window.dentAnalytics && typeof window.dentAnalytics.track === 'function') {
@@ -171,7 +242,7 @@ const ScheduleApp = {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const isAdmin = !!(this.adminPassword || sessionStorage.getItem('dent2025_schedule_admin_pass'));
+        const isAdmin = !!(this.adminPassword || sessionStorage.getItem('dent2025_schedule_admin_pass') || sessionStorage.getItem('dent2025_admin_pass'));
 
         const groupedEvents = {};
         let totalVisibleEvents = 0;
@@ -405,12 +476,19 @@ const ScheduleApp = {
                     const isNationalDay = ev.id === 'evt_hol_national' || (ev.title && ev.title.includes('اليوم الوطني'));
                     const nationalDayCardClass = isNationalDay ? ' event-card-national-day' : '';
                     
+                    const typeMeta = this.getEventTypeMeta(ev);
+                    let typeBadgeHtml = '';
+                    if (typeMeta && typeMeta.label && typeMeta.label !== 'أخرى' && typeMeta.label !== 'حدث') {
+                        typeBadgeHtml = `<span class="badge ${typeMeta.badgeClass}">${dentEscapeHtml(typeMeta.label)}</span>`;
+                    }
+
                     cardsHtml += `
                         <div class="event-card${nationalDayCardClass}" id="event-${ev.id}">
                             <div class="event-info" style="flex: 1; min-width: 0;">
                                 <h3 class="event-title" dir="auto">${dentEscapeHtml(ev.title)}</h3>
                             </div>
                             <div class="event-badges" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                ${typeBadgeHtml}
                                 <span class="badge ${extraBadgeClass}">${badgeHtml}</span>
                                 ${adminNoticeBadge}
                                 ${adminButtons}
@@ -460,10 +538,12 @@ const ScheduleApp = {
             if (!ev || !ev.title) return false;
             const t = ev.title.toLowerCase();
             const id = (ev.id || '').toLowerCase();
-            if (t.includes('واجب') || t.includes('تكليف') || t.includes('مشروع') || t.includes('تقرير') || t.includes('نهائ') || t.includes('فاينل')) {
+            const type = (ev.type || '').toLowerCase();
+            const typeLabel = (ev.type_label || '').toLowerCase();
+            if (t.includes('واجب') || t.includes('تكليف') || t.includes('مشروع') || t.includes('تقرير') || t.includes('نهائ') || t.includes('فاينل') || type === 'homework' || type === 'research' || type === 'final') {
                 return false;
             }
-            return t.includes('كويز') || t.includes('quiz') || id.includes('quiz') || t.includes('اختبار قصير') || (ev.type === 'exam' && !t.includes('نهائ') && !t.includes('فاينل'));
+            return t.includes('كويز') || t.includes('quiz') || id.includes('quiz') || t.includes('اختبار قصير') || type === 'quiz' || type === 'assessment' || typeLabel.includes('كويز') || typeLabel.includes('اسسمنت') || (type === 'exam' && !t.includes('نهائ') && !t.includes('فاينل'));
         };
 
         events.forEach(ev => {
@@ -471,7 +551,8 @@ const ScheduleApp = {
             if (evDate) evDate.setHours(0, 0, 0, 0);
             
             if (ev.type === 'start') startEvent = ev;
-            if (ev.type === 'exam') finalsEvent = ev;
+            if (ev.type === 'final' || (ev.type === 'exam' && (ev.title.includes('نهائ') || ev.title.includes('فاينل')))) finalsEvent = ev;
+            else if (!finalsEvent && ev.type === 'exam') finalsEvent = ev;
             
             if (evDate && evDate >= today) {
                 if (isQuiz(ev) && !closestExam) closestExam = ev;
@@ -647,6 +728,9 @@ const ScheduleApp = {
         logoutBtn.onclick = () => {
             this.adminPassword = null;
             sessionStorage.removeItem('dent2025_schedule_admin_pass');
+            sessionStorage.removeItem('dent2025_admin_pass');
+            sessionStorage.removeItem('dent2025_permissions');
+            sessionStorage.removeItem('dent2025_passkey_info');
             let lock = document.querySelector('.dent-schedule-secret-lock');
             if(lock) { lock.style.display = 'flex'; }
             this.render(this.eventsData);
@@ -666,7 +750,11 @@ const ScheduleApp = {
         const submitBtnText = isEdit ? 'حفظ التعديلات' : 'حفظ الحدث';
         
         const titleVal = isEdit ? dentEscapeHtml(existingEvent.title || '') : '';
-        const typeVal = isEdit ? (existingEvent.type || 'other') : 'other';
+        const standardTypes = ['quiz', 'assessment', 'research', 'homework', 'exam', 'midterm', 'final', 'holiday', 'payment', 'start', 'other'];
+        const isCustomType = isEdit && (existingEvent.type === 'custom' || (!standardTypes.includes(existingEvent.type) && existingEvent.type) || !!existingEvent.type_label);
+        const effectiveType = isCustomType ? 'custom' : (isEdit ? (existingEvent.type || 'other') : 'quiz');
+        const customTypeVal = isCustomType ? (existingEvent.type_label || existingEvent.type || '') : '';
+
         const dateVal = isEdit ? (existingEvent.date || '') : '';
         const endDateVal = isEdit ? (existingEvent.end_date || '') : '';
         const isGlobal = isEdit ? !!existingEvent.is_global : (this.scheduleId === 'global');
@@ -717,7 +805,7 @@ const ScheduleApp = {
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; gap: 8px;">
                     <div style="flex:1;">
                         <h3 style="margin: 0 0 4px; font-size: 1.1rem; font-weight: 700; color: #f8fafc;">${modalTitle}</h3>
-                        <span style="font-size: 0.75rem; color: #a78bfa; background: rgba(167,139,250,0.12); border: 1px solid rgba(167,139,250,0.25); border-radius: 6px; padding: 2px 8px; display: inline-block;">📌 ${dentEscapeHtml(scopeText)}</span>
+                        <span style="font-size: 0.75rem; color: #a78bfa; background: rgba(167,139,250,0.12); border: 1px solid rgba(167,139,250,0.25); border-radius: 6px; padding: 2px 8px; display: inline-block;">نطاق: ${dentEscapeHtml(scopeText)}</span>
                     </div>
                     <button type="button" onclick="document.getElementById('dent-admin-modal').remove()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; flex-shrink:0; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">×</button>
                 </div>
@@ -731,13 +819,23 @@ const ScheduleApp = {
                 
                 <div style="margin-bottom: 14px;">
                     <label style="font-size:0.8rem; color:#a1a1aa; font-weight:600; display:block; margin-bottom:5px;">نوع الحدث</label>
-                    <select id="ev-type" style="width: 100%; height: 44px; padding: 0 14px; background: #121212; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 0.9rem; font-family: inherit; box-sizing: border-box; outline: none; transition: all 0.2s; color-scheme: dark;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)';">
-                        <option value="start"${typeVal === 'start' ? ' selected' : ''}>بداية دراسة</option>
-                        <option value="holiday"${typeVal === 'holiday' ? ' selected' : ''}>إجازة</option>
-                        <option value="exam"${typeVal === 'exam' ? ' selected' : ''}>اختبار</option>
-                        <option value="payment"${typeVal === 'payment' ? ' selected' : ''}>مكافأة</option>
-                        <option value="other"${typeVal === 'other' ? ' selected' : ''}>أخرى</option>
+                    <select id="ev-type" onchange="ScheduleApp.toggleCustomTypeInput(this.value)" style="width: 100%; height: 44px; padding: 0 14px; background: #121212; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 0.9rem; font-family: inherit; box-sizing: border-box; outline: none; transition: all 0.2s; color-scheme: dark;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)';">
+                        <option value="quiz"${effectiveType === 'quiz' ? ' selected' : ''}>كويز</option>
+                        <option value="assessment"${effectiveType === 'assessment' ? ' selected' : ''}>اسسمنت / تقييم</option>
+                        <option value="research"${effectiveType === 'research' ? ' selected' : ''}>بحث / مشروع</option>
+                        <option value="homework"${effectiveType === 'homework' ? ' selected' : ''}>واجب / تكليف</option>
+                        <option value="exam"${effectiveType === 'exam' ? ' selected' : ''}>اختبار</option>
+                        <option value="midterm"${effectiveType === 'midterm' ? ' selected' : ''}>اختبار نصفي</option>
+                        <option value="final"${effectiveType === 'final' ? ' selected' : ''}>اختبار نهائي</option>
+                        <option value="holiday"${effectiveType === 'holiday' ? ' selected' : ''}>إجازة</option>
+                        <option value="payment"${effectiveType === 'payment' ? ' selected' : ''}>مكافأة</option>
+                        <option value="start"${effectiveType === 'start' ? ' selected' : ''}>بداية دراسة</option>
+                        <option value="other"${effectiveType === 'other' ? ' selected' : ''}>أخرى</option>
+                        <option value="custom"${effectiveType === 'custom' ? ' selected' : ''}>نوع مخصص (كتابة يدوية)...</option>
                     </select>
+                    <div id="ev-custom-type-wrap" style="display: ${effectiveType === 'custom' ? 'block' : 'none'}; margin-top: 8px;">
+                        <input type="text" id="ev-custom-type" value="${dentEscapeHtml(customTypeVal)}" placeholder="اكتب نوع الحدث المخصص (مثال: بريزنتيشن، معمل، تسليم حالة...)" style="width: 100%; height: 40px; padding: 0 12px; background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.22); border-radius: 8px; color: #fff; font-size: 0.85rem; font-family: inherit; box-sizing: border-box; outline: none; transition: all 0.2s;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.22)';">
+                    </div>
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-bottom: 14px; width: 100%;">
@@ -785,7 +883,27 @@ const ScheduleApp = {
         const isEdit = !!id;
 
         const title = (document.getElementById('ev-title')?.value || '').trim();
-        const type = document.getElementById('ev-type')?.value || 'other';
+        const typeSelect = document.getElementById('ev-type');
+        let selectedType = typeSelect ? typeSelect.value : 'other';
+        let typeLabel = null;
+
+        if (selectedType === 'custom') {
+            const customInput = document.getElementById('ev-custom-type');
+            const customVal = (customInput ? customInput.value : '').trim();
+            if (customVal) {
+                selectedType = 'custom';
+                typeLabel = customVal;
+            } else {
+                selectedType = 'other';
+                typeLabel = 'أخرى';
+            }
+        } else {
+            const selectedOpt = typeSelect ? typeSelect.options[typeSelect.selectedIndex] : null;
+            if (selectedOpt) {
+                typeLabel = selectedOpt.text.trim();
+            }
+        }
+
         const date = (document.getElementById('ev-date')?.value || '').trim();
         const end_date = (document.getElementById('ev-end')?.value || '').trim();
         const previewEl = document.getElementById('ev-hijri-preview');
@@ -815,7 +933,8 @@ const ScheduleApp = {
             schedule_id: targetSchedId,
             is_global: isGlobal,
             title: title,
-            type: type,
+            type: selectedType,
+            type_label: typeLabel,
             date: date,
             end_date: end_date || null,
             hijri: hijri
@@ -1123,23 +1242,6 @@ const ScheduleApp = {
             }
         });
 
-        // Type mapping — prints whatever "نوع الحدث" was entered when making the event
-        const typeMap = {
-            'exam': 'اختبار',
-            'holiday': 'إجازة رسمية',
-            'payment': 'مكافأة',
-            'start': 'بداية دراسة',
-            'other': 'أخرى'
-        };
-
-        const typeBadgeClass = {
-            'exam': 'm1-badge-exam',
-            'holiday': 'm1-badge-holiday',
-            'payment': 'm1-badge-payment',
-            'start': 'm1-badge-holiday',
-            'other': 'm1-badge-exam'
-        };
-
         let weeksHtml = '';
         const sortedWeeks = Object.keys(groupedWeeks).sort();
 
@@ -1188,8 +1290,9 @@ const ScheduleApp = {
                         countdownText = 'جارٍ / منتهٍ';
                     }
 
-                    const typeLabel = ev.type_label || typeMap[ev.type] || ev.type || 'حدث';
-                    const badgeClass = typeBadgeClass[ev.type] || 'm1-badge-exam';
+                    const typeMeta = this.getEventTypeMeta(ev);
+                    const typeLabel = typeMeta.label;
+                    const badgeClass = typeMeta.printClass;
 
                     rowsHtml += `
                         <tr>

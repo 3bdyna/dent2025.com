@@ -1002,27 +1002,39 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             return;
         }
 
-        const enteredPass = prompt("أدخل كلمة مرور المشرف لتعديل عنوان الاختبار:");
+        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        if (window.dentPromptPin) {
+            window.dentPromptPin({
+                title: 'تعديل عنوان الاختبار',
+                subtitle: 'أدخل رمز PIN للمشرف لتعديل العنوان',
+                context: sel,
+                onSuccess: function() {
+                    proceedToEdit();
+                }
+            });
+            return;
+        }
+
+        const enteredPass = prompt("أدخل رمز PIN للمشرف لتعديل عنوان الاختبار:");
         if (!enteredPass) return;
 
-        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
         fetch(`${API_BASE}/dent2025_api.php?action=check_auth`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: enteredPass, specialty: sel.specialty || 'dentistry', year: sel.year || 1, semester: sel.semester || 1 })
+            body: JSON.stringify({ password: enteredPass, specialty: sel.specialty || 'dentistry', year: sel.year || 3, semester: sel.semester || 1 })
         })
         .then(r => r.json())
         .then(res => {
             if (res.success) {
                 sessionStorage.setItem('dent2025_admin_pass', enteredPass);
+                sessionStorage.setItem('dent2025_schedule_admin_pass', enteredPass);
                 proceedToEdit();
             } else {
-                alert("كلمة المرور غير صحيحة.");
+                alert(res.message || "رمز PIN غير صحيح.");
             }
         })
         .catch(() => {
-            sessionStorage.setItem('dent2025_admin_pass', enteredPass);
-            proceedToEdit();
+            alert("حدث خطأ في الاتصال بالخادم.");
         });
     }
 

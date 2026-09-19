@@ -144,9 +144,9 @@
     </div>
 </div>
 
+<script src="/frontend_components/dent_pin_modal.js"></script>
 <script>
     const DENT_API_BASE = window.location.pathname.startsWith('/dev') ? '/dev' : '';
-
     function repositionAdminPanel() {
         const panel = document.getElementById('dent-admin-panel');
         if (!panel) return;
@@ -171,12 +171,23 @@
             return;
         }
 
-        const pass = prompt("Enter Admin Password:");
+        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        if (window.dentPromptPin) {
+            window.dentPromptPin({
+                title: 'تسجيل دخول المشرف',
+                subtitle: 'أدخل رمز PIN لتعديل وإدارة المقررات الدراسية',
+                context: sel,
+                onSuccess: function() {
+                    activateAdminMode();
+                }
+            });
+            return;
+        }
+
+        // Fallback
+        const pass = prompt("أدخل رمز PIN للمشرف:");
         if (!pass) return;
 
-        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
-        if (!sel.specialty) return alert("الرجاء اختيار التخصص أولاً من الصفحة الرئيسية.");
-        
         fetch(DENT_API_BASE + '/dent2025_api.php?action=check_auth', {
             method: 'POST',
             body: JSON.stringify({ password: pass, specialty: sel.specialty, year: sel.year, semester: sel.semester })
@@ -185,11 +196,12 @@
         .then(res => {
             if (res.success) {
                 sessionStorage.setItem('dent2025_admin_pass', pass);
+                sessionStorage.setItem('dent2025_schedule_admin_pass', pass);
                 const perms = (res.data && res.data.permissions) ? res.data.permissions : {};
                 sessionStorage.setItem('dent2025_permissions', JSON.stringify(perms));
                 activateAdminMode();
             } else {
-                alert("كلمة المرور غير صحيحة. (Incorrect Password)");
+                alert(res.message || "رمز PIN غير صحيح.");
             }
         })
         .catch(err => {
@@ -228,7 +240,9 @@
 
     function logoutAdmin() {
         sessionStorage.removeItem('dent2025_admin_pass');
+        sessionStorage.removeItem('dent2025_schedule_admin_pass');
         sessionStorage.removeItem('dent2025_permissions');
+        sessionStorage.removeItem('dent2025_passkey_info');
         let lock = document.querySelector('.dent-secret-lock');
         if(lock) { lock.classList.remove('hidden'); lock.style.display = 'flex'; }
         

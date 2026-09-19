@@ -408,12 +408,70 @@ $input = json_decode($raw_input, true) ?: [];
 $password = $input['password'] ?? ($_POST['password'] ?? '');
 
 if ($action === 'check_auth') {
+    $client_ip = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'));
+    if (strpos($client_ip, ',') !== false) {
+        $client_ip = trim(explode(',', $client_ip)[0]);
+    }
+
+    $rate_dir = dirname(__FILE__) . '/dent2025_study_data';
+    if (!is_dir($rate_dir)) @mkdir($rate_dir, 0777, true);
+    $rate_file = $rate_dir . '/auth_rate_limits.json';
+
+    $rate_data = [];
+    if (file_exists($rate_file)) {
+        $rate_data = json_decode(@file_get_contents($rate_file), true) ?: [];
+    }
+
+    $now = time();
+    // Prune stale records older than 15 minutes
+    foreach ($rate_data as $ip_key => $rec) {
+        if (($now - ($rec['time'] ?? 0)) > 900) {
+            unset($rate_data[$ip_key]);
+        }
+    }
+
+    $rec = $rate_data[$client_ip] ?? ['attempts' => 0, 'time' => $now, 'locked_until' => 0];
+    if (!empty($rec['locked_until']) && $rec['locked_until'] > $now) {
+        $remaining_mins = max(1, ceil(($rec['locked_until'] - $now) / 60));
+        echo json_encode([
+            "success" => false,
+            "locked" => true,
+            "message" => "تم قفل محاولات الدخول مؤقتاً لتكرار الخطأ. يرجى الانتظار {$remaining_mins} دقيقة."
+        ]);
+        exit;
+    }
+
     $entry = dent2025_get_passkey_info($password);
     if ($entry) {
+        // Successful login: reset attempts
+        if (isset($rate_data[$client_ip])) {
+            unset($rate_data[$client_ip]);
+            @file_put_contents($rate_file, json_encode($rate_data), LOCK_EX);
+        }
         unset($entry['passkey']);
         echo json_encode(["success" => true, "data" => $entry]);
     } else {
-        echo json_encode(["success" => false, "message" => "Invalid password"]);
+        $attempts = ($rec['attempts'] ?? 0) + 1;
+        $rec['attempts'] = $attempts;
+        $rec['time'] = $now;
+        if ($attempts >= 5) {
+            $rec['locked_until'] = $now + 600; // 10 minute lockout
+            $rate_data[$client_ip] = $rec;
+            @file_put_contents($rate_file, json_encode($rate_data), LOCK_EX);
+            echo json_encode([
+                "success" => false,
+                "locked" => true,
+                "message" => "تم تجاوز الحد الأقصى للمحاولات (5). تم قفل الدخول لمدة 10 دقائق."
+            ]);
+        } else {
+            $rate_data[$client_ip] = $rec;
+            @file_put_contents($rate_file, json_encode($rate_data), LOCK_EX);
+            $remaining = 5 - $attempts;
+            echo json_encode([
+                "success" => false,
+                "message" => "رمز PIN غير صحيح. محاولات متبقية: {$remaining}"
+            ]);
+        }
     }
     exit;
 }

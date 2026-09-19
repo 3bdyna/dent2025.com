@@ -33,10 +33,16 @@
 </style>
 
 <div class="dent-admin-controls-wrapper">
-    <div class="dent-secret-lock-main" id="dent-lock-main" onclick="promptAdminLoginMain()" title="Admin Login">🔒</div>
+    <div class="dent-secret-lock-main" id="dent-lock-main" onclick="promptAdminLoginMain()" title="Admin Login">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+    </div>
     <button class="dent-logout-main" id="dent-logout-main" onclick="logoutAdminMain()">خروج (Logout)</button>
 </div>
 
+<script src="/frontend_components/dent_pin_modal.js"></script>
 <script>
     function promptAdminLoginMain() {
         if (sessionStorage.getItem('dent2025_admin_pass')) {
@@ -44,12 +50,23 @@
             return;
         }
 
-        const pass = prompt("Enter Admin Password:");
+        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        if (window.dentPromptPin) {
+            window.dentPromptPin({
+                title: 'تسجيل دخول المشرف',
+                subtitle: 'أدخل رمز PIN لإدارة الإعلانات والمحتوى',
+                context: sel,
+                onSuccess: function() {
+                    activateAdminModeMain();
+                }
+            });
+            return;
+        }
+
+        // Fallback if modal script is still loading
+        const pass = prompt("أدخل رمز PIN للمشرف:");
         if (!pass) return;
 
-        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
-        if (!sel.specialty) return alert("الرجاء اختيار التخصص أولاً من الصفحة الرئيسية.");
-        
         const apiBase = window.location.pathname.startsWith('/dev') ? '/dev' : '';
         fetch(apiBase + '/dent2025_api.php?action=check_auth', {
             method: 'POST',
@@ -59,11 +76,12 @@
         .then(res => {
             if (res.success) {
                 sessionStorage.setItem('dent2025_admin_pass', pass);
+                sessionStorage.setItem('dent2025_schedule_admin_pass', pass);
                 const perms = (res.data && res.data.permissions) ? res.data.permissions : {};
                 sessionStorage.setItem('dent2025_permissions', JSON.stringify(perms));
                 activateAdminModeMain();
             } else {
-                alert("كلمة المرور غير صحيحة. (Incorrect Password)");
+                alert(res.message || "رمز PIN غير صحيح.");
             }
         })
         .catch(err => {
@@ -84,7 +102,9 @@
 
     function logoutAdminMain() {
         sessionStorage.removeItem('dent2025_admin_pass');
+        sessionStorage.removeItem('dent2025_schedule_admin_pass');
         sessionStorage.removeItem('dent2025_permissions');
+        sessionStorage.removeItem('dent2025_passkey_info');
         document.getElementById('dent-lock-main').style.display = 'block';
         document.getElementById('dent-logout-main').style.display = 'none';
         // Refresh dashboard to hide the Edit Announcements button
