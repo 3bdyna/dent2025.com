@@ -1237,7 +1237,6 @@ const ScheduleApp = {
         if (announcementText) {
             announcementHtml = `
                 <div style="margin-top: 12px; border: 1px solid #cbd5e1; border-right: 3px solid #334155; border-radius: 6px; padding: 8px 12px; background: #f8fafc; page-break-inside: avoid;">
-                    <strong style="font-size: 0.72rem; color: #1e293b; display: block; margin-bottom: 4px;">📢 إعلانات وتنبيهات الدفعة:</strong>
                     <div class="print-ann-body" style="font-size: 0.70rem; color: #1e293b; line-height: 1.5;">${announcementText}</div>
                 </div>
             `;
