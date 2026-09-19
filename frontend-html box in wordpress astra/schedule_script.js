@@ -98,30 +98,6 @@ const ScheduleApp = {
             }
         }
     },
-    formatEventTitleHtml: function(title) {
-        if (!title) return '';
-        const match = title.match(/^(.*?)\s*-\s*(المواضيع|Topics|المواضيع المقررة):\s*(.*)$/i);
-        if (match) {
-            const mainPart = match[1].trim();
-            const topicsLabel = match[2].trim() + ':';
-            const topicsContent = match[3].trim();
-            const topicItems = topicsContent.split(/[,،]\s*/).filter(Boolean);
-            
-            let chipsHtml = '';
-            topicItems.forEach(t => {
-                chipsHtml += `<span class="event-topic-chip" dir="auto">${dentEscapeHtml(t)}</span>`;
-            });
-
-            return `
-                <h3 class="event-title" dir="auto">${dentEscapeHtml(mainPart)}</h3>
-                <div class="event-topics-row">
-                    <span class="event-topics-label">${dentEscapeHtml(topicsLabel)}</span>
-                    <div class="event-topics-chips">${chipsHtml}</div>
-                </div>
-            `;
-        }
-        return `<h3 class="event-title" dir="auto">${dentEscapeHtml(title)}</h3>`;
-    },
     hijriMonths: [
         "محرم", "صفر", "ربيع الأول", "ربيع الآخر", "جمادى الأولى", "جمادى الآخرة",
         "رجب", "شعبان", "رمضان", "شوال", "ذو القعدة", "ذو الحجة"
@@ -512,7 +488,7 @@ const ScheduleApp = {
                     cardsHtml += `
                         <div class="event-card${nationalDayCardClass}" id="event-${ev.id}">
                             <div class="event-info" style="flex: 1; min-width: 0;">
-                                ${this.formatEventTitleHtml(ev.title)}
+                                <h3 class="event-title" dir="auto">${dentEscapeHtml(ev.title)}</h3>
                             </div>
                             <div class="event-badges">
                                 ${typeBadgeHtml}
@@ -615,14 +591,12 @@ const ScheduleApp = {
                 elExam.style.color = '';
             }
             if (elExamName) {
-                const cleanTitle = (closestExam.title || '').replace(/\s*-\s*(المواضيع|Topics|المواضيع المقررة):.*$/i, '').trim();
-                elExamName.innerText = `(${cleanTitle})`;
+                elExamName.innerText = `(${closestExam.title})`;
                 elExamName.title = closestExam.title;
             }
             if (statExamCard) {
-                const cleanTitle = (closestExam.title || '').replace(/\s*-\s*(المواضيع|Topics|المواضيع المقررة):.*$/i, '').trim();
                 statExamCard.style.cursor = 'pointer';
-                statExamCard.title = `انقر للانتقال إلى: ${cleanTitle}`;
+                statExamCard.title = `انقر للانتقال إلى: ${closestExam.title}`;
                 statExamCard.onclick = () => {
                     const targetCard = document.getElementById(`event-${closestExam.id}`);
                     if (targetCard) {
@@ -1332,13 +1306,7 @@ const ScheduleApp = {
                                 <span class="m1-date-hijri">${dentEscapeHtml(hijriStr)}</span>
                             </td>
                             <td class="m1-title-col">
-                                ${(() => {
-                                    const matchTopics = ev.title ? ev.title.match(/^(.*?)\s*-\s*(المواضيع|Topics|المواضيع المقررة):\s*(.*)$/i) : null;
-                                    if (matchTopics) {
-                                        return `<strong>${dentEscapeHtml(matchTopics[1].trim())}</strong><div style="font-size: 8pt; color: #475569; margin-top: 3px; font-weight: normal;"><span style="font-weight: 600;">${dentEscapeHtml(matchTopics[2].trim())}:</span> <span dir="ltr" style="unicode-bidi: isolate;">${dentEscapeHtml(matchTopics[3].trim())}</span></div>`;
-                                    }
-                                    return `<strong>${dentEscapeHtml(ev.title)}</strong>`;
-                                })()}
+                                <strong>${dentEscapeHtml(ev.title)}</strong>
                             </td>
                             <td class="m1-status-col"><span class="m1-type-badge ${badgeClass}">${dentEscapeHtml(typeLabel)}</span></td>
                             <td class="m1-status-col ${countdownClass}">${dentEscapeHtml(countdownText)}</td>
