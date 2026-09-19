@@ -609,6 +609,25 @@
         .then(r => r.json())
         .then(res => {
             if (res.success && res.data) {
+                const allowedContexts = res.data.allowed_contexts || [];
+                const isUniversal = allowedContexts.includes('*');
+                const currentContextKey = `${payload.specialty}_${payload.year}_${payload.semester}`;
+
+                if (!isUniversal && !allowedContexts.includes(currentContextKey)) {
+                    isVerifying = false;
+                    if (submitBtn) submitBtn.disabled = false;
+                    triggerShake();
+                    setStatus('رمز PIN غير مصرح له بهذه الدفعة/القسم.', 'error');
+                    currentDigits = [];
+                    updateCells();
+                    const hiddenInput = activeModal?.overlay?.querySelector('#dent-pin-hidden');
+                    if (hiddenInput) {
+                        hiddenInput.value = '';
+                        try { hiddenInput.focus(); } catch(e) {}
+                    }
+                    return;
+                }
+
                 sessionStorage.setItem('dent2025_admin_pass', pin);
                 sessionStorage.setItem('dent2025_schedule_admin_pass', pin);
                 const perms = res.data.permissions || {};
