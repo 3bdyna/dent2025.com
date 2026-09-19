@@ -1065,7 +1065,7 @@ const ScheduleApp = {
         modal.innerHTML = `
             <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 24px; width: 100%; max-width: 460px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: #fff; box-sizing: border-box;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
-                    <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #f8fafc;">طباعة تقويم الأسبوعين القادمين (A4 PDF)</h3>
+                    <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #f8fafc;">طباعة تقويم الأسابيع الـ 3 القادمة (A4 PDF)</h3>
                     <button type="button" onclick="document.getElementById('dent-print-schedule-modal').remove()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">×</button>
                 </div>
 
@@ -1103,7 +1103,7 @@ const ScheduleApp = {
             try {
                 mobileWindow = window.open('', '_blank');
                 if (mobileWindow) {
-                    mobileWindow.document.write('<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Dent2025 • تقويم الأسبوعين</title><style>body{background:#0b0f17;color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:90vh;margin:0;text-align:center;direction:rtl;}.card{background:#18181b;padding:26px 20px;border-radius:14px;border:1px solid rgba(255,255,255,0.12);max-width:320px;box-shadow:0 10px 30px rgba(0,0,0,0.4);}.spinner{width:38px;height:38px;border:3px solid rgba(255,255,255,0.15);border-top-color:#38bdf8;border-radius:50%;animation:dentSpin 0.8s linear infinite;margin:0 auto 16px auto;}@keyframes dentSpin{to{transform:rotate(360deg);}}</style></head><body><div class="card"><div class="spinner"></div><div style="font-weight:700;font-size:1.05rem;margin-bottom:6px;">جاري تجهيز تقويم الأسبوعين للطباعة...</div><div style="font-size:0.8rem;color:#94a3b8;">يرجى الانتظار ثانية واحدة</div></div></body></html>');
+                    mobileWindow.document.write('<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Dent2025 • تقويم الأسابيع الثلاثة</title><style>body{background:#0b0f17;color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:90vh;margin:0;text-align:center;direction:rtl;}.card{background:#18181b;padding:26px 20px;border-radius:14px;border:1px solid rgba(255,255,255,0.12);max-width:320px;box-shadow:0 10px 30px rgba(0,0,0,0.4);}.spinner{width:38px;height:38px;border:3px solid rgba(255,255,255,0.15);border-top-color:#38bdf8;border-radius:50%;animation:dentSpin 0.8s linear infinite;margin:0 auto 16px auto;}@keyframes dentSpin{to{transform:rotate(360deg);}}</style></head><body><div class="card"><div class="spinner"></div><div style="font-weight:700;font-size:1.05rem;margin-bottom:6px;">جاري تجهيز تقويم الأسابيع الثلاثة للطباعة...</div><div style="font-size:0.8rem;color:#94a3b8;">يرجى الانتظار ثانية واحدة</div></div></body></html>');
                     mobileWindow.document.close();
                 }
             } catch(e) {
@@ -1129,7 +1129,7 @@ const ScheduleApp = {
             }
         }
 
-        const printHtml = this.generateTwoWeeksPrintHtml(notes, announcementText, isMobile);
+        const printHtml = this.generateThreeWeeksPrintHtml(notes, announcementText, isMobile);
 
         const modal = document.getElementById('dent-print-schedule-modal');
         if (modal) modal.remove();
@@ -1181,12 +1181,40 @@ const ScheduleApp = {
     },
 
     generateTwoWeeksPrintHtml: function(customNotes, announcementText, isMobile = false) {
+        return this.generateThreeWeeksPrintHtml(customNotes, announcementText, isMobile);
+    },
+
+    generateThreeWeeksPrintHtml: function(customNotes, announcementText, isMobile = false) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const twoWeeksLater = new Date(today);
-        twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
-        twoWeeksLater.setHours(23, 59, 59, 999);
 
+        // 1. Calculate the Sunday that started the CURRENT week
+        const currentSunday = new Date(today);
+        currentSunday.setDate(today.getDate() - today.getDay());
+        currentSunday.setHours(0, 0, 0, 0);
+
+        // 2. Exactly 3 full academic weeks (21 days): from current Sunday through the Saturday of the 3rd week
+        const threeWeeksEnd = new Date(currentSunday);
+        threeWeeksEnd.setDate(currentSunday.getDate() + 20); // 21st day of the span (Saturday night)
+        threeWeeksEnd.setHours(23, 59, 59, 999);
+
+        // 3. Anchor semester start to Sunday 2026-08-30 (Week 1), ensuring consistent week numbering
+        const startSunday = new Date(2026, 7, 30);
+        startSunday.setHours(0, 0, 0, 0);
+
+        // Calculate dynamic week numbers for badge
+        const startWeekNum = Math.floor((currentSunday - startSunday) / (1000 * 60 * 60 * 24 * 7)) + 1;
+        const midWeekNum = startWeekNum + 1;
+        const endWeekNum = startWeekNum + 2;
+
+        let weeksBadgeText = '';
+        if (startWeekNum > 0) {
+            weeksBadgeText = `الأسابيع (${startWeekNum}، ${midWeekNum}، ${endWeekNum}) • تقويم أم القرى`;
+        } else {
+            weeksBadgeText = 'تقويم أم القرى';
+        }
+
+        // Filter events strictly across the 3 full academic weeks
         const rawEvents = Array.isArray(this.eventsData) ? this.eventsData : [];
         const events = rawEvents.filter(ev => {
             const s = this.parseLocalDate(ev.date);
@@ -1196,10 +1224,10 @@ const ScheduleApp = {
                 const e = this.parseLocalDate(ev.end_date);
                 if (e) {
                     e.setHours(23, 59, 59, 999);
-                    return (e >= today && s <= twoWeeksLater);
+                    return (e >= currentSunday && s <= threeWeeksEnd);
                 }
             }
-            return (s >= today && s <= twoWeeksLater);
+            return (s >= currentSunday && s <= threeWeeksEnd);
         });
 
         // Derive subtitles from saved student selection
@@ -1211,44 +1239,49 @@ const ScheduleApp = {
         const semText = sel.semester ? ` (الفصل الدراسي ${sel.semester === 1 || sel.semester === '1' ? 'الأول' : 'الثاني'})` : '';
         const subTitle = `${specTitle}${yearText}${semText}`;
 
-        // Date range string (BiDi safe)
-        const startDay = today.getDate();
-        const startMonth = this.gregorianMonthsEN[today.getMonth()].substring(0, 3);
-        const startYear = today.getFullYear();
-        const endD = new Date(today);
-        endD.setDate(endD.getDate() + 14);
-        const endDay = endD.getDate();
-        const endMonth = this.gregorianMonthsEN[endD.getMonth()].substring(0, 3);
-        const endYear = endD.getFullYear();
+        // Date range string (BiDi safe) - spans Sunday of Week 1 through Saturday of Week 3
+        const startDay = currentSunday.getDate();
+        const startMonth = this.gregorianMonthsEN[currentSunday.getMonth()].substring(0, 3);
+        const startYear = currentSunday.getFullYear();
+        const endDay = threeWeeksEnd.getDate();
+        const endMonth = this.gregorianMonthsEN[threeWeeksEnd.getMonth()].substring(0, 3);
+        const endYear = threeWeeksEnd.getFullYear();
         const rangeStr = `${startDay} ${startMonth} ${startYear} — ${endDay} ${endMonth} ${endYear}`;
 
-        // Anchor semester start to Sunday 2026-08-30 (Week 1), ensuring consistent week numbering
-        let startSunday = new Date(2026, 7, 30);
-        startSunday.setHours(0, 0, 0, 0);
+        const groupedWeeks = {};
 
-        // Calculate dynamic week numbers for badge
-        const todaySunday = new Date(today);
-        todaySunday.setDate(today.getDate() - today.getDay());
-        todaySunday.setHours(0, 0, 0, 0);
-        const startWeekNum = Math.floor((todaySunday - startSunday) / (1000 * 60 * 60 * 24 * 7)) + 1;
+        // Pre-initialize the 3 exact consecutive weeks in order so they all appear
+        for (let i = 0; i < 3; i++) {
+            const wSunday = new Date(currentSunday);
+            wSunday.setDate(currentSunday.getDate() + (i * 7));
+            const wNum = startWeekNum + i;
+            const sunMonth = this.gregorianMonthsAR[wSunday.getMonth()];
+            const sunDay = wSunday.getDate();
+            const sunYear = wSunday.getFullYear();
+            const weekKey = `${sunYear}-${String(wSunday.getMonth() + 1).padStart(2, '0')}-${String(sunDay).padStart(2, '0')}`;
+            const weekName = `الأسبوع ${wNum} — ${sunMonth}`;
 
-        const endSunday = new Date(twoWeeksLater);
-        endSunday.setDate(twoWeeksLater.getDate() - endSunday.getDay());
-        endSunday.setHours(0, 0, 0, 0);
-        const endWeekNum = Math.floor((endSunday - startSunday) / (1000 * 60 * 60 * 24 * 7)) + 1;
-
-        let weeksBadgeText = '';
-        if (startWeekNum > 0 && endWeekNum > 0) {
-            if (startWeekNum === endWeekNum) {
-                weeksBadgeText = `الأسبوع ${startWeekNum} • تقويم أم القرى`;
-            } else {
-                weeksBadgeText = `الأسبوع ${startWeekNum} والأسبوع ${endWeekNum} • تقويم أم القرى`;
+            // Derive Hijri label for week header
+            const hDateStr = this.hijriFromGregorian(`${sunYear}-${String(wSunday.getMonth() + 1).padStart(2, '0')}-${String(sunDay).padStart(2, '0')}`);
+            let hijriLabel = '';
+            if (hDateStr) {
+                const parts = hDateStr.split('/');
+                if (parts.length >= 2) {
+                    const mIndex = parseInt(parts[1], 10) - 1;
+                    if (mIndex >= 0 && mIndex < 12) {
+                        hijriLabel = `${this.hijriMonths[mIndex]} ${parts[0]}هـ`;
+                    }
+                }
             }
-        } else {
-            weeksBadgeText = 'تقويم أم القرى';
+
+            groupedWeeks[weekKey] = {
+                weekNum: wNum,
+                weekName: weekName,
+                hijriLabel: hijriLabel,
+                events: []
+            };
         }
 
-        const groupedWeeks = {};
         events.forEach(ev => {
             const dateObj = this.parseLocalDate(ev.date) || new Date();
             const dayOfWeek = dateObj.getDay();
@@ -1256,23 +1289,23 @@ const ScheduleApp = {
             sundayDate.setDate(dateObj.getDate() - dayOfWeek);
             sundayDate.setHours(0, 0, 0, 0);
 
-            const weekNum = Math.floor((sundayDate - startSunday) / (1000 * 60 * 60 * 24 * 7)) + 1;
             const sunMonth = this.gregorianMonthsAR[sundayDate.getMonth()];
             const sunDay = sundayDate.getDate();
             const sunYear = sundayDate.getFullYear();
-            const weekKey = `${sunYear}-${String(sundayDate.getMonth()).padStart(2, '0')}-${String(sunDay).padStart(2, '0')}`;
-            const weekName = `الأسبوع ${weekNum} — ${sunMonth}`;
+            const weekKey = `${sunYear}-${String(sundayDate.getMonth() + 1).padStart(2, '0')}-${String(sunDay).padStart(2, '0')}`;
 
             if (!groupedWeeks[weekKey]) {
+                const weekNum = Math.floor((sundayDate - startSunday) / (1000 * 60 * 60 * 24 * 7)) + 1;
                 groupedWeeks[weekKey] = {
-                    weekName,
+                    weekNum: weekNum,
+                    weekName: `الأسبوع ${weekNum} — ${sunMonth}`,
                     hijriLabel: '',
                     events: []
                 };
             }
             groupedWeeks[weekKey].events.push(ev);
 
-            if (!groupedWeeks[weekKey].hijriLabel && ev.hijri) {
+            if (ev.hijri && !groupedWeeks[weekKey].hijriLabel) {
                 const rawParts = ev.hijri.split(/[\/\-]/);
                 if (rawParts.length >= 2) {
                     let hYear = rawParts[0];
@@ -1292,12 +1325,20 @@ const ScheduleApp = {
         let weeksHtml = '';
         const sortedWeeks = Object.keys(groupedWeeks).sort();
 
-        if (sortedWeeks.length === 0) {
-            weeksHtml = '<div style="text-align: center; padding: 24px; color: #64748b; font-size: 0.85rem; border: 1px dashed #cbd5e1; border-radius: 6px;">لا توجد أحداث مجدولة خلال الـ 14 يوماً القادمة.</div>';
-        } else {
-            sortedWeeks.forEach(weekKey => {
-                const groupData = groupedWeeks[weekKey];
-                let rowsHtml = '';
+        sortedWeeks.forEach(weekKey => {
+            const groupData = groupedWeeks[weekKey];
+            let rowsHtml = '';
+
+            if (groupData.events.length === 0) {
+                rowsHtml = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #94a3b8; padding: 6px 10px; font-size: 0.68rem; font-style: italic;">
+                            لا توجد اختبارات أو أحداث مجدولة لهذا الأسبوع
+                        </td>
+                    </tr>
+                `;
+            } else {
+                groupData.events.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
                 groupData.events.forEach(ev => {
                     const dDate = this.parseLocalDate(ev.date) || new Date();
                     const dayName = dDate.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { weekday: 'long' });
@@ -1333,8 +1374,11 @@ const ScheduleApp = {
                         countdownText = `بعد ${diffDays} أيام`;
                     } else if (diffDays > 10) {
                         countdownText = `بعد ${diffDays} يوماً`;
+                    } else if (diffDays < 0) {
+                        countdownText = 'انتهى';
+                        countdownClass = 'm1-countdown-normal';
                     } else {
-                        countdownText = 'جارٍ / منتهٍ';
+                        countdownText = 'اليوم';
                     }
 
                     const typeMeta = this.getEventTypeMeta(ev);
@@ -1356,38 +1400,38 @@ const ScheduleApp = {
                         </tr>
                     `;
                 });
+            }
 
-                weeksHtml += `
-                    <div class="m1-week-block">
-                        <div class="m1-week-header">
-                            <span>${dentEscapeHtml(groupData.weekName)}</span>
-                            <span>${dentEscapeHtml(groupData.hijriLabel || '')}</span>
-                        </div>
-                        <table class="m1-table">
-                            <thead>
-                                <tr>
-                                    <th>اليوم</th>
-                                    <th>التاريخ</th>
-                                    <th>تفاصيل الحدث والمقرر</th>
-                                    <th style="text-align: center;">النوع</th>
-                                    <th style="text-align: center;">العد التنازلي</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${rowsHtml}
-                            </tbody>
-                        </table>
+            weeksHtml += `
+                <div class="m1-week-block">
+                    <div class="m1-week-header">
+                        <span>${dentEscapeHtml(groupData.weekName)}</span>
+                        <span>${dentEscapeHtml(groupData.hijriLabel || '')}</span>
                     </div>
-                `;
-            });
-        }
+                    <table class="m1-table">
+                        <thead>
+                            <tr>
+                                <th>اليوم</th>
+                                <th>التاريخ</th>
+                                <th>تفاصيل الحدث والمقرر</th>
+                                <th style="text-align: center;">النوع</th>
+                                <th style="text-align: center;">العد التنازلي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        });
 
         // Announcement section (if provided)
         let announcementHtml = '';
         if (announcementText) {
             announcementHtml = `
-                <div style="margin-top: 12px; border: 1px solid #cbd5e1; border-right: 3px solid #334155; border-radius: 6px; padding: 8px 12px; background: #f8fafc; page-break-inside: avoid;">
-                    <div class="print-ann-body" style="font-size: 0.70rem; color: #1e293b; line-height: 1.5;">${announcementText}</div>
+                <div style="margin-top: 10px; border: 1px solid #cbd5e1; border-right: 3px solid #334155; border-radius: 6px; padding: 7px 12px; background: #f8fafc; page-break-inside: avoid;">
+                    <div class="print-ann-body" style="font-size: 0.70rem; color: #1e293b; line-height: 1.45;">${announcementText}</div>
                 </div>
             `;
         }
@@ -1396,9 +1440,9 @@ const ScheduleApp = {
         let notesHtml = '';
         if (customNotes) {
             notesHtml = `
-                <div style="margin-top: 12px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; background: #fafafa; page-break-inside: avoid;">
-                    <strong style="font-size: 0.72rem; color: #334155; display: block; margin-bottom: 4px;">ملاحظات وتذكيرات شخصية:</strong>
-                    <div style="font-size: 0.72rem; color: #1e293b; line-height: 1.5; white-space: pre-wrap;">${dentEscapeHtml(customNotes)}</div>
+                <div style="margin-top: 10px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 7px 12px; background: #fafafa; page-break-inside: avoid;">
+                    <strong style="font-size: 0.70rem; color: #334155; display: block; margin-bottom: 3px;">ملاحظات وتذكيرات شخصية:</strong>
+                    <div style="font-size: 0.70rem; color: #1e293b; line-height: 1.45; white-space: pre-wrap;">${dentEscapeHtml(customNotes)}</div>
                 </div>
             `;
         }
@@ -1410,7 +1454,7 @@ const ScheduleApp = {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dent2025 • تقويم الأسبوعين القادمين</title>
+    <title>Dent2025 • تقويم الأسابيع الثلاثة القادمة</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1507,18 +1551,18 @@ const ScheduleApp = {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
             border-bottom: 2px solid #0f172a;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
         .doc-titles h1 {
-            font-size: 1.20rem;
+            font-size: 1.15rem;
             font-weight: 800;
             color: #0f172a;
             line-height: 1.2;
         }
         .doc-titles p {
-            font-size: 0.76rem;
+            font-size: 0.74rem;
             color: #64748b;
             font-weight: 500;
             margin-top: 2px;
@@ -1531,9 +1575,9 @@ const ScheduleApp = {
             display: inline-block;
             background: #f1f5f9;
             border: 1px solid #cbd5e1;
-            padding: 4px 10px;
+            padding: 3px 9px;
             border-radius: 6px;
-            font-size: 0.74rem;
+            font-size: 0.72rem;
             font-weight: 700;
             color: #1e293b;
             font-family: 'Outfit', sans-serif;
@@ -1547,7 +1591,7 @@ const ScheduleApp = {
             direction: rtl;
         }
         .m1-week-block {
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
             overflow: hidden;
@@ -1557,8 +1601,8 @@ const ScheduleApp = {
         .m1-week-header {
             background: #1e293b;
             color: #f8fafc;
-            padding: 5px 12px;
-            font-size: 0.76rem;
+            padding: 4px 10px;
+            font-size: 0.74rem;
             font-weight: 700;
             display: flex;
             justify-content: space-between;
@@ -1567,7 +1611,7 @@ const ScheduleApp = {
         .m1-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.72rem;
+            font-size: 0.70rem;
         }
         .m1-table tr {
             page-break-inside: avoid;
@@ -1578,13 +1622,13 @@ const ScheduleApp = {
             color: #475569;
             font-weight: 700;
             text-align: right;
-            padding: 5px 8px;
+            padding: 4px 8px;
             border-bottom: 1px solid #cbd5e1;
-            font-size: 0.68rem;
+            font-size: 0.66rem;
             white-space: nowrap;
         }
         .m1-table td {
-            padding: 5px 8px;
+            padding: 4px 8px;
             border-bottom: 1px solid #e2e8f0;
             vertical-align: middle;
             color: #1e293b;
@@ -1593,9 +1637,9 @@ const ScheduleApp = {
         .m1-table tr:nth-child(even) { background-color: #fafafa; }
         .m1-type-badge {
             display: inline-block;
-            font-size: 0.64rem;
+            font-size: 0.62rem;
             font-weight: 600;
-            padding: 2px 7px;
+            padding: 2px 6px;
             border-radius: 4px;
             white-space: nowrap;
         }
@@ -1605,18 +1649,18 @@ const ScheduleApp = {
         .m1-day-col {
             font-weight: 700;
             color: #0f172a;
-            width: 75px;
-            font-size: 0.72rem;
+            width: 70px;
+            font-size: 0.70rem;
         }
         .m1-date-col {
-            width: 120px;
+            width: 115px;
             vertical-align: middle;
-            line-height: 1.35;
+            line-height: 1.3;
         }
         .m1-date-greg {
             display: block;
             font-family: 'Outfit', sans-serif;
-            font-size: 0.68rem;
+            font-size: 0.66rem;
             font-weight: 700;
             color: #1e293b;
             direction: ltr;
@@ -1625,28 +1669,28 @@ const ScheduleApp = {
         }
         .m1-date-hijri {
             display: block;
-            font-size: 0.62rem;
+            font-size: 0.60rem;
             color: #64748b;
             direction: rtl;
             text-align: right;
             margin-top: 1px;
             unicode-bidi: isolate;
         }
-        .m1-title-col { font-weight: 600; line-height: 1.35; }
-        .m1-status-col { width: 75px; text-align: center; }
+        .m1-title-col { font-weight: 600; line-height: 1.3; }
+        .m1-status-col { width: 70px; text-align: center; }
         .m1-countdown-urgent { color: #991b1b; font-weight: 700; }
         .m1-countdown-soon { color: #c2410c; font-weight: 700; }
         .m1-countdown-normal { color: #475569; font-weight: 600; }
         .print-ann-body p { margin: 0 0 3px 0; }
         .print-ann-body p:last-child { margin-bottom: 0; }
         .doc-footer {
-            margin-top: 12px;
-            padding-top: 8px;
+            margin-top: 8px;
+            padding-top: 6px;
             border-top: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.68rem;
+            font-size: 0.66rem;
             color: #64748b;
             page-break-inside: avoid;
             break-inside: avoid;
@@ -1682,12 +1726,12 @@ const ScheduleApp = {
     <div class="a4-print-sheet">
         <div class="doc-header">
             <div class="doc-titles">
-                <h1>Dent2025 • جدول الأسبوعين القادمين</h1>
+                <h1>Dent2025 • جدول الأسابيع الثلاثة القادمة</h1>
                 <p>${dentEscapeHtml(subTitle)}</p>
             </div>
             <div class="doc-meta-badge">
                 <span class="period" dir="ltr">${dentEscapeHtml(rangeStr)}</span>
-                <span class="subperiod">${dentEscapeHtml(weeksBadgeText)}</span>
+                <span class="subperiod" dir="rtl"><bdi>${dentEscapeHtml(weeksBadgeText)}</bdi></span>
             </div>
         </div>
 
