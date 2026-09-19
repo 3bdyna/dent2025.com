@@ -88,9 +88,15 @@ function ai_exam_check_daily_rate_limit($maxExamsPerDay = 3) {
         }
     }
 
-    $dataDir = __DIR__ . '/../quizzes_data';
+    $dataDir = __DIR__ . '/gemini_keys_data';
     if (!is_dir($dataDir)) @mkdir($dataDir, 0777, true);
     $limitFile = $dataDir . '/exam_generation_limits.json';
+
+    // Auto-clean legacy file from quizzes_data if it exists so it never appears as a phantom quiz
+    $legacyLimitFile = __DIR__ . '/../quizzes_data/exam_generation_limits.json';
+    if (file_exists($legacyLimitFile)) {
+        @unlink($legacyLimitFile);
+    }
 
     $ip = 'unknown';
     foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'] as $h) {
@@ -2746,7 +2752,7 @@ if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($action === 'get') {
     $rawQuizId = $_GET['id'] ?? '';
     $quizId = preg_replace('/[^a-zA-Z0-9_-]/', '', $rawQuizId);
-    if (empty($quizId)) sendResponse(false, "Missing or invalid quiz ID.");
+    if (empty($quizId) || strpos($quizId, 'quiz_') !== 0) sendResponse(false, "Missing or invalid quiz ID.");
     
     $filePath = __DIR__ . '/../quizzes_data/' . $quizId . '.json';
     if (!file_exists($filePath) || basename($filePath) !== ($quizId . '.json')) sendResponse(false, "Quiz not found.");
@@ -2776,11 +2782,21 @@ if ($action === 'list_quizzes') {
         $list = [];
         $subjectMetaCache = [];
         foreach ($files as $f) {
+            $filename = basename($f);
+            // Ignore system/meta files or non-quiz files
+            if ($filename === 'exam_generation_limits.json' || strpos($filename, 'quiz_') !== 0) {
+                // If legacy rate limit file is still sitting in quizzes_data, remove it permanently
+                if ($filename === 'exam_generation_limits.json') {
+                    @unlink($f);
+                }
+                continue;
+            }
+
             $fileContent = @file_get_contents($f);
             if (!$fileContent) continue;
             
             $data = json_decode($fileContent, true);
-            if (!is_array($data)) continue;
+            if (!is_array($data) || empty($data['id']) || empty($data['questions']) || !is_array($data['questions'])) continue;
             
             $dataSubjectId = (string)($data['subject_id'] ?? '');
             if ($subjectId && $dataSubjectId !== (string)$subjectId) {
@@ -2862,6 +2878,15 @@ if ($action === 'delete_quiz' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($quizId)) sendResponse(false, "Missing quiz ID.");
 
     $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '', $quizId);
+    if ($cleanId === 'exam_generation_limits') {
+        $legacyPath = __DIR__ . '/../quizzes_data/exam_generation_limits.json';
+        if (file_exists($legacyPath)) @unlink($legacyPath);
+        sendResponse(true, ["message" => "Legacy limits cleaned successfully."]);
+    }
+    if (strpos($cleanId, 'quiz_') !== 0) {
+        sendResponse(false, "Invalid quiz ID.");
+    }
+
     $filePath = __DIR__ . '/../quizzes_data/' . $cleanId . '.json';
     if (file_exists($filePath)) {
         @unlink($filePath);
@@ -2893,6 +2918,9 @@ if ($action === 'rename_quiz' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($newName)) sendResponse(false, "Quiz name cannot be empty.");
 
     $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '', $quizId);
+    if (strpos($cleanId, 'quiz_') !== 0) {
+        sendResponse(false, "Invalid quiz ID.");
+    }
     $filePath = __DIR__ . '/../quizzes_data/' . $cleanId . '.json';
 
     if (!file_exists($filePath)) {

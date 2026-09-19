@@ -3675,7 +3675,11 @@ window.AdminApp = {
     },
 
     renderQuizzesTable(list) {
-        let displayList = list || [];
+        let displayList = (list || []).filter(q => {
+            if (!q || !q.id || q.id === 'exam_generation_limits') return false;
+            if (!q.id.startsWith('quiz_') && (!q.num_questions || q.num_questions <= 0)) return false;
+            return true;
+        });
         if (this.focusMode && this.focusMode.enabled) {
             displayList = displayList.filter(q => {
                 if (q.specialty && q.specialty !== this.focusMode.specialty) return false;
