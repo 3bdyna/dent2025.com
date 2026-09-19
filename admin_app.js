@@ -765,6 +765,12 @@ window.AdminApp = {
             } else {
                 this.loadQuizzes();
             }
+        } else if (this.currentTab === 'cache') {
+            if (this.lastCacheData) {
+                this.renderCacheTab(this.lastCacheData);
+            } else {
+                this.loadCacheStats();
+            }
         }
     },
 
@@ -3906,8 +3912,37 @@ window.AdminApp = {
         });
     },
 
-    prewarmSingleFile(fileId, fileName, subjectName, subjectId) {
+    migrateCacheHierarchy() {
+        this.showLoading(true);
+        fetch('/backend/api_ai_exam.php?action=migrate_cache_structure&password=' + encodeURIComponent(this.pass || ''))
+        .then(r => r.json())
+        .then(res => {
+            this.showLoading(false);
+            if (res.success && res.data) {
+                this.showToast(`تم تنظيم المجلدات بنجاح (${res.data.migrated} ملف تم نقله)`);
+                if (res.data.stats) {
+                    this.renderCacheTab(res.data.stats);
+                } else {
+                    this.loadCacheStats();
+                }
+            } else {
+                this.showToast(res.message || 'فشل تنظيم المجلدات', true);
+            }
+        })
+        .catch(err => {
+            this.showLoading(false);
+            console.error('Error migrating cache hierarchy:', err);
+            this.showToast('خطأ في الاتصال أثناء تنظيم المجلدات', true);
+        });
+    },
+
+    prewarmSingleFile(fileId, fileName, subjectName, subjectId, specialty = '', year = '', semester = '') {
         if (!fileId) return;
+        if (!specialty && this.focusMode && this.focusMode.enabled) {
+            specialty = this.focusMode.specialty || '';
+            year = this.focusMode.year || '';
+            semester = this.focusMode.semester || '';
+        }
         this.showLoading(true);
         fetch('/backend/api_ai_exam.php?action=prewarm_single_file', {
             method: 'POST',
@@ -3917,7 +3952,10 @@ window.AdminApp = {
                 file_id: fileId,
                 file_name: fileName || 'ملف مقرر',
                 subject_name: subjectName || 'مادة دراسية',
-                subject_id: subjectId || null
+                subject_id: subjectId || null,
+                specialty: specialty,
+                year: year,
+                semester: semester
             })
         })
         .then(r => r.json())
@@ -3954,18 +3992,75 @@ window.AdminApp = {
         const uncachedTableCount = document.getElementById('uncached-table-count');
         const cachedTbody = document.getElementById('cached-files-list');
         const uncachedTbody = document.getElementById('uncached-files-list');
+        const focusIndicatorEl = document.getElementById('cache-focus-indicator');
 
         const summary = data.catalog_summary || {};
-        const cachedFiles = data.cached_files || [];
-        const uncachedFiles = data.uncached_files || [];
+        const rawCachedFiles = data.cached_files || [];
+        const rawUncachedFiles = data.uncached_files || [];
 
-        if (countEl) countEl.innerText = data.text_cache_count || cachedFiles.length || 0;
-        if (sizeEl) sizeEl.innerText = `${data.text_cache_size_formatted || '0 KB'} (نصوص مستخرجة)`;
-        if (uncachedCountEl) uncachedCountEl.innerText = summary.uncached_count !== undefined ? summary.uncached_count : uncachedFiles.length;
-        if (subsWithFilesEl) subsWithFilesEl.innerText = `${summary.subjects_with_files || 8} مادة`;
+        // Check if Academic Focus Mode is active
+        const isFocused = Boolean(this.focusMode && this.focusMode.enabled);
+        let cachedFiles = rawCachedFiles;
+        let uncachedFiles = rawUncachedFiles;
+
+        if (isFocused) {
+            const fSpec = this.focusMode.specialty;
+            const fYear = String(this.focusMode.year);
+            const fSem = String(this.focusMode.semester);
+
+            cachedFiles = rawCachedFiles.filter(f => {
+                if (f.specialty && f.specialty !== fSpec) return false;
+                if (f.year !== null && f.year !== undefined && f.year !== '' && String(f.year) !== fYear) return false;
+                if (f.semester !== null && f.semester !== undefined && f.semester !== '' && String(f.semester) !== fSem) return false;
+                return true;
+            });
+
+            uncachedFiles = rawUncachedFiles.filter(u => {
+                if (u.specialty && u.specialty !== fSpec) return false;
+                if (u.year !== null && u.year !== undefined && u.year !== '' && String(u.year) !== fYear) return false;
+                if (u.semester !== null && u.semester !== undefined && u.semester !== '' && String(u.semester) !== fSem) return false;
+                return true;
+            });
+        }
+
+        // Compute stats (focused or global)
+        let totalBytes = 0;
+        cachedFiles.forEach(f => { totalBytes += (f.size_bytes || 0); });
+        const sizeFormatted = (totalBytes > 1048576) 
+            ? (totalBytes / 1048576).toFixed(2) + ' MB' 
+            : (totalBytes / 1024).toFixed(1) + ' KB';
+
+        const distinctSubjects = new Set();
+        cachedFiles.forEach(f => { if (f.subject_name) distinctSubjects.add(f.subject_name); });
+        uncachedFiles.forEach(u => { if (u.subject_name) distinctSubjects.add(u.subject_name); });
+
+        if (countEl) countEl.innerText = cachedFiles.length;
+        if (sizeEl) sizeEl.innerText = `${isFocused ? sizeFormatted : (data.text_cache_size_formatted || '0 KB')} (نصوص مستخرجة)`;
+        if (uncachedCountEl) uncachedCountEl.innerText = uncachedFiles.length;
+        if (subsWithFilesEl) {
+            subsWithFilesEl.innerText = isFocused ? `${distinctSubjects.size} مادة` : `${summary.subjects_with_files || distinctSubjects.size || 8} مادة`;
+        }
 
         if (cachedTableCount) cachedTableCount.innerText = cachedFiles.length;
         if (uncachedTableCount) uncachedTableCount.innerText = uncachedFiles.length;
+
+        // Render Focus Indicator Pill
+        if (focusIndicatorEl) {
+            if (isFocused) {
+                const label = this.getTrackLabel(this.focusMode.specialty, this.focusMode.year, this.focusMode.semester);
+                focusIndicatorEl.innerHTML = `
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-300 text-xs font-medium">
+                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                        <span>وضع التركيز نشط: <strong>${label}</strong></span>
+                        <span class="text-gray-400 text-[11px]">— يتم عرض وفحص وتجهيز ملفات هذا المسار فقط (${cachedFiles.length} مخزن، ${uncachedFiles.length} معلق)</span>
+                    </div>
+                `;
+                focusIndicatorEl.classList.remove('hidden');
+            } else {
+                focusIndicatorEl.innerHTML = '';
+                focusIndicatorEl.classList.add('hidden');
+            }
+        }
 
         const settings = data.settings || {};
         if (autoCheck) autoCheck.checked = (settings.auto_prewarm_on_upload !== false);
@@ -3978,17 +4073,19 @@ window.AdminApp = {
         // 1. Render Cached Files Table
         if (cachedTbody) {
             if (cachedFiles.length === 0) {
-                cachedTbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">لا توجد ملفات مخزنة حالياً في الكاش.</td></tr>';
+                cachedTbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">${isFocused ? 'لا توجد ملفات مخزنة في الكاش لهذا المسار المحدد حالياً.' : 'لا توجد ملفات مخزنة حالياً في الكاش.'}</td></tr>`;
             } else {
                 cachedTbody.innerHTML = cachedFiles.map(f => {
                     const sName = f.subject_name || 'مادة دراسية';
                     const fName = f.file_name || f.file_id;
                     const fId = f.file_id;
                     const fSize = f.size_formatted || '';
+                    const relPath = f.rel_path || '';
                     return `
                         <tr class="hover:bg-white/[0.02] transition">
                             <td class="p-3 text-white font-medium truncate max-w-[140px]" title="${sName}">
-                                ${sName}
+                                <div class="truncate">${sName}</div>
+                                ${relPath ? `<div class="text-[9px] text-gray-500 font-mono truncate" dir="ltr" title="${relPath}">${relPath}</div>` : ''}
                             </td>
                             <td class="p-3 text-gray-300 truncate max-w-[180px]" title="${fName}">
                                 <div class="truncate">${fName}</div>
@@ -4011,13 +4108,16 @@ window.AdminApp = {
         // 2. Render Uncached / Pending Files Table
         if (uncachedTbody) {
             if (uncachedFiles.length === 0) {
-                uncachedTbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">جميع ملفات قوقل درايف مخزنة وجاهزة في الكاش.</td></tr>';
+                uncachedTbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">${isFocused ? 'جميع ملفات هذا المسار مخزنة وجاهزة في الكاش.' : 'جميع ملفات قوقل درايف مخزنة وجاهزة في الكاش.'}</td></tr>`;
             } else {
                 uncachedTbody.innerHTML = uncachedFiles.map(u => {
                     const sName = u.subject_name || 'مادة دراسية';
                     const fName = u.file_name || u.file_id;
                     const fId = u.file_id;
                     const sId = u.subject_id || '';
+                    const uSpec = u.specialty || '';
+                    const uYear = u.year || '';
+                    const uSem = u.semester || '';
                     return `
                         <tr class="hover:bg-white/[0.02] transition">
                             <td class="p-3 text-white font-medium truncate max-w-[140px]" title="${sName}">
@@ -4031,7 +4131,7 @@ window.AdminApp = {
                                 <span class="bg-amber-500/10 text-amber-300 border border-amber-500/20 text-xs px-2 py-0.5 rounded font-mono">معلق</span>
                             </td>
                             <td class="p-3 text-center">
-                                <button onclick="AdminApp.prewarmSingleFile('${fId}', '${fName.replace(/'/g, "\\'")}', '${sName.replace(/'/g, "\\'")}', '${sId}')" class="btn btn-secondary text-xs py-1 px-3">
+                                <button onclick="AdminApp.prewarmSingleFile('${fId}', '${fName.replace(/'/g, "\\'")}', '${sName.replace(/'/g, "\\'")}', '${sId}', '${uSpec}', '${uYear}', '${uSem}')" class="btn btn-secondary text-xs py-1 px-3">
                                     تجهيز الآن
                                 </button>
                             </td>
@@ -4075,9 +4175,20 @@ window.AdminApp = {
     },
 
     async prewarmPendingFilesOnly() {
-        const uncached = (this.lastCacheData && this.lastCacheData.uncached_files) ? this.lastCacheData.uncached_files : [];
+        let uncached = (this.lastCacheData && this.lastCacheData.uncached_files) ? this.lastCacheData.uncached_files : [];
+        if (this.focusMode && this.focusMode.enabled) {
+            const fSpec = this.focusMode.specialty;
+            const fYear = String(this.focusMode.year);
+            const fSem = String(this.focusMode.semester);
+            uncached = uncached.filter(u => {
+                if (u.specialty && u.specialty !== fSpec) return false;
+                if (u.year !== null && u.year !== undefined && u.year !== '' && String(u.year) !== fYear) return false;
+                if (u.semester !== null && u.semester !== undefined && u.semester !== '' && String(u.semester) !== fSem) return false;
+                return true;
+            });
+        }
         if (!uncached || uncached.length === 0) {
-            this.showToast('جميع الملفات مخزنة مسبقاً في الكاش ولا توجد ملفات معلقة');
+            this.showToast('جميع ملفات هذا المسار مخزنة مسبقاً في الكاش ولا توجد ملفات معلقة');
             return;
         }
 
@@ -4124,7 +4235,10 @@ window.AdminApp = {
                         file_id: u.file_id,
                         file_name: u.file_name || 'ملف مقرر',
                         subject_name: u.subject_name || 'مادة دراسية',
-                        subject_id: u.subject_id || null
+                        subject_id: u.subject_id || null,
+                        specialty: u.specialty || '',
+                        year: u.year || null,
+                        semester: u.semester || null
                     })
                 });
 
@@ -4198,11 +4312,22 @@ window.AdminApp = {
                 throw new Error(subData.message || 'فشل جلب قائمة المواد');
             }
 
-            const subjects = subData.data.subjects;
+            let subjects = subData.data.subjects;
+            if (this.focusMode && this.focusMode.enabled) {
+                const fSpec = this.focusMode.specialty;
+                const fYear = String(this.focusMode.year);
+                const fSem = String(this.focusMode.semester);
+                subjects = subjects.filter(s => {
+                    if (s.specialty && s.specialty !== fSpec) return false;
+                    if (s.year !== null && s.year !== undefined && s.year !== '' && String(s.year) !== fYear) return false;
+                    if (s.semester !== null && s.semester !== undefined && s.semester !== '' && String(s.semester) !== fSem) return false;
+                    return true;
+                });
+            }
             const total = subjects.length;
 
             if (total === 0) {
-                if (pMsg) pMsg.innerText = 'لا توجد مواد مرتبطة بمجلدات قوقل درايف.';
+                if (pMsg) pMsg.innerText = (this.focusMode && this.focusMode.enabled) ? 'لا توجد مواد مرتبطة بقوقل درايف لهذا المسار المحدد.' : 'لا توجد مواد مرتبطة بمجلدات قوقل درايف.';
                 if (btn) { btn.disabled = false; btn.innerHTML = 'بدء التجهيز الشامل الآن'; }
                 return;
             }
@@ -4243,6 +4368,9 @@ window.AdminApp = {
                                 subject_id: sub.id,
                                 folder_id: sub.chapters_folder_id,
                                 subject_name: sub.name,
+                                specialty: sub.specialty || '',
+                                year: sub.year || 1,
+                                semester: sub.semester || 1,
                                 offset: offset,
                                 limit: 1
                             })

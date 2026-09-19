@@ -917,9 +917,13 @@
  <p class="text-gray-400 text-xs hidden sm:block mt-0.5">استخراج وفهرسة نصوص المقررات لتوليد الاختبارات فورياً</p>
  </div>
  <div class="flex items-center gap-1.5 shrink-0">
- <button onclick="AdminApp.scanDriveCatalog()" class="btn btn-secondary text-xs py-1.5 px-2.5">فحص</button>
- <button id="btn-prewarm-now" onclick="AdminApp.runPrewarmCache()" class="btn btn-primary text-xs py-1.5 px-3 font-semibold">بدء التجهيز</button>
- </div>
+            <button onclick="AdminApp.migrateCacheHierarchy()" class="btn btn-secondary text-xs py-1.5 px-2.5" title="ترتيب ملفات الكاش في مجلدات حسب التخصص والمستوى والمقرر">ترتيب المجلدات</button>
+            <button onclick="AdminApp.scanDriveCatalog()" class="btn btn-secondary text-xs py-1.5 px-2.5">فحص</button>
+            <button id="btn-prewarm-now" onclick="AdminApp.runPrewarmCache()" class="btn btn-primary text-xs py-1.5 px-3 font-semibold">بدء التجهيز</button>
+    </div>
+
+    <!-- Active Track / Focus Mode Indicator -->
+    <div id="cache-focus-indicator" class="hidden"></div>
  </div>
 
         <!-- Summary Stats -->
