@@ -224,9 +224,11 @@ if (dent2025_is_frontend_head()) {
         $og_url = 'https://dent2025.com/logos/og_share_preview.jpg?v=' . $og_ver;
         $site_url = function_exists('home_url') ? home_url('/') : 'https://dent2025.com/';
 
+        $invisible_desc = "\xE2\xA0\x80";
         $head .= "\n" .
             '<!-- Open Graph Meta Tags for WhatsApp / Social Media -->' . "\n" .
             '<meta property="og:title" content="Dent 2025 | Study Hub">' . "\n" .
+            '<meta property="og:description" content="' . $invisible_desc . '">' . "\n" .
             '<meta property="og:type" content="website">' . "\n" .
             '<meta property="og:url" content="' . esc_url($site_url) . '">' . "\n" .
             '<meta property="og:image" content="' . esc_url($og_url) . '">' . "\n" .
@@ -237,6 +239,7 @@ if (dent2025_is_frontend_head()) {
             '<!-- Twitter Card Tags -->' . "\n" .
             '<meta name="twitter:card" content="summary_large_image">' . "\n" .
             '<meta name="twitter:title" content="Dent 2025 | Study Hub">' . "\n" .
+            '<meta name="twitter:description" content="' . $invisible_desc . '">' . "\n" .
             '<meta name="twitter:image" content="' . esc_url($og_url) . '">' . "\n";
 
         echo $head;
