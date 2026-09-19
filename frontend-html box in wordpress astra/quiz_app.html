@@ -143,6 +143,36 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     scrollbar-color: rgba(255, 255, 255, 0.15) rgba(0, 0, 0, 0.2);
 }
 
+/* Wizard Stepper System */
+.dent-wizard-tracker { display: flex; align-items: center; justify-content: space-between; position: relative; margin-bottom: 18px; padding: 0 10px; }
+.dent-tracker-bar { position: absolute; top: 14px; left: 24px; right: 24px; height: 2px; background: rgba(255, 255, 255, 0.08); z-index: 1; }
+.dent-tracker-fill { position: absolute; top: 14px; right: 24px; width: 0%; height: 2px; background: #94a3b8; transition: width 0.3s ease; z-index: 2; }
+.dent-step-node { display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; z-index: 3; cursor: pointer; user-select: none; }
+.dent-step-circle { width: 28px; height: 28px; border-radius: 50%; background: #18181b; border: 1px solid rgba(255, 255, 255, 0.1); color: #64748b; font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all 0.25s ease; }
+.dent-step-label { font-size: 0.74rem; font-weight: 600; color: #64748b; transition: color 0.25s ease; white-space: nowrap; }
+.dent-step-node.active .dent-step-circle { background: #27272a; border-color: rgba(255, 255, 255, 0.35); color: #ffffff; box-shadow: 0 0 10px rgba(255, 255, 255, 0.1); }
+.dent-step-node.active .dent-step-label { color: #f8fafc; }
+.dent-step-node.completed .dent-step-circle { background: #18181b; border-color: rgba(34, 197, 94, 0.4); color: #a7f3d0; }
+.dent-step-node.completed .dent-step-label { color: #94a3b8; }
+
+.dent-step-panel { display: none; }
+.dent-step-panel.active { display: block; animation: dentFade 0.2s ease forwards; }
+@keyframes dentFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+.dent-step-intro { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 6px; }
+.dent-step-title { font-size: 0.92rem; font-weight: 700; color: #f8fafc; }
+.dent-step-desc { font-size: 0.74rem; color: #64748b; }
+
+.dent-summary-box { background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+.dent-summary-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; padding: 5px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+.dent-summary-row:last-child { border-bottom: none; }
+.dent-summary-key { color: #94a3b8; }
+.dent-summary-val { color: #ffffff; font-weight: 600; text-align: left; }
+
+.dent-wizard-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.dent-wizard-actions .dent-btn-prev { flex: 1; max-width: 130px; height: 38px; margin-top: 0; }
+.dent-wizard-actions .dent-btn-next { flex: 2; height: 38px; margin-top: 0; }
+
 @media (max-width: 650px) {
     .dent-quiz-card { padding: 14px 10px; }
     .dent-quiz-header { font-size: 1.15rem; margin-bottom: 12px; padding-bottom: 8px; }
@@ -151,13 +181,16 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     .dent-quiz-checkbox-group { grid-template-columns: 1fr 1fr; gap: 5px; }
     .dent-diff-btn { padding: 7px 4px; font-size: 0.75rem; }
     .dent-bank-filters { flex-direction: column; gap: 6px; }
+    .dent-step-label { font-size: 0.68rem; }
+    .dent-step-circle { width: 24px; height: 24px; font-size: 0.72rem; }
+    .dent-tracker-bar, .dent-tracker-fill { top: 12px; }
 }
 </style>
 
 <div class="dent-quiz-container">
     <!-- Generator Section -->
     <div class="dent-quiz-card" id="dent-generator-view">
-        <div class="dent-quiz-header">منصة الاختبارات بالذكاء الاصطناعي</div>
+        <div class="dent-quiz-header">الاختبارات بالذكاء الاصطناعي</div>
 
         <!-- Main Mode Tabs -->
         <div class="dent-tab-switcher">
@@ -168,165 +201,248 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 <span>تصفية وتجميع أسئلة السنوات السابقة</span>
             </button>
         </div>
-        
-        <!-- Subject Selector -->
-        <div class="dent-quiz-form-group">
-            <label class="dent-quiz-label">المادة الدراسية:</label>
-            <select id="dq-subject" class="dent-quiz-input">
-                <option value="">جاري تحميل المواد...</option>
-            </select>
+
+        <!-- Stepper Tracker -->
+        <div class="dent-wizard-tracker">
+            <div class="dent-tracker-bar"></div>
+            <div class="dent-tracker-fill" id="dq-tracker-fill"></div>
+
+            <div class="dent-step-node active" id="dq-node-step1">
+                <div class="dent-step-circle">1</div>
+                <div class="dent-step-label">المحتوى والمصدر</div>
+            </div>
+            <div class="dent-step-node" id="dq-node-step2">
+                <div class="dent-step-circle">2</div>
+                <div class="dent-step-label">التخصيص والمعايير</div>
+            </div>
+            <div class="dent-step-node" id="dq-node-step3">
+                <div class="dent-step-circle">3</div>
+                <div class="dent-step-label">المراجعة والبدء</div>
+            </div>
         </div>
 
-        <!-- ================= MODE 1: FRESH AI GENERATION ================= -->
-        <div id="dq-panel-ai">
-            <!-- Google Drive Source Type Switcher (Chapters vs Materials - selections preserved) -->
-            <div class="dent-quiz-form-group">
-                <label class="dent-quiz-label">ملفات Google Drive المحددة:</label>
-                <div class="dent-sub-tabs" id="dq-folder-tabs">
-                    <button type="button" class="dent-sub-tab-btn active" data-folder="chapters">المحاضرات</button>
-                    <button type="button" class="dent-sub-tab-btn" data-folder="materials">الملازم والمصادر</button>
-                </div>
+        <!-- ================= STEP 1: CONTENT & SOURCE ================= -->
+        <div class="dent-step-panel active" id="dq-step-panel-1">
+            <div class="dent-step-intro">
+                <span class="dent-step-title">الخطوة 1: اختيار المادة وتحديد المحتوى المستهدف</span>
+                <span class="dent-step-desc" id="dq-step1-desc">تحديد محاضرات وملازم المذاكرة</span>
+            </div>
 
-                <!-- Google Drive Files Container with Persistent Selection State -->
-                <div style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 6px; flex-wrap: wrap;">
-                        <span id="dq-selection-summary" style="font-size: 0.8rem; color: #94a3b8;">لم يتم تحديد أي ملفات بعد</span>
-                        <div style="display: flex; gap: 5px;">
-                            <button type="button" id="dq-select-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem;" disabled>تحديد المعروض</button>
-                            <button type="button" id="dq-clear-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem;" disabled>إلغاء التحديد</button>
+            <!-- Subject Selector -->
+            <div class="dent-quiz-form-group">
+                <label class="dent-quiz-label">المادة الدراسية:</label>
+                <select id="dq-subject" class="dent-quiz-input">
+                    <option value="">جاري تحميل المواد...</option>
+                </select>
+            </div>
+
+            <!-- MODE 1 SOURCE (AI Generation) -->
+            <div id="dq-panel-ai">
+                <!-- Google Drive Source Type Switcher (Chapters vs Materials) -->
+                <div class="dent-quiz-form-group">
+                    <label class="dent-quiz-label">ملفات Google Drive المحددة:</label>
+                    <div class="dent-sub-tabs" id="dq-folder-tabs">
+                        <button type="button" class="dent-sub-tab-btn active" data-folder="chapters">المحاضرات</button>
+                        <button type="button" class="dent-sub-tab-btn" data-folder="materials">الملازم والمصادر</button>
+                    </div>
+
+                    <!-- Google Drive Files Container -->
+                    <div style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 6px; flex-wrap: wrap;">
+                            <span id="dq-selection-summary" style="font-size: 0.8rem; color: #94a3b8;">لم يتم تحديد أي ملفات بعد</span>
+                            <div style="display: flex; gap: 5px;">
+                                <button type="button" id="dq-select-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem;" disabled>تحديد المعروض</button>
+                                <button type="button" id="dq-clear-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem;" disabled>إلغاء التحديد</button>
+                            </div>
+                        </div>
+                        <div id="dq-chapters-container" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-left: 2px;">
+                            <div style="color: #64748b; font-size: 0.82rem; text-align: center; padding: 10px;">اختر المادة أولاً لتحميل الملفات...</div>
                         </div>
                     </div>
-                    <div id="dq-chapters-container" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-left: 2px;">
-                        <div style="color: #64748b; font-size: 0.82rem; text-align: center; padding: 10px;">اختر المادة أولاً لتحميل الملفات...</div>
+                </div>
+
+                <!-- Optional Device File Upload (PDF / Slides) -->
+                <div class="dent-quiz-form-group" style="margin-bottom: 6px;">
+                    <label class="dent-quiz-label">أو ارفع ملفات من جهازك (اختياري - PDF / شرائح):</label>
+                    <div class="dent-upload-zone" id="dq-ai-dropzone">
+                        <div class="dent-upload-title">اسحب وأفلت الملفات هنا، أو انقر للاختيار</div>
+                        <div class="dent-upload-sub">يدعم ملفات PDF، صور السلايدات، ومستندات المذاكرة</div>
+                        <input type="file" id="dq-ai-file-input" multiple accept=".pdf,image/*,.docx,.pptx" style="display: none;">
+                    </div>
+                    <div class="dent-uploaded-chips" id="dq-ai-uploaded-chips"></div>
+                </div>
+            </div>
+
+            <!-- MODE 2 SOURCE (Past Exam Filter) -->
+            <div id="dq-panel-pastexam" style="display: none;">
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; font-size: 0.78rem; color: #cbd5e1; line-height: 1.4;">
+                    <strong>التصفية الذكية:</strong> حدد الشابترات المستهدفة التي تذاكرها، ثم اختر ملف الاختبار السابق من Google Drive أو ارفعه من جهازك. سيقوم الذكاء الاصطناعي بفرز واستخراج الأسئلة التابعة للشابترات المحددة فقط.
+                </div>
+
+                <!-- Target Chapters Selection -->
+                <div class="dent-quiz-form-group">
+                    <label class="dent-quiz-label">1. حدد الشابترات المستهدفة (التي تريد استخراج أسئلتها فقط):</label>
+                    <div style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 8px 10px;">
+                        <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                            <button type="button" id="dq-target-select-all" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem; flex: 1;">تحديد الكل</button>
+                            <button type="button" id="dq-target-deselect-all" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem; flex: 1;">إلغاء التحديد</button>
+                        </div>
+                        <div id="dq-target-chaps-container" style="max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;">
+                            <div style="color: #64748b; font-size: 0.82rem; text-align: center; padding: 6px;">اختر المادة أولاً لعرض الشابترات...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Past Exam Source Selector (Google Drive vs Device Upload) -->
+                <div class="dent-quiz-form-group" style="margin-bottom: 6px;">
+                    <label class="dent-quiz-label">2. ملف / صور الاختبار السابق (تجميعات، فاينل، ميدتيرم):</label>
+                    <div class="dent-sub-tabs" id="dq-pastexam-source-tabs">
+                        <button type="button" class="dent-sub-tab-btn active" data-source="drive">اختيار من Google Drive</button>
+                        <button type="button" class="dent-sub-tab-btn" data-source="upload">رفع ملفات من الجهاز</button>
+                    </div>
+
+                    <!-- Google Drive Selection View for Past Exam -->
+                    <div id="dq-pastexam-drive-view" style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 8px 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 6px;">
+                            <span style="font-size: 0.76rem; color: #94a3b8;">حدد ملف الاختبار السابق:</span>
+                            <div style="display: flex; gap: 4px;">
+                                <button type="button" class="dent-sub-tab-btn active dent-pastexam-folder-btn" data-folder="materials" style="padding: 2px 7px; font-size: 0.72rem;">الملازم</button>
+                                <button type="button" class="dent-sub-tab-btn dent-pastexam-folder-btn" data-folder="chapters" style="padding: 2px 7px; font-size: 0.72rem;">المحاضرات</button>
+                            </div>
+                        </div>
+                        <div id="dq-pastexam-drive-container" style="max-height: 110px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;">
+                            <div style="color: #64748b; font-size: 0.82rem; text-align: center; padding: 6px;">اختر المادة أولاً لعرض الملفات...</div>
+                        </div>
+                    </div>
+
+                    <!-- Device Upload View for Past Exam -->
+                    <div id="dq-pastexam-upload-view" style="display: none;">
+                        <div class="dent-upload-zone" id="dq-pastexam-dropzone">
+                            <div class="dent-upload-title">اسحب صور الأسئلة أو ملف الـ PDF هنا</div>
+                            <div class="dent-upload-sub">يدعم تصوير الكاميرا، لقطات الشاشة، وملفات PDF</div>
+                            <input type="file" id="dq-pastexam-file-input" multiple accept="image/*,.pdf" style="display: none;">
+                        </div>
+                        <div class="dent-uploaded-chips" id="dq-pastexam-uploaded-chips"></div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Optional Device File Upload (PDF / Slides) -->
-            <div class="dent-quiz-form-group">
-                <label class="dent-quiz-label">أو ارفع ملفات من جهازك (اختياري - PDF / شرائح):</label>
-                <div class="dent-upload-zone" id="dq-ai-dropzone">
-                    <div class="dent-upload-title">اسحب وأفلت الملفات هنا، أو انقر للاختيار</div>
-                    <div class="dent-upload-sub">يدعم ملفات PDF، صور السلايدات، ومستندات المذاكرة</div>
-                    <input type="file" id="dq-ai-file-input" multiple accept=".pdf,image/*,.docx,.pptx" style="display: none;">
-                </div>
-                <div class="dent-uploaded-chips" id="dq-ai-uploaded-chips"></div>
+        <!-- ================= STEP 2: CUSTOMIZATION & CRITERIA ================= -->
+        <div class="dent-step-panel" id="dq-step-panel-2">
+            <div class="dent-step-intro">
+                <span class="dent-step-title">الخطوة 2: المعايير والتخصيص الأكاديمي</span>
+                <span class="dent-step-desc">ضبط مستوى الصعوبة وأنماط الأسئلة</span>
             </div>
 
-            <!-- Difficulty Selector -->
-            <div class="dent-quiz-form-group">
-                <label class="dent-quiz-label">مستوى الصعوبة الأكاديمية:</label>
-                <div class="dent-difficulty-group">
-                    <button type="button" class="dent-diff-btn" data-diff="easy">سهل (مفاهيم وتعريفات)</button>
-                    <button type="button" class="dent-diff-btn active" data-diff="medium">متوسط (مستوى الامتحانات)</button>
-                    <button type="button" class="dent-diff-btn" data-diff="hard">صعب (تفاصيل دقيقة واستنتاجات)</button>
+            <!-- Mode 1 Customization Options -->
+            <div id="dq-step2-ai">
+                <!-- Difficulty Selector -->
+                <div class="dent-quiz-form-group">
+                    <label class="dent-quiz-label">مستوى الصعوبة الأكاديمية:</label>
+                    <div class="dent-difficulty-group">
+                        <button type="button" class="dent-diff-btn" data-diff="easy">سهل (مفاهيم وتعريفات)</button>
+                        <button type="button" class="dent-diff-btn active" data-diff="medium">متوسط (مستوى الامتحانات)</button>
+                        <button type="button" class="dent-diff-btn" data-diff="hard">صعب (تفاصيل دقيقة واستنتاجات)</button>
+                    </div>
                 </div>
-            </div>
 
-            <div class="dent-quiz-form-group" style="display: grid; grid-template-columns: 2fr 1fr; gap: 6px; margin-bottom: 6px;">
-                <div>
-                    <label class="dent-quiz-label">عنوان الاختبار:</label>
-                    <input type="text" id="dq-quiz-name" class="dent-quiz-input" placeholder="مثال: اختبار الفاينل - شابتر 1">
+                <div class="dent-quiz-form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div>
+                        <label class="dent-quiz-label">عدد الأسئلة المطلوبة:</label>
+                        <input type="number" id="dq-num-qs" class="dent-quiz-input" value="10" min="1" max="100" placeholder="10 إلى 100" style="text-align: center;">
+                    </div>
+                    <div>
+                        <label class="dent-quiz-label">الصفحات / الوحدة (اختياري):</label>
+                        <input type="text" id="dq-page-range" class="dent-quiz-input" placeholder="مثال: 35-55 أو Unit 3">
+                    </div>
                 </div>
-                <div>
-                    <label class="dent-quiz-label">عدد الأسئلة:</label>
-                    <input type="number" id="dq-num-qs" class="dent-quiz-input" value="10" min="1" max="100" placeholder="10 إلى 100" style="text-align: center;">
-                </div>
-            </div>
 
-            <div class="dent-quiz-form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
-                <div>
-                    <label class="dent-quiz-label">الصفحات / الوحدة (اختياري):</label>
-                    <input type="text" id="dq-page-range" class="dent-quiz-input" placeholder="مثال: 35-55 أو Unit 3">
-                </div>
-                <div>
+                <div class="dent-quiz-form-group">
                     <label class="dent-quiz-label">توجيهات مخصصة (اختياري):</label>
                     <input type="text" id="dq-focus" class="dent-quiz-input" placeholder="مثال: ركز على أسئلة القواعد">
                 </div>
-            </div>
 
-            <div class="dent-quiz-form-group" style="margin-bottom: 6px;">
-                <label class="dent-quiz-label">أنواع الأسئلة:</label>
-                <div class="dent-quiz-checkbox-group">
-                    <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-mcq" checked> خيارات متعددة (MCQ)</label>
-                    <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-except" checked> أسئلة الاستثناء (Except)</label>
-                    <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-cases"> حالات سريرية (Cases)</label>
-                    <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-statements"> العبارتين (Statements)</label>
-                    <label class="dent-quiz-checkbox-label" style="grid-column: 1 / -1;"><input type="checkbox" id="dq-type-tf"> صح أم خطأ (True/False)</label>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= MODE 2: PAST EXAMS SMART FILTER ================= -->
-        <div id="dq-panel-pastexam" style="display: none;">
-            <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; font-size: 0.78rem; color: #cbd5e1; line-height: 1.4;">
-                <strong>التصفية الذكية:</strong> حدد الشابترات المستهدفة التي تذاكرها، ثم اختر ملف الاختبار السابق من Google Drive أو ارفعه من جهازك. سيقوم الذكاء الاصطناعي بفرز واستخراج الأسئلة التابعة للشابترات المحددة فقط.
-            </div>
-
-            <!-- Target Chapters Selection -->
-            <div class="dent-quiz-form-group">
-                <label class="dent-quiz-label">1. حدد الشابترات المستهدفة (التي تريد استخراج أسئلتها فقط):</label>
-                <div style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 8px 10px;">
-                    <div style="display: flex; gap: 6px; margin-bottom: 6px;">
-                        <button type="button" id="dq-target-select-all" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem; flex: 1;">تحديد الكل</button>
-                        <button type="button" id="dq-target-deselect-all" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem; flex: 1;">إلغاء التحديد</button>
-                    </div>
-                    <div id="dq-target-chaps-container" style="max-height: 130px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;">
-                        <div style="color: #64748b; font-size: 0.82rem; text-align: center; padding: 6px;">اختر المادة أولاً لعرض الشابترات...</div>
+                <div class="dent-quiz-form-group" style="margin-bottom: 6px;">
+                    <label class="dent-quiz-label">أنواع الأسئلة:</label>
+                    <div class="dent-quiz-checkbox-group">
+                        <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-mcq" checked> خيارات متعددة (MCQ)</label>
+                        <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-except" checked> أسئلة الاستثناء (Except)</label>
+                        <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-cases"> حالات سريرية (Cases)</label>
+                        <label class="dent-quiz-checkbox-label"><input type="checkbox" id="dq-type-statements"> العبارتين (Statements)</label>
+                        <label class="dent-quiz-checkbox-label" style="grid-column: 1 / -1;"><input type="checkbox" id="dq-type-tf"> صح أم خطأ (True/False)</label>
                     </div>
                 </div>
             </div>
 
-            <!-- Past Exam Source Selector (Google Drive vs Device Upload) -->
-            <div class="dent-quiz-form-group">
-                <label class="dent-quiz-label">2. ملف / صور الاختبار السابق (تجميعات، فاينل، ميدتيرم):</label>
-                <div class="dent-sub-tabs" id="dq-pastexam-source-tabs">
-                    <button type="button" class="dent-sub-tab-btn active" data-source="drive">اختيار من Google Drive</button>
-                    <button type="button" class="dent-sub-tab-btn" data-source="upload">رفع ملفات من الجهاز</button>
-                </div>
-
-                <!-- Google Drive Selection View for Past Exam -->
-                <div id="dq-pastexam-drive-view" style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 8px 10px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 6px;">
-                        <span style="font-size: 0.76rem; color: #94a3b8;">حدد ملف الاختبار السابق:</span>
-                        <div style="display: flex; gap: 4px;">
-                            <button type="button" class="dent-sub-tab-btn active dent-pastexam-folder-btn" data-folder="materials" style="padding: 2px 7px; font-size: 0.72rem;">الملازم</button>
-                            <button type="button" class="dent-sub-tab-btn dent-pastexam-folder-btn" data-folder="chapters" style="padding: 2px 7px; font-size: 0.72rem;">المحاضرات</button>
-                        </div>
-                    </div>
-                    <div id="dq-pastexam-drive-container" style="max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;">
-                        <div style="color: #64748b; font-size: 0.82rem; text-align: center; padding: 6px;">اختر المادة أولاً لعرض الملفات...</div>
-                    </div>
-                </div>
-
-                <!-- Device Upload View for Past Exam -->
-                <div id="dq-pastexam-upload-view" style="display: none;">
-                    <div class="dent-upload-zone" id="dq-pastexam-dropzone">
-                        <div class="dent-upload-title">اسحب صور الأسئلة أو ملف الـ PDF هنا</div>
-                        <div class="dent-upload-sub">يدعم تصوير الكاميرا، لقطات الشاشة، وملفات PDF</div>
-                        <input type="file" id="dq-pastexam-file-input" multiple accept="image/*,.pdf" style="display: none;">
-                    </div>
-                    <div class="dent-uploaded-chips" id="dq-pastexam-uploaded-chips"></div>
-                </div>
-            </div>
-
-            <div class="dent-quiz-form-group" style="display: grid; grid-template-columns: 2fr 1fr; gap: 6px; margin-bottom: 6px;">
-                <div>
-                    <label class="dent-quiz-label">عنوان بنك الأسئلة المصفّى:</label>
-                    <input type="text" id="dq-pastexam-quiz-name" class="dent-quiz-input" placeholder="مثال: تجميعات فاينل 2024">
-                </div>
-                <div>
-                    <label class="dent-quiz-label">الحد الأقصى للأسئلة:</label>
+            <!-- Mode 2 Customization Options -->
+            <div id="dq-step2-past" style="display: none;">
+                <div class="dent-quiz-form-group">
+                    <label class="dent-quiz-label">الحد الأقصى للأسئلة المستخرجة:</label>
                     <input type="number" id="dq-pastexam-num-qs" class="dent-quiz-input" value="200" min="1" max="200" placeholder="200 (تلقائي)" style="text-align: center;">
                 </div>
-            </div>
-            <div style="font-size: 0.76rem; color: #94a3b8; margin-bottom: 10px; line-height: 1.4;">
-                يستخرج الذكاء الاصطناعي كافة الأسئلة التابعة للشابترات المحددة حتى نهايتها دون توقف. أي أسئلة مقالية أو فراغات يتم تحويلها تلقائياً إلى خيارات مع وضع علامة (*) في بدايتها.
+                <div style="font-size: 0.76rem; color: #94a3b8; margin-bottom: 6px; line-height: 1.5; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+                    يستخرج الذكاء الاصطناعي كافة الأسئلة التابعة للشابترات المحددة حتى نهايتها دون توقف. أي أسئلة مقالية أو فراغات يتم تحويلها تلقائياً إلى خيارات مع وضع علامة (*) في بدايتها.
+                </div>
             </div>
         </div>
 
-        <button id="dq-generate-btn" class="dent-quiz-btn">إنشاء وتجهيز الاختبار</button>
+        <!-- ================= STEP 3: REVIEW & LAUNCH ================= -->
+        <div class="dent-step-panel" id="dq-step-panel-3">
+            <div class="dent-step-intro">
+                <span class="dent-step-title">الخطوة 3: التسمية والمراجعة النهائية</span>
+                <span class="dent-step-desc">تأكيد قبل إطلاق التوليد</span>
+            </div>
 
+            <!-- Quiz Name Inputs -->
+            <div class="dent-quiz-form-group" id="dq-title-group-ai">
+                <label class="dent-quiz-label">عنوان الاختبار المحفوظ:</label>
+                <input type="text" id="dq-quiz-name" class="dent-quiz-input" placeholder="مثال: اختبار الفاينل - شابتر 1">
+            </div>
+            <div class="dent-quiz-form-group" id="dq-title-group-past" style="display: none;">
+                <label class="dent-quiz-label">عنوان بنك الأسئلة المصفّى:</label>
+                <input type="text" id="dq-pastexam-quiz-name" class="dent-quiz-input" placeholder="مثال: تجميعات فاينل 2024">
+            </div>
+
+            <!-- Dynamic Live Summary Box -->
+            <div class="dent-summary-box" id="dq-summary-box">
+                <div class="dent-summary-row">
+                    <span class="dent-summary-key">نمط الاختبار:</span>
+                    <span class="dent-summary-val" id="dq-sum-mode">توليد ذكي من المحاضرات</span>
+                </div>
+                <div class="dent-summary-row">
+                    <span class="dent-summary-key">المادة الدراسية:</span>
+                    <span class="dent-summary-val" id="dq-sum-subject">-</span>
+                </div>
+                <div class="dent-summary-row">
+                    <span class="dent-summary-key">المحتوى المستهدف:</span>
+                    <span class="dent-summary-val" id="dq-sum-files" style="color: #cbd5e1;">-</span>
+                </div>
+                <div class="dent-summary-row">
+                    <span class="dent-summary-key">المعايير والعدد:</span>
+                    <span class="dent-summary-val" id="dq-sum-config" style="color: #bfdbfe;">-</span>
+                </div>
+            </div>
+
+            <div style="font-size: 0.76rem; color: #64748b; line-height: 1.5; margin-bottom: 8px;">
+                يمكنك مغادرة الصفحة بأي وقت؛ سيتم حفظ الاختبار تلقائياً في بنك الأسئلة فور اكتماله بواسطة Gemini Flash.
+            </div>
+        </div>
+
+        <!-- Wizard Stepper Navigation Actions -->
+        <div class="dent-wizard-actions">
+            <button type="button" class="dent-quiz-btn dent-btn-secondary dent-btn-prev" id="dq-btn-prev" style="display: none;">
+                <span>السابق</span>
+            </button>
+            <button type="button" class="dent-quiz-btn dent-btn-next" id="dq-btn-next">
+                <span>المتابعة للخطوة التالية</span>
+            </button>
+            <button type="button" id="dq-generate-btn" class="dent-quiz-btn" style="display: none; flex: 2; height: 38px; margin-top: 0;">
+                <span>إنشاء وتجهيز الاختبار</span>
+            </button>
+        </div>
+
+        <!-- Loader -->
         <div class="dent-quiz-loader" id="dq-loader">
             <div class="dent-quiz-spinner"></div>
             <div id="dq-progress-bar-container" style="width: 100%; max-width: 300px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; margin: 12px auto 14px; overflow: hidden;">
@@ -449,6 +565,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             checkUrlDirectQuiz();
         });
         setupModeSwitcher();
+        setupWizardStepper();
         setupFolderTabs();
         setupPastExamSourceTabs();
         setupFileUploaders();
@@ -534,11 +651,16 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         initQuizApp();
     }
 
+    let currentWizardStep = 1;
+
     function setupModeSwitcher() {
         const tabAi = document.getElementById('dq-tab-ai');
         const tabPast = document.getElementById('dq-tab-pastexam');
         const panelAi = document.getElementById('dq-panel-ai');
         const panelPast = document.getElementById('dq-panel-pastexam');
+        const step2Ai = document.getElementById('dq-step2-ai');
+        const step2Past = document.getElementById('dq-step2-past');
+        const step1Desc = document.getElementById('dq-step1-desc');
         const genBtn = document.getElementById('dq-generate-btn');
 
         tabAi.addEventListener('click', () => {
@@ -547,7 +669,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             tabPast.classList.remove('active');
             panelAi.style.display = 'block';
             panelPast.style.display = 'none';
-            genBtn.innerText = 'إنشاء وتجهيز الاختبار';
+            if (step2Ai) step2Ai.style.display = 'block';
+            if (step2Past) step2Past.style.display = 'none';
+            if (step1Desc) step1Desc.innerText = 'تحديد محاضرات وملازم المذاكرة';
+            if (genBtn) genBtn.innerText = 'إنشاء وتجهيز الاختبار';
+            goToWizardStep(1);
         });
 
         tabPast.addEventListener('click', () => {
@@ -556,8 +682,180 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             tabAi.classList.remove('active');
             panelPast.style.display = 'block';
             panelAi.style.display = 'none';
-            genBtn.innerText = 'استخراج وتصفية الأسئلة السابقة';
+            if (step2Past) step2Past.style.display = 'block';
+            if (step2Ai) step2Ai.style.display = 'none';
+            if (step1Desc) step1Desc.innerText = 'تحديد الشابترات المستهدفة وملف الاختبار السابق';
+            if (genBtn) genBtn.innerText = 'استخراج وتصفية الأسئلة السابقة';
+            goToWizardStep(1);
         });
+    }
+
+    function setupWizardStepper() {
+        const btnNext = document.getElementById('dq-btn-next');
+        const btnPrev = document.getElementById('dq-btn-prev');
+
+        if (btnNext) {
+            btnNext.addEventListener('click', () => {
+                if (currentWizardStep === 1) {
+                    const subjectId = document.getElementById('dq-subject').value;
+                    if (!subjectId) {
+                        alert("يرجى اختيار المادة الدراسية أولاً.");
+                        return;
+                    }
+
+                    if (currentCreationMode === 'ai_generation') {
+                        const selectedChapters = Array.from(selectedDriveFilesMap.values());
+                        if (selectedChapters.length === 0 && aiUploadedFiles.length === 0) {
+                            alert("يرجى تحديد ملف واحد على الأقل من المحاضرات أو الملازم، أو رفع ملف من الجهاز.");
+                            return;
+                        }
+                    } else {
+                        const checkedTargets = document.querySelectorAll('.dq-target-chap-checkbox:checked');
+                        if (checkedTargets.length === 0) {
+                            alert("يرجى تحديد شابتر مستهدف واحد على الأقل للبحث عن أسئلته.");
+                            return;
+                        }
+                        if (currentPastExamSource === 'drive' && pastExamDriveFilesMap.size === 0) {
+                            alert("يرجى تحديد ملف الاختبار السابق من قائمة Google Drive.");
+                            return;
+                        }
+                        if (currentPastExamSource === 'upload' && pastExamUploadedFiles.length === 0) {
+                            alert("يرجى رفع صور أو ملفات أوراق الاختبار السابق.");
+                            return;
+                        }
+                    }
+                    goToWizardStep(2);
+                } else if (currentWizardStep === 2) {
+                    goToWizardStep(3);
+                }
+            });
+        }
+
+        if (btnPrev) {
+            btnPrev.addEventListener('click', () => {
+                if (currentWizardStep > 1) {
+                    goToWizardStep(currentWizardStep - 1);
+                }
+            });
+        }
+
+        for (let i = 1; i <= 3; i++) {
+            const node = document.getElementById('dq-node-step' + i);
+            if (node) {
+                node.addEventListener('click', () => {
+                    if (i < currentWizardStep) {
+                        goToWizardStep(i);
+                    } else if (i === 2 && currentWizardStep === 1) {
+                        if (btnNext) btnNext.click();
+                    } else if (i === 3 && currentWizardStep === 2) {
+                        if (btnNext) btnNext.click();
+                    }
+                });
+            }
+        }
+    }
+
+    function goToWizardStep(step) {
+        currentWizardStep = step;
+
+        for (let i = 1; i <= 3; i++) {
+            const panel = document.getElementById('dq-step-panel-' + i);
+            const node = document.getElementById('dq-node-step' + i);
+            if (panel) {
+                if (i === currentWizardStep) {
+                    panel.classList.add('active');
+                } else {
+                    panel.classList.remove('active');
+                }
+            }
+            if (node) {
+                if (i === currentWizardStep) {
+                    node.classList.add('active');
+                    node.classList.remove('completed');
+                } else {
+                    node.classList.remove('active');
+                    if (i < currentWizardStep) node.classList.add('completed');
+                    else node.classList.remove('completed');
+                }
+            }
+        }
+
+        const fill = document.getElementById('dq-tracker-fill');
+        if (fill) {
+            if (currentWizardStep === 1) fill.style.width = '0%';
+            else if (currentWizardStep === 2) fill.style.width = '50%';
+            else if (currentWizardStep === 3) fill.style.width = '100%';
+        }
+
+        const btnPrev = document.getElementById('dq-btn-prev');
+        const btnNext = document.getElementById('dq-btn-next');
+        const genBtn = document.getElementById('dq-generate-btn');
+
+        if (btnPrev) btnPrev.style.display = (currentWizardStep > 1) ? 'flex' : 'none';
+
+        if (currentWizardStep === 3) {
+            if (btnNext) btnNext.style.display = 'none';
+            if (genBtn) genBtn.style.display = 'flex';
+            updateWizardSummary();
+        } else {
+            if (btnNext) btnNext.style.display = 'flex';
+            if (genBtn) genBtn.style.display = 'none';
+        }
+    }
+
+    function updateWizardSummary() {
+        const subjectSelect = document.getElementById('dq-subject');
+        const subName = subjectSelect.options[subjectSelect.selectedIndex]?.text || 'مادة دراسية';
+        const sumSubject = document.getElementById('dq-sum-subject');
+        const sumMode = document.getElementById('dq-sum-mode');
+        const sumFiles = document.getElementById('dq-sum-files');
+        const sumConfig = document.getElementById('dq-sum-config');
+        const aiTitleInput = document.getElementById('dq-quiz-name');
+        const pastTitleInput = document.getElementById('dq-pastexam-quiz-name');
+        const titleAiGroup = document.getElementById('dq-title-group-ai');
+        const titlePastGroup = document.getElementById('dq-title-group-past');
+
+        if (sumSubject) sumSubject.innerText = subName;
+
+        if (currentCreationMode === 'ai_generation') {
+            if (sumMode) sumMode.innerText = 'توليد ذكي من المحاضرات';
+            if (titleAiGroup) titleAiGroup.style.display = 'block';
+            if (titlePastGroup) titlePastGroup.style.display = 'none';
+
+            const driveCount = selectedDriveFilesMap.size;
+            const upCount = aiUploadedFiles.length;
+            let filesStr = '';
+            if (driveCount > 0 && upCount > 0) filesStr = `${driveCount} ملف Drive + ${upCount} ملف مرفوع`;
+            else if (driveCount > 0) filesStr = `${driveCount} ملف من Google Drive`;
+            else if (upCount > 0) filesStr = `${upCount} ملف مرفوع`;
+            else filesStr = 'لم يتم تحديد ملفات';
+            if (sumFiles) sumFiles.innerText = filesStr;
+
+            const diffMap = { easy: 'سهل', medium: 'متوسط', hard: 'صعب' };
+            const numQs = document.getElementById('dq-num-qs')?.value || '10';
+            if (sumConfig) sumConfig.innerText = `${diffMap[currentDifficulty] || 'متوسط'} • ${numQs} أسئلة`;
+
+            if (aiTitleInput && !aiTitleInput.value.trim()) {
+                const firstFile = Array.from(selectedDriveFilesMap.values())[0]?.name || '';
+                aiTitleInput.value = firstFile ? `اختبار — ${firstFile}` : `اختبار — ${subName}`;
+            }
+        } else {
+            if (sumMode) sumMode.innerText = 'تصفية وتجميع أسئلة السنوات السابقة';
+            if (titleAiGroup) titleAiGroup.style.display = 'none';
+            if (titlePastGroup) titlePastGroup.style.display = 'block';
+
+            const checkedTargets = document.querySelectorAll('.dq-target-chap-checkbox:checked');
+            const sourceStr = (currentPastExamSource === 'drive') ? 'Google Drive' : 'ملف مرفوع';
+            if (sumFiles) sumFiles.innerText = `تصفية (${checkedTargets.length} شابتر مستهدف) • ${sourceStr}`;
+
+            const maxQs = document.getElementById('dq-pastexam-num-qs')?.value || '200';
+            if (sumConfig) sumConfig.innerText = `حتى ${maxQs} سؤال مصفّى`;
+
+            if (pastTitleInput && !pastTitleInput.value.trim()) {
+                const firstTarget = checkedTargets[0]?.value || '';
+                pastTitleInput.value = firstTarget ? `تجميعات (${firstTarget})` : `تجميعات — ${subName}`;
+            }
+        }
     }
 
     function setupFolderTabs() {
@@ -1730,6 +2028,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         document.getElementById('dent-player-view').style.display = 'none';
         document.getElementById('dent-generator-view').style.display = 'block';
         document.getElementById('dent-bank-view').style.display = 'block';
+        goToWizardStep(1);
         scrollToQuizContainer();
     }
 
