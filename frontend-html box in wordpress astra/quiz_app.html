@@ -2066,7 +2066,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 const optItem = document.createElement('label');
                 optItem.className = 'dent-opt-item';
                 const optionMatch = String(opt).match(/^\s*([A-D])(?:[.)\-:\s]+)([\s\S]*)$/i);
-                const optionLetter = optionMatch ? optionMatch[1].toUpperCase() + '.' : '';
+                const optionLetter = optionMatch ? '.' + optionMatch[1].toUpperCase() : '';
                 const optionText = optionMatch ? optionMatch[2] : String(opt);
                 optItem.innerHTML = `
                     <input type="radio" name="q_${index}" value="${escapeHtml(opt)}">
