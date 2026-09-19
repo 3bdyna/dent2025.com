@@ -214,6 +214,33 @@ if (dent2025_is_frontend_head()) {
         $head .= '<link rel="preload" as="font" type="font/woff2" href="/frontend_components/fonts/notokufiarabic-arabic.woff2" crossorigin>';
         $head .= '<link rel="preload" as="font" type="font/woff2" href="/frontend_components/fonts/outfit-latin.woff2" crossorigin>';
 
+        // Strip legacy or duplicate Open Graph and Twitter Card tags from <head>
+        $head = preg_replace('~<!--\s*(?:Open Graph Meta Tags|Twitter Card Tags).*?-->\s*~is', '', $head);
+        $head = preg_replace('~<meta\b[^>]*(?:property|name)=["\'](?:og:[^"\']+|twitter:[^"\']+)["\'][^>]*>\s*~i', '', $head);
+
+        // Inject standardized Open Graph & Twitter Card tags with cache busting
+        $og_file = ABSPATH . 'logos/og_share_preview.jpg';
+        $og_ver = file_exists($og_file) ? filemtime($og_file) : 1;
+        $og_url = 'https://dent2025.com/logos/og_share_preview.jpg?v=' . $og_ver;
+        $site_url = function_exists('home_url') ? home_url('/') : 'https://dent2025.com/';
+
+        $head .= "\n" .
+            '<!-- Open Graph Meta Tags for WhatsApp / Social Media -->' . "\n" .
+            '<meta property="og:title" content="Dent 2025 | Study Hub">' . "\n" .
+            '<meta property="og:description" content="The official study hub for the Dental Class of 2025.">' . "\n" .
+            '<meta property="og:type" content="website">' . "\n" .
+            '<meta property="og:url" content="' . esc_url($site_url) . '">' . "\n" .
+            '<meta property="og:image" content="' . esc_url($og_url) . '">' . "\n" .
+            '<meta property="og:image:secure_url" content="' . esc_url($og_url) . '">' . "\n" .
+            '<meta property="og:image:type" content="image/jpeg">' . "\n" .
+            '<meta property="og:image:width" content="1200">' . "\n" .
+            '<meta property="og:image:height" content="630">' . "\n" .
+            '<!-- Twitter Card Tags -->' . "\n" .
+            '<meta name="twitter:card" content="summary_large_image">' . "\n" .
+            '<meta name="twitter:title" content="Dent 2025 | Study Hub">' . "\n" .
+            '<meta name="twitter:description" content="The official study hub for the Dental Class of 2025.">' . "\n" .
+            '<meta name="twitter:image" content="' . esc_url($og_url) . '">' . "\n";
+
         echo $head;
     }, 99);
 
