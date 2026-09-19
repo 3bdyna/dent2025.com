@@ -1346,58 +1346,89 @@ const ScheduleApp = {
             if (groupData.events.length === 0) {
                 rowsHtml = `
                     <tr>
-                        <td colspan="5" style="text-align: center; color: #94a3b8; padding: 6px 10px; font-size: 0.68rem; font-style: italic;">
+                        <td colspan="3" style="text-align: center; color: #94a3b8; padding: 8px 10px; font-size: 0.68rem; font-style: italic;">
                             لا توجد اختبارات أو أحداث مجدولة لهذا الأسبوع
                         </td>
                     </tr>
                 `;
             } else {
                 groupData.events.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+                const daysInWeek = {};
                 groupData.events.forEach(ev => {
-                    const dDate = this.parseLocalDate(ev.date) || new Date();
+                    const dayKey = ev.date + (ev.end_date ? '_' + ev.end_date : '');
+                    if (!daysInWeek[dayKey]) {
+                        daysInWeek[dayKey] = {
+                            date: ev.date,
+                            end_date: ev.end_date,
+                            events: []
+                        };
+                    }
+                    daysInWeek[dayKey].events.push(ev);
+                });
+
+                Object.values(daysInWeek).forEach(dayData => {
+                    const firstEv = dayData.events[0];
+                    const dDate = this.parseLocalDate(firstEv.date) || new Date();
                     const dayName = dDate.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { weekday: 'long' });
                     const monthShort = this.gregorianMonthsEN[dDate.getMonth()].substring(0, 3);
                     let gregDateStr = `${dDate.getDate()} ${monthShort} ${dDate.getFullYear()}`;
-                    if (ev.end_date) {
-                        const eDate = this.parseLocalDate(ev.end_date);
+                    if (firstEv.end_date) {
+                        const eDate = this.parseLocalDate(firstEv.end_date);
                         if (eDate) {
                             const eMonthShort = this.gregorianMonthsEN[eDate.getMonth()].substring(0, 3);
                             gregDateStr = `${dDate.getDate()} – ${eDate.getDate()} ${eMonthShort} ${eDate.getFullYear()}`;
                         }
                     }
 
-                    const rawHijri = ev.hijri ? this.formatHijriDate(ev.hijri) : this.hijriFromGregorian(ev.date);
+                    const rawHijri = firstEv.hijri ? this.formatHijriDate(firstEv.hijri) : this.hijriFromGregorian(firstEv.date);
                     const hijriStr = rawHijri || '—';
 
-                    // Countdown
-                    const targetDate = this.parseLocalDate(ev.date) || new Date();
-                    targetDate.setHours(0,0,0,0);
-                    const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-                    let countdownText = '';
-                    let countdownClass = 'm1-countdown-normal';
-                    if (diffDays === 0) {
-                        countdownText = 'اليوم';
-                        countdownClass = 'm1-countdown-urgent';
-                    } else if (diffDays === 1) {
-                        countdownText = 'غداً';
-                        countdownClass = 'm1-countdown-urgent';
-                    } else if (diffDays === 2) {
-                        countdownText = 'بعد يومين';
-                        countdownClass = 'm1-countdown-soon';
-                    } else if (diffDays >= 3 && diffDays <= 10) {
-                        countdownText = `بعد ${diffDays} أيام`;
-                    } else if (diffDays > 10) {
-                        countdownText = `بعد ${diffDays} يوماً`;
-                    } else if (diffDays < 0) {
-                        countdownText = 'انتهى';
-                        countdownClass = 'm1-countdown-normal';
-                    } else {
-                        countdownText = 'اليوم';
-                    }
+                    let cardsHtml = '';
+                    dayData.events.forEach(ev => {
+                        const targetDate = this.parseLocalDate(ev.date) || new Date();
+                        targetDate.setHours(0,0,0,0);
+                        const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+                        let countdownText = '';
+                        let countdownClass = 'm1-countdown-normal';
+                        if (diffDays === 0) {
+                            countdownText = 'اليوم';
+                            countdownClass = 'm1-countdown-urgent';
+                        } else if (diffDays === 1) {
+                            countdownText = 'غداً';
+                            countdownClass = 'm1-countdown-urgent';
+                        } else if (diffDays === 2) {
+                            countdownText = 'بعد يومين';
+                            countdownClass = 'm1-countdown-soon';
+                        } else if (diffDays >= 3 && diffDays <= 10) {
+                            countdownText = `بعد ${diffDays} أيام`;
+                        } else if (diffDays > 10) {
+                            countdownText = `بعد ${diffDays} يوماً`;
+                        } else if (diffDays < 0) {
+                            countdownText = 'انتهى';
+                            countdownClass = 'm1-countdown-normal';
+                        } else {
+                            countdownText = 'اليوم';
+                        }
 
-                    const typeMeta = this.getEventTypeMeta(ev);
-                    const typeLabel = typeMeta.label;
-                    const badgeClass = typeMeta.printClass;
+                        const typeMeta = this.getEventTypeMeta(ev);
+                        const typeLabel = typeMeta.label;
+                        const badgeClass = typeMeta.printClass;
+
+                        cardsHtml += `
+                            <div class="m1-print-card">
+                                <div class="m1-card-title">${dentEscapeHtml(ev.title)}</div>
+                                <div class="m1-card-badges">
+                                    <span class="m1-type-badge ${badgeClass}">${dentEscapeHtml(typeLabel)}</span>
+                                    <span class="m1-countdown-badge ${countdownClass}">${dentEscapeHtml(countdownText)}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    const gridStyle = dayData.events.length >= 2
+                        ? 'display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; width: 100%;'
+                        : 'display: grid; grid-template-columns: 1fr; gap: 6px; width: 100%;';
 
                     rowsHtml += `
                         <tr>
@@ -1406,11 +1437,11 @@ const ScheduleApp = {
                                 <span class="m1-date-greg" dir="ltr">${dentEscapeHtml(gregDateStr)}</span>
                                 <span class="m1-date-hijri">${dentEscapeHtml(hijriStr)}</span>
                             </td>
-                            <td class="m1-title-col">
-                                <strong>${dentEscapeHtml(ev.title)}</strong>
+                            <td class="m1-events-cell">
+                                <div style="${gridStyle}">
+                                    ${cardsHtml}
+                                </div>
                             </td>
-                            <td class="m1-status-col"><span class="m1-type-badge ${badgeClass}">${dentEscapeHtml(typeLabel)}</span></td>
-                            <td class="m1-status-col ${countdownClass}">${dentEscapeHtml(countdownText)}</td>
                         </tr>
                     `;
                 });
@@ -1425,11 +1456,9 @@ const ScheduleApp = {
                     <table class="m1-table">
                         <thead>
                             <tr>
-                                <th>اليوم</th>
-                                <th>التاريخ</th>
-                                <th>تفاصيل الحدث والمقرر</th>
-                                <th style="text-align: center;">النوع</th>
-                                <th style="text-align: center;">العد التنازلي</th>
+                                <th class="m1-th-day">اليوم</th>
+                                <th class="m1-th-date">التاريخ</th>
+                                <th class="m1-th-events">الأحداث والمقررات المجدولة</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1647,40 +1676,33 @@ const ScheduleApp = {
             color: #475569;
             font-weight: 700;
             text-align: right;
-            padding: 5px 10px;
+            padding: 5px 8px;
             border-bottom: 1px solid #cbd5e1;
             font-size: 0.68rem;
             white-space: nowrap;
         }
+        .m1-th-day { width: 65px; }
+        .m1-th-date { width: 110px; }
+        .m1-th-events { text-align: right; }
         .m1-table td {
-            padding: 5px 10px;
+            padding: 4px 6px;
             border-bottom: 1px solid #e2e8f0;
             vertical-align: middle;
             color: #1e293b;
         }
         .m1-table tr:last-child td { border-bottom: none; }
         .m1-table tr:nth-child(even) { background-color: #fafafa; }
-        .m1-type-badge {
-            display: inline-block;
-            font-size: 0.62rem;
-            font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 4px;
-            white-space: nowrap;
-        }
-        .m1-badge-exam { background: #f8fafc; color: #881337; border: 1px solid #fecdd3; }
-        .m1-badge-holiday { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-        .m1-badge-payment { background: #fefce8; color: #854d0e; border: 1px solid #fef08a; }
         .m1-day-col {
             font-weight: 700;
             color: #0f172a;
-            width: 70px;
+            width: 65px;
             font-size: 0.70rem;
+            vertical-align: middle;
         }
         .m1-date-col {
-            width: 120px;
+            width: 110px;
             vertical-align: middle;
-            line-height: 1.3;
+            line-height: 1.25;
         }
         .m1-date-greg {
             display: block;
@@ -1701,11 +1723,61 @@ const ScheduleApp = {
             margin-top: 1px;
             unicode-bidi: isolate;
         }
-        .m1-title-col { font-weight: 600; line-height: 1.3; }
-        .m1-status-col { width: 75px; text-align: center; }
-        .m1-countdown-urgent { color: #991b1b; font-weight: 700; }
-        .m1-countdown-soon { color: #c2410c; font-weight: 700; }
-        .m1-countdown-normal { color: #475569; font-weight: 600; }
+        .m1-events-cell {
+            vertical-align: middle;
+            padding: 4px 6px;
+        }
+        .m1-print-card {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 4px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            box-sizing: border-box;
+            min-height: 28px;
+        }
+        .m1-card-title {
+            font-size: 0.69rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.3;
+            flex: 1;
+            min-width: 0;
+            word-break: break-word;
+        }
+        .m1-card-badges {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .m1-type-badge {
+            display: inline-block;
+            font-size: 0.60rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .m1-countdown-badge {
+            display: inline-block;
+            font-size: 0.60rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+        .m1-badge-exam { background: #f8fafc; color: #881337; border: 1px solid #fecdd3; }
+        .m1-badge-holiday { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .m1-badge-payment { background: #fefce8; color: #854d0e; border: 1px solid #fef08a; }
+        .m1-countdown-urgent { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+        .m1-countdown-soon { background: #fff7ed; color: #c2410c; border-color: #ffedd5; }
+        .m1-countdown-normal { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
         .print-ann-body p { margin: 0 0 3px 0; }
         .print-ann-body p:last-child { margin-bottom: 0; }
         .doc-footer {
