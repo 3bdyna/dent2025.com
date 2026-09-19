@@ -1546,24 +1546,29 @@ const ScheduleApp = {
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 15mm 16mm 14mm 16mm;
+                margin: 0;
             }
             html, body {
                 background: #ffffff !important;
-                padding: ${isMobile ? '12mm 14mm' : '0'} !important;
+                padding: 0 !important;
                 margin: 0 !important;
                 width: 100% !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
             .no-print, .dent-mobile-toolbar {
                 display: none !important;
             }
             .a4-print-sheet {
-                padding: 0 !important;
+                box-sizing: border-box !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 16mm 20mm !important;
+                margin: 0 auto !important;
                 box-shadow: none !important;
                 border: none !important;
                 border-radius: 0 !important;
-                width: 100% !important;
-                max-width: 100% !important;
+                background: #ffffff !important;
             }
         }
 
