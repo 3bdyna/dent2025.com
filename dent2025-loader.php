@@ -71,6 +71,10 @@ function dent2025_load_component_shortcode($atts) {
         return "<!-- Dent2025 Loader: Failed to read file ({$safe_file}) -->";
     }
 
+    if ($safe_file === 'study_timer_banner_widget.html') {
+        $GLOBALS['dent2025_timer_rendered'] = true;
+    }
+
     // Strip legacy PHP snippet wrapper tags if any exist in the source file
     $content = preg_replace('/<\?php\s*add_action.*?\?>/s', '', $content);
     $content = preg_replace('/<\?php\s*\};\s*\?>/s', '', $content);
@@ -129,6 +133,9 @@ add_action('wp_footer', function() {
     // Avoid loading timer on welcome selection page
     if (is_page('wolcome') || is_page('welcome')) return;
 
+    // Avoid duplicate rendering if already embedded via [dent_component file="study_timer_banner_widget.html"]
+    if (!empty($GLOBALS['dent2025_timer_rendered'])) return;
+
     $timer_file = ABSPATH . 'frontend_components/study_timer_banner_widget.html';
     if (file_exists($timer_file)) {
         $content = file_get_contents($timer_file);
@@ -138,6 +145,7 @@ add_action('wp_footer', function() {
                 return '<style>' . preg_replace('/\s+/', ' ', $m[1]) . '</style>';
             }, $content);
             echo $content;
+            $GLOBALS['dent2025_timer_rendered'] = true;
         }
     }
 });

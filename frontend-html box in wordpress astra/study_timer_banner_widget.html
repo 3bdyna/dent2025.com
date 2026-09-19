@@ -892,6 +892,9 @@
    GLOBAL MODAL & TIMER CONTROL FUNCTIONS
    -------------------------------------------------- */
 window.openDentTimerModal = function() {
+  if (typeof window.dentRefreshTimerUI === 'function') {
+    window.dentRefreshTimerUI();
+  }
   var modal = document.getElementById('dent-timer-modal');
   if (modal) {
     if (modal.parentNode !== document.body) {
@@ -951,6 +954,91 @@ document.addEventListener('click', function(e) {
   var KEY_LOGS = 'dent2025_timer_logs';
   var KEY_POS = 'dent2025_timer_badge_pos';
   var KEY_ACTIVE_SESSION = 'dent2025_timer_active_session';
+  
+  // Multi-layer persistence helpers for PIN (localStorage + sessionStorage + cookie backup)
+  function setPinCookie(name, value, days) {
+    try {
+      var expires = "";
+      if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+      }
+      document.cookie = name + "=" + encodeURIComponent(value || "") + expires + "; path=/; SameSite=Lax";
+    } catch(e) {}
+  }
+
+  function getPinCookie(name) {
+    try {
+      var nameEQ = name + "=";
+      var ca = document.cookie.split(';');
+      for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+      }
+    } catch(e) {}
+    return null;
+  }
+
+  function getPersistedPin() {
+    var pin = null;
+    try { pin = localStorage.getItem(KEY_PIN); } catch(e) {}
+    if (!pin || !/^\d{4}$/.test(String(pin).trim())) {
+      try { pin = sessionStorage.getItem(KEY_PIN); } catch(e) {}
+    }
+    if (!pin || !/^\d{4}$/.test(String(pin).trim())) {
+      pin = getPinCookie(KEY_PIN);
+    }
+    if (pin) {
+      pin = String(pin).trim();
+      if (/^\d{4}$/.test(pin)) {
+        try { localStorage.setItem(KEY_PIN, pin); } catch(e) {}
+        try { sessionStorage.setItem(KEY_PIN, pin); } catch(e) {}
+        setPinCookie(KEY_PIN, pin, 365);
+        return pin;
+      }
+    }
+    return '';
+  }
+
+  function persistPin(val) {
+    if (!val) return;
+    val = String(val).trim();
+    try { localStorage.setItem(KEY_PIN, val); } catch(e) {}
+    try { sessionStorage.setItem(KEY_PIN, val); } catch(e) {}
+    setPinCookie(KEY_PIN, val, 365);
+  }
+
+  function updatePinDisplay(customPin) {
+    var pin = (customPin !== undefined && customPin !== null) ? String(customPin).trim() : (state.pin || getPersistedPin());
+    if (pin && /^\d{4}$/.test(pin)) {
+      state.pin = pin;
+    }
+    var pinText = state.pin ? state.pin : '----';
+
+    // Update all matching elements across the DOM in case of cloned/duplicate containers
+    var displays = document.querySelectorAll('#dent-pin-display, .dent-pin-display-text');
+    for (var i = 0; i < displays.length; i++) {
+      if (displays[i]) {
+        displays[i].textContent = pinText;
+      }
+    }
+
+    var badge = $('dent-pin-badge') || document.querySelector('.dent-study-pin-badge');
+    if (badge) {
+      if (state.pin) {
+        badge.setAttribute('title', 'رمز السجل الحالي: ' + state.pin + ' (انقر للإدارة أو التغيير)');
+      } else {
+        badge.setAttribute('title', 'انقر لتعيين رمز السجل أو المزامنة من جهاز آخر');
+      }
+    }
+
+    var manageCurrent = $('dent-manage-current-pin') || document.getElementById('dent-manage-current-pin');
+    if (manageCurrent) {
+      manageCurrent.textContent = pinText;
+    }
+  }
   
   var state = { 
     pin: '', 
@@ -1014,7 +1102,7 @@ document.addEventListener('click', function(e) {
   }
 
   function getEls() {
-    if (!els.clockDigits) {
+    if (!els.clockDigits || !document.body.contains(els.clockDigits)) {
       els = {
         modalOverlay: $('dent-timer-modal'), 
         pulseHome: $('dent-banner-pulse-homepage'), 
@@ -1265,6 +1353,21 @@ document.addEventListener('click', function(e) {
   window.dentToggleTimer = toggleTimer;
   window.dentFinishTimer = finishTimer;
   window.dentResetTimer = resetTimer;
+  window.dentRefreshTimerUI = function() {
+    cleanupDuplicates();
+    init();
+    var pin = getPersistedPin();
+    if (pin) {
+      state.pin = pin;
+      updatePinDisplay(pin);
+      hidePinSetupCard();
+    } else {
+      state.pin = '';
+      updatePinDisplay('');
+      showPinSetupCard();
+    }
+    render();
+  };
 
   function init() {
     cleanupDuplicates();
@@ -1527,20 +1630,17 @@ document.addEventListener('click', function(e) {
   }
 
   function setupPIN() {
-    var elements = getEls();
-    var pin = null;
-    try { pin = localStorage.getItem(KEY_PIN); } catch(e) {}
-    var isValid = true;
-    if (!pin) { isValid = false; }
-    else if (pin.length !== 4) { isValid = false; }
-    else if (!/^\d{4}$/.test(pin)) { isValid = false; }
+    var pin = getPersistedPin();
+    var isValid = Boolean(pin && pin.length === 4 && /^\d{4}$/.test(pin));
     
     if (!isValid) { 
+      state.pin = '';
+      updatePinDisplay('');
       showPinSetupCard(); 
       return false; 
     }
     state.pin = pin;
-    if (elements.pinDisplay) elements.pinDisplay.textContent = pin;
+    updatePinDisplay(pin);
     hidePinSetupCard();
     return true;
   }
@@ -1552,6 +1652,7 @@ document.addEventListener('click', function(e) {
     if (elements.pinInfoBar) { elements.pinInfoBar.style.display = 'none'; }
     var content = document.querySelector('.dent-study-content');
     if (content) { content.style.display = 'none'; }
+    updatePinDisplay('');
   }
 
   function hidePinSetupCard() {
@@ -1561,12 +1662,16 @@ document.addEventListener('click', function(e) {
     if (elements.pinInfoBar) { elements.pinInfoBar.style.display = 'flex'; }
     var content = document.querySelector('.dent-study-content');
     if (content) { content.style.display = 'block'; }
+    updatePinDisplay();
   }
 
   function openPinManageCard() {
+    init();
+    updatePinDisplay();
     var elements = getEls();
     if (!state.pin) { showPinSetupCard(); return; }
-    if (elements.manageCurrentPin) elements.manageCurrentPin.textContent = state.pin;
+    var manageCurrent = $('dent-manage-current-pin') || document.getElementById('dent-manage-current-pin');
+    if (manageCurrent) manageCurrent.textContent = state.pin;
     if (elements.manageCard) { elements.manageCard.style.display = 'block'; }
     if (elements.tabsBar) { elements.tabsBar.style.display = 'none'; }
     if (elements.pinInfoBar) { elements.pinInfoBar.style.display = 'none'; }
@@ -1581,6 +1686,7 @@ document.addEventListener('click', function(e) {
     if (elements.pinInfoBar) { elements.pinInfoBar.style.display = 'flex'; }
     var content = document.querySelector('.dent-study-content');
     if (content) { content.style.display = 'block'; }
+    updatePinDisplay();
   }
 
   function handlePinSubmit() {
@@ -1610,7 +1716,8 @@ document.addEventListener('click', function(e) {
         return;
       }
       state.pin = val; 
-      try { localStorage.setItem(KEY_PIN, val); } catch(e) {}
+      persistPin(val);
+      updatePinDisplay(val);
       if (res.data) {
         if (res.data.logs) {
           state.logs = res.data.logs;
@@ -1650,6 +1757,8 @@ document.addEventListener('click', function(e) {
       .then(function(res) {
         if (res.success) { 
           state.pin = val; 
+          persistPin(val);
+          updatePinDisplay(val);
           if (res.data) {
             if (res.data.logs) {
               state.logs = res.data.logs;
@@ -1683,6 +1792,8 @@ document.addEventListener('click', function(e) {
       .then(function(res) { 
         if (res.success) { 
           state.pin = val; 
+          persistPin(val);
+          updatePinDisplay(val);
           saveLocal(); 
           closePinManageCard(); 
           render(); 
@@ -1703,7 +1814,10 @@ document.addEventListener('click', function(e) {
   }
 
   function syncGet() {
-    if (!state.pin) return;
+    var pin = state.pin || getPersistedPin();
+    if (!pin) return;
+    state.pin = pin;
+    updatePinDisplay(pin);
     var amp = String.fromCharCode(38);
     fetch(API_URL + '?action=study_get_data' + amp + 'pin=' + encodeURIComponent(state.pin))
     .then(function(r) { return r.json(); })
@@ -1737,16 +1851,22 @@ document.addEventListener('click', function(e) {
     }).catch(function(e) {});
   }
 
-  function saveLocal() { try { localStorage.setItem(KEY_LOGS, JSON.stringify(state.logs)); localStorage.setItem(KEY_PIN, state.pin); } catch(e) {} }
+  function saveLocal() {
+    try {
+      localStorage.setItem(KEY_LOGS, JSON.stringify(state.logs));
+      if (state.pin) {
+        persistPin(state.pin);
+      }
+    } catch(e) {}
+  }
   function loadLocal() {
     try {
       var l = localStorage.getItem(KEY_LOGS);
       if (l) { state.logs = JSON.parse(l); }
-      var p = localStorage.getItem(KEY_PIN);
-      if (p && /^\d{4}$/.test(p)) {
+      var p = getPersistedPin();
+      if (p) {
         state.pin = p;
-        var el = getEls();
-        if (el.pinDisplay) el.pinDisplay.textContent = p;
+        updatePinDisplay(p);
         hidePinSetupCard();
       }
     } catch(e) {}
@@ -1857,6 +1977,7 @@ document.addEventListener('click', function(e) {
   }
 
   function render() {
+    updatePinDisplay();
     var elements = getEls();
     var today = getLocalDateStr();
     var yestD = new Date();
@@ -1952,6 +2073,7 @@ document.addEventListener('click', function(e) {
         restoreActiveSessionState();
       } else if (e.key === KEY_LOGS || e.key === KEY_PIN) {
         loadLocal();
+        updatePinDisplay();
         render();
       }
     }
