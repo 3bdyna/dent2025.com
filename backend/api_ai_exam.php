@@ -742,6 +742,7 @@ function saveCacheMetaStore($data) {
 }
 
 function getSystemCacheStats() {
+    global $pdo;
     $cacheDir = __DIR__ . '/gemini_keys_data/text_cache';
     if (!is_dir($cacheDir)) @mkdir($cacheDir, 0777, true);
 
@@ -756,6 +757,19 @@ function getSystemCacheStats() {
     $cachedFiles = [];
     $meta = getCacheMetaStore();
     $filesMeta = $meta['files_meta'] ?? [];
+    $metaChanged = false;
+
+    // Build subject lookup map from DB if available
+    $subjectMap = [];
+    if ($pdo) {
+        try {
+            $table_subs = getAiExamSubjectsTable($pdo);
+            $stmt = $pdo->query("SELECT id, name, specialty, year, semester FROM {$table_subs}");
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $subjectMap[intval($row['id'])] = $row;
+            }
+        } catch (Throwable $e) {}
+    }
 
     if (is_dir($cacheDir)) {
         $iterator = new RecursiveIteratorIterator(
@@ -771,14 +785,68 @@ function getSystemCacheStats() {
                 $relPath = ltrim(substr($fullPath, strlen(str_replace('\\', '/', $cacheDir))), '/');
 
                 $m = $filesMeta[$cleanId] ?? [];
+
+                // Parse physical directory structure: {specialty}/year_{year}/semester_{semester}/{subject_folder}/{file}.txt
+                $pathParts = explode('/', $relPath);
+                $pathSpec = $pathParts[0] ?? '';
+                $pathYear = null;
+                if (isset($pathParts[1]) && preg_match('/year_(\d+)/i', $pathParts[1], $ym)) {
+                    $pathYear = intval($ym[1]);
+                }
+                $pathSem = null;
+                if (isset($pathParts[2]) && preg_match('/semester_(\d+)/i', $pathParts[2], $sm)) {
+                    $pathSem = intval($sm[1]);
+                }
+                $pathSubId = null;
+                if (isset($pathParts[3]) && preg_match('/^(\d+)_/', $pathParts[3], $subm)) {
+                    $pathSubId = intval($subm[1]);
+                }
+
+                $subId = !empty($m['subject_id']) ? intval($m['subject_id']) : $pathSubId;
+                $dbSub = ($subId && isset($subjectMap[$subId])) ? $subjectMap[$subId] : null;
+
+                // Determine robust specialty
+                $spec = !empty($m['specialty']) ? $m['specialty'] : ($dbSub['specialty'] ?? $pathSpec);
+                if (empty($spec) || !in_array($spec, ['dentistry', 'medicine', 'pre-med'], true)) {
+                    $spec = in_array($pathSpec, ['dentistry', 'medicine', 'pre-med'], true) ? $pathSpec : 'dentistry';
+                }
+
+                // Determine robust year and semester
+                $year = (isset($m['year']) && $m['year'] !== '') ? intval($m['year']) : (isset($dbSub['year']) ? intval($dbSub['year']) : ($pathYear ?? 1));
+                $semester = (isset($m['semester']) && $m['semester'] !== '') ? intval($m['semester']) : (isset($dbSub['semester']) ? intval($dbSub['semester']) : ($pathSem ?? 1));
+
+                // Pre-Med has only 1 foundation year (normalize to 1 for consistent UI & routing)
+                if ($spec === 'pre-med') {
+                    $year = 1;
+                }
+
+                $subName = $m['subject_name'] ?? ($dbSub['name'] ?? 'مادة دراسية');
+                $fileName = $m['file_name'] ?? ('ملف ' . substr($cleanId, 0, 8) . '.pdf');
+
+                // Self-heal filesMeta if metadata was incomplete
+                if (empty($m['specialty']) || !isset($m['year']) || !isset($m['semester']) || empty($m['rel_path']) || $m['rel_path'] !== $relPath || ($spec === 'pre-med' && ($m['year'] ?? null) === 0)) {
+                    $meta['files_meta'][$cleanId] = array_merge($m, [
+                        'subject_name' => $subName,
+                        'file_name' => $fileName,
+                        'subject_id' => $subId,
+                        'specialty' => $spec,
+                        'year' => $year,
+                        'semester' => $semester,
+                        'rel_path' => $relPath,
+                        'size_bytes' => $sz,
+                        'cached_at' => $m['cached_at'] ?? date('Y-m-d H:i:s', $f->getMTime())
+                    ]);
+                    $metaChanged = true;
+                }
+
                 $cachedFiles[] = [
                     'file_id' => $cleanId,
-                    'subject_name' => $m['subject_name'] ?? 'مادة دراسية',
-                    'file_name' => $m['file_name'] ?? ('ملف ' . substr($cleanId, 0, 8) . '.pdf'),
-                    'subject_id' => $m['subject_id'] ?? null,
-                    'specialty' => $m['specialty'] ?? '',
-                    'year' => isset($m['year']) ? $m['year'] : null,
-                    'semester' => isset($m['semester']) ? $m['semester'] : null,
+                    'subject_name' => $subName,
+                    'file_name' => $fileName,
+                    'subject_id' => $subId,
+                    'specialty' => $spec,
+                    'year' => $year,
+                    'semester' => $semester,
                     'rel_path' => $relPath,
                     'size_bytes' => $sz,
                     'mtime' => $m['cached_at'] ?? date('Y-m-d H:i:s', $f->getMTime()),
@@ -786,6 +854,10 @@ function getSystemCacheStats() {
                 ];
             }
         }
+    }
+
+    if ($metaChanged) {
+        saveCacheMetaStore($meta);
     }
 
     $geminiStore = getGeminiFileCacheStore();
@@ -3474,14 +3546,18 @@ if ($action === 'scan_cache_catalog') {
                 $sname = $s['name'] ?? 'مادة دراسية';
                 $activeDriveFileIds[$fid] = true;
 
+                $subSpec = $s['specialty'] ?? ($existingM['specialty'] ?? '');
+                $subYear = ($subSpec === 'pre-med') ? 1 : (isset($s['year']) ? intval($s['year']) : ($existingM['year'] ?? 1));
+                $subSem = isset($s['semester']) ? intval($s['semester']) : ($existingM['semester'] ?? 1);
+
                 $existingM = $metaStore['files_meta'][$fid] ?? [];
                 $metaStore['files_meta'][$fid] = array_merge($existingM, [
                     'file_name' => $fname,
                     'subject_name' => $sname,
                     'subject_id' => $s['id'],
-                    'specialty' => $s['specialty'] ?? ($existingM['specialty'] ?? ''),
-                    'year' => isset($s['year']) ? intval($s['year']) : ($existingM['year'] ?? 1),
-                    'semester' => isset($s['semester']) ? intval($s['semester']) : ($existingM['semester'] ?? 1),
+                    'specialty' => $subSpec,
+                    'year' => $subYear,
+                    'semester' => $subSem,
                     'cached_at' => $cachedDiskIds[$fid]['mtime'] ?? ($existingM['cached_at'] ?? null)
                 ]);
 
@@ -3491,9 +3567,9 @@ if ($action === 'scan_cache_catalog') {
                         'file_name' => $fname,
                         'subject_name' => $sname,
                         'subject_id' => $s['id'],
-                        'specialty' => $s['specialty'] ?? '',
-                        'year' => isset($s['year']) ? intval($s['year']) : 1,
-                        'semester' => isset($s['semester']) ? intval($s['semester']) : 1
+                        'specialty' => $subSpec,
+                        'year' => $subYear,
+                        'semester' => $subSem
                     ];
                 }
             }

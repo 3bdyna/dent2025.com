@@ -3979,6 +3979,44 @@ window.AdminApp = {
         });
     },
 
+    matchesFocusTrack(item) {
+        if (!this.focusMode || !this.focusMode.enabled) return true;
+        const fSpec = (this.focusMode.specialty || '').toLowerCase().trim();
+        const fYear = String(this.focusMode.year !== null && this.focusMode.year !== undefined ? this.focusMode.year : '');
+        const fSem = String(this.focusMode.semester !== null && this.focusMode.semester !== undefined ? this.focusMode.semester : '');
+
+        const itemSpec = (item.specialty || '').toLowerCase().trim();
+        // Strict specialty match
+        if (itemSpec !== fSpec) return false;
+
+        // Pre-Med has only 1 foundation year (accepts 0, 1, '0', '1')
+        if (fSpec === 'pre-med' || itemSpec === 'pre-med') {
+            // Foundation track year matches
+        } else {
+            const itemYear = String(item.year !== null && item.year !== undefined ? item.year : '');
+            if (itemYear !== fYear) return false;
+        }
+
+        // Semester match
+        const itemSem = String(item.semester !== null && item.semester !== undefined ? item.semester : '');
+        if (itemSem !== fSem) return false;
+
+        return true;
+    },
+
+    getTrackBadge(spec, year, sem) {
+        const s = (spec || '').toLowerCase().trim();
+        const y = (year !== null && year !== undefined && year !== '') ? year : 1;
+        const sm = (sem !== null && sem !== undefined && sem !== '') ? sem : 1;
+        if (s === 'pre-med') {
+            return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">تحضيري - ف${sm}</span>`;
+        } else if (s === 'medicine') {
+            return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">طب بشري - س${y} ف${sm}</span>`;
+        } else {
+            return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-500/20 text-sky-300 border border-sky-500/30">أسنان - س${y} ف${sm}</span>`;
+        }
+    },
+
     renderCacheTab(data) {
         this.lastCacheData = data;
         const countEl = document.getElementById('cache-count-display');
@@ -4000,28 +4038,8 @@ window.AdminApp = {
 
         // Check if Academic Focus Mode is active
         const isFocused = Boolean(this.focusMode && this.focusMode.enabled);
-        let cachedFiles = rawCachedFiles;
-        let uncachedFiles = rawUncachedFiles;
-
-        if (isFocused) {
-            const fSpec = this.focusMode.specialty;
-            const fYear = String(this.focusMode.year);
-            const fSem = String(this.focusMode.semester);
-
-            cachedFiles = rawCachedFiles.filter(f => {
-                if (f.specialty && f.specialty !== fSpec) return false;
-                if (f.year !== null && f.year !== undefined && f.year !== '' && String(f.year) !== fYear) return false;
-                if (f.semester !== null && f.semester !== undefined && f.semester !== '' && String(f.semester) !== fSem) return false;
-                return true;
-            });
-
-            uncachedFiles = rawUncachedFiles.filter(u => {
-                if (u.specialty && u.specialty !== fSpec) return false;
-                if (u.year !== null && u.year !== undefined && u.year !== '' && String(u.year) !== fYear) return false;
-                if (u.semester !== null && u.semester !== undefined && u.semester !== '' && String(u.semester) !== fSem) return false;
-                return true;
-            });
-        }
+        let cachedFiles = rawCachedFiles.filter(f => this.matchesFocusTrack(f));
+        let uncachedFiles = rawUncachedFiles.filter(u => this.matchesFocusTrack(u));
 
         // Compute stats (focused or global)
         let totalBytes = 0;
@@ -4081,14 +4099,18 @@ window.AdminApp = {
                     const fId = f.file_id;
                     const fSize = f.size_formatted || '';
                     const relPath = f.rel_path || '';
+                    const trackBadge = this.getTrackBadge(f.specialty, f.year, f.semester);
                     return `
                         <tr class="hover:bg-white/[0.02] transition">
-                            <td class="p-3 text-white font-medium truncate max-w-[140px]" title="${sName}">
-                                <div class="truncate">${sName}</div>
+                            <td class="p-3 text-white font-medium max-w-[180px]" title="${sName}">
+                                <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                                    ${trackBadge}
+                                    <span class="truncate font-semibold text-xs text-gray-100">${sName}</span>
+                                </div>
                                 ${relPath ? `<div class="text-[9px] text-gray-500 font-mono truncate" dir="ltr" title="${relPath}">${relPath}</div>` : ''}
                             </td>
-                            <td class="p-3 text-gray-300 truncate max-w-[180px]" title="${fName}">
-                                <div class="truncate">${fName}</div>
+                            <td class="p-3 text-gray-300 max-w-[200px]" title="${fName}">
+                                <div class="truncate font-medium">${fName}</div>
                                 <div class="text-[10px] text-gray-500 font-mono">${fId}</div>
                             </td>
                             <td class="p-3 text-center text-emerald-400 font-mono text-xs">
@@ -4118,13 +4140,17 @@ window.AdminApp = {
                     const uSpec = u.specialty || '';
                     const uYear = u.year || '';
                     const uSem = u.semester || '';
+                    const trackBadge = this.getTrackBadge(u.specialty, u.year, u.semester);
                     return `
                         <tr class="hover:bg-white/[0.02] transition">
-                            <td class="p-3 text-white font-medium truncate max-w-[140px]" title="${sName}">
-                                ${sName}
+                            <td class="p-3 text-white font-medium max-w-[180px]" title="${sName}">
+                                <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                                    ${trackBadge}
+                                    <span class="truncate font-semibold text-xs text-gray-100">${sName}</span>
+                                </div>
                             </td>
-                            <td class="p-3 text-gray-300 truncate max-w-[180px]" title="${fName}">
-                                <div class="truncate">${fName}</div>
+                            <td class="p-3 text-gray-300 max-w-[200px]" title="${fName}">
+                                <div class="truncate font-medium">${fName}</div>
                                 <div class="text-[10px] text-gray-500 font-mono">${fId}</div>
                             </td>
                             <td class="p-3 text-center">
@@ -4177,15 +4203,7 @@ window.AdminApp = {
     async prewarmPendingFilesOnly() {
         let uncached = (this.lastCacheData && this.lastCacheData.uncached_files) ? this.lastCacheData.uncached_files : [];
         if (this.focusMode && this.focusMode.enabled) {
-            const fSpec = this.focusMode.specialty;
-            const fYear = String(this.focusMode.year);
-            const fSem = String(this.focusMode.semester);
-            uncached = uncached.filter(u => {
-                if (u.specialty && u.specialty !== fSpec) return false;
-                if (u.year !== null && u.year !== undefined && u.year !== '' && String(u.year) !== fYear) return false;
-                if (u.semester !== null && u.semester !== undefined && u.semester !== '' && String(u.semester) !== fSem) return false;
-                return true;
-            });
+            uncached = uncached.filter(u => this.matchesFocusTrack(u));
         }
         if (!uncached || uncached.length === 0) {
             this.showToast('جميع ملفات هذا المسار مخزنة مسبقاً في الكاش ولا توجد ملفات معلقة');
@@ -4314,15 +4332,7 @@ window.AdminApp = {
 
             let subjects = subData.data.subjects;
             if (this.focusMode && this.focusMode.enabled) {
-                const fSpec = this.focusMode.specialty;
-                const fYear = String(this.focusMode.year);
-                const fSem = String(this.focusMode.semester);
-                subjects = subjects.filter(s => {
-                    if (s.specialty && s.specialty !== fSpec) return false;
-                    if (s.year !== null && s.year !== undefined && s.year !== '' && String(s.year) !== fYear) return false;
-                    if (s.semester !== null && s.semester !== undefined && s.semester !== '' && String(s.semester) !== fSem) return false;
-                    return true;
-                });
+                subjects = subjects.filter(s => this.matchesFocusTrack(s));
             }
             const total = subjects.length;
 
