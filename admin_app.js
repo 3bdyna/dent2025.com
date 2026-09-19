@@ -4165,18 +4165,69 @@ window.AdminApp = {
         return true;
     },
 
+    cacheSubTab: 'cached',
+    cacheSearchQuery: '',
+    cacheSubjectFilter: 'all',
+
+    switchCacheSubTab(tab) {
+        this.cacheSubTab = tab;
+        const panelCached = document.getElementById('panel-cached-files');
+        const panelUncached = document.getElementById('panel-uncached-files');
+        const btnStored = document.getElementById('cache-tab-btn-stored');
+        const btnPending = document.getElementById('cache-tab-btn-pending');
+        const filterControls = document.getElementById('cache-filter-controls');
+
+        if (tab === 'uncached') {
+            if (panelCached) panelCached.classList.add('hidden');
+            if (panelUncached) panelUncached.classList.remove('hidden');
+
+            if (btnStored) {
+                btnStored.className = 'px-3.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/5 border border-transparent';
+            }
+            if (btnPending) {
+                btnPending.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 bg-white/10 text-white border border-white/15';
+            }
+            if (filterControls) filterControls.classList.add('hidden');
+        } else {
+            if (panelCached) panelCached.classList.remove('hidden');
+            if (panelUncached) panelUncached.classList.add('hidden');
+
+            if (btnStored) {
+                btnStored.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 bg-white/10 text-white border border-white/15';
+            }
+            if (btnPending) {
+                btnPending.className = 'px-3.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/5 border border-transparent';
+            }
+            if (filterControls) filterControls.classList.remove('hidden');
+        }
+    },
+
+    onCacheSearch(query) {
+        this.cacheSearchQuery = (query || '').toLowerCase().trim();
+        if (this.lastCacheData) {
+            this.renderCachedFilesListOnly();
+        }
+    },
+
+    onCacheSubjectFilter(subject) {
+        this.cacheSubjectFilter = subject || 'all';
+        if (this.lastCacheData) {
+            this.renderCachedFilesListOnly();
+        }
+    },
+
     getTrackBadge(spec, year, sem) {
         const s = (spec || '').toLowerCase().trim();
         const y = (year !== null && year !== undefined && year !== '') ? year : 1;
         const sm = (sem !== null && sem !== undefined && sem !== '') ? sem : 1;
         if (s === 'pre-med') {
-            return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">تحضيري - ف${sm}</span>`;
+            return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.06] text-purple-200 border border-purple-500/20">تحضيري - ف${sm}</span>`;
         } else if (s === 'medicine') {
-            return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">طب بشري - س${y} ف${sm}</span>`;
+            return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.06] text-emerald-200 border border-emerald-500/20">طب بشري - س${y} ف${sm}</span>`;
         } else if (s === 'unassigned') {
-            return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-500/20 text-gray-300 border border-gray-500/30">غير مصنف</span>`;
+            return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.06] text-gray-300 border border-white/10">غير مصنف</span>`;
         } else {
-            return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-500/20 text-sky-300 border border-sky-500/30">أسنان - س${y} ف${sm}</span>`;
+            return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.06] text-sky-200 border border-sky-500/20">أسنان - س${y} ف${sm}</span>`;
         }
     },
 
@@ -4191,8 +4242,9 @@ window.AdminApp = {
         const lastScanLbl = document.getElementById('cache-last-scan-label');
         const cachedTableCount = document.getElementById('cached-table-count');
         const uncachedTableCount = document.getElementById('uncached-table-count');
-        const cachedTbody = document.getElementById('cached-files-list');
-        const uncachedTbody = document.getElementById('uncached-files-list');
+        const pendingAlert = document.getElementById('cache-pending-alert');
+        const pendingAlertCount = document.getElementById('pending-alert-count');
+        const subjectFilterSel = document.getElementById('cache-subject-filter');
 
         const summary = data.catalog_summary || {};
         const rawCachedFiles = data.cached_files || [];
@@ -4215,14 +4267,44 @@ window.AdminApp = {
         uncachedFiles.forEach(u => { if (u.subject_name) distinctSubjects.add(u.subject_name); });
 
         if (countEl) countEl.innerText = cachedFiles.length;
-        if (sizeEl) sizeEl.innerText = `${isFocused ? sizeFormatted : (data.text_cache_size_formatted || '0 KB')} (نصوص مستخرجة)`;
+        if (sizeEl) sizeEl.innerText = `${isFocused ? sizeFormatted : (data.text_cache_size_formatted || '0 KB')} نصوص مستخرجة`;
         if (uncachedCountEl) uncachedCountEl.innerText = uncachedFiles.length;
         if (subsWithFilesEl) {
             subsWithFilesEl.innerText = isFocused ? `${distinctSubjects.size} مادة` : `${summary.subjects_with_files || distinctSubjects.size || 8} مادة`;
         }
 
         if (cachedTableCount) cachedTableCount.innerText = cachedFiles.length;
-        if (uncachedTableCount) uncachedTableCount.innerText = uncachedFiles.length;
+        if (uncachedTableCount) {
+            uncachedTableCount.innerText = uncachedFiles.length;
+            if (uncachedFiles.length > 0) {
+                uncachedTableCount.classList.remove('text-gray-400', 'bg-white/5');
+                uncachedTableCount.classList.add('text-amber-300', 'bg-amber-500/20');
+            } else {
+                uncachedTableCount.classList.remove('text-amber-300', 'bg-amber-500/20');
+                uncachedTableCount.classList.add('text-gray-400', 'bg-white/5');
+            }
+        }
+
+        // Pending alert banner inside stored files tab
+        if (pendingAlert && pendingAlertCount) {
+            if (uncachedFiles.length > 0) {
+                pendingAlertCount.innerText = uncachedFiles.length;
+                pendingAlert.classList.remove('hidden');
+            } else {
+                pendingAlert.classList.add('hidden');
+            }
+        }
+
+        // Populate Subject Filter options dynamically
+        if (subjectFilterSel) {
+            const currentSubVal = this.cacheSubjectFilter || 'all';
+            let optionsHtml = '<option value="all">جميع المواد</option>';
+            const sortedSubjects = Array.from(distinctSubjects).sort();
+            sortedSubjects.forEach(s => {
+                optionsHtml += `<option value="${this.escapeHtml(s)}"${currentSubVal === s ? ' selected' : ''}>${this.escapeHtml(s)}</option>`;
+            });
+            subjectFilterSel.innerHTML = optionsHtml;
+        }
 
         const settings = data.settings || {};
         if (autoCheck) autoCheck.checked = (settings.auto_prewarm_on_upload !== false);
@@ -4232,84 +4314,127 @@ window.AdminApp = {
             lastScanLbl.innerText = summary.last_scan_time ? `آخر فحص: ${summary.last_scan_time}` : 'فهرس نشط';
         }
 
-        // 1. Render Cached Files Table
-        if (cachedTbody) {
-            if (cachedFiles.length === 0) {
-                cachedTbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">${isFocused ? 'لا توجد ملفات مخزنة في الكاش لهذا المسار المحدد حالياً.' : 'لا توجد ملفات مخزنة حالياً في الكاش.'}</td></tr>`;
-            } else {
-                cachedTbody.innerHTML = cachedFiles.map(f => {
-                    const sName = f.subject_name || 'مادة دراسية';
-                    const fName = f.file_name || f.file_id;
-                    const fId = f.file_id;
-                    const fSize = f.size_formatted || '';
-                    const relPath = f.rel_path || '';
-                    const trackBadge = this.getTrackBadge(f.specialty, f.year, f.semester);
-                    return `
-                        <tr class="hover:bg-white/[0.02] transition">
-                            <td class="p-3 text-white font-medium max-w-[180px]" title="${sName}">
-                                <div class="flex items-center gap-1.5 flex-wrap mb-1">
-                                    ${trackBadge}
-                                    <span class="truncate font-semibold text-xs text-gray-100">${sName}</span>
-                                </div>
-                                ${relPath ? `<div class="text-[9px] text-gray-500 font-mono truncate" dir="ltr" title="${relPath}">${relPath}</div>` : ''}
-                            </td>
-                            <td class="p-3 text-gray-300 max-w-[200px]" title="${fName}">
-                                <div class="truncate font-medium">${fName}</div>
-                                <div class="text-[10px] text-gray-500 font-mono">${fId}</div>
-                            </td>
-                            <td class="p-3 text-center text-emerald-400 font-mono text-xs">
-                                ${fSize}
-                            </td>
-                            <td class="p-3 text-center">
-                                <button onclick="AdminApp.clearCache('${fId}')" class="btn btn-danger text-xs py-1 px-2.5">
-                                    حذف
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            }
+        // Ensure proper sub-tab display
+        this.switchCacheSubTab(this.cacheSubTab || 'cached');
+
+        // Render both lists
+        this.renderCachedFilesListOnly();
+        this.renderUncachedFilesList(uncachedFiles, isFocused);
+    },
+
+    renderCachedFilesListOnly() {
+        if (!this.lastCacheData) return;
+        const cachedTbody = document.getElementById('cached-files-list');
+        const showingCountEl = document.getElementById('cache-showing-count');
+        if (!cachedTbody) return;
+
+        const rawCachedFiles = this.lastCacheData.cached_files || [];
+        const isFocused = Boolean(this.focusMode && this.focusMode.enabled);
+        let cachedFiles = rawCachedFiles.filter(f => this.matchesFocusTrack(f));
+
+        // Filter by subject
+        if (this.cacheSubjectFilter && this.cacheSubjectFilter !== 'all') {
+            cachedFiles = cachedFiles.filter(f => f.subject_name === this.cacheSubjectFilter);
         }
 
-        // 2. Render Uncached / Pending Files Table
-        if (uncachedTbody) {
-            if (uncachedFiles.length === 0) {
-                uncachedTbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">${isFocused ? 'جميع ملفات هذا المسار مخزنة وجاهزة في الكاش.' : 'جميع ملفات قوقل درايف مخزنة وجاهزة في الكاش.'}</td></tr>`;
-            } else {
-                uncachedTbody.innerHTML = uncachedFiles.map(u => {
-                    const sName = u.subject_name || 'مادة دراسية';
-                    const fName = u.file_name || u.file_id;
-                    const fId = u.file_id;
-                    const sId = u.subject_id || '';
-                    const uSpec = u.specialty || '';
-                    const uYear = u.year || '';
-                    const uSem = u.semester || '';
-                    const trackBadge = this.getTrackBadge(u.specialty, u.year, u.semester);
-                    return `
-                        <tr class="hover:bg-white/[0.02] transition">
-                            <td class="p-3 text-white font-medium max-w-[180px]" title="${sName}">
-                                <div class="flex items-center gap-1.5 flex-wrap mb-1">
-                                    ${trackBadge}
-                                    <span class="truncate font-semibold text-xs text-gray-100">${sName}</span>
-                                </div>
-                            </td>
-                            <td class="p-3 text-gray-300 max-w-[200px]" title="${fName}">
-                                <div class="truncate font-medium">${fName}</div>
-                                <div class="text-[10px] text-gray-500 font-mono">${fId}</div>
-                            </td>
-                            <td class="p-3 text-center">
-                                <span class="bg-amber-500/10 text-amber-300 border border-amber-500/20 text-xs px-2 py-0.5 rounded font-mono">معلق</span>
-                            </td>
-                            <td class="p-3 text-center">
-                                <button onclick="AdminApp.prewarmSingleFile('${fId}', '${fName.replace(/'/g, "\\'")}', '${sName.replace(/'/g, "\\'")}', '${sId}', '${uSpec}', '${uYear}', '${uSem}')" class="btn btn-secondary text-xs py-1 px-3">
-                                    تجهيز الآن
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            }
+        // Filter by search query
+        if (this.cacheSearchQuery) {
+            const q = this.cacheSearchQuery;
+            cachedFiles = cachedFiles.filter(f => {
+                const sName = (f.subject_name || '').toLowerCase();
+                const fName = (f.file_name || '').toLowerCase();
+                const fId = (f.file_id || '').toLowerCase();
+                const relPath = (f.rel_path || '').toLowerCase();
+                return sName.includes(q) || fName.includes(q) || fId.includes(q) || relPath.includes(q);
+            });
         }
+
+        if (showingCountEl) {
+            const totalInScope = rawCachedFiles.filter(f => this.matchesFocusTrack(f)).length;
+            showingCountEl.innerText = `عرض ${cachedFiles.length} من أصل ${totalInScope} ملف مخزن`;
+        }
+
+        if (cachedFiles.length === 0) {
+            cachedTbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">${this.cacheSearchQuery ? 'لا توجد نتائج مطابقة لبحثك في ملفات الكاش.' : (isFocused ? 'لا توجد ملفات مخزنة في الكاش لهذا المسار المحدد حالياً.' : 'لا توجد ملفات مخزنة حالياً في الكاش.')}</td></tr>`;
+            return;
+        }
+
+        cachedTbody.innerHTML = cachedFiles.map(f => {
+            const sName = f.subject_name || 'مادة دراسية';
+            const fName = f.file_name || f.file_id;
+            const fId = f.file_id;
+            const fSize = f.size_formatted || '';
+            const relPath = f.rel_path || '';
+            const trackBadge = this.getTrackBadge(f.specialty, f.year, f.semester);
+            return `
+                <tr class="hover:bg-white/[0.02] transition">
+                    <td class="p-2.5 text-white font-medium max-w-[220px]">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            ${trackBadge}
+                            <span class="truncate font-semibold text-xs text-gray-200" title="${sName}">${sName}</span>
+                        </div>
+                    </td>
+                    <td class="p-2.5 text-gray-300 max-w-[240px]">
+                        <div class="truncate font-medium text-xs text-gray-200" title="${fName}">${fName}</div>
+                        <div class="text-[10px] text-gray-500 font-mono select-all">${fId}</div>
+                    </td>
+                    <td class="p-2.5 text-gray-400 font-mono text-[10px] hidden md:table-cell max-w-[200px]" dir="ltr">
+                        <div class="truncate" title="${relPath}">${relPath || '-'}</div>
+                    </td>
+                    <td class="p-2.5 text-center text-gray-300 font-mono text-xs whitespace-nowrap">
+                        ${fSize}
+                    </td>
+                    <td class="p-2.5 text-center whitespace-nowrap">
+                        <button onclick="AdminApp.clearCache('${fId}')" class="text-gray-400 hover:text-red-400 hover:bg-red-500/10 border border-white/5 hover:border-red-500/20 px-2.5 py-1 rounded-lg text-xs transition inline-flex items-center gap-1" title="حذف من الكاش">
+                            <span>حذف</span>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    },
+
+    renderUncachedFilesList(uncachedFiles, isFocused) {
+        const uncachedTbody = document.getElementById('uncached-files-list');
+        if (!uncachedTbody) return;
+
+        if (uncachedFiles.length === 0) {
+            uncachedTbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">${isFocused ? 'جميع ملفات هذا المسار مخزنة وجاهزة في الكاش.' : 'جميع ملفات قوقل درايف مخزنة وجاهزة في الكاش.'}</td></tr>`;
+            return;
+        }
+
+        uncachedTbody.innerHTML = uncachedFiles.map(u => {
+            const sName = u.subject_name || 'مادة دراسية';
+            const fName = u.file_name || u.file_id;
+            const fId = u.file_id;
+            const sId = u.subject_id || '';
+            const uSpec = u.specialty || '';
+            const uYear = u.year || '';
+            const uSem = u.semester || '';
+            const trackBadge = this.getTrackBadge(u.specialty, u.year, u.semester);
+            return `
+                <tr class="hover:bg-white/[0.02] transition">
+                    <td class="p-2.5 text-white font-medium max-w-[220px]">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            ${trackBadge}
+                            <span class="truncate font-semibold text-xs text-gray-200" title="${sName}">${sName}</span>
+                        </div>
+                    </td>
+                    <td class="p-2.5 text-gray-300 max-w-[240px]">
+                        <div class="truncate font-medium text-xs text-gray-200" title="${fName}">${fName}</div>
+                        <div class="text-[10px] text-gray-500 font-mono select-all">${fId}</div>
+                    </td>
+                    <td class="p-2.5 text-center whitespace-nowrap">
+                        <span class="bg-white/[0.05] text-neutral-300 border border-white/10 text-[11px] px-2 py-0.5 rounded font-mono">بانتظار الاستخراج</span>
+                    </td>
+                    <td class="p-2.5 text-center whitespace-nowrap">
+                        <button onclick="AdminApp.prewarmSingleFile('${fId}', '${fName.replace(/'/g, "\\'")}', '${sName.replace(/'/g, "\\'")}', '${sId}', '${uSpec}', '${uYear}', '${uSem}')" class="btn btn-secondary text-xs py-1 px-3">
+                            تجهيز الآن
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     },
 
     saveCacheSettings() {
