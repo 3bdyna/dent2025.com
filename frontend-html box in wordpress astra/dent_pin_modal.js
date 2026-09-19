@@ -1,5 +1,5 @@
 /**
- * Dent2025 - Admin 6-Digit PIN Modal Component
+ * Dent2025 - Admin 4-Digit PIN Modal Component
  * Styled to 100% match the Dent2025 dark zinc / charcoal minimalist aesthetic.
  */
 (function() {
@@ -7,6 +7,7 @@
 
     if (window.DentPinModal) return;
 
+    const PIN_LENGTH = 4;
     const API_BASE = (window.location.pathname === '/dev' || window.location.pathname.startsWith('/dev/')) ? '/dev' : '';
 
     const STYLES = `
@@ -40,7 +41,7 @@
         .dent-pin-card {
             position: relative;
             width: 100%;
-            max-width: 370px;
+            max-width: 340px;
             background: #181b21;
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 18px;
@@ -130,43 +131,43 @@
             display: block;
         }
 
-        /* 6 PIN Display Cells */
+        /* 4 PIN Display Cells */
         .dent-pin-cells-wrapper {
             position: relative;
             display: flex;
             justify-content: center;
-            gap: 8px;
+            gap: 12px;
             margin: 0 auto 14px;
             direction: ltr; /* digits type LTR */
         }
         .dent-pin-cell {
-            width: 44px;
-            height: 50px;
-            border-radius: 10px;
+            width: 52px;
+            height: 56px;
+            border-radius: 12px;
             background: #111317;
             border: 1px solid rgba(255, 255, 255, 0.12);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.35rem;
+            font-size: 1.5rem;
             color: transparent;
             transition: all 0.18s ease;
             box-sizing: border-box;
             cursor: pointer;
         }
         .dent-pin-cell.active-focus {
-            border-color: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.45);
             background: rgba(255, 255, 255, 0.04);
             box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
         }
         .dent-pin-cell.filled {
             background: #1f232b;
-            border-color: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.28);
             color: #f8fafc;
         }
         .dent-pin-cell.filled::after {
             content: '●';
-            font-size: 1rem;
+            font-size: 1.15rem;
             line-height: 1;
             color: #f8fafc;
         }
@@ -212,15 +213,15 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 7px;
             direction: ltr;
-            max-width: 290px;
+            max-width: 270px;
             margin: 0 auto 14px;
         }
         .dent-pin-key {
-            height: 40px;
+            height: 42px;
             border-radius: 8px;
             background: #27272a;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             font-weight: 600;
             font-family: 'Outfit', sans-serif;
             color: #f8fafc;
@@ -364,16 +365,14 @@
                     <button class="dent-pin-close-btn" type="button" aria-label="إغلاق" id="dent-pin-close-btn">×</button>
                 </div>
 
-                <label class="dent-pin-label">أدخل رمز PIN المكون من 6 أرقام للتحقق:</label>
+                <label class="dent-pin-label">أدخل رمز PIN المكون من 4 أرقام للتحقق:</label>
 
                 <div class="dent-pin-cells-wrapper" id="dent-pin-cells-wrap">
                     <div class="dent-pin-cell" data-idx="0"></div>
                     <div class="dent-pin-cell" data-idx="1"></div>
                     <div class="dent-pin-cell" data-idx="2"></div>
                     <div class="dent-pin-cell" data-idx="3"></div>
-                    <div class="dent-pin-cell" data-idx="4"></div>
-                    <div class="dent-pin-cell" data-idx="5"></div>
-                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" class="dent-pin-hidden-input" id="dent-pin-hidden" autocomplete="one-time-code" />
+                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="dent-pin-hidden-input" id="dent-pin-hidden" autocomplete="one-time-code" />
                 </div>
 
                 <div class="dent-pin-status" id="dent-pin-status"></div>
@@ -432,10 +431,10 @@
 
         // Submit button
         overlay.querySelector('#dent-pin-submit-btn').onclick = () => {
-            if (currentDigits.length === 6) {
+            if (currentDigits.length === PIN_LENGTH) {
                 submitPin();
             } else {
-                setStatus('يرجى إدخال جميع الأرقام الـ 6.', 'error');
+                setStatus('يرجى إدخال جميع الأرقام الـ 4.', 'error');
                 triggerShake();
             }
         };
@@ -457,14 +456,22 @@
             }
         };
 
+        // Cells click focuses hidden input
+        const cellsWrap = overlay.querySelector('#dent-pin-cells-wrap');
+        if (cellsWrap && hiddenInput) {
+            cellsWrap.onclick = () => {
+                try { hiddenInput.focus(); } catch(e) {}
+            };
+        }
+
         // Hidden input typing
         if (hiddenInput) {
             hiddenInput.addEventListener('input', () => {
                 if (isVerifying) return;
                 const val = hiddenInput.value.replace(/\D/g, '');
-                currentDigits = val.slice(0, 6).split('');
+                currentDigits = val.slice(0, PIN_LENGTH).split('');
                 updateCells();
-                if (currentDigits.length === 6) {
+                if (currentDigits.length === PIN_LENGTH) {
                     submitPin();
                 }
             });
@@ -488,10 +495,10 @@
                 removeDigit();
             } else if (e.key === 'Enter') {
                 e.preventDefault();
-                if (currentDigits.length === 6) {
+                if (currentDigits.length === PIN_LENGTH) {
                     submitPin();
                 } else {
-                    setStatus('يرجى إدخال جميع الأرقام الـ 6.', 'error');
+                    setStatus('يرجى إدخال جميع الأرقام الـ 4.', 'error');
                     triggerShake();
                 }
             }
@@ -503,12 +510,12 @@
             if (!activeModal || isVerifying) return;
             const pasteData = (e.clipboardData || window.clipboardData)?.getData('text');
             if (!pasteData) return;
-            const cleanDigits = pasteData.replace(/\D/g, '').slice(0, 6);
+            const cleanDigits = pasteData.replace(/\D/g, '').slice(0, PIN_LENGTH);
             if (cleanDigits.length > 0) {
                 e.preventDefault();
                 currentDigits = cleanDigits.split('');
                 updateCells();
-                if (currentDigits.length === 6) {
+                if (currentDigits.length === PIN_LENGTH) {
                     submitPin();
                 }
             }
@@ -517,10 +524,10 @@
     }
 
     function appendDigit(digit) {
-        if (currentDigits.length >= 6 || isVerifying) return;
+        if (currentDigits.length >= PIN_LENGTH || isVerifying) return;
         currentDigits.push(digit);
         updateCells();
-        if (currentDigits.length === 6) {
+        if (currentDigits.length === PIN_LENGTH) {
             submitPin();
         }
     }
@@ -576,7 +583,7 @@
 
     function submitPin() {
         const pin = currentDigits.join('');
-        if (pin.length !== 6 || isVerifying || !activeModal) return;
+        if (pin.length !== PIN_LENGTH || isVerifying || !activeModal) return;
 
         isVerifying = true;
         setStatus('جاري التحقق من الصلاحيات...', 'loading');
