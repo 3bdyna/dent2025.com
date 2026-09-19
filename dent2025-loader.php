@@ -227,7 +227,6 @@ if (dent2025_is_frontend_head()) {
         $head .= "\n" .
             '<!-- Open Graph Meta Tags for WhatsApp / Social Media -->' . "\n" .
             '<meta property="og:title" content="Dent 2025 | Study Hub">' . "\n" .
-            '<meta property="og:description" content="The official study hub for the Dental Class of 2025.">' . "\n" .
             '<meta property="og:type" content="website">' . "\n" .
             '<meta property="og:url" content="' . esc_url($site_url) . '">' . "\n" .
             '<meta property="og:image" content="' . esc_url($og_url) . '">' . "\n" .
@@ -238,7 +237,6 @@ if (dent2025_is_frontend_head()) {
             '<!-- Twitter Card Tags -->' . "\n" .
             '<meta name="twitter:card" content="summary_large_image">' . "\n" .
             '<meta name="twitter:title" content="Dent 2025 | Study Hub">' . "\n" .
-            '<meta name="twitter:description" content="The official study hub for the Dental Class of 2025.">' . "\n" .
             '<meta name="twitter:image" content="' . esc_url($og_url) . '">' . "\n";
 
         echo $head;
