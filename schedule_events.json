@@ -61,8 +61,8 @@
     "date": "2026-12-20",
     "hijri": "1448/07/11",
     "title": "الاختبارات النهائية للفصل الدراسي الأول",
-    "type": "final",
-    "type_label": "اختبار نهائي"
+    "type": "deadline",
+    "type_label": "موعد نهائي"
   },
   {
     "id": "evt_pay_dec",

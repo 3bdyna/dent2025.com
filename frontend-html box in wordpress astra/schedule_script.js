@@ -37,6 +37,7 @@ const ScheduleApp = {
             'exam': { label: 'اختبار', badgeClass: 'badge-type-exam', printClass: 'm1-badge-exam' },
             'midterm': { label: 'اختبار نصفي', badgeClass: 'badge-type-midterm', printClass: 'm1-badge-exam' },
             'final': { label: 'اختبار نهائي', badgeClass: 'badge-type-final', printClass: 'm1-badge-exam' },
+            'deadline': { label: 'موعد نهائي', badgeClass: 'badge-type-deadline', printClass: 'm1-badge-exam' },
             'holiday': { label: 'إجازة رسمية', badgeClass: 'badge-type-holiday', printClass: 'm1-badge-holiday' },
             'payment': { label: 'مكافأة', badgeClass: 'badge-type-payment', printClass: 'm1-badge-payment' },
             'start': { label: 'بداية دراسة', badgeClass: 'badge-type-start', printClass: 'm1-badge-holiday' },
@@ -464,12 +465,14 @@ const ScheduleApp = {
                         const eventSchedId = ev.schedule_id || (isGlobal ? 'global' : this.scheduleId);
                         const escapedId = dentEscapeHtml(ev.id);
                         adminButtons = `
-                            <button class="event-edit-btn" title="تعديل الحدث" onclick="ScheduleApp.showEditModal('${escapedId}')">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                            </button>
-                            <button class="event-delete-btn" title="حذف الحدث" onclick="ScheduleApp.deleteEvent('${escapedId}', ${isGlobal ? 'true' : 'false'}, '${eventSchedId}')">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
-                            </button>`;
+                            <div class="event-admin-actions">
+                                <button class="event-edit-btn" title="تعديل الحدث" onclick="ScheduleApp.showEditModal('${escapedId}')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                </button>
+                                <button class="event-delete-btn" title="حذف الحدث" onclick="ScheduleApp.deleteEvent('${escapedId}', ${isGlobal ? 'true' : 'false'}, '${eventSchedId}')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+                                </button>
+                            </div>`;
                     }
 
                     let extraBadgeClass = badgeClass ? `badge-${badgeClass}` : '';
@@ -487,7 +490,7 @@ const ScheduleApp = {
                             <div class="event-info" style="flex: 1; min-width: 0;">
                                 <h3 class="event-title" dir="auto">${dentEscapeHtml(ev.title)}</h3>
                             </div>
-                            <div class="event-badges" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <div class="event-badges">
                                 ${typeBadgeHtml}
                                 <span class="badge ${extraBadgeClass}">${badgeHtml}</span>
                                 ${adminNoticeBadge}
@@ -540,7 +543,7 @@ const ScheduleApp = {
             const id = (ev.id || '').toLowerCase();
             const type = (ev.type || '').toLowerCase();
             const typeLabel = (ev.type_label || '').toLowerCase();
-            if (t.includes('واجب') || t.includes('تكليف') || t.includes('مشروع') || t.includes('تقرير') || t.includes('نهائ') || t.includes('فاينل') || type === 'homework' || type === 'research' || type === 'final') {
+            if (t.includes('واجب') || t.includes('تكليف') || t.includes('مشروع') || t.includes('تقرير') || t.includes('نهائ') || t.includes('فاينل') || type === 'homework' || type === 'research' || type === 'final' || type === 'deadline') {
                 return false;
             }
             return t.includes('كويز') || t.includes('quiz') || id.includes('quiz') || t.includes('اختبار قصير') || type === 'quiz' || type === 'assessment' || typeLabel.includes('كويز') || typeLabel.includes('اسسمنت') || (type === 'exam' && !t.includes('نهائ') && !t.includes('فاينل'));
@@ -551,7 +554,7 @@ const ScheduleApp = {
             if (evDate) evDate.setHours(0, 0, 0, 0);
             
             if (ev.type === 'start') startEvent = ev;
-            if (ev.type === 'final' || (ev.type === 'exam' && (ev.title.includes('نهائ') || ev.title.includes('فاينل')))) finalsEvent = ev;
+            if (ev.id === 'evt_exam_final' || ev.type === 'final' || (ev.title && (ev.title.includes('نهائ') || ev.title.includes('فاينل')))) finalsEvent = ev;
             else if (!finalsEvent && ev.type === 'exam') finalsEvent = ev;
             
             if (evDate && evDate >= today) {
@@ -750,7 +753,7 @@ const ScheduleApp = {
         const submitBtnText = isEdit ? 'حفظ التعديلات' : 'حفظ الحدث';
         
         const titleVal = isEdit ? dentEscapeHtml(existingEvent.title || '') : '';
-        const standardTypes = ['quiz', 'assessment', 'research', 'homework', 'exam', 'midterm', 'final', 'holiday', 'payment', 'start', 'other'];
+        const standardTypes = ['quiz', 'assessment', 'research', 'homework', 'exam', 'midterm', 'final', 'deadline', 'holiday', 'payment', 'start', 'other'];
         const isCustomType = isEdit && (existingEvent.type === 'custom' || (!standardTypes.includes(existingEvent.type) && existingEvent.type) || !!existingEvent.type_label);
         const effectiveType = isCustomType ? 'custom' : (isEdit ? (existingEvent.type || 'other') : 'quiz');
         const customTypeVal = isCustomType ? (existingEvent.type_label || existingEvent.type || '') : '';
@@ -827,6 +830,7 @@ const ScheduleApp = {
                         <option value="exam"${effectiveType === 'exam' ? ' selected' : ''}>اختبار</option>
                         <option value="midterm"${effectiveType === 'midterm' ? ' selected' : ''}>اختبار نصفي</option>
                         <option value="final"${effectiveType === 'final' ? ' selected' : ''}>اختبار نهائي</option>
+                        <option value="deadline"${effectiveType === 'deadline' ? ' selected' : ''}>موعد نهائي</option>
                         <option value="holiday"${effectiveType === 'holiday' ? ' selected' : ''}>إجازة</option>
                         <option value="payment"${effectiveType === 'payment' ? ' selected' : ''}>مكافأة</option>
                         <option value="start"${effectiveType === 'start' ? ' selected' : ''}>بداية دراسة</option>
