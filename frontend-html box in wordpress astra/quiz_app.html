@@ -1922,7 +1922,12 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
             const expBox = document.createElement('div');
             expBox.className = 'dent-explanation-box';
-            expBox.innerHTML = '<strong>توضيح الإجابة:</strong> ' + escapeHtml(q.explanation || ('الإجابة الصحيحة هي: ' + (q.correctAnswer || '')));
+            const isEnglishQuiz = /[a-zA-Z]{4,}/.test(q.question || '') || /[a-zA-Z]{4,}/.test(q.explanation || '');
+            const expPrefix = isEnglishQuiz ? '<strong>Explanation:</strong> ' : '<strong>توضيح الإجابة:</strong> ';
+            const expFallback = isEnglishQuiz ? ('Correct answer: ' + (q.correctAnswer || '')) : ('الإجابة الصحيحة هي: ' + (q.correctAnswer || ''));
+            expBox.style.direction = isEnglishQuiz ? 'ltr' : 'rtl';
+            expBox.style.textAlign = isEnglishQuiz ? 'left' : 'right';
+            expBox.innerHTML = expPrefix + escapeHtml(q.explanation || expFallback);
             qBlock.appendChild(expBox);
 
             container.appendChild(qBlock);

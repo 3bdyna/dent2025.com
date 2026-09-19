@@ -1460,10 +1460,11 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
     }
 
     $languageRules = "CRITICAL LANGUAGE & ACADEMIC FORMATTING RULES:\n";
-    $languageRules .= "1. MATCH SOURCE LANGUAGE STRICTLY:\n";
-    $languageRules .= "   - If the source material/subject is in ENGLISH (e.g. Dentistry, Medicine, Pre-Med, English Books, Biology, Anatomy, Physiology, Chemistry, etc.), the question text, options (e.g. ['A. Option 1', 'B. Option 2', 'C. Option 3', 'D. Option 4']), and correctAnswer (e.g. 'A') MUST BE 100% IN ENGLISH. Do NOT translate English source content into Arabic questions.\n";
-    $languageRules .= "   - If and only if the source material is in ARABIC (e.g. Islamic Culture, Arabic language), the questions, options, and answers should be in Arabic.\n";
-    $languageRules .= "   - The 'explanation' field should ALWAYS be a clear, high-yield educational breakdown in Arabic (explaining why the correct answer is right and why tricky distractors are incorrect).\n";
+    $languageRules .= "1. MATCH SOURCE LANGUAGE STRICTLY (100% UNIFIED THROUGHOUT):\n";
+    $languageRules .= "   - The language of EVERYTHING (question text, options, and EXPLANATION) MUST strictly match the language of the source document:\n";
+    $languageRules .= "   - For ENGLISH course materials (Dentistry, Medicine, Pre-Med, Anatomy, Operative Dentistry, Pathology, Pharmacology, Biology, Chemistry, English, etc.): The question, all 4 options, and the 'explanation' field MUST BE 100% IN PROFESSIONAL ACADEMIC ENGLISH. Provide a detailed, high-yield educational breakdown in English explaining why the correct answer is scientifically accurate and why the other choices are incorrect. NEVER output Arabic explanations for English material.\n";
+    $languageRules .= "   - For ARABIC course materials (Islamic Culture, Arabic Language, etc.): The question, options, and 'explanation' field MUST BE 100% IN ARABIC.\n";
+    $languageRules .= "   - UNIFIED LANGUAGE: Never mix languages between questions and their explanations.\n";
 
     if ($isPastExamFilter) {
         $targetChaptersStr = !empty($targetChapters) ? implode("\n- ", $targetChapters) : 'All Selected Course Topics';
@@ -1488,7 +1489,7 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         if ($pageRange) $prompt .= "PAGE / UNIT CONSTRAINT: Focus questions strictly on pages / unit: " . $pageRange . ".\n";
         if ($focusArea) $prompt .= "Additional student focus: " . $focusArea . "\n";
         $prompt .= "\nCRITICAL: Return ONLY a raw JSON array matching this exact schema:\n";
-        $prompt .= '[{"type": "mcq|tf", "question": "Question text in English (or Arabic if source is Arabic)", "options":["A. Choice 1", "B. Choice 2", "C. Choice 3", "D. Choice 4"], "correctAnswer": "A", "explanation": "شرح مفصل للإجابة باللغة العربية مع توضيح سبب صحة الخيار", "assignedChapter": "Target Chapter"}]';
+        $prompt .= '[{"type": "mcq|tf", "question": "Question text in source language (English for English material, Arabic for Arabic)", "options":["A. Choice 1", "B. Choice 2", "C. Choice 3", "D. Choice 4"], "correctAnswer": "A", "explanation": "Detailed explanation in the SAME language as the source document (English for English, Arabic for Arabic) explaining why the correct choice is accurate and refuting distractors", "assignedChapter": "Target Chapter"}]';
         if (!empty($text)) $prompt .= "\n\nPast Exam Text/Data:\n" . $text;
     } else {
         $difficultyInstructions = "";
@@ -1562,10 +1563,10 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         $prompt .= "- EXPLOIT COMMON MISCONCEPTIONS: Base distractors on common student errors (e.g. confusing reciprocal terms, swapping early vs. late disease stages, inverting physiological feedback loops, or mixing up similar-sounding anatomical structures).\n";
         $prompt .= "- UNIFORM ANSWER DISTRIBUTION: Distribute the correct answer evenly across A, B, C, and D across the exam.\n";
 
-        $prompt .= "\nSTRICT FIELD ISOLATION (NO ARABIC IN QUESTION/OPTIONS):\n";
-        $prompt .= "- The 'question' string and 'options' array must contain ONLY the English question and 4 choices.\n";
-        $prompt .= "- NEVER output Arabic text, notes, or prefixes like 'توضيح الإجابة:' inside the 'question' or 'options' fields.\n";
-        $prompt .= "- ALL Arabic explanations must strictly live inside the 'explanation' property.\n";
+        $prompt .= "\nSTRICT FIELD ISOLATION & PURITY:\n";
+        $prompt .= "- The 'question' string and 'options' array must contain ONLY the question stem and the 4 choices.\n";
+        $prompt .= "- NEVER output prefix tags or explanation notes (e.g. 'Explanation: ...') inside the 'question' or 'options' fields.\n";
+        $prompt .= "- ALL rationales and educational breakdowns must strictly live inside the 'explanation' property in the source document's language (100% English for English material, 100% Arabic for Arabic material).\n";
 
         $prompt .= "\n" . $difficultyInstructions . "\n";
         $prompt .= $languageRules . "\n";
@@ -1573,7 +1574,7 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         if ($focusArea) $prompt .= "Focus specifically on: " . $focusArea . "\n";
         $prompt .= $promptInstructions;
         $prompt .= "\nCRITICAL: Return ONLY a raw JSON array without markdown blocks. Format must be exactly:\n";
-        $prompt .= '[{"type": "mcq|tf", "question": "Question text in English (or Arabic if source is Arabic)", "options":["A. Choice 1", "B. Choice 2", "C. Choice 3", "D. Choice 4"], "correctAnswer": "A", "explanation": "شرح مفصل للإجابة باللغة العربية مع توضيح سبب صحة الخيار وتفنيد الخيارات الخاطئة", "assignedChapter": "Chapter / Unit Name"}]';
+        $prompt .= '[{"type": "mcq|tf", "question": "Question text in source language (English for English material, Arabic for Arabic)", "options":["A. Choice 1", "B. Choice 2", "C. Choice 3", "D. Choice 4"], "correctAnswer": "A", "explanation": "Detailed high-yield educational breakdown in the SAME language as the source document (English for English material, Arabic for Arabic) explaining why the correct choice is accurate and refuting distractors", "assignedChapter": "Chapter / Unit Name"}]';
         if (!empty($text)) $prompt .= "\n\nSource Document Text:\n" . $text;
     }
 
@@ -1782,7 +1783,12 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         }
         $correct = $resolvedCorrect;
 
-        $explanation = trim($q['explanation'] ?? 'توضيح الإجابة الصحيحة بناءً على المحتوى المعتمد.');
+        $isEnglishQuestion = (bool)preg_match('/[a-zA-Z]{4,}/', $qText);
+        $defaultExp = $isEnglishQuestion ? 'Correct answer confirmed based on the verified academic source.' : 'توضيح الإجابة الصحيحة بناءً على المحتوى المعتمد.';
+        $explanation = trim($q['explanation'] ?? $defaultExp);
+        if (empty($explanation)) {
+            $explanation = $defaultExp;
+        }
         if (!empty($leakedArabicNotes)) {
             $explanation = implode(" - ", $leakedArabicNotes) . "\n" . $explanation;
         }
