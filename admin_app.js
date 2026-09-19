@@ -255,6 +255,10 @@ window.AdminApp = {
             topPortalControl.classList.toggle('hidden', !canManageMaster);
             topPortalControl.classList.toggle('flex', canManageMaster);
         }
+        const mobileToggle = document.getElementById('portal-mode-mobile-toggle');
+        if (mobileToggle) {
+            mobileToggle.classList.toggle('hidden', !canManageMaster);
+        }
     },
 
     showMain() {
@@ -338,16 +342,7 @@ window.AdminApp = {
             }
         });
 
-        // Mobile FAB visibility
-        const fab = document.getElementById('mobile-fab');
-        if (fab) {
-            const tabsWithFab = ['subjects', 'classes', 'events', 'announcements', 'quizzes'];
-            if (tabsWithFab.includes(tabId)) {
-                fab.classList.remove('hidden');
-            } else {
-                fab.classList.add('hidden');
-            }
-        }
+
 
         this.closeMobileDrawer();
 
@@ -398,36 +393,17 @@ window.AdminApp = {
         }
     },
 
-    onFabClick() {
-        if (this.currentTab === 'subjects') {
-            this.openAddSubjectModal();
-        } else if (this.currentTab === 'classes') {
-            this.openClassModal();
-        } else if (this.currentTab === 'events') {
-            this.openEventModal();
-        } else if (this.currentTab === 'announcements') {
-            const editor = document.getElementById('ann-editor-container');
-            if (editor) {
-                editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        } else if (this.currentTab === 'quizzes') {
-            const searchInput = document.getElementById('quizzes-search-input');
-            if (searchInput) {
-                searchInput.focus();
-                searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        } else {
-            this.toggleMobileDrawer();
-        }
-    },
-
     async loadPortalSettings() {
         const topToggle = document.getElementById('portal-mode-top-toggle');
         const topLabel = document.getElementById('portal-mode-top-label');
-        if (!topToggle) return;
+        const mobileToggle = document.getElementById('portal-mode-mobile-toggle');
+        const mobileLabel = document.getElementById('portal-mode-mobile-label');
+        if (!topToggle && !mobileToggle) return;
 
         if (topToggle) topToggle.disabled = true;
         if (topLabel) topLabel.innerText = 'جاري التحميل';
+        if (mobileToggle) mobileToggle.disabled = true;
+        if (mobileLabel) mobileLabel.innerText = 'جاري التحميل';
 
         try {
             const response = await fetch(`${API_BASE}/dent2025_api.php?action=portal_settings&_t=${Date.now()}`, {
@@ -441,9 +417,11 @@ window.AdminApp = {
 
             this.portalMultiSpecialtyMode = result.data.multi_specialty_mode;
             this.updatePortalModeSaveState();
-            topToggle.disabled = false;
+            if (topToggle) topToggle.disabled = false;
+            if (mobileToggle) mobileToggle.disabled = false;
         } catch (e) {
             if (topLabel) topLabel.innerText = 'تعذر التحميل';
+            if (mobileLabel) mobileLabel.innerText = 'تعذر التحميل';
             this.showToast('تعذر تحميل إعداد الموقع', true);
         }
     },
@@ -451,6 +429,9 @@ window.AdminApp = {
     updatePortalModeSaveState() {
         const topToggle = document.getElementById('portal-mode-top-toggle');
         const topLabel = document.getElementById('portal-mode-top-label');
+        const mobileToggle = document.getElementById('portal-mode-mobile-toggle');
+        const mobileLabel = document.getElementById('portal-mode-mobile-label');
+        const mobileDot = document.getElementById('portal-mode-mobile-dot');
         if (this.portalMultiSpecialtyMode === null) return;
 
         const enabled = !!this.portalMultiSpecialtyMode;
@@ -461,11 +442,24 @@ window.AdminApp = {
             topToggle.classList.toggle('bg-white/10', !enabled);
             topToggle.classList.toggle('text-gray-200', !enabled);
         }
+
+        if (mobileLabel) mobileLabel.innerText = enabled ? 'تعدد: مفعّل' : 'تعدد: معطّل';
+        if (mobileDot) {
+            mobileDot.className = enabled ? 'w-2 h-2 rounded-full bg-emerald-400 shrink-0' : 'w-2 h-2 rounded-full bg-amber-400 shrink-0';
+        }
+        if (mobileToggle) {
+            mobileToggle.classList.toggle('bg-emerald-500/15', enabled);
+            mobileToggle.classList.toggle('border-emerald-500/30', enabled);
+            mobileToggle.classList.toggle('text-emerald-300', enabled);
+            mobileToggle.classList.toggle('bg-white/10', !enabled);
+            mobileToggle.classList.toggle('border-white/20', !enabled);
+            mobileToggle.classList.toggle('text-gray-200', !enabled);
+        }
     },
 
     async togglePortalModeFromTop() {
         if (!this.permissions.manage_passwords) {
-            this.showToast('غير مصرح لك بتغيير هذا الإعداد', true);
+            this.showToast('غير مصرح لك بتغيير هذا الإعداد (صلاحية Master مطلوبة)', true);
             return;
         }
         if (this.portalMultiSpecialtyMode === null) {
@@ -481,6 +475,8 @@ window.AdminApp = {
     async savePortalMode(desiredValue) {
         const topToggle = document.getElementById('portal-mode-top-toggle');
         const topLabel = document.getElementById('portal-mode-top-label');
+        const mobileToggle = document.getElementById('portal-mode-mobile-toggle');
+        const mobileLabel = document.getElementById('portal-mode-mobile-label');
         if (!this.permissions.manage_passwords) return;
 
         const nextValue = !!desiredValue;
@@ -494,6 +490,8 @@ window.AdminApp = {
 
         if (topToggle) topToggle.disabled = true;
         if (topLabel) topLabel.innerText = 'جاري الحفظ...';
+        if (mobileToggle) mobileToggle.disabled = true;
+        if (mobileLabel) mobileLabel.innerText = 'جاري الحفظ...';
         try {
             const response = await fetch(`${API_BASE}/dent2025_api.php?action=save_portal_settings`, {
                 method: 'POST',
@@ -508,12 +506,13 @@ window.AdminApp = {
 
             this.portalMultiSpecialtyMode = nextValue;
             this.updatePortalModeSaveState();
-            this.showToast(nextValue ? 'تم تفعيل تعدد التخصصات' : 'تم تعطيل تعدد التخصصات');
+            this.showToast(nextValue ? 'تم تفعيل وضع تعدد التخصصات للموقع بنجاح' : 'تم تفعيل وضع المسار الثابت بنجاح');
         } catch (e) {
             this.updatePortalModeSaveState();
-            this.showToast(e.message || 'تعذر حفظ إعداد الموقع', true);
+            this.showToast('فشل حفظ إعداد الموقع: ' + (e.message || ''), true);
         } finally {
             if (topToggle) topToggle.disabled = false;
+            if (mobileToggle) mobileToggle.disabled = false;
             this.updatePortalModeSaveState();
         }
     },
@@ -1586,9 +1585,9 @@ window.AdminApp = {
                                     ${statusBadge}
                                 </div>
                             </div>
-                            <h4 class="text-base font-bold text-white mb-2">${safeTitle}</h4>
+                            <h4 class="text-base font-bold text-white mb-2 break-words">${safeTitle}</h4>
                             <div class="text-xs text-gray-400 space-y-1 mb-4">
-                                <div>التاريخ: <span class="text-gray-200 font-mono">${safeDateStr}${safeEndDateStr ? ' ⬅ ' + safeEndDateStr : ''}</span></div>
+                                <div>التاريخ: <span class="text-gray-200 font-mono">${safeDateStr}${safeEndDateStr ? ' إلى ' + safeEndDateStr : ''}</span></div>
                                 ${safeHijri ? `<div> الهجري: <span class="text-gray-300 font-mono">${safeHijri}</span></div>` : ''}
                             </div>
                         </div>
@@ -1880,10 +1879,10 @@ window.AdminApp = {
                     const safeLinkId = parseInt(l.id, 10) || 0;
 
                     return `
-                        <div class="flex justify-between items-center bg-black/30 p-2 rounded-lg border border-white/5 text-xs gap-2">
-                            <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-white flex items-center gap-1.5 truncate max-w-[70vw] sm:max-w-md">
+                        <div class="flex justify-between items-center bg-black/30 p-2 rounded-lg border border-white/5 text-xs gap-2 min-w-0 overflow-hidden">
+                            <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-white flex items-center gap-1.5 min-w-0 flex-1 truncate">
                                 <span class="shrink-0">${icon}</span>
-                                <span class="truncate">${safeTitle}</span>
+                                <span class="truncate min-w-0">${safeTitle}</span>
                             </a>
                             <button onclick="AdminApp.deleteLink(${safeLinkId})" class="text-red-400 hover:text-red-300 text-[11px] px-2 py-0.5 bg-red-500/10 hover:bg-red-500/20 rounded border border-red-500/20 shrink-0">حذف</button>
                         </div>
@@ -1901,20 +1900,20 @@ window.AdminApp = {
             const safeMatId = this.escapeHtml(sub.materials_folder_id || 'غير مرتبط');
 
             html += `
-                <div class="bg-black/30 p-3 sm:p-4 rounded-xl border border-white/10 relative hover:border-white/20 transition">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 mb-3 border-b border-white/5 pb-2.5">
-                        <div class="min-w-0 flex-1">
-                            <h3 class="text-base sm:text-lg font-bold text-white leading-snug mb-1 truncate">${safeSubName}</h3>
-                            <div class="flex flex-wrap items-center gap-2.5 text-[11px] text-gray-400">
-                                <span>الساعات: <strong class="text-gray-200">${safeHours}</strong></span>
-                                <span class="text-gray-600">•</span>
-                                <span> توزيع الدرجات: <strong class="text-gray-200">${safeMarks}</strong></span>
+                <div class="bg-black/30 p-3 sm:p-4 rounded-xl border border-white/10 relative hover:border-white/20 transition max-w-full overflow-hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 mb-3 border-b border-white/5 pb-2.5 w-full min-w-0">
+                        <div class="min-w-0 flex-1 w-full">
+                            <h3 class="text-base sm:text-lg font-bold text-white leading-snug mb-1.5 break-words max-w-full">${safeSubName}</h3>
+                            <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-gray-400 max-w-full">
+                                <span class="shrink-0">الساعات: <strong class="text-gray-200 font-mono">${safeHours}</strong></span>
+                                <span class="text-gray-600 shrink-0">•</span>
+                                <span class="break-words min-w-0">توزيع الدرجات: <strong class="text-gray-200 font-medium break-words">${safeMarks}</strong></span>
                             </div>
                         </div>
-                        <div class="grid grid-cols-3 gap-1.5 w-full sm:w-auto shrink-0">
-                            <button onclick="AdminApp.openAddLinkModal(${safeSubId})" class="btn btn-secondary text-xs py-1 px-2.5 flex items-center justify-center gap-1">+ رابط</button>
-                            <button onclick="AdminApp.openEditSubjectModal(${safeSubId})" class="btn btn-primary text-xs py-1 px-2.5 flex items-center justify-center gap-1">تعديل</button>
-                            <button onclick="AdminApp.deleteSubject(${safeSubId})" class="btn btn-danger text-xs py-1 px-2.5 flex items-center justify-center gap-1">حذف</button>
+                        <div class="grid grid-cols-3 gap-1.5 w-full sm:w-auto shrink-0 pt-1 sm:pt-0">
+                            <button onclick="AdminApp.openAddLinkModal(${safeSubId})" class="btn btn-secondary text-xs py-1.5 px-2.5 flex items-center justify-center gap-1">+ رابط</button>
+                            <button onclick="AdminApp.openEditSubjectModal(${safeSubId})" class="btn btn-primary text-xs py-1.5 px-2.5 flex items-center justify-center gap-1">تعديل</button>
+                            <button onclick="AdminApp.deleteSubject(${safeSubId})" class="btn btn-danger text-xs py-1.5 px-2.5 flex items-center justify-center gap-1">حذف</button>
                         </div>
                     </div>
 
@@ -1927,21 +1926,21 @@ window.AdminApp = {
                     </button>
 
                     <!-- Details Container: Collapsible on phone, always visible on tablet/desktop -->
-                    <div id="sub-details-${safeSubId}" class="hidden sm:block space-y-2.5 mt-2.5">
+                    <div id="sub-details-${safeSubId}" class="hidden sm:block space-y-2.5 mt-2.5 max-w-full overflow-hidden">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                            <div class="bg-black/25 p-2 rounded-lg border border-white/5 flex items-center justify-between gap-2">
-                                <span class="text-gray-400 text-[11px] shrink-0 font-medium"> الشباتر:</span>
-                                <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 flex-1 text-left" dir="ltr">${safeChapId}</code>
+                            <div class="bg-black/25 p-2 rounded-lg border border-white/5 flex items-center justify-between gap-2 min-w-0 overflow-hidden">
+                                <span class="text-gray-400 text-[11px] shrink-0 font-medium">الشباتر:</span>
+                                <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 min-w-0 flex-1 text-left" dir="ltr">${safeChapId}</code>
                             </div>
-                            <div class="bg-black/25 p-2 rounded-lg border border-white/5 flex items-center justify-between gap-2">
-                                <span class="text-gray-400 text-[11px] shrink-0 font-medium"> التجميعات:</span>
-                                <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 flex-1 text-left" dir="ltr">${safeMatId}</code>
+                            <div class="bg-black/25 p-2 rounded-lg border border-white/5 flex items-center justify-between gap-2 min-w-0 overflow-hidden">
+                                <span class="text-gray-400 text-[11px] shrink-0 font-medium">التجميعات:</span>
+                                <code class="text-gray-300 font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded select-all truncate border border-white/5 min-w-0 flex-1 text-left" dir="ltr">${safeMatId}</code>
                             </div>
                         </div>
 
-                        <div>
+                        <div class="max-w-full min-w-0">
                             <h4 class="text-[11px] font-semibold text-gray-400 mb-1.5">الروابط المساعدة والمصادر:</h4>
-                            <div class="space-y-1.5">${linksHtml}</div>
+                            <div class="space-y-1.5 max-w-full min-w-0">${linksHtml}</div>
                         </div>
                     </div>
                 </div>
@@ -2330,7 +2329,7 @@ window.AdminApp = {
                                 <span class="bg-white/10 text-gray-200 text-xs px-1.5 py-0.5 rounded font-mono">${safeStartTime} - ${safeEndTime}</span>
                                 <button onclick="AdminApp.deleteClass('${safeClassId}')" class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20" title="حذف الحصة">حذف</button>
                             </div>
-                            <h5 class="font-bold text-white text-sm mb-1">${safeSubject}</h5>
+                            <h5 class="font-bold text-white text-sm mb-1 break-words">${safeSubject}</h5>
                             <div class="flex items-center justify-between text-xs text-gray-400">
                                 <span class="bg-primary/10 text-accent px-1.5 py-0.5 rounded">${safeType}</span>
                                 <span class="text-gray-500">${safeGroupName}</span>
@@ -2598,8 +2597,8 @@ window.AdminApp = {
             
             html += `
                 <div class="glass p-5 rounded-xl border border-white/10 hover:border-white/20 transition relative group">
-                    <div class="flex justify-between items-start mb-3 border-b border-white/5 pb-3">
-                        <span class="bg-primary/20 text-accent px-3 py-1 rounded text-sm font-semibold flex items-center gap-2 border border-primary/30">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3 border-b border-white/5 pb-3">
+                        <span class="bg-primary/20 text-accent px-3 py-1 rounded text-xs sm:text-sm font-semibold flex items-center gap-2 border border-primary/30 break-words">
                             ${safeSpecLabel} | سنة ${safeYear} | ترم ${safeSem}
                         </span>
                         <div class="flex items-center gap-3">
@@ -4019,9 +4018,9 @@ window.AdminApp = {
             `;
 
             cardsHtml += `
-                <div class="bg-black/30 border border-white/10 rounded-xl p-3 space-y-2">
+                <div class="bg-black/30 border border-white/10 rounded-xl p-3 space-y-2 max-w-full overflow-hidden">
                     <div class="flex items-start justify-between gap-2">
-                        <h5 class="text-white font-semibold text-sm leading-snug">${this.escapeHtml(q.quiz_name)}</h5>
+                        <h5 class="text-white font-semibold text-sm leading-snug break-words min-w-0 flex-1">${this.escapeHtml(q.quiz_name)}</h5>
                         <span class="text-[11px] font-mono font-bold bg-primary/10 text-accent px-2 py-0.5 rounded-full shrink-0">${q.num_questions} س</span>
                     </div>
                     <div class="flex flex-wrap items-center gap-1.5 text-xs text-gray-400">

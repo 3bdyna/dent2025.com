@@ -238,11 +238,9 @@
     </div>
 
     <div class="flex items-center gap-1.5 shrink-0">
-      <span id="mobile-active-tab-badge" class="text-[11px] text-gray-400 font-medium hidden sm:inline">المواد والروابط</span>
-      <button onclick="AdminApp.logout()" class="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 active:scale-95 transition" title="تسجيل الخروج">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-        </svg>
+      <button type="button" id="portal-mode-mobile-toggle" onclick="AdminApp.togglePortalModeFromTop()" class="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/15 border border-white/20 text-gray-200 text-xs font-medium transition flex items-center gap-1.5 select-none" title="تغيير وضع تعدد التخصصات للموقع" aria-label="تغيير وضع تعدد التخصصات للموقع">
+        <span id="portal-mode-mobile-dot" class="w-2 h-2 rounded-full bg-gray-400 shrink-0"></span>
+        <span id="portal-mode-mobile-label" class="whitespace-nowrap font-medium text-[11px]">جاري التحميل</span>
       </button>
     </div>
   </header>
@@ -405,7 +403,7 @@
  </aside>
 
  <!-- Main Content -->
- <main class="flex-1 md:overflow-y-auto bg-dark p-3 sm:p-5 md:p-7 relative min-h-0 md:custom-scrollbar pb-24 md:pb-7">
+ <main class="flex-1 md:overflow-y-auto bg-dark p-3 sm:p-5 md:p-7 relative min-h-0 md:custom-scrollbar pb-20 md:pb-7 max-w-full overflow-x-hidden">
  <!-- Toast Notification -->
  <div id="toast" class="fixed top-4 sm:top-5 left-1/2 transform -translate-x-1/2 glass px-4 sm:px-6 py-2.5 sm:py-3 rounded-full text-white shadow-lg transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2 max-w-[90vw] text-xs sm:text-sm">
  <span id="toast-icon"></span>
@@ -486,7 +484,7 @@
 		</button>
 	</div>
 
-	<div id="tab-content" class="h-full">
+	<div id="tab-content" class="h-full max-w-full overflow-x-hidden">
 	<!-- Content will be injected here by JS -->
 	</div>
  </main>
@@ -1777,12 +1775,7 @@
  </div>
  </div>
 
-  <!-- Mobile Floating Action Button (FAB) -->
-  <button id="mobile-fab" onclick="AdminApp.onFabClick()" class="fixed bottom-18 left-4 w-12 h-12 rounded-full btn-primary shadow-2xl flex items-center justify-center text-xl z-30 md:hidden active:scale-95 transition" title="إضافة سريعة" aria-label="إضافة سريعة">
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-    </svg>
-  </button>
+
 
   <!-- Mobile Bottom Navigation Bar -->
   <nav id="mobile-bottom-nav" class="fixed bottom-0 inset-x-0 h-14 bg-[#161616]/95 backdrop-blur-md border-t border-white/10 px-2 grid grid-cols-5 items-center z-40 md:hidden select-none">
@@ -1830,6 +1823,6 @@
  .ql-editor { font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif; font-size: 1rem; }
  </style>
 
- <script src="admin_app.js?v=20260919_08"></script>
+ <script src="admin_app.js?v=20260920_01"></script>
 </body>
 </html>
