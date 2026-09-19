@@ -105,7 +105,7 @@ function dentTrack(type, data) {
 // false (OFF) -> Single-Track Forced: Locks portal to Dentistry Year 3 Semester 1
 //                and instantly bypasses the welcome screen.
 // =========================================================================
-const DENT_MULTI_SPECIALTY_MODE = false; // <-- SET TO 'true' (ON) OR 'false' (OFF)
+const DENT_MULTI_SPECIALTY_MODE = true; // <-- SET TO 'true' (ON) OR 'false' (OFF)
 
 // IMMEDIATE SELECTION CHECK:
 (function() {
