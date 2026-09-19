@@ -946,7 +946,7 @@ function loadAnnouncements(selection) {
     let container = document.getElementById('dynamic-announcements-container');
     if (!container) return;
     
-    container.innerHTML = `<div style="text-align:center; color:#94a3b8; margin-bottom: 20px;">جاري تحميل المهام...</div>`;
+    container.innerHTML = `<div style="text-align:center; color:#94a3b8; margin-top: 24px; margin-bottom: 20px;">جاري تحميل المهام...</div>`;
     
     fetch(`${API_BASE}/announcements_api.php?specialty=${selection.specialty}&year=${selection.year}&semester=${selection.semester}`)
         .then(res => res.json())
@@ -1008,9 +1008,19 @@ function renderAnnouncements(dataObj, selection) {
         .dent-announcements-simple {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 14px; padding: 16px 20px 14px 20px; margin-bottom: 25px;
-            direction: rtl; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
+            border-radius: 14px;
+            padding: 16px 20px 14px 20px;
+            margin-top: 24px;
+            margin-bottom: 25px;
+            direction: rtl;
+            font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
             position: relative;
+        }
+        @media (max-width: 768px) {
+            .dent-announcements-simple {
+                margin-top: 18px;
+                margin-bottom: 20px;
+            }
         }
         .dent-ann-content { font-size: 1rem; line-height: 1.6; color: #cbd5e1; }
         .dent-ann-content p { margin-top: 0; margin-bottom: 6px; }
