@@ -77,7 +77,7 @@ textarea.dent-quiz-input { height: auto !important; min-height: 60px !important;
 .dent-opt-item { display: flex; align-items: center; padding: 9px 12px; background: #121212; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 0.88rem; color: #cbd5e1; }
 .dent-opt-item:hover { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.15); }
 .dent-opt-item input[type="radio"] { margin-left: 10px; width: 14px; height: 14px; accent-color: #94a3b8; cursor: pointer; } 
-.dent-opt-item .dent-opt-letter { flex: 0 0 auto; margin-left: 6px; color: #f8fafc; font-weight: 600; direction: ltr; }
+.dent-opt-item .dent-opt-letter { display: inline-block; flex: 0 0 auto; margin-left: 6px; color: #f8fafc; font-weight: 600; direction: ltr; unicode-bidi: isolate; white-space: nowrap; }
 .dent-opt-item .dent-opt-text { flex: 1 1 auto; min-width: 0; text-align: right; }
 .dent-q-block[data-language="en"] { direction: ltr; }
 .dent-q-block[data-language="en"] .dent-q-text { direction: ltr; text-align: left; }
