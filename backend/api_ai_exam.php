@@ -1113,8 +1113,8 @@ function fetchDriveFolderRecursive($folderId, $prefix = '', $depth = 0) {
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 6);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 4);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
     curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36');
     $html = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -3274,7 +3274,7 @@ if ($action === 'scan_cache_catalog') {
         if (preg_match('/folders\/([a-zA-Z0-9_-]+)/', $folderId, $m)) $folderId = $m[1];
         elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $folderId, $m)) $folderId = $m[1];
 
-        $driveFiles = fetchDriveFolderRecursive($folderId);
+        $driveFiles = fetchDriveFolderCached($folderId);
         if (!empty($driveFiles)) {
             $subjectsWithFiles++;
             $totalDriveFiles += count($driveFiles);
@@ -3379,7 +3379,7 @@ if ($action === 'cron_sync') {
         if (preg_match('/folders\/([a-zA-Z0-9_-]+)/', $folderId, $m)) $folderId = $m[1];
         elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $folderId, $m)) $folderId = $m[1];
 
-        $driveFiles = fetchDriveFolderRecursive($folderId);
+        $driveFiles = fetchDriveFolderCached($folderId);
         if (!empty($driveFiles)) {
             foreach ($driveFiles as $df) {
                 $fid = $df['id'];
@@ -3409,10 +3409,10 @@ if ($action === 'cron_sync') {
         }
     }
 
-    // Auto-prewarm: extract text for new uncached files (max 20 per cron run to stay fast)
+    // Auto-prewarm: extract text for new uncached files (max 5 per cron run to stay fast)
     $prewarmedCount = 0;
     $prewarmedErrors = [];
-    $maxPerRun = 20;
+    $maxPerRun = 5;
     foreach (array_slice($newFiles, 0, $maxPerRun) as $nf) {
         try {
             $res = performDriveExtraction($nf['file_id'], [
