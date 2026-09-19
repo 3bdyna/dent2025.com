@@ -1477,7 +1477,7 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         $prompt .= "3. STRICT TOPIC FILTERING: If a question belongs to ANY OTHER CHAPTER NOT IN THE TARGET LIST, COMPLETELY DISCARD IT.\n";
         $prompt .= "4. OCR & TYPO CLEANING: Intelligently fix scanning artifacts, misread letters, and typographical errors in past exam stems without altering the academic meaning.\n";
         $prompt .= "5. VERIFIED ANSWER DEDUCTION: Ignore any handwritten student scribbles or pencil marks on scanned exams. Scientifically verify the 100% accurate correct answer.\n";
-        $prompt .= "6. NON-MCQ CONVERSION & ASTERISK (*) RULE: If a question was fill-in-the-blank, matching, or short-answer, convert it into a standard 4-option MCQ with plausible distractors and prefix the question with an asterisk '*'.\n";
+        $prompt .= "6. NON-MCQ CONVERSION & ASTERISK (*) RULE: If a question was fill-in-the-blank, matching, or short-answer, convert it into a standard 4-option MCQ with high-yield, plausible distractors and prefix the question with an asterisk '*'. Never make the correct answer the longest choice or use obviously silly/fake distractors.\n";
         $prompt .= $languageRules . "\n";
         if ($pageRange) $prompt .= "PAGE / UNIT CONSTRAINT: Focus questions strictly on pages / unit: " . $pageRange . ".\n";
         if ($focusArea) $prompt .= "Additional student focus: " . $focusArea . "\n";
@@ -1547,10 +1547,14 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         $prompt .= "- Focus on meaningful academic concepts: mechanisms of action, diagnostic criteria, clinical classifications, cause-and-effect relationships, and distinctions.\n";
         $prompt .= "- Avoid trivial filler (e.g. textbook author bios, publication years, or isolated meaningless numbers).\n";
 
-        $prompt .= "\nDISTRACTOR QUALITY & REALISM:\n";
-        $prompt .= "- All 4 options (A, B, C, D) must be plausible, grammatically parallel, and of comparable length.\n";
-        $prompt .= "- Distractors must represent realistic student misconceptions or closely related scientific concepts, NOT obviously ridiculous or fake statements.\n";
-        $prompt .= "- Distribute the correct answer uniformly across A, B, C, and D.\n";
+        $prompt .= "\nANTI-TEST-WISENESS & RIGOROUS DISTRACTOR ENGINEERING (CRITICAL):\n";
+        $prompt .= "- ANTI-LENGTH BIAS: NEVER make the correct answer systematically longer, more detailed, or more qualified than the distractors. All 4 options (A, B, C, D) must be of strictly comparable word count and syntactic complexity. Often make one of the incorrect distractors the longest option so students cannot guess the correct choice by length.\n";
+        $prompt .= "- HIGH-DISCRIMINATION DISTRACTORS: Every distractor must be a genuine, highly plausible scientific alternative from the exact same topic/lecture (e.g. real related bacteria, real dental materials, real anatomical landmarks, real pathological stages). NEVER generate obviously fake, silly, or cartoonish distractors that can be easily eliminated by simple common sense.\n";
+        $prompt .= "- CATEGORY HOMOGENEITY: All 4 options must belong to the exact same conceptual class (e.g. if the correct answer is a specific enzyme, ALL 4 choices must be real, relevant enzymes; if the answer is a treatment protocol, ALL choices must be real treatment protocols).\n";
+        $prompt .= "- ELIMINATE 'CLANG ASSOCIATIONS' & VOCABULARY ECHOING: Do not repeat unique keywords or distinctive phrases from the question stem solely in the correct option. Distractors must also contain relevant subject vocabulary so students cannot guess by word-matching.\n";
+        $prompt .= "- NO LAZY ABSOLUTE GIVEAWAYS: Avoid using obvious giveaway qualifiers like 'always', 'never', 'all', or 'completely' in distractors. Distractors must sound just as balanced, authoritative, and professionally nuanced as the correct choice.\n";
+        $prompt .= "- EXPLOIT COMMON MISCONCEPTIONS: Base distractors on common student errors (e.g. confusing reciprocal terms, swapping early vs. late disease stages, inverting physiological feedback loops, or mixing up similar-sounding anatomical structures).\n";
+        $prompt .= "- UNIFORM ANSWER DISTRIBUTION: Distribute the correct answer evenly across A, B, C, and D across the exam.\n";
 
         $prompt .= "\nSTRICT FIELD ISOLATION (NO ARABIC IN QUESTION/OPTIONS):\n";
         $prompt .= "- The 'question' string and 'options' array must contain ONLY the English question and 4 choices.\n";
