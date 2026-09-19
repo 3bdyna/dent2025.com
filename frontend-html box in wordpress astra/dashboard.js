@@ -75,17 +75,30 @@ function processDentIframeQueue() {
     }
 }
 
-function loadSubjectIframes(detailsEl) {
-    if (!detailsEl || !detailsEl.open) return;
-    const iframes = detailsEl.querySelectorAll('iframe[data-src]');
-    iframes.forEach(iframe => {
-        if (!iframe.src || iframe.src === 'about:blank' || iframe.src === window.location.href) {
-            const dataSrc = iframe.getAttribute('data-src');
-            if (dataSrc) {
-                iframe.src = dataSrc;
+function dentPreloadSubjectIframe(det, includeInactiveTab = false) {
+    if (!det) return;
+    const visibleIframe = det.querySelector('.dent-tab-panel.active iframe') || det.querySelector('iframe');
+    if (visibleIframe && (visibleIframe.src === '' || visibleIframe.src === 'about:blank' || visibleIframe.src === window.location.href)) {
+        const dataSrc = visibleIframe.getAttribute('data-src');
+        if (dataSrc) visibleIframe.src = dataSrc;
+    }
+    if (includeInactiveTab) {
+        const otherIframe = det.querySelector('.dent-tab-panel:not(.active) iframe');
+        if (otherIframe && (otherIframe.src === '' || otherIframe.src === 'about:blank' || otherIframe.src === window.location.href)) {
+            if (!window.dentIframeQueue.includes(otherIframe)) {
+                window.dentIframeQueue.push(otherIframe);
+                if (!window.isDentIframeProcessing) {
+                    window.isDentIframeProcessing = true;
+                    setTimeout(processDentIframeQueue, 400);
+                }
             }
         }
-    });
+    }
+}
+
+function loadSubjectIframes(detailsEl) {
+    if (!detailsEl || !detailsEl.open) return;
+    dentPreloadSubjectIframe(detailsEl, true);
 }
 
 // Analytics helper: safe no-op if tracker not loaded yet
@@ -500,35 +513,84 @@ function renderChapters(subjects) {
     window.dentIframeQueue = [];
     const details = container.querySelectorAll('.dent-chapter-details');
 
-    // On-demand iframe loading: do NOT load heavy Google Drive iframes for closed cards in background.
-    // Only load iframes when the student actually expands a subject card.
+    // Smart Predictive Preloader:
+    // 1. Hover & Touch-Start: Instantly start loading before user even finishes clicking!
     details.forEach((det) => {
+        const summary = det.querySelector('.dent-chapter-summary');
+        const triggerInstantPreload = () => {
+            dentPreloadSubjectIframe(det, false);
+        };
+        if (summary) {
+            summary.addEventListener('mouseenter', triggerInstantPreload, { once: true, passive: true });
+            summary.addEventListener('touchstart', triggerInstantPreload, { once: true, passive: true });
+        }
+
         det.addEventListener('toggle', () => {
             if (det.open) {
                 const subId = parseInt((det.id || '').replace('dent-subject-card-', ''), 10);
                 const sub = currentSubjectsData.find(s => s.id == subId);
                 dentTrack('subject_open', { subject: sub ? sub.name : 'مادة' });
 
-                // 1. Immediately load active iframe in this card
-                const visibleIframe = det.querySelector('.dent-tab-panel.active iframe');
-                if (visibleIframe && (visibleIframe.src === '' || visibleIframe.src === 'about:blank' || visibleIframe.src === window.location.href)) {
-                    const dataSrc = visibleIframe.getAttribute('data-src');
-                    if (dataSrc) visibleIframe.src = dataSrc;
-                }
+                // Immediately ensure active tab is loaded & queue secondary tab
+                dentPreloadSubjectIframe(det, true);
 
-                // 2. Preload this clicked subject's secondary tab (e.g. Materials) smoothly
-                const otherIframe = det.querySelector('.dent-tab-panel:not(.active) iframe');
-                if (otherIframe && (otherIframe.src === '' || otherIframe.src === 'about:blank' || otherIframe.src === window.location.href)) {
-                    window.dentIframeQueue = window.dentIframeQueue.filter(f => f !== otherIframe && f !== visibleIframe);
-                    window.dentIframeQueue.push(otherIframe);
-                    if (!window.isDentIframeProcessing) {
-                        window.isDentIframeProcessing = true;
-                        setTimeout(processDentIframeQueue, 400);
+                // Preload the next adjacent subject card so scrolling down is instantaneous
+                const nextDet = det.nextElementSibling && det.nextElementSibling.matches('.dent-chapter-details')
+                    ? det.nextElementSibling
+                    : null;
+                if (nextDet) {
+                    const nextIframe = nextDet.querySelector('.dent-tab-panel.active iframe');
+                    if (nextIframe && (nextIframe.src === '' || nextIframe.src === 'about:blank' || nextIframe.src === window.location.href)) {
+                        if (!window.dentIframeQueue.includes(nextIframe)) {
+                            window.dentIframeQueue.push(nextIframe);
+                            if (!window.isDentIframeProcessing) {
+                                window.isDentIframeProcessing = true;
+                                setTimeout(processDentIframeQueue, 450);
+                            }
+                        }
                     }
                 }
             }
         });
     });
+
+    // 2. Device-Aware Idle Background Queue:
+    // Waits 1.2s until initial page rendering is completely idle
+    setTimeout(() => {
+        const allDetails = Array.from(container.querySelectorAll('.dent-chapter-details'));
+        if (allDetails.length === 0) return;
+
+        const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
+
+        // On Mobile: silently preload the first 2 subjects' Chapters
+        // On Desktop: queue all subjects' Chapters sequentially
+        const limit = isMobile ? Math.min(2, allDetails.length) : allDetails.length;
+        for (let i = 0; i < limit; i++) {
+            const iframe = allDetails[i].querySelector('.dent-tab-panel[id^="dent-panel-chapters-"] iframe');
+            if (iframe && (iframe.src === '' || iframe.src === 'about:blank' || iframe.src === window.location.href)) {
+                if (!window.dentIframeQueue.includes(iframe)) {
+                    window.dentIframeQueue.push(iframe);
+                }
+            }
+        }
+
+        // On desktop with abundant memory, queue secondary materials folders after chapters
+        if (!isMobile) {
+            allDetails.forEach(det => {
+                const matIframe = det.querySelector('.dent-tab-panel[id^="dent-panel-materials-"] iframe');
+                if (matIframe && (matIframe.src === '' || matIframe.src === 'about:blank' || matIframe.src === window.location.href)) {
+                    if (!window.dentIframeQueue.includes(matIframe)) {
+                        window.dentIframeQueue.push(matIframe);
+                    }
+                }
+            });
+        }
+
+        if (!window.isDentIframeProcessing && window.dentIframeQueue.length > 0) {
+            window.isDentIframeProcessing = true;
+            setTimeout(processDentIframeQueue, isMobile ? 800 : 1000);
+        }
+    }, 1200);
 }
 
 // ---------------------------------------------------------
