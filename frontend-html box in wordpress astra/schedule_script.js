@@ -905,13 +905,13 @@ const ScheduleApp = {
                     <button type="button" onclick="document.getElementById('dent-print-schedule-modal').remove()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">×</button>
                 </div>
 
-                <button type="button" id="dent-exec-print-btn" onclick="ScheduleApp.executePrint()" style="width: 100%; height: 46px; background: #2563eb; color: #ffffff; border: none; border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.95rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);" onmouseover="this.style.background='#1d4ed8'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#2563eb'; this.style.transform='none';">
+                <button type="button" id="dent-exec-print-btn" onclick="ScheduleApp.executePrint()" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.95rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.35)'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.2)'; this.style.transform='none';">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                     <span>طباعة الآن (A4 PDF)</span>
                 </button>
 
                 <label style="display: flex; align-items: flex-start; gap: 10px; margin-top: 16px; padding: 10px 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; font-size: 0.80rem; color: #cbd5e1; cursor: pointer; user-select: none;">
-                    <input type="checkbox" id="dent-print-inc-announcements" checked style="accent-color: #2563eb; width: 16px; height: 16px; margin-top: 2px; cursor: pointer;">
+                    <input type="checkbox" id="dent-print-inc-announcements" checked style="accent-color: #52525b; width: 16px; height: 16px; margin-top: 2px; cursor: pointer;">
                     <span>تضمين إعلانات الدفعة (الإعلان بالصفحة الرئيسية) في أسفل الورقة</span>
                 </label>
 
@@ -1236,8 +1236,8 @@ const ScheduleApp = {
         let announcementHtml = '';
         if (announcementText) {
             announcementHtml = `
-                <div style="margin-top: 12px; border: 1px solid #cbd5e1; border-right: 3px solid #0284c7; border-radius: 6px; padding: 8px 12px; background: #f8fafc; page-break-inside: avoid;">
-                    <strong style="font-size: 0.72rem; color: #0369a1; display: block; margin-bottom: 4px;">📢 إعلانات وتنبيهات الدفعة:</strong>
+                <div style="margin-top: 12px; border: 1px solid #cbd5e1; border-right: 3px solid #334155; border-radius: 6px; padding: 8px 12px; background: #f8fafc; page-break-inside: avoid;">
+                    <strong style="font-size: 0.72rem; color: #1e293b; display: block; margin-bottom: 4px;">📢 إعلانات وتنبيهات الدفعة:</strong>
                     <div class="print-ann-body" style="font-size: 0.70rem; color: #1e293b; line-height: 1.5;">${announcementText}</div>
                 </div>
             `;
