@@ -11,6 +11,8 @@ const API_BASE = (function() {
     }
     return p;
 })();
+
+const AI_API_BASE = `${API_BASE || ''}/backend/api_ai_exam.php`;
 window.AdminApp = {
     pass: null,
     permissions: {},
@@ -656,9 +658,11 @@ window.AdminApp = {
     },
 
     setFocusTrack(specialty, year, semester) {
-        this.focusMode.specialty = specialty;
-        this.focusMode.year = String(year);
-        this.focusMode.semester = String(semester);
+        const allowedSpecialties = ['dentistry', 'medicine', 'pre-med'];
+        const normalizedSpecialty = allowedSpecialties.includes(String(specialty)) ? String(specialty) : 'dentistry';
+        this.focusMode.specialty = normalizedSpecialty;
+        this.focusMode.year = normalizedSpecialty === 'pre-med' ? '1' : String(year);
+        this.focusMode.semester = ['1', '2'].includes(String(semester)) ? String(semester) : '1';
         this.focusMode.enabled = true;
         this.saveFocusMode();
         this.renderFocusBar();
@@ -766,11 +770,9 @@ window.AdminApp = {
                 this.loadQuizzes();
             }
         } else if (this.currentTab === 'cache') {
-            if (this.lastCacheData) {
-                this.renderCacheTab(this.lastCacheData);
-            } else {
-                this.loadCacheStats();
-            }
+            // Reload from the server so a focus change also picks up repaired
+            // subject metadata and freshly scanned pending files.
+            this.loadCacheStats();
         }
     },
 
@@ -819,9 +821,13 @@ window.AdminApp = {
     },
 
     applyFocusFromPopover() {
-        const spec = document.getElementById('pop-focus-spec').value;
-        const year = document.getElementById('pop-focus-year').value;
-        const sem = document.getElementById('pop-focus-sem').value;
+        const specEl = document.getElementById('pop-focus-spec');
+        const yearEl = document.getElementById('pop-focus-year');
+        const semEl = document.getElementById('pop-focus-sem');
+        if (!specEl || !yearEl || !semEl) return;
+        const spec = specEl.value;
+        const year = yearEl.value;
+        const sem = semEl.value;
         this.setFocusTrack(spec, year, sem);
         this.closeFocusPopover();
     },
@@ -3869,9 +3875,15 @@ window.AdminApp = {
     },
 
     // --- CACHE & PRE-WARM MANAGEMENT METHODS ---
+    aiExamUrl(action) {
+        return `${AI_API_BASE}?action=${encodeURIComponent(action)}`;
+    },
+
     loadCacheStats() {
         this.showLoading(true);
-        fetch('/backend/api_ai_exam.php?action=get_cache_stats&password=' + encodeURIComponent(this.pass || ''))
+        fetch(this.aiExamUrl('get_cache_stats'), {
+            headers: { 'X-Admin-Pass': this.pass || '' }
+        })
         .then(r => r.json())
         .then(res => {
             this.showLoading(false);
@@ -3890,7 +3902,9 @@ window.AdminApp = {
 
     scanDriveCatalog() {
         this.showLoading(true);
-        fetch('/backend/api_ai_exam.php?action=scan_cache_catalog&password=' + encodeURIComponent(this.pass || ''))
+        fetch(this.aiExamUrl('scan_cache_catalog'), {
+            headers: { 'X-Admin-Pass': this.pass || '' }
+        })
         .then(r => r.json())
         .then(res => {
             this.showLoading(false);
@@ -3914,12 +3928,19 @@ window.AdminApp = {
 
     migrateCacheHierarchy() {
         this.showLoading(true);
-        fetch('/backend/api_ai_exam.php?action=migrate_cache_structure&password=' + encodeURIComponent(this.pass || ''))
+        fetch(this.aiExamUrl('migrate_cache_structure'), {
+            headers: { 'X-Admin-Pass': this.pass || '' }
+        })
         .then(r => r.json())
         .then(res => {
             this.showLoading(false);
             if (res.success && res.data) {
-                this.showToast(`تم تنظيم المجلدات بنجاح (${res.data.migrated} ملف تم نقله)`);
+                const moved = Number(res.data.migrated || 0);
+                const errors = Array.isArray(res.data.errors) ? res.data.errors.length : 0;
+                const message = res.data.message || (moved > 0
+                    ? `تم تنظيم المجلدات بنجاح (${moved} ملف تم نقله)`
+                    : 'الكاش منظم مسبقاً؛ تم تحديث بيانات التصنيف.');
+                this.showToast(errors > 0 ? `${message} (${errors} ملاحظة)` : message, errors > 0);
                 if (res.data.stats) {
                     this.renderCacheTab(res.data.stats);
                 } else {
@@ -3944,7 +3965,7 @@ window.AdminApp = {
             semester = this.focusMode.semester || '';
         }
         this.showLoading(true);
-        fetch('/backend/api_ai_exam.php?action=prewarm_single_file', {
+        fetch(this.aiExamUrl('prewarm_single_file'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -4012,6 +4033,8 @@ window.AdminApp = {
             return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">تحضيري - ف${sm}</span>`;
         } else if (s === 'medicine') {
             return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">طب بشري - س${y} ف${sm}</span>`;
+        } else if (s === 'unassigned') {
+            return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-500/20 text-gray-300 border border-gray-500/30">غير مصنف</span>`;
         } else {
             return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-500/20 text-sky-300 border border-sky-500/30">أسنان - س${y} ف${sm}</span>`;
         }
@@ -4179,7 +4202,7 @@ window.AdminApp = {
         };
 
         this.showLoading(true);
-        fetch('/backend/api_ai_exam.php?action=save_cache_settings', {
+        fetch(this.aiExamUrl('save_cache_settings'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -4244,7 +4267,7 @@ window.AdminApp = {
             if (pMsg) pMsg.innerText = `(${num}/${uncached.length}) جاري استخراج: ${u.file_name || u.file_id}...`;
 
             try {
-                const res = await fetch('/backend/api_ai_exam.php?action=prewarm_single_file', {
+                const res = await fetch(this.aiExamUrl('prewarm_single_file'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     signal: (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(25000) : undefined,
@@ -4323,7 +4346,9 @@ window.AdminApp = {
 
         try {
             // 1. Get subjects list
-            const subRes = await fetch('/backend/api_ai_exam.php?action=get_prewarm_subjects&password=' + encodeURIComponent(this.pass || ''));
+            const subRes = await fetch(this.aiExamUrl('get_prewarm_subjects'), {
+                headers: { 'X-Admin-Pass': this.pass || '' }
+            });
             const subData = await subRes.json();
 
             if (!subData.success || !subData.data || !subData.data.subjects) {
@@ -4369,7 +4394,7 @@ window.AdminApp = {
 
                 while (hasMore) {
                     try {
-                        const itemRes = await fetch('/backend/api_ai_exam.php?action=prewarm_subject', {
+                        const itemRes = await fetch(this.aiExamUrl('prewarm_subject'), {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             signal: (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(20000) : undefined,
@@ -4464,7 +4489,7 @@ window.AdminApp = {
         if (!confirm(confirmMsg)) return;
 
         this.showLoading(true);
-        fetch('/backend/api_ai_exam.php?action=clear_cache', {
+        fetch(this.aiExamUrl('clear_cache'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: this.pass, file_id: fileId || '' })

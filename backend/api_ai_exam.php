@@ -558,10 +558,11 @@ function setGeminiCachedFile($cacheKey, $fileUri, $fileName, $apiKey) {
 function getStructuredCacheRelPath($meta, $fileId) {
     $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '', $fileId);
 
-    // Specialty: dentistry, medicine, pre-med (default: dentistry)
-    $spec = !empty($meta['specialty']) ? strtolower(trim($meta['specialty'])) : 'dentistry';
-    if (!in_array($spec, ['dentistry', 'medicine', 'pre-med'], true)) {
-        $spec = 'dentistry';
+    // Keep unknown files out of a real academic track. Missing metadata must
+    // not silently classify an unrelated subject as dentistry.
+    $spec = !empty($meta['specialty']) ? strtolower(trim($meta['specialty'])) : 'unassigned';
+    if (!in_array($spec, ['dentistry', 'medicine', 'pre-med', 'unassigned'], true)) {
+        $spec = 'unassigned';
     }
 
     // Year: 1 to 6 (pre-med is Year 1)
@@ -588,6 +589,33 @@ function getStructuredCacheRelPath($meta, $fileId) {
     $subFolder = ($subId > 0) ? ($subId . '_' . substr($cleanSubName, 0, 40)) : substr($cleanSubName, 0, 40);
 
     return "{$spec}/year_{$year}/semester_{$sem}/{$subFolder}/{$cleanId}.txt";
+}
+
+/**
+ * The subjects table is authoritative for a cached file's academic context.
+ * Client supplied metadata and old cache_meta.json entries may be stale.
+ */
+function enrichCacheMetaFromSubject($meta) {
+    global $pdo;
+    if (!is_array($meta) || empty($meta['subject_id']) || !$pdo) return $meta;
+
+    try {
+        $tableSubs = getAiExamSubjectsTable($pdo);
+        $stmt = $pdo->prepare("SELECT id, name, specialty, year, semester FROM {$tableSubs} WHERE id = ? LIMIT 1");
+        $stmt->execute([$meta['subject_id']]);
+        $subject = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($subject) {
+            $meta['subject_id'] = $subject['id'];
+            $meta['subject_name'] = $subject['name'] ?? ($meta['subject_name'] ?? 'مادة دراسية');
+            $meta['specialty'] = $subject['specialty'] ?? '';
+            $meta['year'] = isset($subject['year']) ? intval($subject['year']) : null;
+            $meta['semester'] = isset($subject['semester']) ? intval($subject['semester']) : null;
+        }
+    } catch (Throwable $e) {
+        // Keep best-effort metadata if the database is temporarily unavailable.
+    }
+
+    return $meta;
 }
 
 function getLocalDocumentTextCache($fileId) {
@@ -641,6 +669,7 @@ function setLocalDocumentTextCache($fileId, $text, $meta = []) {
         $metaStore['files_meta'] = [];
     }
     $existing = $metaStore['files_meta'][$cleanId] ?? [];
+    $meta = enrichCacheMetaFromSubject($meta);
     $effectiveMeta = array_merge($existing, array_filter($meta, function($v) { return $v !== null && $v !== ''; }));
 
     $relPath = getStructuredCacheRelPath($effectiveMeta, $cleanId);
@@ -680,6 +709,7 @@ function setLocalDocumentTextCache($fileId, $text, $meta = []) {
 
 // --- AUTOMATIC MIGRATION: FLAT FILES TO STRUCTURED HIERARCHY ---
 function migrateTextCacheToStructuredHierarchy() {
+    global $pdo;
     $cacheDir = __DIR__ . '/gemini_keys_data/text_cache';
     if (!is_dir($cacheDir)) return ['migrated' => 0, 'errors' => []];
 
@@ -688,32 +718,74 @@ function migrateTextCacheToStructuredHierarchy() {
     $migrated = 0;
     $errors = [];
 
-    // Check for any .txt files sitting directly in text_cache/ (flat)
-    $flatFiles = glob($cacheDir . '/*.txt');
-    if ($flatFiles && count($flatFiles) > 0) {
-        foreach ($flatFiles as $ff) {
-            $fileId = basename($ff, '.txt');
-            $m = $filesMeta[$fileId] ?? [];
-            if (empty($m)) {
-                $m = ['specialty' => 'dentistry', 'year' => 3, 'semester' => 1, 'subject_name' => 'General'];
+    $subjectMap = [];
+    if ($pdo) {
+        try {
+            $tableSubs = getAiExamSubjectsTable($pdo);
+            $stmt = $pdo->query("SELECT id, name, specialty, year, semester FROM {$tableSubs}");
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $subjectMap[(string)$row['id']] = $row;
             }
-            $relPath = getStructuredCacheRelPath($m, $fileId);
-            $targetPath = $cacheDir . '/' . $relPath;
-            $targetDir = dirname($targetPath);
-            if (!is_dir($targetDir)) @mkdir($targetDir, 0777, true);
-
-            if (@rename($ff, $targetPath)) {
-                $migrated++;
-                $metaStore['files_meta'][$fileId]['rel_path'] = $relPath;
-                $metaStore['files_meta'][$fileId]['specialty'] = $m['specialty'] ?? 'dentistry';
-                $metaStore['files_meta'][$fileId]['year'] = isset($m['year']) ? intval($m['year']) : 1;
-                $metaStore['files_meta'][$fileId]['semester'] = isset($m['semester']) ? intval($m['semester']) : 1;
-            } else {
-                $errors[] = "Failed moving {$fileId} to {$relPath}";
-            }
-        }
-        saveCacheMetaStore($metaStore);
+        } catch (Throwable $e) {}
     }
+
+    // Reconcile every .txt file, including files already nested. This makes
+    // the admin action useful after previous migrations and repairs stale
+    // metadata without clearing the cache.
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($cacheDir, RecursiveDirectoryIterator::SKIP_DOTS)
+    );
+    foreach ($iterator as $file) {
+        if (!$file->isFile() || strtolower($file->getExtension()) !== 'txt') continue;
+
+        $fileId = $file->getBasename('.txt');
+        $m = is_array($filesMeta[$fileId] ?? null) ? $filesMeta[$fileId] : [];
+        $normalizedCacheDir = str_replace('\\', '/', $cacheDir);
+        $normalizedFilePath = str_replace('\\', '/', $file->getPathname());
+        $relCurrent = ltrim(substr($normalizedFilePath, strlen($normalizedCacheDir)), '/');
+
+        // A subject row wins over cache metadata and directory names.
+        $subjectId = $m['subject_id'] ?? null;
+        $subject = ($subjectId !== null && isset($subjectMap[(string)$subjectId])) ? $subjectMap[(string)$subjectId] : null;
+        if ($subject) {
+            $m['subject_id'] = $subject['id'];
+            $m['subject_name'] = $subject['name'] ?? 'مادة دراسية';
+            $m['specialty'] = $subject['specialty'] ?? 'unassigned';
+            $m['year'] = isset($subject['year']) ? intval($subject['year']) : 1;
+            $m['semester'] = isset($subject['semester']) ? intval($subject['semester']) : 1;
+        } else {
+            // Never invent dentistry ownership for an unidentified legacy file.
+            if (empty($m['specialty'])) $m['specialty'] = 'unassigned';
+            if (!isset($m['year']) || $m['year'] === '') $m['year'] = 1;
+            if (!isset($m['semester']) || $m['semester'] === '') $m['semester'] = 1;
+            if (empty($m['subject_name'])) $m['subject_name'] = 'غير مصنف';
+        }
+
+        $m = enrichCacheMetaFromSubject($m);
+        $relPath = getStructuredCacheRelPath($m, $fileId);
+        $targetPath = $cacheDir . '/' . $relPath;
+        $targetDir = dirname($targetPath);
+        if (!is_dir($targetDir)) @mkdir($targetDir, 0777, true);
+
+        if ($relCurrent !== $relPath) {
+            if (file_exists($targetPath)) {
+                $errors[] = "Skipped {$fileId}: target already exists at {$relPath}";
+                continue;
+            }
+            if (!@rename($file->getPathname(), $targetPath)) {
+                $errors[] = "Failed moving {$fileId} to {$relPath}";
+                continue;
+            }
+            $migrated++;
+        }
+
+        $m['rel_path'] = $relPath;
+        $m['size_bytes'] = @filesize($targetPath) ?: ($m['size_bytes'] ?? 0);
+        $m['cached_at'] = $m['cached_at'] ?? date('Y-m-d H:i:s', @filemtime($targetPath) ?: time());
+        $metaStore['files_meta'][$fileId] = array_merge($metaStore['files_meta'][$fileId] ?? [], $m);
+    }
+
+    saveCacheMetaStore($metaStore);
 
     return ['migrated' => $migrated, 'errors' => $errors];
 }
@@ -805,26 +877,27 @@ function getSystemCacheStats() {
                 $subId = !empty($m['subject_id']) ? intval($m['subject_id']) : $pathSubId;
                 $dbSub = ($subId && isset($subjectMap[$subId])) ? $subjectMap[$subId] : null;
 
-                // Determine robust specialty
-                $spec = !empty($m['specialty']) ? $m['specialty'] : ($dbSub['specialty'] ?? $pathSpec);
-                if (empty($spec) || !in_array($spec, ['dentistry', 'medicine', 'pre-med'], true)) {
-                    $spec = in_array($pathSpec, ['dentistry', 'medicine', 'pre-med'], true) ? $pathSpec : 'dentistry';
+                // The subjects table is authoritative whenever the file is
+                // linked to a subject. Cached metadata is only a fallback.
+                $spec = $dbSub['specialty'] ?? ($m['specialty'] ?? $pathSpec);
+                if (empty($spec) || !in_array($spec, ['dentistry', 'medicine', 'pre-med', 'unassigned'], true)) {
+                    $spec = in_array($pathSpec, ['dentistry', 'medicine', 'pre-med', 'unassigned'], true) ? $pathSpec : 'unassigned';
                 }
 
                 // Determine robust year and semester
-                $year = (isset($m['year']) && $m['year'] !== '') ? intval($m['year']) : (isset($dbSub['year']) ? intval($dbSub['year']) : ($pathYear ?? 1));
-                $semester = (isset($m['semester']) && $m['semester'] !== '') ? intval($m['semester']) : (isset($dbSub['semester']) ? intval($dbSub['semester']) : ($pathSem ?? 1));
+                $year = isset($dbSub['year']) ? intval($dbSub['year']) : ((isset($m['year']) && $m['year'] !== '') ? intval($m['year']) : ($pathYear ?? 1));
+                $semester = isset($dbSub['semester']) ? intval($dbSub['semester']) : ((isset($m['semester']) && $m['semester'] !== '') ? intval($m['semester']) : ($pathSem ?? 1));
 
                 // Pre-Med has only 1 foundation year (normalize to 1 for consistent UI & routing)
                 if ($spec === 'pre-med') {
                     $year = 1;
                 }
 
-                $subName = $m['subject_name'] ?? ($dbSub['name'] ?? 'مادة دراسية');
+                $subName = $dbSub['name'] ?? ($m['subject_name'] ?? 'مادة دراسية');
                 $fileName = $m['file_name'] ?? ('ملف ' . substr($cleanId, 0, 8) . '.pdf');
 
                 // Self-heal filesMeta if metadata was incomplete
-                if (empty($m['specialty']) || !isset($m['year']) || !isset($m['semester']) || empty($m['rel_path']) || $m['rel_path'] !== $relPath || ($spec === 'pre-med' && ($m['year'] ?? null) === 0)) {
+                if (empty($m['specialty']) || ($m['specialty'] ?? null) !== $spec || !isset($m['year']) || intval($m['year']) !== $year || !isset($m['semester']) || intval($m['semester']) !== $semester || empty($m['rel_path']) || $m['rel_path'] !== $relPath || ($spec === 'pre-med' && ($m['year'] ?? null) === 0)) {
                     $meta['files_meta'][$cleanId] = array_merge($m, [
                         'subject_name' => $subName,
                         'file_name' => $fileName,
@@ -1170,10 +1243,17 @@ function performDriveExtraction($driveLink, $meta = []) {
         $fileId = $driveLink;
     }
 
+    // Resolve the academic context before touching the cache. This prevents a
+    // stale client/cache label from surviving a cache hit.
+    $meta = enrichCacheMetaFromSubject($meta);
+
     // Check 6-Month Local Document Text Cache first (0.001s instant retrieval!)
     if (!empty($fileId)) {
         $cachedText = getLocalDocumentTextCache($fileId);
         if ($cachedText !== null) {
+            // Re-save metadata/path while reusing the existing text. This is
+            // cheap and self-heals files whose subject changed tracks.
+            setLocalDocumentTextCache($fileId, $cachedText, $meta);
             return [
                 'success' => true,
                 'data' => [
@@ -3546,11 +3626,17 @@ if ($action === 'scan_cache_catalog') {
                 $sname = $s['name'] ?? 'مادة دراسية';
                 $activeDriveFileIds[$fid] = true;
 
-                $subSpec = $s['specialty'] ?? ($existingM['specialty'] ?? '');
-                $subYear = ($subSpec === 'pre-med') ? 1 : (isset($s['year']) ? intval($s['year']) : ($existingM['year'] ?? 1));
-                $subSem = isset($s['semester']) ? intval($s['semester']) : ($existingM['semester'] ?? 1);
-
                 $existingM = $metaStore['files_meta'][$fid] ?? [];
+                // The current subject row is authoritative. Do not reuse an
+                // old cache entry's dentistry label when the subject moved to
+                // another specialty.
+                $subSpec = !empty($s['specialty']) ? strtolower(trim($s['specialty'])) : 'unassigned';
+                if (!in_array($subSpec, ['dentistry', 'medicine', 'pre-med', 'unassigned'], true)) {
+                    $subSpec = 'unassigned';
+                }
+                $subYear = ($subSpec === 'pre-med') ? 1 : (isset($s['year']) ? intval($s['year']) : 1);
+                $subSem = isset($s['semester']) ? intval($s['semester']) : 1;
+
                 $metaStore['files_meta'][$fid] = array_merge($existingM, [
                     'file_name' => $fname,
                     'subject_name' => $sname,
@@ -3804,9 +3890,14 @@ if ($action === 'prewarm_single_file') {
 // --- ACTION 13.9.5: MIGRATE CACHE STRUCTURE TO DIRECTORY HIERARCHY ---
 if ($action === 'migrate_cache_structure') {
     $res = migrateTextCacheToStructuredHierarchy();
+    $migratedCount = intval($res['migrated'] ?? 0);
+    $errorCount = count($res['errors'] ?? []);
+    $message = $migratedCount > 0
+        ? "تم تنظيم {$migratedCount} ملف كاش وتحديث بياناته."
+        : ($errorCount > 0 ? "لم يتم نقل ملفات بسبب تعارضات، وتم تسجيل {$errorCount} ملاحظة." : "الكاش منظم مسبقاً؛ تم تحديث بيانات التصنيف.");
     sendResponse(true, [
-        'message' => "تم تنظيم ملفات الكاش في هيكلية المجلدات بنجاح.",
-        'migrated' => $res['migrated'],
+        'message' => $message,
+        'migrated' => $migratedCount,
         'errors' => $res['errors'],
         'stats' => getSystemCacheStats()
     ]);
