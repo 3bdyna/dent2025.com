@@ -1195,6 +1195,16 @@ const ScheduleApp = {
         const endYear = endD.getFullYear();
         const rangeStr = `${startDay} ${startMonth} ${startYear} — ${endDay} ${endMonth} ${endYear}`;
 
+        // Stats count
+        let examCount = 0;
+        let holidayCount = 0;
+        let paymentCount = 0;
+        events.forEach(ev => {
+            if (ev.type === 'exam') examCount++;
+            else if (ev.type === 'holiday') holidayCount++;
+            else if (ev.type === 'payment') paymentCount++;
+        });
+
         // Anchor semester start to Sunday 2026-08-30 (Week 1), ensuring consistent week numbering
         let startSunday = new Date(2026, 7, 30);
         startSunday.setHours(0, 0, 0, 0);
@@ -1346,7 +1356,7 @@ const ScheduleApp = {
                             <thead>
                                 <tr>
                                     <th>اليوم</th>
-                                    <th>التاريخ</th>
+                                    <th>التاريخ (ميلادي / هجري)</th>
                                     <th>تفاصيل الحدث والمقرر</th>
                                     <th style="text-align: center;">النوع</th>
                                     <th style="text-align: center;">العد التنازلي</th>
@@ -1446,6 +1456,35 @@ const ScheduleApp = {
             margin-top: 3px;
             text-align: right;
             direction: rtl;
+        }
+        .print-stats-ribbon {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .print-stat-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 6px 10px;
+            text-align: center;
+        }
+        .print-stat-item .num {
+            display: block;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #0f172a;
+            font-family: 'Outfit', sans-serif;
+            line-height: 1;
+        }
+        .print-stat-item .lbl {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: #64748b;
+            margin-top: 3px;
+            display: block;
+        }
         .m1-week-block {
             margin-bottom: 12px;
             border: 1px solid #cbd5e1;
@@ -1476,7 +1515,6 @@ const ScheduleApp = {
             padding: 6px 10px;
             border-bottom: 1px solid #cbd5e1;
             font-size: 0.68rem;
-            white-space: nowrap;
         }
         .m1-table td {
             padding: 6px 10px;
@@ -1571,6 +1609,25 @@ const ScheduleApp = {
         <div class="doc-meta-badge">
             <span class="period" dir="ltr">${dentEscapeHtml(rangeStr)}</span>
             <span class="subperiod">${dentEscapeHtml(weeksBadgeText)}</span>
+        </div>
+    </div>
+
+    <div class="print-stats-ribbon">
+        <div class="print-stat-item">
+            <span class="num">${examCount}</span>
+            <span class="lbl">اختبارات مجدولة</span>
+        </div>
+        <div class="print-stat-item">
+            <span class="num">${holidayCount}</span>
+            <span class="lbl">إجازات رسمية</span>
+        </div>
+        <div class="print-stat-item">
+            <span class="num">${paymentCount}</span>
+            <span class="lbl">صرف مكافآت</span>
+        </div>
+        <div class="print-stat-item">
+            <span class="num">14</span>
+            <span class="lbl">يوماً تحت المتابعة</span>
         </div>
     </div>
 
