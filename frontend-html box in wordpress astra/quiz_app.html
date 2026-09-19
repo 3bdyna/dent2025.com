@@ -536,6 +536,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     
     // Persistent file caches per subject
     let activeFolderTab = 'chapters'; // 'chapters' | 'materials'
+    let isLoadingDriveFiles = false;
     let subjectChaptersFiles = [];
     let subjectMaterialsFiles = [];
     
@@ -865,7 +866,9 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 activeFolderTab = tab.dataset.folder || 'chapters';
-                renderDriveFilesList();
+                if (!isLoadingDriveFiles) {
+                    renderDriveFilesList();
+                }
             });
         });
     }
@@ -1076,41 +1079,58 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             } else {
                 select.innerHTML = '<option value="">لا توجد مواد متاحة حالياً</option>';
             }
+
+            if (select.value) {
+                loadFilesForSubject();
+            }
         } catch (err) {
             select.innerHTML = `<option value="">خطأ في التحميل</option>`;
         }
     }
 
-    async function fetchDriveFilesByFolderId(folderId) {
+    async function fetchDriveFilesByFolderId(folderId, forceRefresh = false) {
         if (!folderId) return [];
         const cacheKey = 'dent2025_drive_ch_' + folderId;
-        try {
-            const cached = sessionStorage.getItem(cacheKey);
-            if (cached) {
-                const parsed = JSON.parse(cached);
-                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-            }
-        } catch (e) {}
-
-        try {
-            let res = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?action=list_chapters` + String.fromCharCode(38) + `folder_id=${folderId}`);
-            const data = await res.json();
-            let driveFiles = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
-            const mapped = driveFiles.map(f => ({
-                id: f.id.startsWith('http') ? f.id : `https://drive.google.com/file/d/${f.id}/view`,
-                name: f.name
-            }));
-            if (mapped.length > 0) {
-                try { sessionStorage.setItem(cacheKey, JSON.stringify(mapped)); } catch (e) {}
-            }
-            return mapped;
-        } catch (err) {
-            console.error("Drive fetch error for folder:", folderId, err);
-            return [];
+        if (!forceRefresh) {
+            try {
+                const cached = sessionStorage.getItem(cacheKey);
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                }
+            } catch (e) {}
         }
+
+        const refreshParam = forceRefresh ? '&refresh=1' : '';
+        const fetchUrl = `${QUIZ_API_BASE}/api_ai_exam.php?action=list_chapters&folder_id=${encodeURIComponent(folderId)}${refreshParam}`;
+
+        let attempts = 0;
+        while (attempts < 2) {
+            attempts++;
+            try {
+                const res = await fetch(fetchUrl);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                let driveFiles = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+                const mapped = driveFiles.map(f => ({
+                    id: f.id.startsWith('http') ? f.id : `https://drive.google.com/file/d/${f.id}/view`,
+                    name: f.name
+                }));
+                if (mapped.length > 0) {
+                    try { sessionStorage.setItem(cacheKey, JSON.stringify(mapped)); } catch (e) {}
+                    return mapped;
+                }
+            } catch (err) {
+                console.warn(`Drive fetch attempt ${attempts} failed for folder:`, folderId, err);
+            }
+            if (attempts < 2) {
+                await new Promise(r => setTimeout(r, 600));
+            }
+        }
+        return [];
     }
 
-    async function loadFilesForSubject() {
+    async function loadFilesForSubject(forceRefresh = false) {
         const subjectId = document.getElementById('dq-subject').value;
         const chapContainer = document.getElementById('dq-chapters-container');
         const targetContainer = document.getElementById('dq-target-chaps-container');
@@ -1129,22 +1149,34 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const subject = currentSubjectsData.find(s => s.id == subjectId);
         if (!subject) return;
 
-        chapContainer.innerHTML = '<div style="color: #94a3b8; font-size: 0.85rem; text-align: center; padding: 12px;">جاري تحميل ملفات المادة من Google Drive...</div>';
-        targetContainer.innerHTML = '<div style="color: #94a3b8; font-size: 0.85rem; text-align: center; padding: 8px;">جاري تحميل الشابترات المستهدفة...</div>';
+        isLoadingDriveFiles = true;
+        chapContainer.innerHTML = `
+            <div style="color: #94a3b8; font-size: 0.84rem; text-align: center; padding: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+                <div class="dent-quiz-spinner" style="width: 20px; height: 20px; border-width: 2px; margin: 0 auto;"></div>
+                <span>جاري جلب المحاضرات والملازم من Google Drive...</span>
+            </div>
+        `;
+        targetContainer.innerHTML = '<div style="color: #94a3b8; font-size: 0.82rem; text-align: center; padding: 8px;">جاري تحميل الشابترات المستهدفة...</div>';
         selectAllBtn.disabled = true;
         clearAllBtn.disabled = true;
 
         subjectChaptersFiles = [];
         subjectMaterialsFiles = [];
 
-        // Parallel fetch for both chapters and materials
-        const [chaps, mats] = await Promise.all([
-            subject.chapters_folder_id ? fetchDriveFilesByFolderId(subject.chapters_folder_id) : Promise.resolve([]),
-            subject.materials_folder_id ? fetchDriveFilesByFolderId(subject.materials_folder_id) : Promise.resolve([])
-        ]);
+        try {
+            // Parallel fetch for both chapters and materials
+            const [chaps, mats] = await Promise.all([
+                subject.chapters_folder_id ? fetchDriveFilesByFolderId(subject.chapters_folder_id, forceRefresh) : Promise.resolve([]),
+                subject.materials_folder_id ? fetchDriveFilesByFolderId(subject.materials_folder_id, forceRefresh) : Promise.resolve([])
+            ]);
 
-        subjectChaptersFiles = chaps;
-        subjectMaterialsFiles = mats;
+            subjectChaptersFiles = chaps;
+            subjectMaterialsFiles = mats;
+        } catch (e) {
+            console.error("Error loading subject files:", e);
+        } finally {
+            isLoadingDriveFiles = false;
+        }
 
         // Render target chapters for Past Exam filter (using Chapters files)
         if (subjectChaptersFiles.length > 0) {
@@ -1206,7 +1238,28 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             selectAllBtn.disabled = false;
             clearAllBtn.disabled = false;
         } else {
-            chapContainer.innerHTML = `<div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 12px;">لا توجد ملفات متوفرة في قسم ${activeFolderTab === 'chapters' ? 'المحاضرات' : 'الملازم'}</div>`;
+            const tabName = (activeFolderTab === 'chapters') ? 'المحاضرات' : 'الملازم';
+            chapContainer.innerHTML = `
+                <div style="color: #94a3b8; font-size: 0.82rem; text-align: center; padding: 12px; line-height: 1.6;">
+                    <div style="margin-bottom: 8px; color: #cbd5e1;">لم تظهر ملفات في قسم ${tabName} حالياً.</div>
+                    <button type="button" id="dq-retry-drive-btn" class="dent-quiz-btn dent-btn-secondary" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; padding: 6px 14px; font-size: 0.78rem; margin: 0 auto; cursor: pointer;">
+                        <span>إعادة جلب الملفات من Google Drive</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+                    </button>
+                </div>
+            `;
+            const retryBtn = document.getElementById('dq-retry-drive-btn');
+            if (retryBtn) {
+                retryBtn.addEventListener('click', () => {
+                    const subId = document.getElementById('dq-subject').value;
+                    const sub = currentSubjectsData.find(s => s.id == subId);
+                    if (sub) {
+                        if (sub.chapters_folder_id) sessionStorage.removeItem('dent2025_drive_ch_' + sub.chapters_folder_id);
+                        if (sub.materials_folder_id) sessionStorage.removeItem('dent2025_drive_ch_' + sub.materials_folder_id);
+                    }
+                    loadFilesForSubject(true);
+                });
+            }
             selectAllBtn.disabled = true;
             clearAllBtn.disabled = (selectedDriveFilesMap.size === 0);
         }
