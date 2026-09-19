@@ -231,3 +231,55 @@ if (dent2025_is_frontend_head()) {
         return $tag;
     }, 20, 3);
 }
+
+// --- Daily Cache Cron Sync at 12:00 PM AST (09:00 UTC) ---
+add_filter('cron_schedules', function ($schedules) {
+    $schedules['dent2025_daily_noon'] = [
+        'interval' => 86400,
+        'display'  => 'Once Daily at 12 PM AST'
+    ];
+    return $schedules;
+});
+
+add_action('dent2025_cache_cron_sync', function () {
+    $passwords_file = ABSPATH . 'dent2025_passwords.json';
+    if (!file_exists($passwords_file)) return;
+    $passwords = json_decode(file_get_contents($passwords_file), true);
+    if (!is_array($passwords)) return;
+
+    // Find master passkey
+    $masterPass = '';
+    foreach ($passwords as $entry) {
+        if (!empty($entry['permissions']['manage_passwords'])) {
+            $masterPass = $entry['passkey'] ?? '';
+            break;
+        }
+    }
+    if (empty($masterPass)) return;
+
+    $url = site_url('/backend/api_ai_exam.php');
+    wp_remote_post($url, [
+        'timeout' => 120,
+        'body'    => json_encode([
+            'action'   => 'cron_sync',
+            'password' => $masterPass
+        ]),
+        'headers' => ['Content-Type' => 'application/json']
+    ]);
+});
+
+// Schedule the cron on plugin activation / on every load if not scheduled
+add_action('init', function () {
+    if (!wp_next_scheduled('dent2025_cache_cron_sync')) {
+        // Next 12:00 PM AST = 09:00 UTC
+        $now_utc = time();
+        $today_noon_utc = strtotime(gmdate('Y-m-d') . ' 09:00:00 UTC');
+        $next_run = ($today_noon_utc > $now_utc) ? $today_noon_utc : $today_noon_utc + 86400;
+        wp_schedule_event($next_run, 'dent2025_daily_noon', 'dent2025_cache_cron_sync');
+    }
+});
+
+// Clean up on plugin deactivation
+register_deactivation_hook(__FILE__, function () {
+    wp_clear_scheduled_hook('dent2025_cache_cron_sync');
+});

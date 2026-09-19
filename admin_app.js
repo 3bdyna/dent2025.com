@@ -3969,7 +3969,7 @@ window.AdminApp = {
 
         const settings = data.settings || {};
         if (autoCheck) autoCheck.checked = (settings.auto_prewarm_on_upload !== false);
-        if (scheduleSel) scheduleSel.value = settings.periodic_schedule || 'weekly';
+        if (scheduleSel) scheduleSel.value = settings.periodic_schedule || 'daily_12pm';
 
         if (lastScanLbl) {
             lastScanLbl.innerText = summary.last_scan_time ? `آخر فحص: ${summary.last_scan_time}` : 'فهرس نشط';
@@ -4049,7 +4049,7 @@ window.AdminApp = {
         const payload = {
             password: this.pass,
             auto_prewarm_on_upload: autoCheck ? autoCheck.checked : true,
-            periodic_schedule: scheduleSel ? scheduleSel.value : 'weekly'
+            periodic_schedule: scheduleSel ? scheduleSel.value : 'daily_12pm'
         };
 
         this.showLoading(true);

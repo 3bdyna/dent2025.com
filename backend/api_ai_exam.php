@@ -38,7 +38,7 @@ $AI_MASTER_ACTIONS = [
     'test_keys', 'gemini_status', 'add_gemini_key', 'edit_gemini_key', 'delete_gemini_key', 
     'get_gemini_keys', 'save_cache_settings', 'clear_cache', 'get_cache_stats',
     'prewarm_cache', 'check_prewarm_job', 'get_prewarm_subjects', 'prewarm_subject', 
-    'scan_cache_catalog', 'prewarm_single_file'
+    'scan_cache_catalog', 'prewarm_single_file', 'cron_sync'
 ];
 
 if (in_array($action, $AI_MASTER_ACTIONS, true)) {
@@ -549,7 +549,7 @@ function setGeminiCachedFile($cacheKey, $fileUri, $fileName, $apiKey) {
     saveGeminiFileCacheStore($store);
 }
 
-// --- 6-MONTH PERSISTENT LOCAL TEXT CACHE (180 DAYS) ---
+// --- PERSISTENT LOCAL TEXT CACHE (Mirrors Google Drive lifecycle) ---
 function getLocalDocumentTextCache($fileId) {
     if (empty($fileId)) return null;
     $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '', $fileId);
@@ -557,12 +557,7 @@ function getLocalDocumentTextCache($fileId) {
     $cacheFile = $cacheDir . '/' . $cleanId . '.txt';
     if (!file_exists($cacheFile)) return null;
 
-    // 180-Day TTL (6 months)
-    if (time() - filemtime($cacheFile) > 180 * 86400) {
-        @unlink($cacheFile);
-        return null;
-    }
-
+    // Permanent cache: retained indefinitely until original file is removed from Google Drive
     $content = @file_get_contents($cacheFile);
     return (!empty($content) && strlen(trim($content)) > 150) ? $content : null;
 }
@@ -607,7 +602,7 @@ function getCacheMetaStore() {
     }
     return [
         'auto_prewarm_on_upload' => true,
-        'periodic_schedule' => 'weekly',
+        'periodic_schedule' => 'daily_12pm',
         'last_prewarm_time' => null,
         'last_prewarm_stats' => null,
         'files_meta' => [],
@@ -3266,6 +3261,7 @@ if ($action === 'scan_cache_catalog') {
     $subjectsWithFiles = 0;
     $totalDriveFiles = 0;
     $uncachedFiles = [];
+    $activeDriveFileIds = [];
 
     foreach ($subjects as $s) {
         $folderId = trim($s['chapters_folder_id'] ?? '');
@@ -3283,6 +3279,7 @@ if ($action === 'scan_cache_catalog') {
                 $fid = $df['id'];
                 $fname = $df['name'] ?? 'ملف مقرر';
                 $sname = $s['name'] ?? 'مادة دراسية';
+                $activeDriveFileIds[$fid] = true;
 
                 $metaStore['files_meta'][$fid] = [
                     'file_name' => $fname,
@@ -3306,6 +3303,23 @@ if ($action === 'scan_cache_catalog') {
         }
     }
 
+    // Auto-prune cached files that were deleted from Google Drive
+    $prunedCount = 0;
+    if (!empty($activeDriveFileIds) && count($activeDriveFileIds) > 10) {
+        // Safety guard: ensure Drive scrape succeeded with >10 files before deleting anything
+        foreach (array_keys($cachedDiskIds) as $cachedFid) {
+            if (!isset($activeDriveFileIds[$cachedFid])) {
+                $targetFile = $cacheDir . '/' . $cachedFid . '.txt';
+                if (file_exists($targetFile)) {
+                    @unlink($targetFile);
+                }
+                unset($cachedDiskIds[$cachedFid]);
+                unset($metaStore['files_meta'][$cachedFid]);
+                $prunedCount++;
+            }
+        }
+    }
+
     $metaStore['uncached_files'] = $uncachedFiles;
     $metaStore['catalog_summary'] = [
         'total_subjects' => $totalSubjects,
@@ -3313,6 +3327,7 @@ if ($action === 'scan_cache_catalog') {
         'total_drive_files' => $totalDriveFiles,
         'cached_count' => count($cachedDiskIds),
         'uncached_count' => count($uncachedFiles),
+        'pruned_count' => $prunedCount,
         'last_scan_time' => date('Y-m-d H:i:s')
     ];
 
@@ -3320,7 +3335,107 @@ if ($action === 'scan_cache_catalog') {
 
     sendResponse(true, [
         'summary' => $metaStore['catalog_summary'],
+        'pruned_count' => $prunedCount,
         'stats' => getSystemCacheStats()
+    ]);
+}
+
+// --- ACTION 13.8.1: DAILY CRON SYNC (scan catalog + prune deleted + prewarm new) ---
+// Designed to be called by server cron at 12:00 PM daily (AST):
+// curl -s "https://dent2025.com/backend/api_ai_exam.php?action=cron_sync&password=MASTER_PASS"
+if ($action === 'cron_sync') {
+    if (!$pdo) sendResponse(false, "Database connection unavailable.");
+
+    $table_subs = getAiExamSubjectsTable($pdo);
+    $stmt = $pdo->query("SELECT id, name, specialty, year, semester, chapters_folder_id FROM {$table_subs} WHERE chapters_folder_id IS NOT NULL AND chapters_folder_id != '' ORDER BY specialty, year, semester, id ASC");
+    $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $metaStore = getCacheMetaStore();
+    if (!isset($metaStore['files_meta']) || !is_array($metaStore['files_meta'])) {
+        $metaStore['files_meta'] = [];
+    }
+
+    $cacheDir = __DIR__ . '/gemini_keys_data/text_cache';
+    $cachedDiskIds = [];
+    if (is_dir($cacheDir)) {
+        $files = glob($cacheDir . '/*.txt');
+        if ($files) {
+            foreach ($files as $f) {
+                $cachedDiskIds[basename($f, '.txt')] = true;
+            }
+        }
+    }
+
+    $activeDriveFileIds = [];
+    $newFiles = [];
+
+    foreach ($subjects as $s) {
+        $folderId = trim($s['chapters_folder_id'] ?? '');
+        if (empty($folderId)) continue;
+        if (preg_match('/folders\/([a-zA-Z0-9_-]+)/', $folderId, $m)) $folderId = $m[1];
+        elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $folderId, $m)) $folderId = $m[1];
+
+        $driveFiles = fetchDriveFolderRecursive($folderId);
+        if (!empty($driveFiles)) {
+            foreach ($driveFiles as $df) {
+                $fid = $df['id'];
+                $activeDriveFileIds[$fid] = true;
+                if (!isset($cachedDiskIds[$fid])) {
+                    $newFiles[] = [
+                        'file_id' => $fid,
+                        'file_name' => $df['name'] ?? 'ملف مقرر',
+                        'subject_name' => $s['name'] ?? 'مادة دراسية',
+                        'subject_id' => $s['id']
+                    ];
+                }
+            }
+        }
+    }
+
+    // Prune: delete cached files no longer on Drive
+    $prunedCount = 0;
+    if (count($activeDriveFileIds) > 10) {
+        foreach (array_keys($cachedDiskIds) as $cachedFid) {
+            if (!isset($activeDriveFileIds[$cachedFid])) {
+                $targetFile = $cacheDir . '/' . $cachedFid . '.txt';
+                if (file_exists($targetFile)) @unlink($targetFile);
+                unset($metaStore['files_meta'][$cachedFid]);
+                $prunedCount++;
+            }
+        }
+    }
+
+    // Auto-prewarm: extract text for new uncached files (max 20 per cron run to stay fast)
+    $prewarmedCount = 0;
+    $prewarmedErrors = [];
+    $maxPerRun = 20;
+    foreach (array_slice($newFiles, 0, $maxPerRun) as $nf) {
+        try {
+            $res = performDriveExtraction($nf['file_id'], [
+                'subject_name' => $nf['subject_name'],
+                'file_name' => $nf['file_name'],
+                'subject_id' => $nf['subject_id']
+            ]);
+            if ($res['success']) {
+                $prewarmedCount++;
+            } else {
+                $prewarmedErrors[] = $nf['file_name'] . ': ' . ($res['message'] ?? 'فشل');
+            }
+        } catch (Throwable $e) {
+            $prewarmedErrors[] = $nf['file_name'] . ': ' . $e->getMessage();
+        }
+    }
+
+    $metaStore['last_prewarm_time'] = date('Y-m-d H:i:s');
+    $metaStore['uncached_files'] = array_slice($newFiles, $maxPerRun);
+    saveCacheMetaStore($metaStore);
+
+    sendResponse(true, [
+        'message' => 'Daily cron sync completed.',
+        'pruned' => $prunedCount,
+        'prewarmed' => $prewarmedCount,
+        'remaining_uncached' => max(0, count($newFiles) - $maxPerRun),
+        'errors' => $prewarmedErrors
     ]);
 }
 
