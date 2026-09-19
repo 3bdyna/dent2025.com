@@ -213,9 +213,6 @@ if (dent2025_is_frontend_head()) {
         }
         $head .= '<link rel="preload" as="font" type="font/woff2" href="/frontend_components/fonts/notokufiarabic-arabic.woff2" crossorigin>';
         $head .= '<link rel="preload" as="font" type="font/woff2" href="/frontend_components/fonts/outfit-latin.woff2" crossorigin>';
-        $head .= '<link rel="preload" as="image" type="image/webp" href="/logos/dentistry.webp">';
-        $head .= '<link rel="preload" as="image" type="image/webp" href="/logos/medicine.webp">';
-        $head .= '<link rel="preload" as="image" type="image/webp" href="/logos/pre-med.webp">';
 
         echo $head;
     }, 99);

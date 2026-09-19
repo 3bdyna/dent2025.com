@@ -500,18 +500,8 @@ function renderChapters(subjects) {
     window.dentIframeQueue = [];
     const details = container.querySelectorAll('.dent-chapter-details');
 
-    // 1. Queue all Chapters iframes first
-    details.forEach((det) => {
-        const chaptersIframe = det.querySelector('.dent-tab-panel[id^="dent-panel-chapters-"] iframe');
-        if (chaptersIframe) window.dentIframeQueue.push(chaptersIframe);
-    });
-
-    // 2. Queue all Materials iframes in sequence
-    details.forEach((det) => {
-        const materialsIframe = det.querySelector('.dent-tab-panel[id^="dent-panel-materials-"] iframe');
-        if (materialsIframe) window.dentIframeQueue.push(materialsIframe);
-    });
-
+    // On-demand iframe loading: do NOT load heavy Google Drive iframes for closed cards in background.
+    // Only load iframes when the student actually expands a subject card.
     details.forEach((det) => {
         det.addEventListener('toggle', () => {
             if (det.open) {
@@ -526,24 +516,19 @@ function renderChapters(subjects) {
                     if (dataSrc) visibleIframe.src = dataSrc;
                 }
 
-                // 2. Prioritize this clicked subject's other tab (e.g. Materials) to the front of queue
+                // 2. Preload this clicked subject's secondary tab (e.g. Materials) smoothly
                 const otherIframe = det.querySelector('.dent-tab-panel:not(.active) iframe');
                 if (otherIframe && (otherIframe.src === '' || otherIframe.src === 'about:blank' || otherIframe.src === window.location.href)) {
                     window.dentIframeQueue = window.dentIframeQueue.filter(f => f !== otherIframe && f !== visibleIframe);
-                    window.dentIframeQueue.unshift(otherIframe);
+                    window.dentIframeQueue.push(otherIframe);
                     if (!window.isDentIframeProcessing) {
                         window.isDentIframeProcessing = true;
-                        setTimeout(processDentIframeQueue, 300);
+                        setTimeout(processDentIframeQueue, 400);
                     }
                 }
             }
         });
     });
-
-    if (!window.isDentIframeProcessing) {
-        window.isDentIframeProcessing = true;
-        setTimeout(processDentIframeQueue, 600);
-    }
 }
 
 // ---------------------------------------------------------
