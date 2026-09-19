@@ -115,7 +115,7 @@ textarea.dent-quiz-input { height: auto !important; min-height: 60px !important;
 .dent-q-converted-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.28); color: #fde047; font-size: 0.72rem; font-weight: 600; border-radius: 4px; }
 
 .dent-bank-meta { display: flex; align-items: center; justify-content: space-between; font-size: 0.74rem; color: #64748b; margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.04); }
-.dent-bank-actions { display: flex; gap: 6px; margin-top: 8px; }
+.dent-bank-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 .dent-bank-actions button { padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; }
 
 /* Enhanced Chapters Dropdown Trigger */
@@ -394,14 +394,29 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 <span class="dent-step-desc">تأكيد قبل إطلاق التوليد</span>
             </div>
 
-            <!-- Quiz Name Inputs -->
-            <div class="dent-quiz-form-group" id="dq-title-group-ai">
-                <label class="dent-quiz-label">عنوان الاختبار المحفوظ:</label>
-                <input type="text" id="dq-quiz-name" class="dent-quiz-input" placeholder="مثال: اختبار الفاينل - شابتر 1">
-            </div>
-            <div class="dent-quiz-form-group" id="dq-title-group-past" style="display: none;">
-                <label class="dent-quiz-label">عنوان بنك الأسئلة المصفّى:</label>
-                <input type="text" id="dq-pastexam-quiz-name" class="dent-quiz-input" placeholder="مثال: تجميعات فاينل 2024">
+            <!-- Smart Auto Quiz Name Display & Admin Edit (No Emojis) -->
+            <div class="dent-quiz-form-group" id="dq-title-group-smart" style="margin-bottom: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label class="dent-quiz-label" style="margin-bottom: 0;">عنوان الاختبار المعتمد في بنك الأسئلة:</label>
+                    <button type="button" id="dq-admin-edit-title-btn" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #94a3b8; font-size: 0.72rem; padding: 3px 9px; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
+                        تعديل العنوان (مشرف)
+                    </button>
+                </div>
+                
+                <!-- Read-only auto-generated title card -->
+                <div id="dq-title-preview-card" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px 14px; transition: border-color 0.2s;">
+                    <div id="dq-auto-title-text" style="font-size: 0.95rem; font-weight: 600; color: #f1f5f9; line-height: 1.4; word-break: break-word;">-</div>
+                    <div style="font-size: 0.72rem; color: #64748b; margin-top: 3px;">تسمية معيارية موحدة تلقائية بناءً على المحتوى المختار</div>
+                </div>
+
+                <!-- Admin manual edit input (revealed when admin clicks edit) -->
+                <div id="dq-admin-title-edit-panel" style="display: none; margin-top: 8px;">
+                    <input type="text" id="dq-quiz-name" class="dent-quiz-input" style="font-weight: 600;" placeholder="عنوان مخصص للاختبار">
+                    <span style="font-size: 0.7rem; color: #94a3b8; display: block; margin-top: 4px;">تم تفعيل التعديل اليدوي للعنوان بواسطة المشرف.</span>
+                </div>
+
+                <!-- Hidden input for past exam compatibility -->
+                <input type="hidden" id="dq-pastexam-quiz-name">
             </div>
 
             <!-- Dynamic Live Summary Box -->
@@ -549,6 +564,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
     let aiUploadedFiles = [];
     let pastExamUploadedFiles = [];
+    let isAdminTitleCustomized = false;
 
     function checkUrlDirectQuiz() {
         try {
@@ -754,6 +770,23 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 });
             }
         }
+
+        const adminEditBtn = document.getElementById('dq-admin-edit-title-btn');
+        if (adminEditBtn) {
+            adminEditBtn.addEventListener('click', handleAdminTitleEditToggle);
+        }
+
+        const nameInput = document.getElementById('dq-quiz-name');
+        if (nameInput) {
+            nameInput.addEventListener('input', () => {
+                isAdminTitleCustomized = true;
+                const val = nameInput.value.trim();
+                const autoText = document.getElementById('dq-auto-title-text');
+                if (autoText) autoText.innerText = val || generateSmartQuizName();
+                const pastInput = document.getElementById('dq-pastexam-quiz-name');
+                if (pastInput) pastInput.value = val;
+            });
+        }
     }
 
     function goToWizardStep(step) {
@@ -804,6 +837,171 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         }
     }
 
+    function cleanFileNameForTitle(name) {
+        if (!name) return '';
+        let clean = String(name).trim();
+
+        // 1. Remove file extensions (.pdf, .pptx, .docx, etc.)
+        clean = clean.replace(/\.(pdf|pptx|ppt|docx|doc|txt|png|jpg|jpeg|webp)$/i, '');
+
+        // 2. Remove file noise like [1], (1), (2024), etc.
+        clean = clean.replace(/[\[\(]\s*\d+\s*[\]\)]/g, ' ');
+
+        // 3. Remove versioning, draft, copy keywords
+        clean = clean.replace(/[-_]?(v\d+|draft|copy|updated|new)[-_]?/gi, ' ');
+        clean = clean.replace(/[-_](final|last)$/i, '');
+
+        // 4. Remove instructor titles (e.g. Dr. Ahmed, Dr_Salem, د. أحمد)
+        clean = clean.replace(/[-_]?(dr|doctor)[\s._]+[a-zA-Z\u0600-\u06FF]+/gi, ' ');
+        clean = clean.replace(/[-_]?(\u062f|\u062f\u0643\u062a\u0648\u0631)[\s._]+[\u0600-\u06FF]+/gi, ' ');
+
+        // 5. Clean up Lecture / Chapter prefixes
+        clean = clean.replace(/^(lec|lecture)[\s._-]*0*(\d+)/i, 'Lec $2:');
+        clean = clean.replace(/^(ch|chapter)[\s._-]*0*(\d+)/i, 'Ch $2:');
+        clean = clean.replace(/^(\u0645\u062d\u0627\u0636\u0631\u0629)[\s._-]*0*(\d+)/i, 'محاضرة $2:');
+        clean = clean.replace(/^(\u0634\u0627\u0628\u062a\u0631)[\s._-]*0*(\d+)/i, 'شابتر $2:');
+
+        // 6. Replace underscores and repetitive dashes with clean single space
+        clean = clean.replace(/[_]+/g, ' ');
+        clean = clean.replace(/\s*-\s*/g, ' - ');
+        clean = clean.replace(/:\s*[-:]+/g, ': ');
+        clean = clean.replace(/\s+/g, ' ').trim();
+
+        // 7. Strip trailing dashes or colons
+        clean = clean.replace(/[-:]+$/, '').trim();
+
+        return clean;
+    }
+
+    function generateSmartQuizName() {
+        const subjectSelect = document.getElementById('dq-subject');
+        const subName = subjectSelect?.options[subjectSelect.selectedIndex]?.text || '';
+        const isArabicSubject = /[\u0600-\u06FF]{3,}/.test(subName);
+
+        if (currentCreationMode === 'ai_generation') {
+            const driveFiles = Array.from(selectedDriveFilesMap.values());
+            const allFiles = [...driveFiles, ...aiUploadedFiles];
+
+            if (allFiles.length === 0) {
+                return isArabicSubject ? `اختبار مادة ${subName || 'العامة'}` : `Quiz — ${subName || 'General'}`;
+            }
+
+            const pageRange = document.getElementById('dq-page-range')?.value.trim() || '';
+            const focusArea = document.getElementById('dq-focus-area')?.value.trim() || '';
+
+            let baseName = '';
+            if (allFiles.length === 1) {
+                baseName = cleanFileNameForTitle(allFiles[0].name);
+            } else if (allFiles.length <= 3) {
+                baseName = allFiles.map(f => cleanFileNameForTitle(f.name)).join(' + ');
+            } else {
+                baseName = isArabicSubject ? `اختبار شامل (${allFiles.length} محاضرات)` : `Comprehensive Review (${allFiles.length} Lectures)`;
+            }
+
+            if (pageRange) {
+                baseName += isArabicSubject ? ` (ص ${pageRange})` : ` (pp. ${pageRange})`;
+            } else if (focusArea) {
+                const shortFocus = focusArea.length > 25 ? focusArea.slice(0, 25) + '...' : focusArea;
+                baseName += isArabicSubject ? ` [تركيز: ${shortFocus}]` : ` [Focus: ${shortFocus}]`;
+            }
+
+            return baseName;
+        } else {
+            // Mode 2: Past Exam Filter
+            const checkedTargets = Array.from(document.querySelectorAll('.dq-target-chap-checkbox:checked')).map(cb => cb.value);
+            let examFileName = '';
+            if (currentPastExamSource === 'drive') {
+                const f = Array.from(pastExamDriveFilesMap.values())[0];
+                if (f) examFileName = cleanFileNameForTitle(f.name);
+            } else if (pastExamUploadedFiles.length > 0) {
+                examFileName = cleanFileNameForTitle(pastExamUploadedFiles[0].name);
+            }
+
+            if (checkedTargets.length === 0) {
+                return isArabicSubject ? 'تجميعات أسئلة السنوات السابقة' : 'Past Exam Questions Bank';
+            }
+
+            let targetsPart = '';
+            if (checkedTargets.length === 1) {
+                targetsPart = cleanFileNameForTitle(checkedTargets[0]);
+            } else if (checkedTargets.length <= 3) {
+                targetsPart = checkedTargets.map(t => cleanFileNameForTitle(t)).join(' + ');
+            } else {
+                targetsPart = `شامل (${checkedTargets.length} شابترات)`;
+            }
+
+            let title = `تجميعات: ${targetsPart}`;
+            if (examFileName && checkedTargets.length === 1) {
+                const shortExam = examFileName.replace(/^(اختبار|تجميعات|exam)\s*[-:]?\s*/i, '').trim();
+                if (shortExam) {
+                    title += ` (${shortExam})`;
+                }
+            }
+            return title;
+        }
+    }
+
+    function handleAdminTitleEditToggle() {
+        const editPanel = document.getElementById('dq-admin-title-edit-panel');
+        const input = document.getElementById('dq-quiz-name');
+        const autoText = document.getElementById('dq-auto-title-text');
+        const btn = document.getElementById('dq-admin-edit-title-btn');
+
+        if (editPanel && editPanel.style.display === 'block') {
+            isAdminTitleCustomized = false;
+            editPanel.style.display = 'none';
+            if (btn) btn.innerText = 'تعديل العنوان (مشرف)';
+            const smartTitle = generateSmartQuizName();
+            if (autoText) autoText.innerText = smartTitle;
+            if (input) input.value = smartTitle;
+            const pastInput = document.getElementById('dq-pastexam-quiz-name');
+            if (pastInput) pastInput.value = smartTitle;
+            return;
+        }
+
+        const proceedToEdit = () => {
+            isAdminTitleCustomized = true;
+            if (editPanel) editPanel.style.display = 'block';
+            if (btn) btn.innerText = 'إلغاء التعديل (تلقائي)';
+            if (input) {
+                if (!input.value.trim()) {
+                    input.value = autoText?.innerText || generateSmartQuizName();
+                }
+                input.focus();
+                input.select();
+            }
+        };
+
+        const adminPass = sessionStorage.getItem('dent2025_admin_pass');
+        if (adminPass) {
+            proceedToEdit();
+            return;
+        }
+
+        const enteredPass = prompt("أدخل كلمة مرور المشرف لتعديل عنوان الاختبار:");
+        if (!enteredPass) return;
+
+        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        fetch(`${API_BASE}/dent2025_api.php?action=check_auth`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: enteredPass, specialty: sel.specialty || 'dentistry', year: sel.year || 1, semester: sel.semester || 1 })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                sessionStorage.setItem('dent2025_admin_pass', enteredPass);
+                proceedToEdit();
+            } else {
+                alert("كلمة المرور غير صحيحة.");
+            }
+        })
+        .catch(() => {
+            sessionStorage.setItem('dent2025_admin_pass', enteredPass);
+            proceedToEdit();
+        });
+    }
+
     function updateWizardSummary() {
         const subjectSelect = document.getElementById('dq-subject');
         const subName = subjectSelect.options[subjectSelect.selectedIndex]?.text || 'مادة دراسية';
@@ -811,17 +1009,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const sumMode = document.getElementById('dq-sum-mode');
         const sumFiles = document.getElementById('dq-sum-files');
         const sumConfig = document.getElementById('dq-sum-config');
-        const aiTitleInput = document.getElementById('dq-quiz-name');
-        const pastTitleInput = document.getElementById('dq-pastexam-quiz-name');
-        const titleAiGroup = document.getElementById('dq-title-group-ai');
-        const titlePastGroup = document.getElementById('dq-title-group-past');
 
         if (sumSubject) sumSubject.innerText = subName;
 
         if (currentCreationMode === 'ai_generation') {
             if (sumMode) sumMode.innerText = 'توليد ذكي من المحاضرات';
-            if (titleAiGroup) titleAiGroup.style.display = 'block';
-            if (titlePastGroup) titlePastGroup.style.display = 'none';
 
             const driveCount = selectedDriveFilesMap.size;
             const upCount = aiUploadedFiles.length;
@@ -835,15 +1027,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             const diffMap = { easy: 'سهل', medium: 'متوسط', hard: 'صعب' };
             const numQs = document.getElementById('dq-num-qs')?.value || '10';
             if (sumConfig) sumConfig.innerText = `${diffMap[currentDifficulty] || 'متوسط'} • ${numQs} أسئلة`;
-
-            if (aiTitleInput && !aiTitleInput.value.trim()) {
-                const firstFile = Array.from(selectedDriveFilesMap.values())[0]?.name || '';
-                aiTitleInput.value = firstFile ? `اختبار — ${firstFile}` : `اختبار — ${subName}`;
-            }
         } else {
             if (sumMode) sumMode.innerText = 'تصفية وتجميع أسئلة السنوات السابقة';
-            if (titleAiGroup) titleAiGroup.style.display = 'none';
-            if (titlePastGroup) titlePastGroup.style.display = 'block';
 
             const checkedTargets = document.querySelectorAll('.dq-target-chap-checkbox:checked');
             const sourceStr = (currentPastExamSource === 'drive') ? 'Google Drive' : 'ملف مرفوع';
@@ -851,10 +1036,21 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
             const maxQs = document.getElementById('dq-pastexam-num-qs')?.value || '200';
             if (sumConfig) sumConfig.innerText = `حتى ${maxQs} سؤال مصفّى`;
+        }
 
-            if (pastTitleInput && !pastTitleInput.value.trim()) {
-                const firstTarget = checkedTargets[0]?.value || '';
-                pastTitleInput.value = firstTarget ? `تجميعات (${firstTarget})` : `تجميعات — ${subName}`;
+        // Automatic smart naming update (if not manually overridden by admin)
+        const autoText = document.getElementById('dq-auto-title-text');
+        const aiTitleInput = document.getElementById('dq-quiz-name');
+        const pastTitleInput = document.getElementById('dq-pastexam-quiz-name');
+
+        if (!isAdminTitleCustomized) {
+            const smartTitle = generateSmartQuizName();
+            if (autoText) autoText.innerText = smartTitle;
+            if (aiTitleInput) aiTitleInput.value = smartTitle;
+            if (pastTitleInput) pastTitleInput.value = smartTitle;
+        } else {
+            if (autoText && aiTitleInput && aiTitleInput.value.trim()) {
+                autoText.innerText = aiTitleInput.value.trim();
             }
         }
     }
@@ -1382,7 +1578,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 }
             }
 
-            quizName = document.getElementById('dq-pastexam-quiz-name').value.trim() || `تجميعات (${checkedTargets[0]}...)`;
+            quizName = document.getElementById('dq-quiz-name')?.value?.trim() || document.getElementById('dq-pastexam-quiz-name')?.value?.trim() || generateSmartQuizName();
             let numQs = parseInt(document.getElementById('dq-pastexam-num-qs').value, 10) || 200;
             if (numQs > 200) numQs = 200;
 
@@ -1404,11 +1600,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 return;
             }
 
-            quizName = document.getElementById('dq-quiz-name').value.trim();
-            if (!quizName) {
-                alert("يرجى كتابة اسم للاختبار.");
-                return;
-            }
+            quizName = document.getElementById('dq-quiz-name')?.value?.trim() || generateSmartQuizName();
 
             let numQs = parseInt(document.getElementById('dq-num-qs').value, 10) || 10;
             if (numQs > 100) numQs = 100;
@@ -1686,8 +1878,40 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 alert("تم نسخ رابط الاختبار المباشر للحافظة!");
             });
 
-            // Admin Quick Delete Button
+            // Admin Quick Actions (Rename & Delete)
             if (sessionStorage.getItem('dent2025_admin_pass')) {
+                const renameBtn = document.createElement('button');
+                renameBtn.className = 'dent-quiz-btn dent-btn-secondary';
+                renameBtn.style.cssText = 'margin-top:0; padding:7px 9px; font-size:0.82rem; color:#93c5fd; border-color:rgba(147,197,253,0.25);';
+                renameBtn.innerText = 'تعديل الاسم';
+                renameBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const currentName = q.quiz_name || '';
+                    const newName = prompt('تعديل عنوان الاختبار في بنك الأسئلة:', currentName);
+                    if (!newName || !newName.trim() || newName.trim() === currentName) return;
+
+                    try {
+                        const res = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?action=rename_quiz`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                id: q.id,
+                                quiz_name: newName.trim(),
+                                password: sessionStorage.getItem('dent2025_admin_pass') || ''
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            loadSavedQuizzesBank();
+                        } else {
+                            alert(data.message || 'تعذر تعديل اسم الاختبار.');
+                        }
+                    } catch (err) {
+                        alert('حدث خطأ أثناء الاتصال بالخادم لتعديل الاسم.');
+                    }
+                });
+                card.querySelector('.dent-bank-actions').appendChild(renameBtn);
+
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'dent-quiz-btn dent-btn-secondary';
                 deleteBtn.style.cssText = 'margin-top:0; padding:7px 9px; font-size:0.82rem; color:#f87171; border-color:rgba(239,68,68,0.25);';

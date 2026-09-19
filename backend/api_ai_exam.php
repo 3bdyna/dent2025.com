@@ -38,7 +38,7 @@ $AI_MASTER_ACTIONS = [
     'test_keys', 'gemini_status', 'add_gemini_key', 'edit_gemini_key', 'delete_gemini_key', 
     'get_gemini_keys', 'save_cache_settings', 'clear_cache', 'get_cache_stats',
     'prewarm_cache', 'check_prewarm_job', 'get_prewarm_subjects', 'prewarm_subject', 
-    'scan_cache_catalog', 'prewarm_single_file', 'cron_sync'
+    'scan_cache_catalog', 'prewarm_single_file', 'cron_sync', 'migrate_cache_structure'
 ];
 
 if (in_array($action, $AI_MASTER_ACTIONS, true)) {
@@ -549,37 +549,122 @@ function setGeminiCachedFile($cacheKey, $fileUri, $fileName, $apiKey) {
     saveGeminiFileCacheStore($store);
 }
 
-// --- PERSISTENT LOCAL TEXT CACHE (Mirrors Google Drive lifecycle) ---
+// --- STRUCTURED LOCAL TEXT CACHE (Organized by Specialty / Year / Semester / Subject) ---
+
+/**
+ * Computes a standardized relative path for a cache file based on subject metadata.
+ * Format: {specialty}/year_{year}/semester_{semester}/{subject_id}_{clean_subject}/{fileId}.txt
+ */
+function getStructuredCacheRelPath($meta, $fileId) {
+    $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '', $fileId);
+
+    // Specialty: dentistry, medicine, pre-med (default: dentistry)
+    $spec = !empty($meta['specialty']) ? strtolower(trim($meta['specialty'])) : 'dentistry';
+    if (!in_array($spec, ['dentistry', 'medicine', 'pre-med'], true)) {
+        $spec = 'dentistry';
+    }
+
+    // Year: 1 to 6 (pre-med is Year 1)
+    $year = isset($meta['year']) ? intval($meta['year']) : 1;
+    if ($year < 1) $year = 1;
+
+    // Semester: 1 or 2
+    $sem = isset($meta['semester']) ? intval($meta['semester']) : 1;
+    if ($sem < 1) $sem = 1;
+
+    // Subject folder: e.g. 174_Oral_Diagnosis
+    $subId = !empty($meta['subject_id']) ? intval($meta['subject_id']) : 0;
+    $rawSubName = $meta['subject_name'] ?? 'Subject';
+    if (strpos($rawSubName, '│') !== false) {
+        $parts = explode('│', $rawSubName);
+        $rawSubName = trim($parts[0]);
+    } elseif (strpos($rawSubName, '|') !== false) {
+        $parts = explode('|', $rawSubName);
+        $rawSubName = trim($parts[0]);
+    }
+    $cleanSubName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $rawSubName);
+    $cleanSubName = trim(preg_replace('/_+/', '_', $cleanSubName), '_');
+    if (empty($cleanSubName)) $cleanSubName = 'Subject';
+    $subFolder = ($subId > 0) ? ($subId . '_' . substr($cleanSubName, 0, 40)) : substr($cleanSubName, 0, 40);
+
+    return "{$spec}/year_{$year}/semester_{$sem}/{$subFolder}/{$cleanId}.txt";
+}
+
 function getLocalDocumentTextCache($fileId) {
     if (empty($fileId)) return null;
     $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '', $fileId);
     $cacheDir = __DIR__ . '/gemini_keys_data/text_cache';
-    $cacheFile = $cacheDir . '/' . $cleanId . '.txt';
-    if (!file_exists($cacheFile)) return null;
 
-    // Permanent cache: retained indefinitely until original file is removed from Google Drive
-    $content = @file_get_contents($cacheFile);
-    return (!empty($content) && strlen(trim($content)) > 150) ? $content : null;
+    // 1. Try structured relative path recorded in metadata
+    $metaStore = getCacheMetaStore();
+    if (!empty($metaStore['files_meta'][$cleanId]['rel_path'])) {
+        $structuredPath = $cacheDir . '/' . $metaStore['files_meta'][$cleanId]['rel_path'];
+        if (file_exists($structuredPath)) {
+            $content = @file_get_contents($structuredPath);
+            if (!empty($content) && strlen(trim($content)) > 150) return $content;
+        }
+    }
+
+    // 2. Try legacy flat root path
+    $flatPath = $cacheDir . '/' . $cleanId . '.txt';
+    if (file_exists($flatPath)) {
+        $content = @file_get_contents($flatPath);
+        if (!empty($content) && strlen(trim($content)) > 150) return $content;
+    }
+
+    // 3. Fallback: Search any nested subfolder for {$cleanId}.txt
+    if (is_dir($cacheDir)) {
+        $matches = glob($cacheDir . "/*/*/*/*/{$cleanId}.txt");
+        if ($matches && file_exists($matches[0])) {
+            $content = @file_get_contents($matches[0]);
+            if (!empty($content) && strlen(trim($content)) > 150) {
+                // Self-heal: record found path into metadata
+                $fullPath = str_replace('\\', '/', $matches[0]);
+                $rel = ltrim(substr($fullPath, strlen(str_replace('\\', '/', $cacheDir))), '/');
+                $metaStore['files_meta'][$cleanId]['rel_path'] = $rel;
+                saveCacheMetaStore($metaStore);
+                return $content;
+            }
+        }
+    }
+
+    return null;
 }
 
 function setLocalDocumentTextCache($fileId, $text, $meta = []) {
     if (empty($fileId) || empty(trim($text)) || strlen(trim($text)) <= 150) return;
     $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '', $fileId);
     $cacheDir = __DIR__ . '/gemini_keys_data/text_cache';
-    if (!is_dir($cacheDir)) @mkdir($cacheDir, 0777, true);
-    $cacheFile = $cacheDir . '/' . $cleanId . '.txt';
-    @file_put_contents($cacheFile, $text);
 
-    // Persist file and subject metadata
     $metaStore = getCacheMetaStore();
     if (!isset($metaStore['files_meta']) || !is_array($metaStore['files_meta'])) {
         $metaStore['files_meta'] = [];
     }
     $existing = $metaStore['files_meta'][$cleanId] ?? [];
+    $effectiveMeta = array_merge($existing, array_filter($meta, function($v) { return $v !== null && $v !== ''; }));
+
+    $relPath = getStructuredCacheRelPath($effectiveMeta, $cleanId);
+    $targetFile = $cacheDir . '/' . $relPath;
+    $targetDir = dirname($targetFile);
+    if (!is_dir($targetDir)) @mkdir($targetDir, 0777, true);
+
+    @file_put_contents($targetFile, $text);
+
+    // If legacy flat file exists, remove to avoid duplicate disk space
+    $flatFile = $cacheDir . '/' . $cleanId . '.txt';
+    if (file_exists($flatFile) && realpath($flatFile) !== realpath($targetFile)) {
+        @unlink($flatFile);
+    }
+
+    // Persist complete file and subject metadata
     $metaStore['files_meta'][$cleanId] = [
-        'subject_name' => $meta['subject_name'] ?? ($existing['subject_name'] ?? 'مادة دراسية'),
-        'file_name' => $meta['file_name'] ?? ($existing['file_name'] ?? ('ملف ' . substr($cleanId, 0, 8) . '.pdf')),
-        'subject_id' => $meta['subject_id'] ?? ($existing['subject_id'] ?? null),
+        'subject_name' => $effectiveMeta['subject_name'] ?? 'مادة دراسية',
+        'file_name' => $effectiveMeta['file_name'] ?? ('ملف ' . substr($cleanId, 0, 8) . '.pdf'),
+        'subject_id' => $effectiveMeta['subject_id'] ?? null,
+        'specialty' => $effectiveMeta['specialty'] ?? 'dentistry',
+        'year' => isset($effectiveMeta['year']) ? intval($effectiveMeta['year']) : 1,
+        'semester' => isset($effectiveMeta['semester']) ? intval($effectiveMeta['semester']) : 1,
+        'rel_path' => $relPath,
         'size_bytes' => strlen($text),
         'cached_at' => date('Y-m-d H:i:s')
     ];
@@ -591,6 +676,46 @@ function setLocalDocumentTextCache($fileId, $text, $meta = []) {
         }));
     }
     saveCacheMetaStore($metaStore);
+}
+
+// --- AUTOMATIC MIGRATION: FLAT FILES TO STRUCTURED HIERARCHY ---
+function migrateTextCacheToStructuredHierarchy() {
+    $cacheDir = __DIR__ . '/gemini_keys_data/text_cache';
+    if (!is_dir($cacheDir)) return ['migrated' => 0, 'errors' => []];
+
+    $metaStore = getCacheMetaStore();
+    $filesMeta = $metaStore['files_meta'] ?? [];
+    $migrated = 0;
+    $errors = [];
+
+    // Check for any .txt files sitting directly in text_cache/ (flat)
+    $flatFiles = glob($cacheDir . '/*.txt');
+    if ($flatFiles && count($flatFiles) > 0) {
+        foreach ($flatFiles as $ff) {
+            $fileId = basename($ff, '.txt');
+            $m = $filesMeta[$fileId] ?? [];
+            if (empty($m)) {
+                $m = ['specialty' => 'dentistry', 'year' => 3, 'semester' => 1, 'subject_name' => 'General'];
+            }
+            $relPath = getStructuredCacheRelPath($m, $fileId);
+            $targetPath = $cacheDir . '/' . $relPath;
+            $targetDir = dirname($targetPath);
+            if (!is_dir($targetDir)) @mkdir($targetDir, 0777, true);
+
+            if (@rename($ff, $targetPath)) {
+                $migrated++;
+                $metaStore['files_meta'][$fileId]['rel_path'] = $relPath;
+                $metaStore['files_meta'][$fileId]['specialty'] = $m['specialty'] ?? 'dentistry';
+                $metaStore['files_meta'][$fileId]['year'] = isset($m['year']) ? intval($m['year']) : 1;
+                $metaStore['files_meta'][$fileId]['semester'] = isset($m['semester']) ? intval($m['semester']) : 1;
+            } else {
+                $errors[] = "Failed moving {$fileId} to {$relPath}";
+            }
+        }
+        saveCacheMetaStore($metaStore);
+    }
+
+    return ['migrated' => $migrated, 'errors' => $errors];
 }
 
 // --- CACHE METADATA & SYSTEM STATS ---
@@ -618,6 +743,14 @@ function saveCacheMetaStore($data) {
 
 function getSystemCacheStats() {
     $cacheDir = __DIR__ . '/gemini_keys_data/text_cache';
+    if (!is_dir($cacheDir)) @mkdir($cacheDir, 0777, true);
+
+    // Auto-migrate any flat files on disk to the structured hierarchy
+    $flatCheck = glob($cacheDir . '/*.txt');
+    if ($flatCheck && count($flatCheck) > 0) {
+        migrateTextCacheToStructuredHierarchy();
+    }
+
     $count = 0;
     $totalBytes = 0;
     $cachedFiles = [];
@@ -625,21 +758,30 @@ function getSystemCacheStats() {
     $filesMeta = $meta['files_meta'] ?? [];
 
     if (is_dir($cacheDir)) {
-        $files = glob($cacheDir . '/*.txt');
-        if ($files) {
-            $count = count($files);
-            foreach ($files as $f) {
-                $cleanId = basename($f, '.txt');
-                $sz = filesize($f);
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($cacheDir, RecursiveDirectoryIterator::SKIP_DOTS)
+        );
+        foreach ($iterator as $f) {
+            if ($f->isFile() && $f->getExtension() === 'txt') {
+                $count++;
+                $sz = $f->getSize();
                 $totalBytes += $sz;
+                $cleanId = $f->getBasename('.txt');
+                $fullPath = str_replace('\\', '/', $f->getPathname());
+                $relPath = ltrim(substr($fullPath, strlen(str_replace('\\', '/', $cacheDir))), '/');
+
                 $m = $filesMeta[$cleanId] ?? [];
                 $cachedFiles[] = [
                     'file_id' => $cleanId,
                     'subject_name' => $m['subject_name'] ?? 'مادة دراسية',
                     'file_name' => $m['file_name'] ?? ('ملف ' . substr($cleanId, 0, 8) . '.pdf'),
                     'subject_id' => $m['subject_id'] ?? null,
+                    'specialty' => $m['specialty'] ?? '',
+                    'year' => isset($m['year']) ? $m['year'] : null,
+                    'semester' => isset($m['semester']) ? $m['semester'] : null,
+                    'rel_path' => $relPath,
                     'size_bytes' => $sz,
-                    'mtime' => $m['cached_at'] ?? date('Y-m-d H:i:s', filemtime($f)),
+                    'mtime' => $m['cached_at'] ?? date('Y-m-d H:i:s', $f->getMTime()),
                     'size_formatted' => ($sz > 1048576) ? round($sz / 1048576, 2) . ' MB' : round($sz / 1024, 1) . ' KB'
                 ];
             }
@@ -656,7 +798,7 @@ function getSystemCacheStats() {
     $uncached = $meta['uncached_files'] ?? [];
     $catalogSummary = $meta['catalog_summary'] ?? [
         'total_subjects' => 103,
-        'subjects_with_files' => 8,
+        'subjects_with_files' => 16,
         'total_drive_files' => $count + count($uncached),
         'cached_count' => $count,
         'uncached_count' => count($uncached)
@@ -2505,6 +2647,10 @@ if ($action === 'list_quizzes') {
 
 // --- ACTION 8: DELETE A SAVED QUIZ ---
 if ($action === 'delete_quiz' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $pass = ai_exam_read_passkey();
+    if (!dent2025_check_rbac_permission($pass, 'edit_basic_subject')) {
+        sendResponse(false, "غير مصرح: صلاحيات المشرف مطلوبة لحذف الاختبار.");
+    }
     $data = json_decode(file_get_contents("php://input"), true);
     $quizId = $data['id'] ?? $data['quiz_id'] ?? $_GET['id'] ?? '';
 
@@ -2529,6 +2675,10 @@ if ($action === 'delete_quiz' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // --- ACTION 8.5: RENAME A SAVED QUIZ ---
 if ($action === 'rename_quiz' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $pass = ai_exam_read_passkey();
+    if (!dent2025_check_rbac_permission($pass, 'edit_basic_subject')) {
+        sendResponse(false, "غير مصرح: صلاحيات المشرف مطلوبة لتعديل اسم الاختبار.");
+    }
     global $JSON_INPUT;
     $data = $JSON_INPUT ?: (json_decode(file_get_contents("php://input"), true) ?: []);
     $quizId = $data['id'] ?? $data['quiz_id'] ?? $_POST['id'] ?? $_GET['id'] ?? '';
@@ -2605,10 +2755,11 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($pdo) && $pdo !== null) {
             try {
                 $tableSubs = getAiExamSubjectsTable($pdo);
-                $stmt = $pdo->prepare("SELECT specialty, year, semester FROM {$tableSubs} WHERE id = ?");
+                $stmt = $pdo->prepare("SELECT name, specialty, year, semester FROM {$tableSubs} WHERE id = ?");
                 $stmt->execute([$subjectId]);
                 $subRow = $stmt->fetch(PDO::FETCH_ASSOC);
                 if ($subRow) {
+                    $subjectName = $subRow['name'] ?? 'مادة دراسية';
                     if (empty($specialty)) $specialty = $subRow['specialty'] ?? '';
                     if ($year === null && isset($subRow['year'])) $year = intval($subRow['year']);
                     if ($semester === null && isset($subRow['semester'])) $semester = intval($subRow['semester']);
@@ -2705,7 +2856,14 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             file_put_contents($jobFile, json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 
             try {
-                $extRes = performDriveExtraction($driveLink);
+                $extRes = performDriveExtraction($driveLink, [
+                    'subject_name' => $subjectName ?? ($chapName ?? 'مادة دراسية'),
+                    'file_name' => $chapName ?? 'شابتر',
+                    'subject_id' => $subjectId,
+                    'specialty' => $specialty,
+                    'year' => $year,
+                    'semester' => $semester
+                ]);
                 if ($extRes['success'] && isset($extRes['data'])) {
                     $t = $extRes['data']['text'] ?? '';
                     $imgs = $extRes['data']['images'] ?? [];
@@ -3070,7 +3228,14 @@ if ($action === 'prewarm_cache' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Extract and cache
                 try {
-                    $ext = performDriveExtraction($fId);
+                    $ext = performDriveExtraction($fId, [
+                        'subject_name' => $subName,
+                        'file_name' => $fName,
+                        'subject_id' => $sub['id'],
+                        'specialty' => $sub['specialty'] ?? '',
+                        'year' => isset($sub['year']) ? intval($sub['year']) : 1,
+                        'semester' => isset($sub['semester']) ? intval($sub['semester']) : 1
+                    ]);
                     if ($ext['success']) {
                         $newlyCached++;
                         $log[] = "تم تخزين: $subName — $fName";
@@ -3156,6 +3321,9 @@ if ($action === 'prewarm_subject') {
     $subjectId = $data['subject_id'] ?? $_POST['subject_id'] ?? $_GET['subject_id'] ?? '';
     $folderId = $data['folder_id'] ?? $_POST['folder_id'] ?? $_GET['folder_id'] ?? '';
     $subjectName = $data['subject_name'] ?? $_POST['subject_name'] ?? $_GET['subject_name'] ?? 'مادة دراسية';
+    $specialty = $data['specialty'] ?? $_POST['specialty'] ?? $_GET['specialty'] ?? '';
+    $year = isset($data['year']) ? intval($data['year']) : (isset($_POST['year']) ? intval($_POST['year']) : null);
+    $semester = isset($data['semester']) ? intval($data['semester']) : (isset($_POST['semester']) ? intval($_POST['semester']) : null);
 
     if (preg_match('/folders\/([a-zA-Z0-9_-]+)/', $folderId, $matches)) {
         $folderId = $matches[1];
@@ -3163,16 +3331,19 @@ if ($action === 'prewarm_subject') {
         $folderId = $matches[1];
     }
 
-    if (empty($folderId) && !empty($subjectId) && $pdo) {
+    if (!empty($subjectId) && $pdo && (empty($folderId) || empty($specialty) || $year === null || $semester === null)) {
         $table_subs = getAiExamSubjectsTable($pdo);
 
         try {
-            $stmt = $pdo->prepare("SELECT id, name, chapters_folder_id FROM {$table_subs} WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, name, specialty, year, semester, chapters_folder_id FROM {$table_subs} WHERE id = ?");
             $stmt->execute([$subjectId]);
             $sub = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($sub) {
                 if (empty($subjectName) || $subjectName === 'مادة دراسية') $subjectName = $sub['name'];
-                $folderId = trim($sub['chapters_folder_id'] ?? '');
+                if (empty($folderId)) $folderId = trim($sub['chapters_folder_id'] ?? '');
+                if (empty($specialty)) $specialty = $sub['specialty'] ?? '';
+                if ($year === null && isset($sub['year'])) $year = intval($sub['year']);
+                if ($semester === null && isset($sub['semester'])) $semester = intval($sub['semester']);
             }
         } catch (Throwable $e) {}
     }
@@ -3216,7 +3387,10 @@ if ($action === 'prewarm_subject') {
             $ext = performDriveExtraction($fId, [
                 'subject_name' => $subjectName,
                 'file_name' => $fName,
-                'subject_id' => $subjectId
+                'subject_id' => $subjectId,
+                'specialty' => $specialty,
+                'year' => $year,
+                'semester' => $semester
             ]);
             if ($ext['success']) {
                 $newlyCached++;
@@ -3262,12 +3436,15 @@ if ($action === 'scan_cache_catalog') {
     $cacheDir = __DIR__ . '/gemini_keys_data/text_cache';
     $cachedDiskIds = [];
     if (is_dir($cacheDir)) {
-        $files = glob($cacheDir . '/*.txt');
-        if ($files) {
-            foreach ($files as $f) {
-                $cachedDiskIds[basename($f, '.txt')] = [
-                    'size_bytes' => filesize($f),
-                    'mtime' => date('Y-m-d H:i:s', filemtime($f))
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($cacheDir, RecursiveDirectoryIterator::SKIP_DOTS)
+        );
+        foreach ($iterator as $f) {
+            if ($f->isFile() && $f->getExtension() === 'txt') {
+                $cleanId = $f->getBasename('.txt');
+                $cachedDiskIds[$cleanId] = [
+                    'size_bytes' => $f->getSize(),
+                    'mtime' => date('Y-m-d H:i:s', $f->getMTime())
                 ];
             }
         }
@@ -3297,22 +3474,26 @@ if ($action === 'scan_cache_catalog') {
                 $sname = $s['name'] ?? 'مادة دراسية';
                 $activeDriveFileIds[$fid] = true;
 
-                $metaStore['files_meta'][$fid] = [
+                $existingM = $metaStore['files_meta'][$fid] ?? [];
+                $metaStore['files_meta'][$fid] = array_merge($existingM, [
                     'file_name' => $fname,
                     'subject_name' => $sname,
                     'subject_id' => $s['id'],
-                    'specialty' => $s['specialty'] ?? '',
-                    'year' => $s['year'] ?? 0,
-                    'semester' => $s['semester'] ?? 1,
-                    'cached_at' => $cachedDiskIds[$fid]['mtime'] ?? ($metaStore['files_meta'][$fid]['cached_at'] ?? null)
-                ];
+                    'specialty' => $s['specialty'] ?? ($existingM['specialty'] ?? ''),
+                    'year' => isset($s['year']) ? intval($s['year']) : ($existingM['year'] ?? 1),
+                    'semester' => isset($s['semester']) ? intval($s['semester']) : ($existingM['semester'] ?? 1),
+                    'cached_at' => $cachedDiskIds[$fid]['mtime'] ?? ($existingM['cached_at'] ?? null)
+                ]);
 
                 if (!isset($cachedDiskIds[$fid])) {
                     $uncachedFiles[] = [
                         'file_id' => $fid,
                         'file_name' => $fname,
                         'subject_name' => $sname,
-                        'subject_id' => $s['id']
+                        'subject_id' => $s['id'],
+                        'specialty' => $s['specialty'] ?? '',
+                        'year' => isset($s['year']) ? intval($s['year']) : 1,
+                        'semester' => isset($s['semester']) ? intval($s['semester']) : 1
                     ];
                 }
             }
@@ -3325,9 +3506,13 @@ if ($action === 'scan_cache_catalog') {
         // Safety guard: ensure Drive scrape succeeded with >10 files before deleting anything
         foreach (array_keys($cachedDiskIds) as $cachedFid) {
             if (!isset($activeDriveFileIds[$cachedFid])) {
-                $targetFile = $cacheDir . '/' . $cachedFid . '.txt';
-                if (file_exists($targetFile)) {
-                    @unlink($targetFile);
+                $rel = $metaStore['files_meta'][$cachedFid]['rel_path'] ?? null;
+                if ($rel && file_exists($cacheDir . '/' . $rel)) {
+                    @unlink($cacheDir . '/' . $rel);
+                }
+                $flatTarget = $cacheDir . '/' . $cachedFid . '.txt';
+                if (file_exists($flatTarget)) {
+                    @unlink($flatTarget);
                 }
                 unset($cachedDiskIds[$cachedFid]);
                 unset($metaStore['files_meta'][$cachedFid]);
@@ -3374,10 +3559,13 @@ if ($action === 'cron_sync') {
     $cacheDir = __DIR__ . '/gemini_keys_data/text_cache';
     $cachedDiskIds = [];
     if (is_dir($cacheDir)) {
-        $files = glob($cacheDir . '/*.txt');
-        if ($files) {
-            foreach ($files as $f) {
-                $cachedDiskIds[basename($f, '.txt')] = true;
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($cacheDir, RecursiveDirectoryIterator::SKIP_DOTS)
+        );
+        foreach ($iterator as $f) {
+            if ($f->isFile() && $f->getExtension() === 'txt') {
+                $cleanId = $f->getBasename('.txt');
+                $cachedDiskIds[$cleanId] = true;
             }
         }
     }
@@ -3401,7 +3589,10 @@ if ($action === 'cron_sync') {
                         'file_id' => $fid,
                         'file_name' => $df['name'] ?? 'ملف مقرر',
                         'subject_name' => $s['name'] ?? 'مادة دراسية',
-                        'subject_id' => $s['id']
+                        'subject_id' => $s['id'],
+                        'specialty' => $s['specialty'] ?? '',
+                        'year' => isset($s['year']) ? intval($s['year']) : 1,
+                        'semester' => isset($s['semester']) ? intval($s['semester']) : 1
                     ];
                 }
             }
@@ -3413,8 +3604,12 @@ if ($action === 'cron_sync') {
     if (count($activeDriveFileIds) > 10) {
         foreach (array_keys($cachedDiskIds) as $cachedFid) {
             if (!isset($activeDriveFileIds[$cachedFid])) {
-                $targetFile = $cacheDir . '/' . $cachedFid . '.txt';
-                if (file_exists($targetFile)) @unlink($targetFile);
+                $rel = $metaStore['files_meta'][$cachedFid]['rel_path'] ?? null;
+                if ($rel && file_exists($cacheDir . '/' . $rel)) {
+                    @unlink($cacheDir . '/' . $rel);
+                }
+                $flatTarget = $cacheDir . '/' . $cachedFid . '.txt';
+                if (file_exists($flatTarget)) @unlink($flatTarget);
                 unset($metaStore['files_meta'][$cachedFid]);
                 $prunedCount++;
             }
@@ -3430,7 +3625,10 @@ if ($action === 'cron_sync') {
             $res = performDriveExtraction($nf['file_id'], [
                 'subject_name' => $nf['subject_name'],
                 'file_name' => $nf['file_name'],
-                'subject_id' => $nf['subject_id']
+                'subject_id' => $nf['subject_id'],
+                'specialty' => $nf['specialty'] ?? '',
+                'year' => $nf['year'] ?? 1,
+                'semester' => $nf['semester'] ?? 1
             ]);
             if ($res['success']) {
                 $prewarmedCount++;
@@ -3464,13 +3662,42 @@ if ($action === 'prewarm_single_file') {
     $fileName = $data['file_name'] ?? $_POST['file_name'] ?? $_GET['file_name'] ?? 'ملف مقرر';
     $subjectName = $data['subject_name'] ?? $_POST['subject_name'] ?? $_GET['subject_name'] ?? 'مادة دراسية';
     $subjectId = $data['subject_id'] ?? $_POST['subject_id'] ?? $_GET['subject_id'] ?? null;
+    $specialty = $data['specialty'] ?? $_POST['specialty'] ?? $_GET['specialty'] ?? '';
+    $year = isset($data['year']) ? intval($data['year']) : (isset($_POST['year']) ? intval($_POST['year']) : null);
+    $semester = isset($data['semester']) ? intval($data['semester']) : (isset($_POST['semester']) ? intval($_POST['semester']) : null);
 
     if (empty($fileId)) sendResponse(false, "Missing file_id parameter.");
+
+    $metaStore = getCacheMetaStore();
+    if (empty($specialty) && isset($metaStore['files_meta'][$fileId])) {
+        $fm = $metaStore['files_meta'][$fileId];
+        $specialty = $fm['specialty'] ?? '';
+        if ($year === null && isset($fm['year'])) $year = intval($fm['year']);
+        if ($semester === null && isset($fm['semester'])) $semester = intval($fm['semester']);
+        if ($subjectId === null && isset($fm['subject_id'])) $subjectId = $fm['subject_id'];
+    }
+
+    if (empty($specialty) && !empty($subjectId) && $pdo) {
+        try {
+            $table_subs = getAiExamSubjectsTable($pdo);
+            $stmt = $pdo->prepare("SELECT specialty, year, semester FROM {$table_subs} WHERE id = ?");
+            $stmt->execute([$subjectId]);
+            $subRow = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($subRow) {
+                $specialty = $subRow['specialty'] ?? '';
+                if ($year === null && isset($subRow['year'])) $year = intval($subRow['year']);
+                if ($semester === null && isset($subRow['semester'])) $semester = intval($subRow['semester']);
+            }
+        } catch (Throwable $e) {}
+    }
 
     $meta = [
         'subject_name' => $subjectName,
         'file_name' => $fileName,
-        'subject_id' => $subjectId
+        'subject_id' => $subjectId,
+        'specialty' => $specialty,
+        'year' => $year,
+        'semester' => $semester
     ];
 
     $res = performDriveExtraction($fileId, $meta);
@@ -3498,6 +3725,17 @@ if ($action === 'prewarm_single_file') {
     }
 }
 
+// --- ACTION 13.9.5: MIGRATE CACHE STRUCTURE TO DIRECTORY HIERARCHY ---
+if ($action === 'migrate_cache_structure') {
+    $res = migrateTextCacheToStructuredHierarchy();
+    sendResponse(true, [
+        'message' => "تم تنظيم ملفات الكاش في هيكلية المجلدات بنجاح.",
+        'migrated' => $res['migrated'],
+        'errors' => $res['errors'],
+        'stats' => getSystemCacheStats()
+    ]);
+}
+
 // --- ACTION 14: CLEAR CACHE ---
 if ($action === 'clear_cache' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     global $JSON_INPUT;
@@ -3509,21 +3747,65 @@ if ($action === 'clear_cache' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!empty($fileId)) {
         $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '', $fileId);
-        $targetFile = $cacheDir . '/' . $cleanId . '.txt';
-        if (file_exists($targetFile)) {
-            @unlink($targetFile);
+        $metaStore = getCacheMetaStore();
+        
+        // 1. Delete structured path if recorded
+        if (!empty($metaStore['files_meta'][$cleanId]['rel_path'])) {
+            $target = $cacheDir . '/' . $metaStore['files_meta'][$cleanId]['rel_path'];
+            if (file_exists($target)) {
+                @unlink($target);
+                $deletedCount++;
+            }
+        }
+        
+        // 2. Delete legacy flat path
+        $flat = $cacheDir . '/' . $cleanId . '.txt';
+        if (file_exists($flat)) {
+            @unlink($flat);
             $deletedCount++;
         }
-    } else {
+        
+        // 3. Fallback search in nested directories
         if (is_dir($cacheDir)) {
-            $files = glob($cacheDir . '/*.txt');
-            if ($files) {
-                foreach ($files as $f) {
-                    @unlink($f);
-                    $deletedCount++;
+            $matches = glob($cacheDir . "/*/*/*/*/{$cleanId}.txt");
+            if ($matches) {
+                foreach ($matches as $m) {
+                    if (file_exists($m)) {
+                        @unlink($m);
+                        $deletedCount++;
+                    }
                 }
             }
         }
+
+        if (isset($metaStore['files_meta'][$cleanId])) {
+            unset($metaStore['files_meta'][$cleanId]);
+            saveCacheMetaStore($metaStore);
+        }
+    } else {
+        // Clear all cached .txt files recursively
+        if (is_dir($cacheDir)) {
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($cacheDir, RecursiveDirectoryIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::CHILD_FIRST
+            );
+            foreach ($iterator as $f) {
+                if ($f->isFile() && $f->getExtension() === 'txt') {
+                    @unlink($f->getRealPath());
+                    $deletedCount++;
+                } elseif ($f->isDir()) {
+                    @rmdir($f->getRealPath());
+                }
+            }
+        }
+
+        $metaStore = getCacheMetaStore();
+        $metaStore['files_meta'] = [];
+        if (isset($metaStore['catalog_summary'])) {
+            $metaStore['catalog_summary']['cached_count'] = 0;
+            $metaStore['catalog_summary']['uncached_count'] = $metaStore['catalog_summary']['total_drive_files'] ?? 0;
+        }
+        saveCacheMetaStore($metaStore);
     }
 
     sendResponse(true, [
