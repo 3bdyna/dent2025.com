@@ -188,9 +188,10 @@ function getAiExamSubjectLinksTable($pdo) {
 
 // Primary and fallback Gemini models
 $GEMINI_MODELS = [
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
     'gemini-flash-latest',
-    'gemini-2.5-flash',
-    'gemini-2.5-flash-lite'
+    'gemini-3.6-flash'
 ];
 
 /**
@@ -1117,8 +1118,9 @@ function fetchDriveFolderRecursive($folderId, $prefix = '', $depth = 0) {
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 6);
-    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 6);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36');
     $html = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
@@ -1128,7 +1130,7 @@ function fetchDriveFolderRecursive($folderId, $prefix = '', $depth = 0) {
     }
     
     $results = [];
-    if (preg_match_all('/<div class="flip-entry"[^>]*id="entry-([^"]+)"[\s\S]*?<a href="([^"]+)"[\s\S]*?<div class="flip-entry-title">(.*?)<\/div>/i', $html, $matches, PREG_SET_ORDER)) {
+    if (preg_match_all('/<div class="flip-entry"[^>]*id="entry-([^"]+)"[\s\S]*?<a[^>]*href="([^"]+)"[\s\S]*?<div class="flip-entry-title"[^>]*>(.*?)<\/div>/i', $html, $matches, PREG_SET_ORDER)) {
         foreach ($matches as $m) {
             $entryId = $m[1];
             $link = $m[2];
@@ -1153,9 +1155,54 @@ function fetchDriveFolderRecursive($folderId, $prefix = '', $depth = 0) {
     return $results;
 }
 
+function getDriveFolderCacheDir() {
+    $dir = __DIR__ . '/gemini_keys_data/text_cache';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    return $dir;
+}
+
+function fetchDriveFolderCached($folderId, $forceRefresh = false) {
+    if (empty($folderId)) return [];
+    
+    $cacheDir = getDriveFolderCacheDir();
+    $cacheFile = $cacheDir . '/dfolder_' . preg_replace('/[^a-zA-Z0-9_-]/', '', $folderId) . '.json';
+    $cacheTtl = 14400; // 4 hours
+    
+    // Check if fresh cache exists
+    if (!$forceRefresh && file_exists($cacheFile)) {
+        $age = time() - filemtime($cacheFile);
+        if ($age < $cacheTtl) {
+            $data = json_decode(file_get_contents($cacheFile), true);
+            if (is_array($data) && count($data) > 0) {
+                return $data;
+            }
+        }
+    }
+    
+    // Live scrape
+    $files = fetchDriveFolderRecursive($folderId);
+    if (!empty($files)) {
+        @file_put_contents($cacheFile, json_encode($files, JSON_UNESCAPED_UNICODE));
+        return $files;
+    }
+    
+    // Fallback: If live scrape timed out or failed, but we have ANY older cache file, use it!
+    if (file_exists($cacheFile)) {
+        $data = json_decode(file_get_contents($cacheFile), true);
+        if (is_array($data) && count($data) > 0) {
+            return $data;
+        }
+    }
+    
+    return [];
+}
+
 // --- ACTION 1.5: LIST CHAPTERS NATIVELY FROM GOOGLE DRIVE ---
 if ($action === 'list_chapters') {
     $folderId = $_GET['folder_id'] ?? '';
+    $forceRefresh = !empty($_GET['refresh']) || !empty($_GET['nocache']);
     
     if (preg_match('/folders\/([a-zA-Z0-9_-]+)/', $folderId, $matches)) {
         $folderId = $matches[1];
@@ -1167,7 +1214,7 @@ if ($action === 'list_chapters') {
         sendResponse(false, "No valid folder ID provided.");
     }
     
-    $files = fetchDriveFolderRecursive($folderId);
+    $files = fetchDriveFolderCached($folderId, $forceRefresh);
     sendResponse(true, $files);
 }
 
@@ -1383,7 +1430,7 @@ function extractImagesFromPdfViaGhostScript($pdfPath) {
 function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches = 1) {
     global $GEMINI_MODELS;
     $hasFileUri = !empty($data['gemini_file_uri']);
-    $modelsToTry = $hasFileUri ? ['gemini-flash-latest', 'gemini-2.5-flash'] : (!empty($GEMINI_MODELS) ? $GEMINI_MODELS : ['gemini-2.5-flash', 'gemini-flash-latest']);
+    $modelsToTry = $hasFileUri ? ['gemini-3.5-flash', 'gemini-flash-latest'] : (!empty($GEMINI_MODELS) ? $GEMINI_MODELS : ['gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-latest']);
 
     $mode = $data['mode'] ?? 'ai_generation';
     $isPastExamFilter = ($mode === 'past_exam_filter');
@@ -1979,7 +2026,7 @@ if ($action === 'gemini_status') {
 // --- ACTION 7: TEST GEMINI KEYS HEALTH ---
 if ($action === 'test_keys') {
     global $GEMINI_MODELS;
-    $targetModel = !empty($GEMINI_MODELS[0]) ? $GEMINI_MODELS[0] : 'gemini-2.5-flash';
+    $targetModel = !empty($GEMINI_MODELS[0]) ? $GEMINI_MODELS[0] : 'gemini-3.5-flash';
     $targetIndex = isset($_GET['key_index']) ? intval($_GET['key_index']) : -1;
     $dataDir = __DIR__ . '/gemini_keys_data';
     if (!is_dir($dataDir)) @mkdir($dataDir, 0777, true);
@@ -2057,7 +2104,7 @@ if ($action === 'add_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Quick verification ping
     global $GEMINI_MODELS;
-    $targetModel = !empty($GEMINI_MODELS[0]) ? $GEMINI_MODELS[0] : 'gemini-flash-latest';
+    $targetModel = !empty($GEMINI_MODELS[0]) ? $GEMINI_MODELS[0] : 'gemini-3.5-flash';
     $testPayload = json_encode([
         "contents" => [["parts" => [["text" => "ping"]]]],
         "generationConfig" => ["maxOutputTokens" => 1]
@@ -2148,7 +2195,7 @@ if ($action === 'edit_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Re-test edited key
     global $GEMINI_MODELS;
-    $targetModel = !empty($GEMINI_MODELS[0]) ? $GEMINI_MODELS[0] : 'gemini-flash-latest';
+    $targetModel = !empty($GEMINI_MODELS[0]) ? $GEMINI_MODELS[0] : 'gemini-3.5-flash';
     $testedKey = $entries[$targetIndex]['key'];
     $testPayload = json_encode([
         "contents" => [["parts" => [["text" => "ping"]]]],
