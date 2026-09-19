@@ -105,10 +105,29 @@ function dentTrack(type, data) {
 // false (OFF) -> Single-Track Forced: Locks portal to Dentistry Year 3 Semester 1
 //                and instantly bypasses the welcome screen.
 // =========================================================================
-const DENT_MULTI_SPECIALTY_MODE = true; // <-- SET TO 'true' (ON) OR 'false' (OFF)
+// The server-side admin setting is the source of truth. Keep the fallback
+// restricted until the setting has been loaded, so a failed request never
+// accidentally enables a broader public portal mode.
+let DENT_MULTI_SPECIALTY_MODE = false;
 
-// IMMEDIATE SELECTION CHECK:
-(function() {
+async function dentLoadPortalMode() {
+    try {
+        const response = await fetch(`${API_BASE_URL}?action=portal_settings&_t=${Date.now()}`, {
+            cache: 'no-store',
+            credentials: 'same-origin'
+        });
+        const payload = await response.json();
+        if (payload && payload.success && payload.data && typeof payload.data.multi_specialty_mode === 'boolean') {
+            DENT_MULTI_SPECIALTY_MODE = payload.data.multi_specialty_mode;
+        }
+    } catch (e) {
+        // Keep the restricted fallback when the setting endpoint is unavailable.
+        console.warn('Unable to load portal mode; using restricted mode.', e);
+    }
+}
+
+// IMMEDIATE SELECTION CHECK (after the server setting has loaded):
+function dentApplyPortalModeRouting() {
     const isWelcomePage = window.location.pathname.includes('wolcome') || window.location.pathname.includes('welcome');
 
     if (!DENT_MULTI_SPECIALTY_MODE) {
@@ -120,11 +139,11 @@ const DENT_MULTI_SPECIALTY_MODE = true; // <-- SET TO 'true' (ON) OR 'false' (OF
         if (isWelcomePage) {
             document.documentElement.style.visibility = 'hidden';
             window.location.replace(API_BASE + '/');
-            return;
+            return true;
         }
     } else {
         // [ON MODE]: Full multi-specialty portal
-        if (isWelcomePage) return; // Don't redirect from welcome page itself
+        if (isWelcomePage) return false; // Don't redirect from welcome page itself
 
         let isValidSelection = false;
         try {
@@ -142,9 +161,29 @@ const DENT_MULTI_SPECIALTY_MODE = true; // <-- SET TO 'true' (ON) OR 'false' (OF
             sessionStorage.setItem('dent2025_redirect_after', window.location.pathname);
             document.documentElement.style.visibility = 'hidden';
             window.location.replace(API_BASE + '/wolcome/');
+            return true;
         }
     }
-})();
+    return false;
+}
+
+async function dentBootstrapDashboard() {
+    // Prevent a flash of the wrong page while the admin setting is loading.
+    document.documentElement.style.visibility = 'hidden';
+    await dentLoadPortalMode();
+
+    const redirected = dentApplyPortalModeRouting();
+    if (redirected) return;
+
+    document.documentElement.style.visibility = '';
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', dentInitDashboard, { once: true });
+    } else {
+        dentInitDashboard();
+    }
+}
+
+dentBootstrapDashboard();
 
 function dentInitDashboard() {
     const isWelcomePage = window.location.pathname.includes('wolcome') || window.location.pathname.includes('welcome');
@@ -174,12 +213,6 @@ function dentInitDashboard() {
     }
 
     loadDashboardData();
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', dentInitDashboard);
-} else {
-    dentInitDashboard();
 }
 
 function loadDashboardData(forceRefresh = false) {

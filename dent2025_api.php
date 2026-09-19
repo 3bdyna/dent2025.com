@@ -72,6 +72,20 @@ function dent2025_table($name) {
 
 $action = $_GET['action'] ?? '';
 
+// --- PUBLIC PORTAL SETTINGS ---
+// This setting is intentionally readable without authentication so the public
+// dashboard can determine its routing mode before rendering or redirecting.
+if ($action === 'portal_settings') {
+    $multi_specialty_mode = get_option('dent2025_multi_specialty_mode', true);
+    echo json_encode([
+        "success" => true,
+        "data" => [
+            "multi_specialty_mode" => (bool) $multi_specialty_mode
+        ]
+    ]);
+    exit;
+}
+
 // --- GET DATA ---
 if ($action === 'data') {
     $specialty = sanitize_text_field($_GET['specialty'] ?? '');
@@ -473,6 +487,70 @@ if ($action === 'check_auth') {
             ]);
         }
     }
+    exit;
+}
+
+if ($action === 'save_portal_settings') {
+    if (!dent2025_check_rbac_permission($password, 'manage_passwords')) {
+        echo json_encode(["success" => false, "message" => "Unauthorized: manage_passwords permission required."]);
+        exit;
+    }
+
+    $raw_mode = $input['multi_specialty_mode'] ?? null;
+    if (is_bool($raw_mode)) {
+        $multi_specialty_mode = $raw_mode;
+    } elseif (is_string($raw_mode)) {
+        $normalized_mode = strtolower(trim($raw_mode));
+        if (in_array($normalized_mode, ['true', '1', 'on', 'yes'], true)) {
+            $multi_specialty_mode = true;
+        } elseif (in_array($normalized_mode, ['false', '0', 'off', 'no'], true)) {
+            $multi_specialty_mode = false;
+        } else {
+            $multi_specialty_mode = null;
+        }
+    } else {
+        $multi_specialty_mode = null;
+    }
+
+    if ($multi_specialty_mode === null) {
+        echo json_encode(["success" => false, "message" => "Invalid multi-specialty mode value."]);
+        exit;
+    }
+
+    $previous_mode = (bool) get_option('dent2025_multi_specialty_mode', true);
+    $saved = update_option('dent2025_multi_specialty_mode', $multi_specialty_mode, false);
+    // update_option() returns false when the value was already identical; that
+    // still represents a successful desired state.
+    $current_mode = (bool) get_option('dent2025_multi_specialty_mode', $multi_specialty_mode);
+
+    if ($current_mode !== $multi_specialty_mode) {
+        echo json_encode(["success" => false, "message" => "Failed to save portal setting."]);
+        exit;
+    }
+
+    $pass_info = dent2025_get_passkey_info($password);
+    dent2025_record_audit_event(
+        'settings',
+        'edit',
+        $multi_specialty_mode ? 'تفعيل وضع تعدد التخصصات' : 'تعطيل وضع تعدد التخصصات',
+        $pass_info['label'] ?? '',
+        null,
+        [
+            'setting' => 'multi_specialty_mode',
+            'previous_value' => $previous_mode,
+            'new_value' => $multi_specialty_mode
+        ]
+    );
+
+    if (function_exists('do_action')) {
+        do_action('litespeed_purge_all');
+    }
+
+    echo json_encode([
+        "success" => true,
+        "message" => "Portal setting saved successfully.",
+        "data" => ["multi_specialty_mode" => $multi_specialty_mode]
+    ]);
     exit;
 }
 
@@ -937,4 +1015,3 @@ if ($action === 'sync_drive') {
 }
 
 echo json_encode(["success" => false, "message" => "Invalid action."]);
-

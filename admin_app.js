@@ -27,6 +27,7 @@ window.AdminApp = {
     announcementsData: [],
     historyData: [],
     visibleKeys: {}, // To track visible passkeys in passwords tab
+    portalMultiSpecialtyMode: null,
 
     // Universal Focus Mode (Active Academic Track)
     focusMode: {
@@ -237,7 +238,7 @@ window.AdminApp = {
 
     applyPermissionsUI() {
         const canManageMaster = !!(this.permissions && this.permissions.manage_passwords);
-        const masterOnlyTabs = ['passwords', 'gemini', 'cache', 'history'];
+        const masterOnlyTabs = ['passwords', 'gemini', 'cache', 'history', 'settings'];
         masterOnlyTabs.forEach(tabName => {
             document.querySelectorAll(`[data-tab="${tabName}"]`).forEach(el => {
                 if (canManageMaster) {
@@ -256,7 +257,7 @@ window.AdminApp = {
     },
 
     switchTab(tabId) {
-        const masterOnlyTabs = ['passwords', 'gemini', 'cache', 'history'];
+        const masterOnlyTabs = ['passwords', 'gemini', 'cache', 'history', 'settings'];
         if (masterOnlyTabs.includes(tabId)) {
             const canManageMaster = !!(this.permissions && this.permissions.manage_passwords);
             if (!canManageMaster) {
@@ -276,7 +277,8 @@ window.AdminApp = {
             'cache': 'ذاكرة الكاش والتجهيز',
             'gemini': 'مراقبة مفاتيح المعالجة الذكية',
             'passwords': 'الصلاحيات والمفاتيح',
-            'history': 'سجل التغييرات والاستعادة'
+            'history': 'سجل التغييرات والاستعادة',
+            'settings': 'إعدادات الموقع'
         };
 
         const badge = document.getElementById('mobile-active-tab-badge');
@@ -360,12 +362,109 @@ window.AdminApp = {
                 this.loadQuizzes();
             } else if (tabId === 'cache') {
                 this.loadCacheStats();
+            } else if (tabId === 'settings') {
+                this.loadPortalSettings();
             }
         } else {
             contentDiv.innerHTML = `<div class="p-8 text-center text-gray-400 glass rounded-2xl">
                 <h2 class="text-2xl mb-2">قريباً</h2>
                 <p>هذا القسم قيد التطوير...</p>
             </div>`;
+        }
+    },
+
+    async loadPortalSettings() {
+        const toggle = document.getElementById('portal-multi-specialty-toggle');
+        const saveBtn = document.getElementById('portal-mode-save-btn');
+        const status = document.getElementById('portal-mode-status');
+        const label = document.getElementById('portal-mode-label');
+        if (!toggle || !saveBtn) return;
+
+        toggle.disabled = true;
+        saveBtn.disabled = true;
+        if (status) status.innerText = 'جاري تحميل الإعداد...';
+        if (label) label.innerText = 'جاري التحميل';
+
+        try {
+            const response = await fetch(`${API_BASE}/dent2025_api.php?action=portal_settings&_t=${Date.now()}`, {
+                cache: 'no-store',
+                credentials: 'same-origin'
+            });
+            const result = await response.json();
+            if (!result.success || !result.data || typeof result.data.multi_specialty_mode !== 'boolean') {
+                throw new Error(result.message || 'Invalid portal settings response');
+            }
+
+            this.portalMultiSpecialtyMode = result.data.multi_specialty_mode;
+            toggle.checked = this.portalMultiSpecialtyMode;
+            toggle.disabled = false;
+            if (status) status.innerText = this.portalMultiSpecialtyMode
+                ? 'الحالة الحالية: وضع تعدد التخصصات مفعّل.'
+                : 'الحالة الحالية: الموقع مثبت على مسار طب الأسنان.';
+            if (label) label.innerText = this.portalMultiSpecialtyMode ? 'مفعّل' : 'معطّل';
+            this.updatePortalModeSaveState();
+        } catch (e) {
+            if (status) status.innerText = 'تعذر تحميل إعداد الموقع.';
+            if (label) label.innerText = 'غير متاح';
+            this.showToast('تعذر تحميل إعداد الموقع', true);
+        }
+    },
+
+    updatePortalModeSaveState() {
+        const toggle = document.getElementById('portal-multi-specialty-toggle');
+        const saveBtn = document.getElementById('portal-mode-save-btn');
+        const label = document.getElementById('portal-mode-label');
+        if (!toggle || !saveBtn) return;
+        const changed = this.portalMultiSpecialtyMode !== null && toggle.checked !== this.portalMultiSpecialtyMode;
+        saveBtn.disabled = !changed;
+        if (label && this.portalMultiSpecialtyMode !== null) {
+            label.innerText = toggle.checked ? 'مفعّل' : 'معطّل';
+        }
+    },
+
+    async savePortalMode() {
+        const toggle = document.getElementById('portal-multi-specialty-toggle');
+        const saveBtn = document.getElementById('portal-mode-save-btn');
+        if (!toggle || !saveBtn || !this.permissions.manage_passwords) return;
+
+        const nextValue = !!toggle.checked;
+        const confirmation = nextValue
+            ? 'سيتم السماح للطلاب باختيار جميع التخصصات. هل تريد المتابعة؟'
+            : 'سيتم تثبيت الموقع على طب الأسنان، السنة الثالثة، الترم الأول. هل تريد المتابعة؟';
+        if (!window.confirm(confirmation)) {
+            toggle.checked = !!this.portalMultiSpecialtyMode;
+            this.updatePortalModeSaveState();
+            return;
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'جاري الحفظ...';
+        try {
+            const response = await fetch(`${API_BASE}/dent2025_api.php?action=save_portal_settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    password: this.pass,
+                    multi_specialty_mode: nextValue
+                })
+            });
+            const result = await response.json();
+            if (!result.success) throw new Error(result.message || 'Save failed');
+
+            this.portalMultiSpecialtyMode = nextValue;
+            const status = document.getElementById('portal-mode-status');
+            const label = document.getElementById('portal-mode-label');
+            if (status) status.innerText = nextValue
+                ? 'الحالة الحالية: وضع تعدد التخصصات مفعّل.'
+                : 'الحالة الحالية: الموقع مثبت على مسار طب الأسنان.';
+            if (label) label.innerText = nextValue ? 'مفعّل' : 'معطّل';
+            this.showToast(nextValue ? 'تم تفعيل تعدد التخصصات' : 'تم تعطيل تعدد التخصصات');
+        } catch (e) {
+            toggle.checked = !!this.portalMultiSpecialtyMode;
+            this.showToast(e.message || 'تعذر حفظ إعداد الموقع', true);
+        } finally {
+            saveBtn.innerText = 'حفظ التغيير';
+            this.updatePortalModeSaveState();
         }
     },
 
