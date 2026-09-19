@@ -79,6 +79,15 @@ textarea.dent-quiz-input { height: auto !important; min-height: 60px !important;
 .dent-opt-item input[type="radio"] { margin-left: 10px; width: 14px; height: 14px; accent-color: #94a3b8; cursor: pointer; } 
 .dent-opt-item .dent-opt-letter { flex: 0 0 auto; margin-left: 6px; color: #f8fafc; font-weight: 600; direction: ltr; }
 .dent-opt-item .dent-opt-text { flex: 1 1 auto; min-width: 0; text-align: right; }
+.dent-q-block[data-language="en"] { direction: ltr; }
+.dent-q-block[data-language="en"] .dent-q-text { direction: ltr; text-align: left; }
+.dent-q-block[data-language="en"] .dent-opt-item { direction: rtl; }
+.dent-q-block[data-language="en"] .dent-opt-text { direction: ltr; text-align: left; }
+.dent-q-block[data-language="en"] .dent-explanation-box { direction: ltr; text-align: left; }
+.dent-q-block[data-language="ar"] { direction: rtl; }
+.dent-q-block[data-language="ar"] .dent-q-text,
+.dent-q-block[data-language="ar"] .dent-opt-text { direction: rtl; text-align: right; }
+.dent-q-block[data-language="ar"] .dent-explanation-box { direction: rtl; text-align: right; }
 .dent-opt-item.selected { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.06); color: #fff; }
 
 /* Feedback Styles */
@@ -1971,6 +1980,55 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         }
     }
 
+    function detectQuestionLanguage(q) {
+        const explicit = String(q?.language || '').toLowerCase().trim();
+        if (explicit === 'ar' || explicit === 'arabic' || explicit === 'العربية') return 'ar';
+        if (explicit === 'en' || explicit === 'english') return 'en';
+
+        const sample = [q?.question || '', q?.explanation || '', ...(Array.isArray(q?.options) ? q.options : [])].join(' ');
+        const arabicCount = (sample.match(/[\u0600-\u06FF]/g) || []).length;
+        const latinCount = (sample.match(/[A-Za-z]/g) || []).length;
+        return arabicCount > latinCount ? 'ar' : 'en';
+    }
+
+    function stripOptionPrefix(value) {
+        return String(value || '').replace(/^\s*(?:[A-Ha-h]|[أإآابجدههـوزح])\s*[.)\-:\s]+/u, '').trim();
+    }
+
+    function getCorrectOptionIndex(question, options) {
+        if (!Array.isArray(options) || options.length === 0) return -1;
+
+        const explicitIndex = Number(question?.correctIndex);
+        if (Number.isInteger(explicitIndex) && explicitIndex >= 0 && explicitIndex < options.length) {
+            return explicitIndex;
+        }
+
+        const correct = String(question?.correctAnswer || '').trim();
+        if (!correct) return -1;
+
+        const exactIndex = options.findIndex(option => String(option).trim().toLowerCase() === correct.toLowerCase());
+        if (exactIndex !== -1) return exactIndex;
+
+        const cleanCorrect = stripOptionPrefix(correct).toLowerCase();
+        const textIndex = options.findIndex(option => stripOptionPrefix(option).toLowerCase() === cleanCorrect);
+        if (textIndex !== -1) return textIndex;
+
+        const latinMatch = correct.match(/^([A-H])(?:\s*[.)\-:]*)?$/i);
+        if (latinMatch) return latinMatch[1].toUpperCase().charCodeAt(0) - 65 < options.length
+            ? latinMatch[1].toUpperCase().charCodeAt(0) - 65 : -1;
+
+        const normalizedArabic = correct.replace(/[إأآ]/g, 'ا').replace(/[.)\-:\s]+$/u, '').trim();
+        const arabicLetters = ['ا', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح'];
+        const arabicIndex = arabicLetters.indexOf(normalizedArabic);
+        return arabicIndex >= 0 && arabicIndex < options.length ? arabicIndex : -1;
+    }
+
+    function isQuestionAnswerCorrect(question, selectedIndex, selectedValue, options) {
+        const correctIndex = getCorrectOptionIndex(question, options);
+        if (correctIndex < 0 || selectedIndex < 0) return false;
+        return selectedIndex === correctIndex;
+    }
+
     // --- PLAYER LOGIC ---
     function openPlayer(title, metaSub, questions, metaObj = {}) {
         generatedQuestions = questions;
@@ -2030,6 +2088,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             const qBlock = document.createElement('div');
             qBlock.className = 'dent-q-block';
             qBlock.dataset.index = index;
+            const questionLanguage = detectQuestionLanguage(q);
+            qBlock.dataset.language = questionLanguage;
 
             const isConverted = (typeof q.question === 'string' && q.question.trim().startsWith('*'));
             const convertedBadge = isConverted ? `<span class="dent-q-converted-badge" title="تم تحويل هذا السؤال من سؤال مقالي أو فراغات إلى اختيار من متعدد">* سؤال محوّل لخيارات</span>` : '';
@@ -2062,76 +2122,35 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 opts = q.options;
             }
             
-            opts.forEach(opt => {
+            opts.forEach((opt, optIndex) => {
                 const optItem = document.createElement('label');
                 optItem.className = 'dent-opt-item';
-                const optionMatch = String(opt).match(/^\s*([A-D])(?:[.)\-:\s]+)([\s\S]*)$/i);
-                const optionLetter = optionMatch ? '.' + optionMatch[1].toUpperCase() : '';
+                const optionMatch = String(opt).match(/^\s*([A-Ha-h]|[أإآابجدههـوزح])(?:[.)\-:\s]+)([\s\S]*)$/u);
+                const optionLetter = '.' + String.fromCharCode(65 + optIndex);
                 const optionText = optionMatch ? optionMatch[2] : String(opt);
                 optItem.innerHTML = `
-                    <input type="radio" name="q_${index}" value="${escapeHtml(opt)}">
-                    ${optionLetter ? `<span class="dent-opt-letter">${optionLetter}</span>` : ''}
+                    <input type="radio" name="q_${index}" value="${escapeHtml(opt)}" data-option-index="${optIndex}">
+                    <span class="dent-opt-letter">${optionLetter}</span>
                     <span class="dent-opt-text">${escapeHtml(optionText)}</span>
                 `;
                 
-                // Helper to check answer match accurately without false substring positives
-                function checkQuizMatch(userOpt, correctOpt, optsList) {
-                    if (!userOpt || !correctOpt) return false;
-                    const u = userOpt.toString().trim().toLowerCase();
-                    const c = correctOpt.toString().trim().toLowerCase();
-                    if (u === c) return true;
-
-                    const cleanPrefix = s => s.replace(/^[a-z0-9\u0621-\u064A][\.\)\:\-\s]+/i, '').trim().toLowerCase();
-                    const uClean = cleanPrefix(u);
-                    const cClean = cleanPrefix(c);
-                    if (uClean && cClean && uClean === cClean) return true;
-
-                    // Latin letter mapping (A, B, C, D, E, F)
-                    if (/^[a-z]$/i.test(c)) {
-                        const targetLetter = c.toUpperCase();
-                        const uPrefixMatch = u.match(/^([a-z])[\.\)\:\-\s]/i);
-                        if (uPrefixMatch && uPrefixMatch[1].toUpperCase() === targetLetter) return true;
-                        if (Array.isArray(optsList)) {
-                            const userIdx = optsList.findIndex(o => o.toString().trim().toLowerCase() === u);
-                            const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-                            if (userIdx !== -1 && letters[userIdx] === targetLetter) return true;
-                        }
-                    }
-
-                    // Arabic letter mapping (أ, ب, ج, د, هـ, و) with Hamza normalization
-                    const normAr = s => s.replace(/[إأآ]/g, 'ا');
-                    const cNorm = normAr(c);
-                    const arLetters = ['ا', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح'];
-                    const arLetterIdx = arLetters.indexOf(cNorm);
-                    if (arLetterIdx !== -1) {
-                        const uPrefixMatch = normAr(u).match(/^([\u0621-\u064A])[\.\)\:\-\s]/);
-                        if (uPrefixMatch && uPrefixMatch[1] === arLetters[arLetterIdx]) return true;
-                        if (Array.isArray(optsList)) {
-                            const userIdx = optsList.findIndex(o => o.toString().trim().toLowerCase() === u);
-                            if (userIdx !== -1 && userIdx === arLetterIdx) return true;
-                        }
-                    }
-
-                    return false;
-                }
-
                 // Instant Feedback on click
                 optItem.querySelector('input').addEventListener('change', () => {
                     const siblings = optList.querySelectorAll('.dent-opt-item');
                     siblings.forEach(s => s.classList.remove('selected'));
                     optItem.classList.add('selected');
 
-                    const correctAns = (q.correctAnswer || '').toString().trim();
                     const userVal = opt.trim();
-                    const isMatch = checkQuizMatch(userVal, correctAns, opts);
+                    const isMatch = isQuestionAnswerCorrect(q, optIndex, userVal, opts);
 
                     if (isMatch) {
                         optItem.classList.add('correct');
                     } else {
                         optItem.classList.add('wrong');
                         siblings.forEach(s => {
-                            const val = s.querySelector('span').innerText.trim();
-                            if (checkQuizMatch(val, correctAns, opts)) {
+                            const radio = s.querySelector('input[type="radio"]');
+                            const candidateIndex = radio ? Number(radio.dataset.optionIndex) : -1;
+                            if (isQuestionAnswerCorrect(q, candidateIndex, radio?.value || '', opts)) {
                                 s.classList.add('correct');
                             }
                         });
@@ -2163,7 +2182,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
             const expBox = document.createElement('div');
             expBox.className = 'dent-explanation-box';
-            const isEnglishQuiz = /[a-zA-Z]{4,}/.test(q.question || '') || /[a-zA-Z]{4,}/.test(q.explanation || '');
+            const isEnglishQuiz = questionLanguage === 'en';
             const expPrefix = isEnglishQuiz ? '<strong>Explanation:</strong> ' : '<strong>توضيح الإجابة:</strong> ';
             const expFallback = isEnglishQuiz ? ('Correct answer: ' + (q.correctAnswer || '')) : ('الإجابة الصحيحة هي: ' + (q.correctAnswer || ''));
             expBox.style.direction = isEnglishQuiz ? 'ltr' : 'rtl';
@@ -2197,46 +2216,6 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const missedQuestions = [];
         const breakdown = {};
 
-        function checkQuizMatchSubmit(userOpt, correctOpt, optsList) {
-            if (!userOpt || !correctOpt) return false;
-            const u = userOpt.toString().trim().toLowerCase();
-            const c = correctOpt.toString().trim().toLowerCase();
-            if (u === c) return true;
-
-            const cleanPrefix = s => s.replace(/^[a-z0-9\u0621-\u064A][\.\)\:\-\s]+/i, '').trim().toLowerCase();
-            const uClean = cleanPrefix(u);
-            const cClean = cleanPrefix(c);
-            if (uClean && cClean && uClean === cClean) return true;
-
-            // Latin letter mapping (A, B, C, D, E, F)
-            if (/^[a-z]$/i.test(c)) {
-                const targetLetter = c.toUpperCase();
-                const uPrefixMatch = u.match(/^([a-z])[\.\)\:\-\s]/i);
-                if (uPrefixMatch && uPrefixMatch[1].toUpperCase() === targetLetter) return true;
-                if (Array.isArray(optsList)) {
-                    const userIdx = optsList.findIndex(o => o.toString().trim().toLowerCase() === u);
-                    const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-                    if (userIdx !== -1 && letters[userIdx] === targetLetter) return true;
-                }
-            }
-
-            // Arabic letter mapping (أ, ب, ج, د, هـ, و) with Hamza normalization
-            const normAr = s => s.replace(/[إأآ]/g, 'ا');
-            const cNorm = normAr(c);
-            const arLetters = ['ا', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح'];
-            const arLetterIdx = arLetters.indexOf(cNorm);
-            if (arLetterIdx !== -1) {
-                const uPrefixMatch = normAr(u).match(/^([\u0621-\u064A])[\.\)\:\-\s]/);
-                if (uPrefixMatch && uPrefixMatch[1] === arLetters[arLetterIdx]) return true;
-                if (Array.isArray(optsList)) {
-                    const userIdx = optsList.findIndex(o => o.toString().trim().toLowerCase() === u);
-                    if (userIdx !== -1 && userIdx === arLetterIdx) return true;
-                }
-            }
-
-            return false;
-        }
-
         qBlocks.forEach((block, index) => {
             const qData = generatedQuestions[index];
             const correctAns = (qData.correctAnswer || '').toString().trim();
@@ -2254,7 +2233,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             let isCorrect = false;
             if (selectedRadio) {
                 const userVal = selectedRadio.value.trim();
-                const isMatch = checkQuizMatchSubmit(userVal, correctAns, opts);
+                const selectedIndex = Number(selectedRadio.dataset.optionIndex);
+                const isMatch = isQuestionAnswerCorrect(qData, selectedIndex, userVal, opts);
                 if (isMatch) {
                     score++;
                     isCorrect = true;

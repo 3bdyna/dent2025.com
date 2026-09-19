@@ -1716,6 +1716,31 @@ function extractImagesFromPdfViaGhostScript($pdfPath) {
     return $validImages;
 }
 
+function detectQuizQuestionLanguage($question, $options = [], $explanation = '') {
+    $sample = (string)$question . ' ' . implode(' ', is_array($options) ? $options : []) . ' ' . (string)$explanation;
+    preg_match_all('/[\x{0600}-\x{06FF}]/u', $sample, $arabicMatches);
+    preg_match_all('/[A-Za-z]/', $sample, $latinMatches);
+    return count($arabicMatches[0] ?? []) > count($latinMatches[0] ?? []) ? 'ar' : 'en';
+}
+
+function normalizeQuizLanguage($language, $question, $options = [], $explanation = '') {
+    $value = strtolower(trim((string)$language));
+    if ($value === 'arabic' || $value === 'العربية') return 'ar';
+    if ($value === 'english') return 'en';
+    if ($value === 'ar' || $value === 'en') return $value;
+    return detectQuizQuestionLanguage($question, $options, $explanation);
+}
+
+function summarizeQuizLanguage($questions) {
+    $arabic = 0;
+    $english = 0;
+    foreach (is_array($questions) ? $questions : [] as $question) {
+        if (($question['language'] ?? '') === 'ar') $arabic++;
+        else $english++;
+    }
+    return $arabic > $english ? 'ar' : 'en';
+}
+
 function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches = 1) {
     global $GEMINI_MODELS;
     $hasFileUri = !empty($data['gemini_file_uri']);
@@ -1759,6 +1784,9 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
     $languageRules .= "   - For ENGLISH course materials (Dentistry, Medicine, Pre-Med, Anatomy, Operative Dentistry, Pathology, Pharmacology, Biology, Chemistry, English, etc.): The question, all 4 options, and the 'explanation' field MUST BE 100% IN PROFESSIONAL ACADEMIC ENGLISH. Provide a detailed, high-yield educational breakdown in English explaining why the correct answer is scientifically accurate and why the other choices are incorrect. NEVER output Arabic explanations for English material.\n";
     $languageRules .= "   - For ARABIC course materials (Islamic Culture, Arabic Language, etc.): The question, options, and 'explanation' field MUST BE 100% IN ARABIC.\n";
     $languageRules .= "   - UNIFIED LANGUAGE: Never mix languages between questions and their explanations.\n";
+    $languageRules .= "2. Return a per-question 'language' field: 'en' for English or 'ar' for Arabic.\n";
+    $languageRules .= "3. Return 'correctIndex' as the authoritative zero-based option index. Return 'correctAnswer' as the complete matching option for compatibility.\n";
+    $languageRules .= "4. Do not prefix option text with A., B., C., or D.; the viewer adds answer markers automatically.\n";
 
     if ($isPastExamFilter) {
         $targetChaptersStr = !empty($targetChapters) ? implode("\n- ", $targetChapters) : 'All Selected Course Topics';
@@ -1783,7 +1811,7 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         if ($pageRange) $prompt .= "PAGE / UNIT CONSTRAINT: Focus questions strictly on pages / unit: " . $pageRange . ".\n";
         if ($focusArea) $prompt .= "Additional student focus: " . $focusArea . "\n";
         $prompt .= "\nCRITICAL: Return ONLY a raw JSON array matching this exact schema:\n";
-        $prompt .= '[{"type": "mcq|tf", "question": "Question text in source language (English for English material, Arabic for Arabic)", "options":["A. Choice 1", "B. Choice 2", "C. Choice 3", "D. Choice 4"], "correctAnswer": "A", "explanation": "Detailed explanation in the SAME language as the source document (English for English, Arabic for Arabic) explaining why the correct choice is accurate and refuting distractors", "assignedChapter": "Target Chapter"}]';
+        $prompt .= '[{"type": "mcq|tf", "language": "en|ar", "question": "Question text in the source language", "options":["Choice 1", "Choice 2", "Choice 3", "Choice 4"], "correctIndex": 0, "correctAnswer": "Choice 1", "explanation": "Detailed explanation in the SAME language as the source document", "assignedChapter": "Target Chapter"}]';
         if (!empty($text)) $prompt .= "\n\nPast Exam Text/Data:\n" . $text;
     } else {
         $difficultyInstructions = "";
@@ -1868,7 +1896,7 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         if ($focusArea) $prompt .= "Focus specifically on: " . $focusArea . "\n";
         $prompt .= $promptInstructions;
         $prompt .= "\nCRITICAL: Return ONLY a raw JSON array without markdown blocks. Format must be exactly:\n";
-        $prompt .= '[{"type": "mcq|tf", "question": "Question text in source language (English for English material, Arabic for Arabic)", "options":["A. Choice 1", "B. Choice 2", "C. Choice 3", "D. Choice 4"], "correctAnswer": "A", "explanation": "Detailed high-yield educational breakdown in the SAME language as the source document (English for English material, Arabic for Arabic) explaining why the correct choice is accurate and refuting distractors", "assignedChapter": "Chapter / Unit Name"}]';
+        $prompt .= '[{"type": "mcq|tf", "language": "en|ar", "question": "Question text in the source language", "options":["Choice 1", "Choice 2", "Choice 3", "Choice 4"], "correctIndex": 0, "correctAnswer": "Choice 1", "explanation": "Detailed high-yield educational breakdown in the SAME language as the source document explaining why the correct choice is accurate and refuting distractors", "assignedChapter": "Chapter / Unit Name"}]';
         if (!empty($text)) $prompt .= "\n\nSource Document Text:\n" . $text;
     }
 
@@ -2008,6 +2036,7 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
     }
 
     $validated = [];
+    $invalidQuestions = 0;
     foreach ($parsedQuestions as $q) {
         if (!is_array($q)) continue;
         $qText = trim($q['question'] ?? '');
@@ -2015,7 +2044,17 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         
         $opts = $q['options'] ?? [];
         if (!is_array($opts) || count($opts) < 2) {
-            $opts = ['أ', 'ب', 'ج', 'د'];
+            $invalidQuestions++;
+            continue;
+        }
+        $opts = array_values(array_filter(array_map(function($option) {
+            return trim((string)$option);
+        }, $opts), function($option) {
+            return $option !== '';
+        }));
+        if (count($opts) < 2) {
+            $invalidQuestions++;
+            continue;
         }
 
         // Leaked Arabic Explanation / Artifact Sanitizer
@@ -2041,30 +2080,34 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
             $opts = $cleanOpts;
         }
         
-        $correct = trim($q['correctAnswer'] ?? '');
-        $resolvedCorrect = null;
+        $correct = trim((string)($q['correctAnswer'] ?? ''));
+        $resolvedIndex = null;
+        if (isset($q['correctIndex']) && is_numeric($q['correctIndex'])) {
+            $candidateIndex = (int)$q['correctIndex'];
+            if ($candidateIndex >= 0 && $candidateIndex < count($opts)) {
+                $resolvedIndex = $candidateIndex;
+            }
+        }
 
-        if (!empty($correct)) {
-            // 1. Direct exact match
-            if (in_array($correct, $opts)) {
-                $resolvedCorrect = $correct;
+        if ($resolvedIndex === null && $correct !== '') {
+            // Backward-compatible resolution for older exams that only stored correctAnswer.
+            $exactIndex = array_search($correct, $opts, true);
+            if ($exactIndex !== false) {
+                $resolvedIndex = (int)$exactIndex;
             } else {
-                // 2. Map single letters (A, B, C, D / أ, ب, ج, د) to corresponding option index
-                $letterMap = ['A' => 0, 'B' => 1, 'C' => 2, 'D' => 3, 'E' => 4, 'F' => 5];
-                $arLetterMap = ['أ' => 0, 'ا' => 0, 'ب' => 1, 'ج' => 2, 'د' => 3, 'هـ' => 4, 'ه' => 4];
+                $letterMap = ['A' => 0, 'B' => 1, 'C' => 2, 'D' => 3, 'E' => 4, 'F' => 5, 'G' => 6, 'H' => 7];
+                $arLetterMap = ['أ' => 0, 'ا' => 0, 'ب' => 1, 'ج' => 2, 'د' => 3, 'هـ' => 4, 'ه' => 4, 'و' => 5, 'ز' => 6, 'ح' => 7];
                 $upper = strtoupper(trim(preg_replace('/[\.\)\:\-\s]+$/', '', $correct)));
-
                 if (isset($letterMap[$upper]) && isset($opts[$letterMap[$upper]])) {
-                    $resolvedCorrect = $opts[$letterMap[$upper]];
+                    $resolvedIndex = $letterMap[$upper];
                 } elseif (isset($arLetterMap[$correct]) && isset($opts[$arLetterMap[$correct]])) {
-                    $resolvedCorrect = $opts[$arLetterMap[$correct]];
+                    $resolvedIndex = $arLetterMap[$correct];
                 } else {
-                    // 3. Prefix/Substring matching
-                    foreach ($opts as $optItem) {
-                        $cleanOpt = trim(preg_replace('/^[a-zA-Z0-9\x{0600}-\x{06FF}][\.\)\:\-\s]+/u', '', $optItem));
-                        $cleanCorr = trim(preg_replace('/^[a-zA-Z0-9\x{0600}-\x{06FF}][\.\)\:\-\s]+/u', '', $correct));
-                        if (!empty($cleanCorr) && (stripos($optItem, $cleanCorr) !== false || stripos($cleanOpt, $cleanCorr) !== false)) {
-                            $resolvedCorrect = $optItem;
+                    $cleanCorrect = trim(preg_replace('/^[a-zA-Z0-9\x{0600}-\x{06FF}][\.\)\:\-\s]+/u', '', $correct));
+                    foreach ($opts as $optionIndex => $optItem) {
+                        $cleanOption = trim(preg_replace('/^[a-zA-Z0-9\x{0600}-\x{06FF}][\.\)\:\-\s]+/u', '', $optItem));
+                        if ($cleanCorrect !== '' && (strcasecmp($optItem, $correct) === 0 || strcasecmp($cleanOption, $cleanCorrect) === 0)) {
+                            $resolvedIndex = $optionIndex;
                             break;
                         }
                     }
@@ -2072,13 +2115,16 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
             }
         }
 
-        if (empty($resolvedCorrect)) {
-            $resolvedCorrect = $opts[0];
+        // Never silently turn an unresolved answer into option 1.
+        if ($resolvedIndex === null) {
+            $invalidQuestions++;
+            continue;
         }
-        $correct = $resolvedCorrect;
+        $correct = $opts[$resolvedIndex];
 
-        $isEnglishQuestion = (bool)preg_match('/[a-zA-Z]{4,}/', $qText);
-        $defaultExp = $isEnglishQuestion ? 'Correct answer confirmed based on the verified academic source.' : 'توضيح الإجابة الصحيحة بناءً على المحتوى المعتمد.';
+        $explanation = trim($q['explanation'] ?? '');
+        $language = normalizeQuizLanguage($q['language'] ?? '', $qText, $opts, $explanation);
+        $defaultExp = $language === 'en' ? 'Correct answer confirmed based on the verified academic source.' : 'توضيح الإجابة الصحيحة بناءً على المحتوى المعتمد.';
         $explanation = trim($q['explanation'] ?? $defaultExp);
         if (empty($explanation)) {
             $explanation = $defaultExp;
@@ -2089,15 +2135,21 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
 
         $validated[] = [
             'type' => $q['type'] ?? 'mcq',
+            'language' => $language,
             'question' => $qText,
             'options' => $opts,
+            'correctIndex' => $resolvedIndex,
             'correctAnswer' => $correct,
             'explanation' => $explanation,
             'assignedChapter' => trim($q['assignedChapter'] ?? ($data['chapterName'] ?? 'عام'))
         ];
     }
 
-    return ['success' => true, 'data' => ['questions' => $validated]];
+    if (empty($validated)) {
+        return ['success' => false, 'message' => 'No valid questions with a resolvable correct answer were generated.'];
+    }
+
+    return ['success' => true, 'data' => ['questions' => $validated, 'invalid_questions' => $invalidQuestions]];
 }
 
 function performGeminiGeneration($data, $API_KEYS, $jobFileCallback = null) {
@@ -2671,6 +2723,7 @@ if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         'types_summary' => $typesSummary,
         'creation_mode' => $mode,
         'difficulty' => $difficulty,
+        'language' => summarizeQuizLanguage($questions),
         'created_at' => date('Y-m-d H:i:s'),
         'questions' => $questions
     ];
@@ -3206,6 +3259,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             'types_summary' => $data['typesSummary'] ?? ($isPastExamFilter ? 'تجميعات سنوات' : 'خيارات متعددة'),
             'creation_mode' => $mode,
             'difficulty' => $difficulty,
+            'language' => summarizeQuizLanguage($questions),
             'created_at' => date('Y-m-d H:i:s'),
             'questions' => $questions
         ];
