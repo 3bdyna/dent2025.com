@@ -19,6 +19,7 @@
     }
 
     .dent-schedule-container {
+        position: relative;
         font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
         background-color: var(--bg-color);
         color: var(--text-primary);
@@ -29,6 +30,45 @@
         margin: 36px auto 30px auto;
         border: 1px solid var(--border-color);
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .dent-print-schedule-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #94a3b8;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        padding: 0;
+        z-index: 5;
+    }
+    .dent-print-schedule-btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.25);
+        transform: translateY(-1px);
+    }
+    .dent-print-schedule-btn svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+    }
+
+    @media (max-width: 600px) {
+        .dent-print-schedule-btn {
+            top: 14px;
+            right: 14px;
+            width: 30px;
+            height: 30px;
+        }
     }
 
     .dent-schedule-title {
@@ -344,6 +384,13 @@
 
 <!-- HTML STRUCTURE -->
 <div class="dent-schedule-container" id="dent-schedule-app">
+    <button id="dent-print-schedule-trigger" class="dent-print-schedule-btn" title="طباعة تقويم الأسبوعين القادمين (A4 PDF)" onclick="ScheduleApp.openPrintModal()" aria-label="طباعة تقويم الأسبوعين القادمين">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+    </button>
     <h2 class="dent-schedule-title">التقويم الدراسي</h2>
     
     <div class="stats-grid" id="schedule-stats" style="display: none;">

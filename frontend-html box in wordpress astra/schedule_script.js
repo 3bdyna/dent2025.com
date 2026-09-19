@@ -888,6 +888,623 @@ const ScheduleApp = {
             console.error('Schedule delete error:', err);
             alert('تعذر الاتصال بالخادم لحذف الحدث.');
         });
+    },
+
+    // 2-WEEK PRINT FEATURE
+    openPrintModal: function() {
+        let modal = document.getElementById('dent-print-schedule-modal');
+        if (modal) modal.remove();
+
+        modal = document.createElement('div');
+        modal.id = 'dent-print-schedule-modal';
+        modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 9999999; display: flex; justify-content: center; align-items: center; direction: rtl; font-family: \'Outfit\', \'Noto Kufi Arabic\', sans-serif; padding: 16px; box-sizing: border-box;';
+        modal.innerHTML = `
+            <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 24px; width: 100%; max-width: 460px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: #fff; box-sizing: border-box;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+                    <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #f8fafc;">طباعة تقويم الأسبوعين القادمين (A4 PDF)</h3>
+                    <button type="button" onclick="document.getElementById('dent-print-schedule-modal').remove()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">×</button>
+                </div>
+
+                <button type="button" id="dent-exec-print-btn" onclick="ScheduleApp.executePrint()" style="width: 100%; height: 46px; background: #2563eb; color: #ffffff; border: none; border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.95rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);" onmouseover="this.style.background='#1d4ed8'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#2563eb'; this.style.transform='none';">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    <span>طباعة الآن (A4 PDF)</span>
+                </button>
+
+                <label style="display: flex; align-items: flex-start; gap: 10px; margin-top: 16px; padding: 10px 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; font-size: 0.80rem; color: #cbd5e1; cursor: pointer; user-select: none;">
+                    <input type="checkbox" id="dent-print-inc-announcements" checked style="accent-color: #2563eb; width: 16px; height: 16px; margin-top: 2px; cursor: pointer;">
+                    <span>تضمين إعلانات الدفعة (الإعلان بالصفحة الرئيسية) في أسفل الورقة</span>
+                </label>
+
+                <div style="margin-top: 14px;">
+                    <label style="font-size: 0.78rem; color: #a1a1aa; font-weight: 600; display: block; margin-bottom: 6px;">ملاحظات أو تذكيرات إضافية (اختياري):</label>
+                    <textarea id="dent-print-custom-notes" placeholder="اكتب أي ملاحظات أو تذكيرات ترغب في ظهورها أسفل الورقة (اختياري - ستختفي هذه المساحة تلقائياً عند الطباعة إذا تركتها فارغة)..." style="width: 100%; height: 80px; padding: 10px 12px; background: #121212; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 0.82rem; font-family: inherit; box-sizing: border-box; outline: none; resize: vertical; line-height: 1.5;"></textarea>
+                </div>
+
+                <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
+                    <button type="button" onclick="document.getElementById('dent-print-schedule-modal').remove()" style="padding: 8px 18px; background: #27272a; border: 1px solid rgba(255,255,255,0.1); color: #a1a1aa; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#a1a1aa';">إلغاء</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    },
+
+    executePrint: async function() {
+        const printBtn = document.getElementById('dent-exec-print-btn');
+        if (printBtn) {
+            printBtn.disabled = true;
+            printBtn.innerHTML = 'جاري التجهيز...';
+        }
+
+        const notes = (document.getElementById('dent-print-custom-notes')?.value || '').trim();
+        const incAnnouncements = !!document.getElementById('dent-print-inc-announcements')?.checked;
+
+        let announcementText = '';
+        if (incAnnouncements) {
+            try {
+                let sel = {};
+                try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
+                let spec = sel.specialty;
+                let yr = sel.year;
+                let sem = sel.semester;
+                if (!spec && this.scheduleId && this.scheduleId !== 'global') {
+                    const parts = this.scheduleId.match(/^([a-z\-]+)_y(\d+)_s(\d+)$/);
+                    if (parts) {
+                        spec = parts[1];
+                        yr = parts[2];
+                        sem = parts[3];
+                    }
+                }
+                if (!spec) {
+                    spec = 'dentistry'; yr = 3; sem = 1;
+                }
+                const apiBase = (typeof API_BASE !== 'undefined' ? API_BASE : window.location.origin);
+                const res = await fetch(`${apiBase}/announcements_api.php?specialty=${encodeURIComponent(spec)}&year=${encodeURIComponent(yr)}&semester=${encodeURIComponent(sem)}&_t=${Date.now()}`);
+                const data = await res.json();
+                if (data && data.success && data.data && data.data.content) {
+                    const raw = String(data.data.content).trim();
+                    if (raw && raw !== 'لا يوجد إعلانات حالياً.' && raw !== '<p></p>' && raw !== '<br>') {
+                        announcementText = raw;
+                    }
+                }
+            } catch(e) {
+                console.warn('Could not fetch announcements for print:', e);
+            }
+        }
+
+        const printHtml = this.generateTwoWeeksPrintHtml(notes, announcementText);
+
+        let iframe = document.getElementById('dent-schedule-print-iframe');
+        if (iframe) iframe.remove();
+
+        iframe = document.createElement('iframe');
+        iframe.id = 'dent-schedule-print-iframe';
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        document.body.appendChild(iframe);
+
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(printHtml);
+        doc.close();
+
+        const modal = document.getElementById('dent-print-schedule-modal');
+        if (modal) modal.remove();
+
+        setTimeout(() => {
+            try {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            } catch(err) {
+                console.error('Print iframe error:', err);
+            }
+        }, 400);
+    },
+
+    generateTwoWeeksPrintHtml: function(customNotes, announcementText) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const twoWeeksLater = new Date(today);
+        twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
+        twoWeeksLater.setHours(23, 59, 59, 999);
+
+        const rawEvents = Array.isArray(this.eventsData) ? this.eventsData : [];
+        const events = rawEvents.filter(ev => {
+            const s = this.parseLocalDate(ev.date);
+            if (!s) return false;
+            s.setHours(0, 0, 0, 0);
+            if (ev.end_date) {
+                const e = this.parseLocalDate(ev.end_date);
+                if (e) {
+                    e.setHours(23, 59, 59, 999);
+                    return (e >= today && s <= twoWeeksLater);
+                }
+            }
+            return (s >= today && s <= twoWeeksLater);
+        });
+
+        // Derive subtitles from saved student selection
+        let sel = {};
+        try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
+        const specNames = { 'dentistry': 'كلية طب الأسنان', 'medicine': 'كلية الطب البشري', 'pre-med': 'السنة التحضيرية' };
+        const specTitle = specNames[sel.specialty] || 'البرنامج الأكاديمي';
+        const yearText = (sel.specialty === 'pre-med' || !sel.year) ? '' : ` — السنة ${sel.year}`;
+        const semText = sel.semester ? ` (الفصل الدراسي ${sel.semester === 1 || sel.semester === '1' ? 'الأول' : 'الثاني'})` : '';
+        const subTitle = `${specTitle}${yearText}${semText}`;
+
+        // Date range string (BiDi safe)
+        const startDay = today.getDate();
+        const startMonth = this.gregorianMonthsEN[today.getMonth()].substring(0, 3);
+        const startYear = today.getFullYear();
+        const endD = new Date(today);
+        endD.setDate(endD.getDate() + 14);
+        const endDay = endD.getDate();
+        const endMonth = this.gregorianMonthsEN[endD.getMonth()].substring(0, 3);
+        const endYear = endD.getFullYear();
+        const rangeStr = `${startDay} ${startMonth} ${startYear} — ${endDay} ${endMonth} ${endYear}`;
+
+        // Stats count
+        let examCount = 0;
+        let holidayCount = 0;
+        let paymentCount = 0;
+        events.forEach(ev => {
+            if (ev.type === 'exam') examCount++;
+            else if (ev.type === 'holiday') holidayCount++;
+            else if (ev.type === 'payment') paymentCount++;
+        });
+
+        // Anchor semester start to Sunday 2026-08-30 (Week 1), ensuring consistent week numbering
+        let startSunday = new Date(2026, 7, 30);
+        startSunday.setHours(0, 0, 0, 0);
+
+        // Calculate dynamic week numbers for badge
+        const todaySunday = new Date(today);
+        todaySunday.setDate(today.getDate() - today.getDay());
+        todaySunday.setHours(0, 0, 0, 0);
+        const startWeekNum = Math.floor((todaySunday - startSunday) / (1000 * 60 * 60 * 24 * 7)) + 1;
+
+        const endSunday = new Date(twoWeeksLater);
+        endSunday.setDate(twoWeeksLater.getDate() - endSunday.getDay());
+        endSunday.setHours(0, 0, 0, 0);
+        const endWeekNum = Math.floor((endSunday - startSunday) / (1000 * 60 * 60 * 24 * 7)) + 1;
+
+        let weeksBadgeText = '';
+        if (startWeekNum > 0 && endWeekNum > 0) {
+            if (startWeekNum === endWeekNum) {
+                weeksBadgeText = `الأسبوع ${startWeekNum} • تقويم أم القرى`;
+            } else {
+                weeksBadgeText = `الأسبوع ${startWeekNum} والأسبوع ${endWeekNum} • تقويم أم القرى`;
+            }
+        } else {
+            weeksBadgeText = 'تقويم أم القرى';
+        }
+
+        const groupedWeeks = {};
+        events.forEach(ev => {
+            const dateObj = this.parseLocalDate(ev.date) || new Date();
+            const dayOfWeek = dateObj.getDay();
+            const sundayDate = new Date(dateObj);
+            sundayDate.setDate(dateObj.getDate() - dayOfWeek);
+            sundayDate.setHours(0, 0, 0, 0);
+
+            const weekNum = Math.floor((sundayDate - startSunday) / (1000 * 60 * 60 * 24 * 7)) + 1;
+            const sunMonth = this.gregorianMonthsAR[sundayDate.getMonth()];
+            const sunDay = sundayDate.getDate();
+            const sunYear = sundayDate.getFullYear();
+            const weekKey = `${sunYear}-${String(sundayDate.getMonth()).padStart(2, '0')}-${String(sunDay).padStart(2, '0')}`;
+            const weekName = `الأسبوع ${weekNum} — ${sunMonth}`;
+
+            if (!groupedWeeks[weekKey]) {
+                groupedWeeks[weekKey] = {
+                    weekName,
+                    hijriLabel: '',
+                    events: []
+                };
+            }
+            groupedWeeks[weekKey].events.push(ev);
+
+            if (!groupedWeeks[weekKey].hijriLabel && ev.hijri) {
+                const rawParts = ev.hijri.split(/[\/\-]/);
+                if (rawParts.length >= 2) {
+                    let hYear = rawParts[0];
+                    let mStr = rawParts[1];
+                    if (parseInt(rawParts[0], 10) < 100 && parseInt(rawParts[2] || '0', 10) > 1000) {
+                        hYear = rawParts[2];
+                        mStr = rawParts[1];
+                    }
+                    const mIndex = parseInt(mStr, 10) - 1;
+                    if (mIndex >= 0 && mIndex < 12) {
+                        groupedWeeks[weekKey].hijriLabel = `${this.hijriMonths[mIndex]} ${hYear}هـ`;
+                    }
+                }
+            }
+        });
+
+        // Type mapping — prints whatever "نوع الحدث" was entered when making the event
+        const typeMap = {
+            'exam': 'اختبار',
+            'holiday': 'إجازة رسمية',
+            'payment': 'مكافأة',
+            'start': 'بداية دراسة',
+            'other': 'أخرى'
+        };
+
+        const typeBadgeClass = {
+            'exam': 'm1-badge-exam',
+            'holiday': 'm1-badge-holiday',
+            'payment': 'm1-badge-payment',
+            'start': 'm1-badge-holiday',
+            'other': 'm1-badge-exam'
+        };
+
+        let weeksHtml = '';
+        const sortedWeeks = Object.keys(groupedWeeks).sort();
+
+        if (sortedWeeks.length === 0) {
+            weeksHtml = '<div style="text-align: center; padding: 24px; color: #64748b; font-size: 0.85rem; border: 1px dashed #cbd5e1; border-radius: 6px;">لا توجد أحداث مجدولة خلال الـ 14 يوماً القادمة.</div>';
+        } else {
+            sortedWeeks.forEach(weekKey => {
+                const groupData = groupedWeeks[weekKey];
+                let rowsHtml = '';
+                groupData.events.forEach(ev => {
+                    const dDate = this.parseLocalDate(ev.date) || new Date();
+                    const dayName = dDate.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { weekday: 'long' });
+                    const monthShort = this.gregorianMonthsEN[dDate.getMonth()].substring(0, 3);
+                    let gregDateStr = `${dDate.getDate()} ${monthShort} ${dDate.getFullYear()}`;
+                    if (ev.end_date) {
+                        const eDate = this.parseLocalDate(ev.end_date);
+                        if (eDate) {
+                            const eMonthShort = this.gregorianMonthsEN[eDate.getMonth()].substring(0, 3);
+                            gregDateStr = `${dDate.getDate()} – ${eDate.getDate()} ${eMonthShort} ${eDate.getFullYear()}`;
+                        }
+                    }
+
+                    const rawHijri = ev.hijri ? this.formatHijriDate(ev.hijri) : this.hijriFromGregorian(ev.date);
+                    const hijriStr = rawHijri || '—';
+
+                    // Countdown
+                    const targetDate = this.parseLocalDate(ev.date) || new Date();
+                    targetDate.setHours(0,0,0,0);
+                    const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+                    let countdownText = '';
+                    let countdownClass = 'm1-countdown-normal';
+                    if (diffDays === 0) {
+                        countdownText = 'اليوم';
+                        countdownClass = 'm1-countdown-urgent';
+                    } else if (diffDays === 1) {
+                        countdownText = 'غداً';
+                        countdownClass = 'm1-countdown-urgent';
+                    } else if (diffDays === 2) {
+                        countdownText = 'بعد يومين';
+                        countdownClass = 'm1-countdown-soon';
+                    } else if (diffDays >= 3 && diffDays <= 10) {
+                        countdownText = `بعد ${diffDays} أيام`;
+                    } else if (diffDays > 10) {
+                        countdownText = `بعد ${diffDays} يوماً`;
+                    } else {
+                        countdownText = 'جارٍ / منتهٍ';
+                    }
+
+                    const typeLabel = ev.type_label || typeMap[ev.type] || ev.type || 'حدث';
+                    const badgeClass = typeBadgeClass[ev.type] || 'm1-badge-exam';
+
+                    rowsHtml += `
+                        <tr>
+                            <td class="m1-day-col">${dentEscapeHtml(dayName)}</td>
+                            <td class="m1-date-col">
+                                <span class="m1-date-greg" dir="ltr">${dentEscapeHtml(gregDateStr)}</span>
+                                <span class="m1-date-hijri">${dentEscapeHtml(hijriStr)}</span>
+                            </td>
+                            <td class="m1-title-col">
+                                <strong>${dentEscapeHtml(ev.title)}</strong>
+                            </td>
+                            <td class="m1-status-col"><span class="m1-type-badge ${badgeClass}">${dentEscapeHtml(typeLabel)}</span></td>
+                            <td class="m1-status-col ${countdownClass}">${dentEscapeHtml(countdownText)}</td>
+                        </tr>
+                    `;
+                });
+
+                weeksHtml += `
+                    <div class="m1-week-block">
+                        <div class="m1-week-header">
+                            <span>${dentEscapeHtml(groupData.weekName)}</span>
+                            <span>${dentEscapeHtml(groupData.hijriLabel || '')}</span>
+                        </div>
+                        <table class="m1-table">
+                            <thead>
+                                <tr>
+                                    <th>اليوم</th>
+                                    <th>التاريخ (ميلادي / هجري)</th>
+                                    <th>تفاصيل الحدث والمقرر</th>
+                                    <th style="text-align: center;">النوع</th>
+                                    <th style="text-align: center;">العد التنازلي</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            });
+        }
+
+        // Announcement section (if provided)
+        let announcementHtml = '';
+        if (announcementText) {
+            announcementHtml = `
+                <div style="margin-top: 12px; border: 1px solid #cbd5e1; border-right: 3px solid #0284c7; border-radius: 6px; padding: 8px 12px; background: #f8fafc; page-break-inside: avoid;">
+                    <strong style="font-size: 0.72rem; color: #0369a1; display: block; margin-bottom: 4px;">📢 إعلانات وتنبيهات الدفعة:</strong>
+                    <div class="print-ann-body" style="font-size: 0.70rem; color: #1e293b; line-height: 1.5;">${announcementText}</div>
+                </div>
+            `;
+        }
+
+        // Notes section (omitted if empty)
+        let notesHtml = '';
+        if (customNotes) {
+            notesHtml = `
+                <div style="margin-top: 12px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; background: #fafafa; page-break-inside: avoid;">
+                    <strong style="font-size: 0.72rem; color: #334155; display: block; margin-bottom: 4px;">ملاحظات وتذكيرات شخصية:</strong>
+                    <div style="font-size: 0.72rem; color: #1e293b; line-height: 1.5; white-space: pre-wrap;">${dentEscapeHtml(customNotes)}</div>
+                </div>
+            `;
+        }
+
+        const todayFormatted = today.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        return `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Dent2025 • تقويم الأسبوعين القادمين</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #ffffff;
+            color: #0f172a;
+            padding: 10mm 12mm;
+            direction: rtl;
+            font-size: 12px;
+        }
+        @page {
+            size: A4 portrait;
+            margin: 10mm 12mm;
+        }
+        .doc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #0f172a;
+            margin-bottom: 14px;
+        }
+        .doc-titles h1 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.2;
+        }
+        .doc-titles p {
+            font-size: 0.78rem;
+            color: #64748b;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+        .doc-meta-badge {
+            text-align: left;
+            direction: ltr;
+        }
+        .doc-meta-badge .period {
+            display: inline-block;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #1e293b;
+            font-family: 'Outfit', sans-serif;
+        }
+        .doc-meta-badge .subperiod {
+            display: block;
+            font-size: 0.68rem;
+            color: #64748b;
+            margin-top: 3px;
+            text-align: right;
+            direction: rtl;
+        }
+        .print-stats-ribbon {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .print-stat-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 6px 10px;
+            text-align: center;
+        }
+        .print-stat-item .num {
+            display: block;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #0f172a;
+            font-family: 'Outfit', sans-serif;
+            line-height: 1;
+        }
+        .print-stat-item .lbl {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: #64748b;
+            margin-top: 3px;
+            display: block;
+        }
+        .m1-week-block {
+            margin-bottom: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            overflow: hidden;
+            page-break-inside: avoid;
+        }
+        .m1-week-header {
+            background: #1e293b;
+            color: #f8fafc;
+            padding: 5px 12px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .m1-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.72rem;
+        }
+        .m1-table th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            text-align: right;
+            padding: 6px 10px;
+            border-bottom: 1px solid #cbd5e1;
+            font-size: 0.68rem;
+        }
+        .m1-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+            color: #1e293b;
+        }
+        .m1-table tr:last-child td { border-bottom: none; }
+        .m1-table tr:nth-child(even) { background-color: #fafafa; }
+        .m1-type-badge {
+            display: inline-block;
+            font-size: 0.64rem;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .m1-badge-exam { background: #f8fafc; color: #881337; border: 1px solid #fecdd3; }
+        .m1-badge-holiday { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .m1-badge-payment { background: #fefce8; color: #854d0e; border: 1px solid #fef08a; }
+        .m1-day-col {
+            font-weight: 700;
+            color: #0f172a;
+            width: 75px;
+            font-size: 0.72rem;
+        }
+        .m1-date-col {
+            width: 125px;
+            vertical-align: middle;
+            line-height: 1.35;
+        }
+        .m1-date-greg {
+            display: block;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #1e293b;
+            direction: ltr;
+            text-align: right;
+            unicode-bidi: isolate;
+        }
+        .m1-date-hijri {
+            display: block;
+            font-size: 0.62rem;
+            color: #64748b;
+            direction: rtl;
+            text-align: right;
+            margin-top: 1px;
+            unicode-bidi: isolate;
+        }
+        .m1-title-col { font-weight: 600; line-height: 1.35; }
+        .m1-status-col { width: 80px; text-align: center; }
+        .m1-countdown-urgent { color: #991b1b; font-weight: 700; }
+        .m1-countdown-soon { color: #c2410c; font-weight: 700; }
+        .m1-countdown-normal { color: #475569; font-weight: 600; }
+        .print-ann-body p { margin: 0 0 3px 0; }
+        .print-ann-body p:last-child { margin-bottom: 0; }
+        .doc-footer {
+            margin-top: 14px;
+            padding-top: 8px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.68rem;
+            color: #64748b;
+            page-break-inside: avoid;
+        }
+        .doc-footer-right {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            color: #475569;
+            direction: ltr;
+        }
+        .doc-footer-left {
+            font-family: 'Outfit', 'Cairo', sans-serif;
+            color: #64748b;
+            direction: rtl;
+        }
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="doc-header">
+        <div class="doc-titles">
+            <h1>Dent2025 • جدول الأسبوعين القادمين</h1>
+            <p>${dentEscapeHtml(subTitle)}</p>
+        </div>
+        <div class="doc-meta-badge">
+            <span class="period" dir="ltr">${dentEscapeHtml(rangeStr)}</span>
+            <span class="subperiod">${dentEscapeHtml(weeksBadgeText)}</span>
+        </div>
+    </div>
+
+    <div class="print-stats-ribbon">
+        <div class="print-stat-item">
+            <span class="num">${examCount}</span>
+            <span class="lbl">اختبارات مجدولة</span>
+        </div>
+        <div class="print-stat-item">
+            <span class="num">${holidayCount}</span>
+            <span class="lbl">إجازات رسمية</span>
+        </div>
+        <div class="print-stat-item">
+            <span class="num">${paymentCount}</span>
+            <span class="lbl">صرف مكافآت</span>
+        </div>
+        <div class="print-stat-item">
+            <span class="num">14</span>
+            <span class="lbl">يوماً تحت المتابعة</span>
+        </div>
+    </div>
+
+    ${weeksHtml}
+
+    ${announcementHtml}
+
+    ${notesHtml}
+
+    <div class="doc-footer">
+        <span class="doc-footer-right">dent2025.com</span>
+        <span class="doc-footer-left">${dentEscapeHtml(todayFormatted)}</span>
+    </div>
+</body>
+</html>`;
     }
 };
 
