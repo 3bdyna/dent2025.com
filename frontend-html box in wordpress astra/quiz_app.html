@@ -3,7 +3,7 @@
 
 /* Dent2025 AI Exam Portal - Unified Site Design System */
 .dent-quiz-container { max-width: 850px; margin: 20px auto; padding: 0 10px; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif; color: #e2e8f0; direction: rtl; }
-.dent-quiz-card { background: #1e1e1e; padding: 20px 18px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 20px; }
+.dent-quiz-card { background: #1e1e1e; padding: 20px 18px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 20px; overflow: hidden; box-sizing: border-box; }
 .dent-quiz-header { text-align: center; margin-bottom: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 10px; font-weight: 700; font-size: 1.25rem; background: linear-gradient(90deg, #e2e8f0, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
 /* Main Mode Tabs - Compact horizontal on all screens */
@@ -143,17 +143,23 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     scrollbar-color: rgba(255, 255, 255, 0.15) rgba(0, 0, 0, 0.2);
 }
 
-/* Wizard Stepper System */
-.dent-wizard-tracker { display: flex; align-items: center; justify-content: space-between; position: relative; margin-bottom: 18px; padding: 0 10px; }
-.dent-tracker-bar { position: absolute; top: 14px; left: 24px; right: 24px; height: 2px; background: rgba(255, 255, 255, 0.08); z-index: 1; }
-.dent-tracker-fill { position: absolute; top: 14px; right: 24px; width: 0%; height: 2px; background: #94a3b8; transition: width 0.3s ease; z-index: 2; }
-.dent-step-node { display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; z-index: 3; cursor: pointer; user-select: none; }
-.dent-step-circle { width: 28px; height: 28px; border-radius: 50%; background: #18181b; border: 1px solid rgba(255, 255, 255, 0.1); color: #64748b; font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all 0.25s ease; }
-.dent-step-label { font-size: 0.74rem; font-weight: 600; color: #64748b; transition: color 0.25s ease; white-space: nowrap; }
-.dent-step-node.active .dent-step-circle { background: #27272a; border-color: rgba(255, 255, 255, 0.35); color: #ffffff; box-shadow: 0 0 10px rgba(255, 255, 255, 0.1); }
-.dent-step-node.active .dent-step-label { color: #f8fafc; }
-.dent-step-node.completed .dent-step-circle { background: #18181b; border-color: rgba(34, 197, 94, 0.4); color: #a7f3d0; }
+/* Wizard Stepper System - Strictly Contained, Monochromatic with Faint Glow (No Colors) */
+.dent-wizard-tracker { display: flex; align-items: flex-start; justify-content: space-between; position: relative; margin-bottom: 20px; padding: 0 4px; width: 100%; box-sizing: border-box; }
+.dent-step-node { display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; z-index: 3; cursor: pointer; user-select: none; flex-shrink: 0; min-width: 60px; max-width: 105px; text-align: center; }
+.dent-step-circle { width: 28px; height: 28px; border-radius: 50%; background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); color: #71717a; font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all 0.25s ease; box-shadow: none; }
+.dent-step-label { font-size: 0.74rem; font-weight: 600; color: #71717a; transition: color 0.25s ease; line-height: 1.3; word-break: break-word; }
+
+/* Active Step: Faint clean silver/white glow, NO colors */
+.dent-step-node.active .dent-step-circle { background: #27272a; border-color: rgba(255, 255, 255, 0.5); color: #ffffff; box-shadow: 0 0 12px rgba(255, 255, 255, 0.16); }
+.dent-step-node.active .dent-step-label { color: #f8fafc; font-weight: 700; }
+
+/* Completed Step: Neutral silver, NO green/colors, faint subtle glow */
+.dent-step-node.completed .dent-step-circle { background: #222226; border-color: rgba(255, 255, 255, 0.3); color: #e2e8f0; box-shadow: 0 0 6px rgba(255, 255, 255, 0.08); }
 .dent-step-node.completed .dent-step-label { color: #94a3b8; }
+
+/* Connecting Line Segments (Bounded strictly between nodes - cannot overflow or bleed) */
+.dent-step-line { flex: 1; height: 2px; background: rgba(255, 255, 255, 0.08); margin-top: 13px; position: relative; border-radius: 1px; min-width: 15px; overflow: hidden; }
+.dent-step-line-fill { height: 100%; width: 0%; background: #cbd5e1; transition: width 0.3s ease; }
 
 .dent-step-panel { display: none; }
 .dent-step-panel.active { display: block; animation: dentFade 0.2s ease forwards; }
@@ -183,7 +189,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     .dent-bank-filters { flex-direction: column; gap: 6px; }
     .dent-step-label { font-size: 0.68rem; }
     .dent-step-circle { width: 24px; height: 24px; font-size: 0.72rem; }
-    .dent-tracker-bar, .dent-tracker-fill { top: 12px; }
+    .dent-step-line { margin-top: 11px; }
 }
 </style>
 
@@ -202,19 +208,26 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             </button>
         </div>
 
-        <!-- Stepper Tracker -->
+        <!-- Stepper Tracker (Contained Flex Segments - No Out-of-Bounds Bleed) -->
         <div class="dent-wizard-tracker">
-            <div class="dent-tracker-bar"></div>
-            <div class="dent-tracker-fill" id="dq-tracker-fill"></div>
-
             <div class="dent-step-node active" id="dq-node-step1">
                 <div class="dent-step-circle">1</div>
                 <div class="dent-step-label">المحتوى والمصدر</div>
             </div>
+
+            <div class="dent-step-line" id="dq-step-line-1">
+                <div class="dent-step-line-fill" id="dq-step-line-fill-1"></div>
+            </div>
+
             <div class="dent-step-node" id="dq-node-step2">
                 <div class="dent-step-circle">2</div>
                 <div class="dent-step-label">التخصيص والمعايير</div>
             </div>
+
+            <div class="dent-step-line" id="dq-step-line-2">
+                <div class="dent-step-line-fill" id="dq-step-line-fill-2"></div>
+            </div>
+
             <div class="dent-step-node" id="dq-node-step3">
                 <div class="dent-step-circle">3</div>
                 <div class="dent-step-label">المراجعة والبدء</div>
@@ -814,12 +827,10 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             }
         }
 
-        const fill = document.getElementById('dq-tracker-fill');
-        if (fill) {
-            if (currentWizardStep === 1) fill.style.width = '0%';
-            else if (currentWizardStep === 2) fill.style.width = '50%';
-            else if (currentWizardStep === 3) fill.style.width = '100%';
-        }
+        const line1 = document.getElementById('dq-step-line-fill-1');
+        const line2 = document.getElementById('dq-step-line-fill-2');
+        if (line1) line1.style.width = (currentWizardStep >= 2) ? '100%' : '0%';
+        if (line2) line2.style.width = (currentWizardStep >= 3) ? '100%' : '0%';
 
         const btnPrev = document.getElementById('dq-btn-prev');
         const btnNext = document.getElementById('dq-btn-next');
