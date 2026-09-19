@@ -975,13 +975,20 @@ function renderAnnouncements(dataObj, selection) {
         .dent-announcements-simple {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 14px; padding: 20px; margin-bottom: 25px;
+            border-radius: 14px; padding: 16px 20px 14px 20px; margin-bottom: 25px;
             direction: rtl; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
             position: relative;
         }
-        .dent-ann-content { font-size: 1rem; line-height: 1.7; color: #cbd5e1; min-height: 40px; }
+        .dent-ann-content { font-size: 1rem; line-height: 1.6; color: #cbd5e1; }
+        .dent-ann-content p { margin-top: 0; margin-bottom: 6px; }
+        .dent-ann-content p:last-child,
+        .dent-ann-content ul:last-child,
+        .dent-ann-content ol:last-child,
+        .dent-ann-content > *:last-child { margin-bottom: 0 !important; }
+        .dent-ann-content p:empty,
+        .dent-ann-content br:last-child { display: none; }
         .dent-ann-content[contenteditable="true"] {
-            background: rgba(0,0,0,0.3); border: 1px dashed #4f8cff; padding: 15px; border-radius: 8px; outline: none;
+            background: rgba(0,0,0,0.3); border: 1px dashed #4f8cff; padding: 15px; border-radius: 8px; outline: none; min-height: 40px;
         }
         
         .dent-ann-toolbar { display: none; gap: 8px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
@@ -1088,7 +1095,8 @@ window.saveAnnouncements = function() {
     
     // Safely sanitize HTML to prevent script injection while preserving formatting
     content = dentSanitizeRichText(content);
-    if (!content.trim() || content.trim() === '<br>' || content.trim() === '<p></p>') {
+    content = content.replace(/(?:<p>(?:<br\s*\/?>|&nbsp;|\s)*<\/p>|<br\s*\/?>|\s)+$/gi, '').trim();
+    if (!content || content === '<br>' || content === '<p></p>') {
         content = 'لا يوجد إعلانات حالياً.';
     }
     
