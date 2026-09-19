@@ -327,34 +327,37 @@ const ScheduleApp = {
                     let badgeHtml = '';
                     let badgeClass = '';
                     
-                    if (ev.end_date) {
-                        const eDate = this.parseLocalDate(ev.end_date);
-                        if (eDate) {
-                            eDate.setHours(23, 59, 59, 999);
-                            const daysLeft = Math.ceil((eDate - today) / (1000 * 60 * 60 * 24));
-                            if (daysLeft < 0) {
+                    const sDate = this.parseLocalDate(ev.date);
+                    if (sDate) sDate.setHours(0, 0, 0, 0);
+                    const eDate = ev.end_date ? this.parseLocalDate(ev.end_date) : null;
+                    if (eDate) eDate.setHours(0, 0, 0, 0);
+
+                    if (sDate) {
+                        if (eDate && eDate > sDate) {
+                            // Multi-day event
+                            if (today > eDate) {
                                 badgeHtml = 'انتهى';
-                            } else if (daysLeft === 0) {
-                                badgeHtml = 'اليوم';
+                            } else if (today >= sDate && today <= eDate) {
+                                badgeHtml = 'جارية الآن';
                                 badgeClass = 'urgent';
                                 hasHighlight = true;
-                            } else if (daysLeft === 1) {
-                                badgeHtml = 'غداً';
-                                badgeClass = 'warning';
-                            } else if (daysLeft === 2) {
-                                badgeHtml = 'بعد يومين';
-                                badgeClass = 'warning';
-                            } else if (daysLeft >= 3 && daysLeft <= 10) {
-                                badgeHtml = `بعد ${daysLeft} أيام`;
                             } else {
-                                badgeHtml = `بعد ${daysLeft} يوماً`;
+                                const daysLeft = Math.round((sDate - today) / (1000 * 60 * 60 * 24));
+                                if (daysLeft === 1) {
+                                    badgeHtml = 'غداً';
+                                    badgeClass = 'warning';
+                                } else if (daysLeft === 2) {
+                                    badgeHtml = 'بعد يومين';
+                                    badgeClass = 'warning';
+                                } else if (daysLeft >= 3 && daysLeft <= 10) {
+                                    badgeHtml = `بعد ${daysLeft} أيام`;
+                                } else {
+                                    badgeHtml = `بعد ${daysLeft} يوماً`;
+                                }
                             }
-                        }
-                    } else {
-                        const d = this.parseLocalDate(ev.date);
-                        if (d) {
-                            d.setHours(23, 59, 59, 999);
-                            const daysLeft = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+                        } else {
+                            // Single-day event
+                            const daysLeft = Math.round((sDate - today) / (1000 * 60 * 60 * 24));
                             if (daysLeft < 0) {
                                 badgeHtml = 'انتهى';
                             } else if (daysLeft === 0) {
@@ -490,8 +493,9 @@ const ScheduleApp = {
 
         if (closestExam) {
             const cDate = this.parseLocalDate(closestExam.date);
+            if (cDate) cDate.setHours(0, 0, 0, 0);
             const diffTime = cDate ? Math.abs(cDate - today) : 0;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
             if (elExam) {
                 let diffDaysText = '';
                 if (diffDays === 0) diffDaysText = 'اليوم';
@@ -552,7 +556,7 @@ const ScheduleApp = {
             if (semesterEndDate) {
                 if (today <= semesterEndDate) {
                     const diffTime = Math.abs(semesterEndDate - today);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                     if (elDays) elDays.innerText = diffDays;
                 } else {
                     if (elDays) elDays.innerText = '0';
@@ -566,7 +570,7 @@ const ScheduleApp = {
         } else {
             if (semesterEndDate) {
                 const diffTime = Math.abs(semesterEndDate - today);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                 if (elDays) elDays.innerText = diffDays;
                 if (elDaysSub) elDaysSub.innerText = 'في الفصل الدراسي';
             }
@@ -584,7 +588,7 @@ const ScheduleApp = {
             if (eDate) {
                 eDate.setHours(0,0,0,0);
                 const diffTime = Math.abs(eDate - today);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                 if (elVacation) elVacation.innerText = diffDays + ' يوم';
             }
             if (elVacationName) elVacationName.innerText = currentVacation.title;
@@ -594,7 +598,7 @@ const ScheduleApp = {
             if (nDate) {
                 nDate.setHours(0,0,0,0);
                 const diffTime = Math.abs(nDate - today);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                 if (elVacation) elVacation.innerText = diffDays + ' يوم';
             }
             if (elVacationName) elVacationName.innerText = '(' + nextVacation.title + ')';
