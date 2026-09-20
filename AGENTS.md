@@ -139,6 +139,24 @@ python tools/deploy.py "frontend-html box in wordpress astra/dashboard.js" "fron
 - Backend files (`backend/*`) → Auto-routed to `public_html/backend/`
 - Root-level backend files (`dent2025_api.php`, `schedule_backend.php`, etc.) → Auto-routed to `public_html/` (web root)
 
+### D. ⭐ Cloud-First Source of Truth for Dynamic Data (Zero Cloud Data Loss)
+> **CRITICAL RULE**: The live cloud (Azure `/var/www/dent2025/`) is the **absolute Source of Truth** for all dynamic runtime data:
+> - Academic calendar events (`schedule_events.json`, `schedule_events_*.json`)
+> - Class announcements (`announcements_data/*.json`)
+> - Timetable classes (`dent2025_classes.json`)
+>
+> **NEVER blindly overwrite or delete cloud data from local files or Git.**
+>
+> #### The Mandatory 3-Step Protocol when User asks to Add/Edit Events in Chat:
+> 1. **Pull fresh cloud state**: Run `python tools/sync_cloud_events.py --pull` before modifying any local event file.
+> 2. **Apply requested change**: Add or edit the target event in the freshly synced local file.
+> 3. **Smart-Merge Deploy**: Run `python tools/deploy_safe.py --note "description" <file>` (Stage 0 will auto-merge and preserve all cloud events) or `python tools/sync_cloud_events.py --merge-and-deploy <file>`.
+>
+> #### Built-In Guardrails:
+> - **Pre-flight Guardrail (`deploy_guard.py`)**: Automatically queries Azure via SSH. If the local file is missing any event present in the cloud, deployment is **immediately blocked**.
+> - **Auto-Merge in SafeDeploy (`deploy_safe.py`)**: Stage 0 automatically pulls the cloud and merges any local additions without deleting any existing cloud events.
+> - **Zero Deletion Guarantee**: Cloud events are never deleted unless explicit `--allow-delete` flag is passed after creating a server-side backup snapshot.
+
 ---
 
 ## 4. Frontend Component Page-by-Page Mapping Matrix

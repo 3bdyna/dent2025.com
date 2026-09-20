@@ -190,6 +190,33 @@ def run_safe_deployment(files, note, dry_run=False):
     print(f"AI Note      : {note}")
     print(f"Target Files : {files}")
 
+    # Stage 0: Cloud-First Auto-Merge for Dynamic Data Files
+    dynamic_files = [f for f in files if deploy_guard.is_dynamic_data_file(f)]
+    if dynamic_files:
+        import sync_cloud_events
+        print("\n[Stage 0/4] Cloud-First Auto-Merge for Dynamic Data...", flush=True)
+        for df in dynamic_files:
+            fname = os.path.basename(df)
+            loc_path = os.path.abspath(df)
+            rem_path = f"{sync_cloud_events.REMOTE_BASE}/{fname}"
+            if 'announcements_data' in df.replace('\\', '/'):
+                rem_path = f"{sync_cloud_events.REMOTE_BASE}/announcements_data/{fname}"
+
+            rem_raw, _ = sync_cloud_events.get_remote_file_content(rem_path)
+            if rem_raw and rem_raw.strip():
+                try:
+                    with open(loc_path, 'r', encoding='utf-8') as lf:
+                        loc_d = json.load(lf)
+                    rem_d = json.loads(rem_raw)
+                    if isinstance(loc_d, list) and isinstance(rem_d, list):
+                        merged, added, updated = sync_cloud_events.smart_merge_events(loc_d, rem_d, allow_delete=False)
+                        with open(loc_path, 'w', encoding='utf-8') as lf:
+                            json.dump(merged, lf, ensure_ascii=False, indent=2)
+                            lf.write('\n')
+                        print(f"  [MERGED] '{fname}': preserved all cloud events (+{added} new, ~{updated} updated).", flush=True)
+                except Exception as e:
+                    print(f"  [WARNING] Auto-merge failed for '{fname}': {e}", flush=True)
+
     # Stage 1: Pre-flight Guard Check
     t1 = time.time()
     print("\n[Stage 1/4] Pre-flight Guard & Syntax Validation...", flush=True)

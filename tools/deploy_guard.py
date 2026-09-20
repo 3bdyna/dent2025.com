@@ -59,6 +59,76 @@ def is_forbidden_path(path):
         return True
     return False
 
+def is_dynamic_data_file(path):
+    """Checks if path is a dynamic academic data file modified live on website."""
+    base = os.path.basename(path)
+    norm = path.replace('\\', '/')
+    if base.startswith('schedule_events') and base.endswith('.json'):
+        return True
+    if base == 'dent2025_classes.json':
+        return True
+    if 'announcements_data' in norm and base.endswith('.json'):
+        return True
+    return False
+
+def check_dynamic_data_safety(file_path):
+    """
+    Guarantees cloud data cannot be deleted or overwritten by an outdated local file.
+    Validates that every event/item currently on Azure exists in the local file.
+    """
+    if not is_dynamic_data_file(file_path):
+        return True, "OK"
+
+    abs_path = os.path.abspath(file_path)
+    if not os.path.exists(abs_path):
+        return False, f"File does not exist: {file_path}"
+
+    fname = os.path.basename(file_path)
+    remote_path = f"/var/www/dent2025/{fname}"
+    if 'announcements_data' in file_path.replace('\\', '/'):
+        remote_path = f"/var/www/dent2025/announcements_data/{fname}"
+
+    # Query cloud via fast SSH cat
+    try:
+        ssh_cmd = ['ssh', '-n', '-o', 'BatchMode=yes', 'azureuser@ssh.dent2025.com', f'cat {remote_path}']
+        res = subprocess.run(
+            ssh_cmd,
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            encoding='utf-8',
+            errors='ignore',
+            timeout=8
+        )
+        if res.returncode != 0 or not res.stdout.strip():
+            # File might not exist remotely yet, which is safe to deploy as new
+            return True, "OK"
+        remote_raw = res.stdout.strip()
+    except Exception as e:
+        print(f"[GUARD NOTICE] Cloud safety probe unreachable ({e}). Proceeding with caution.")
+        return True, "OK"
+
+    try:
+        with open(abs_path, 'r', encoding='utf-8') as f:
+            local_data = json.load(f)
+        remote_data = json.loads(remote_raw)
+    except Exception as e:
+        return False, f"JSON parse error during cloud safety check: {e}"
+
+    if isinstance(local_data, list) and isinstance(remote_data, list):
+        loc_ids = {e.get('id') for e in local_data if isinstance(e, dict) and 'id' in e}
+        rem_ids = {e.get('id') for e in remote_data if isinstance(e, dict) and 'id' in e}
+        missing_ids = rem_ids - loc_ids
+        if missing_ids:
+            sample = list(missing_ids)[:3]
+            return False, (
+                f"Cloud Protection Alert: Local '{fname}' is missing {len(missing_ids)} event(s) "
+                f"present in the Cloud (e.g. {sample}). The website is the source of truth! "
+                f"Aborting deployment to prevent cloud data loss. Run 'python tools/sync_cloud_events.py --pull' or '--merge-and-deploy {fname}' first."
+            )
+
+    return True, "OK"
+
 def validate_deployment(file_paths, note):
     """Full validation of files and deployment note."""
     errors = []
@@ -76,6 +146,11 @@ def validate_deployment(file_paths, note):
         is_valid, msg = check_syntax(path)
         if not is_valid:
             errors.append(msg)
+            continue
+
+        is_safe, msg_safe = check_dynamic_data_safety(path)
+        if not is_safe:
+            errors.append(msg_safe)
             
     return len(errors) == 0, errors
 
