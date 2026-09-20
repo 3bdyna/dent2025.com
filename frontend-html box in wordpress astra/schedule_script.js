@@ -1085,14 +1085,14 @@ const ScheduleApp = {
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px;">
-                    <button type="button" id="dent-exec-print-btn" onclick="ScheduleApp.executePrint()" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 7px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.35)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.2)';">
+                    <button type="button" id="dent-exec-print-btn" onclick="ScheduleApp.executePrint()" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.90rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.35)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.2)';">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                        <span>طباعة (A4 PDF)</span>
+                        <span>ملف PDF</span>
                     </button>
 
-                    <button type="button" id="dent-exec-image-btn" onclick="ScheduleApp.executeSaveAsImage()" style="width: 100%; height: 46px; background: #2563eb; color: #ffffff; border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 7px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);" onmouseover="this.style.background='#1d4ed8'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#2563eb'; this.style.transform='none';">
+                    <button type="button" id="dent-exec-image-btn" onclick="ScheduleApp.executeSaveAsImage()" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.90rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.35)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.2)';">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                        <span>حفظ كصورة (PNG)</span>
+                        <span>صورة PNG</span>
                     </button>
                 </div>
 
@@ -1202,6 +1202,53 @@ const ScheduleApp = {
         }
     },
 
+    getDynamicScheduleFileName: function(ext = 'png') {
+        let sel = {};
+        try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
+
+        let specPart = 'Schedule';
+        if (sel.specialty === 'dentistry') specPart = 'Dentistry';
+        else if (sel.specialty === 'medicine') specPart = 'Medicine';
+        else if (sel.specialty === 'pre-med') specPart = 'PreMed';
+
+        const yrPart = (sel.specialty === 'pre-med' || !sel.year) ? '' : `_Y${sel.year}`;
+        const semPart = sel.semester ? `_S${sel.semester}` : '';
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const currentSunday = new Date(today);
+        currentSunday.setDate(today.getDate() - today.getDay());
+        const startSunday = new Date(2026, 7, 30);
+        const startWeekNum = Math.floor((currentSunday - startSunday) / (1000 * 60 * 60 * 24 * 7)) + 1;
+        const endWeekNum = startWeekNum + 2;
+
+        let weekPart = '';
+        if (startWeekNum > 0) {
+            weekPart = `_Weeks${startWeekNum}-${endWeekNum}`;
+        }
+
+        const cleanExt = ext ? (ext.startsWith('.') ? ext.slice(1) : ext) : '';
+        const baseName = `Dent2025_${specPart}${yrPart}${semPart}${weekPart}`;
+        return cleanExt ? `${baseName}.${cleanExt}` : baseName;
+    },
+
+    loadHtmlToImage: function() {
+        if (window.htmlToImage) return Promise.resolve(window.htmlToImage);
+        if (this._htmlToImagePromise) return this._htmlToImagePromise;
+        this._htmlToImagePromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js';
+            script.crossOrigin = 'anonymous';
+            script.onload = () => resolve(window.htmlToImage);
+            script.onerror = () => {
+                this._htmlToImagePromise = null;
+                reject(new Error('تعذر تحميل مكتبة معالجة الصور عالية الدقة.'));
+            };
+            document.head.appendChild(script);
+        });
+        return this._htmlToImagePromise;
+    },
+
     loadHtml2Canvas: function() {
         if (window.html2canvas) return Promise.resolve(window.html2canvas);
         if (this._html2canvasPromise) return this._html2canvasPromise;
@@ -1243,8 +1290,6 @@ const ScheduleApp = {
                 }
             }
 
-            await this.loadHtml2Canvas();
-
             const printHtml = this.generateThreeWeeksPrintHtml(notes, announcementText, false);
 
             let iframe = document.getElementById('dent-image-render-iframe');
@@ -1252,7 +1297,7 @@ const ScheduleApp = {
 
             iframe = document.createElement('iframe');
             iframe.id = 'dent-image-render-iframe';
-            iframe.style.cssText = 'position:fixed; left:-9999px; top:0; width:800px; height:1200px; border:0; z-index:-99999;';
+            iframe.style.cssText = 'position:fixed; left:-9999px; top:0; width:860px; height:1200px; border:0; z-index:-99999;';
             document.body.appendChild(iframe);
 
             const doc = iframe.contentWindow.document;
@@ -1263,32 +1308,45 @@ const ScheduleApp = {
             if (doc.fonts && doc.fonts.ready) {
                 await doc.fonts.ready.catch(() => {});
             }
-            await new Promise(resolve => setTimeout(resolve, 350));
+            await new Promise(resolve => setTimeout(resolve, 400));
 
             const targetEl = doc.querySelector('.a4-print-sheet');
             if (!targetEl) throw new Error('تعذر العثور على محتوى الجدول للتصدير.');
 
-            const canvas = await window.html2canvas(targetEl, {
-                scale: 2.5,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: '#ffffff',
-                logging: false,
-                scrollX: 0,
-                scrollY: 0,
-                windowWidth: 800
-            });
+            let blob = null;
+            // Primary high-fidelity rasterizer: html-to-image (SVG foreignObject preserves Arabic ligatures, word-spacing, BiDi)
+            try {
+                const htmlToImage = await this.loadHtmlToImage();
+                blob = await htmlToImage.toBlob(targetEl, {
+                    pixelRatio: 2.5,
+                    backgroundColor: '#ffffff'
+                });
+            } catch(imgErr) {
+                console.warn('html-to-image failed or blocked, falling back to html2canvas:', imgErr);
+                await this.loadHtml2Canvas();
+                const canvas = await window.html2canvas(targetEl, {
+                    scale: 2.5,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    scrollX: 0,
+                    scrollY: 0,
+                    windowWidth: 860
+                });
+                blob = await new Promise((resolve, reject) => {
+                    canvas.toBlob(b => {
+                        if (b) resolve(b);
+                        else reject(new Error('فشل استخراج ملف الصورة.'));
+                    }, 'image/png');
+                });
+            }
 
             if (iframe) iframe.remove();
 
-            const blob = await new Promise((resolve, reject) => {
-                canvas.toBlob(b => {
-                    if (b) resolve(b);
-                    else reject(new Error('فشل استخراج ملف الصورة.'));
-                }, 'image/png');
-            });
+            if (!blob) throw new Error('فشل إنشاء ملف الصورة.');
 
-            const fileName = `Dent2025_Schedule_${new Date().toISOString().slice(0, 10)}.png`;
+            const fileName = this.getDynamicScheduleFileName('png');
             const file = new File([blob], fileName, { type: 'image/png' });
 
             const modal = document.getElementById('dent-print-schedule-modal');
@@ -1299,7 +1357,7 @@ const ScheduleApp = {
                 try {
                     await navigator.share({
                         files: [file],
-                        title: 'Dent2025 • تقويم الأسابيع القادمة',
+                        title: fileName.replace(/\.[^.]+$/, ''),
                         text: 'تقويم الأسابيع القادمة من منصة Dent2025'
                     });
                     return;
@@ -1328,6 +1386,14 @@ const ScheduleApp = {
                 btn.innerHTML = origHtml;
             }
         }
+    },
+
+    formatEventTitleHtml: function(rawTitle) {
+        if (!rawTitle) return '';
+        const escaped = dentEscapeHtml(rawTitle);
+        // Wrap English phrase runs (3+ letters) in an isolated inline-block LTR span
+        // so mixed BiDi Arabic-English titles never scramble parentheses or hyphens when wrapping lines
+        return escaped.replace(/([A-Za-z][A-Za-z0-9\s\-_:\/,\.]{3,}[A-Za-z0-9])/g, '<span dir="ltr" style="display:inline-block; max-width:100%;">$1</span>');
     },
 
     generateTwoWeeksPrintHtml: function(customNotes, announcementText, isMobile = false) {
@@ -1419,7 +1485,8 @@ const ScheduleApp = {
                 if (parts.length >= 2) {
                     const mIndex = parseInt(parts[1], 10) - 1;
                     if (mIndex >= 0 && mIndex < 12) {
-                        hijriLabel = `${this.hijriMonths[mIndex]} ${parts[0]}هـ`;
+                        const cleanYear = String(parts[0]).replace(/[.\s]+$/, '');
+                        hijriLabel = `${this.hijriMonths[mIndex]} ${cleanYear} هـ`;
                     }
                 }
             }
@@ -1466,7 +1533,8 @@ const ScheduleApp = {
                     }
                     const mIndex = parseInt(mStr, 10) - 1;
                     if (mIndex >= 0 && mIndex < 12) {
-                        groupedWeeks[weekKey].hijriLabel = `${this.hijriMonths[mIndex]} ${hYear}هـ`;
+                        const cleanYear = String(hYear).replace(/[.\s]+$/, '');
+                        groupedWeeks[weekKey].hijriLabel = `${this.hijriMonths[mIndex]} ${cleanYear} هـ`;
                     }
                 }
             }
@@ -1551,20 +1619,34 @@ const ScheduleApp = {
                         const typeLabel = typeMeta.label;
                         const badgeClass = typeMeta.printClass;
 
-                        cardsHtml += `
-                            <div class="m1-print-card">
-                                <div class="m1-card-title">${dentEscapeHtml(ev.title)}</div>
-                                <div class="m1-card-badges">
-                                    <span class="m1-type-badge ${badgeClass}">${dentEscapeHtml(typeLabel)}</span>
-                                    <span class="m1-countdown-badge ${countdownClass}">${dentEscapeHtml(countdownText)}</span>
+                        if (dayData.events.length === 1) {
+                            // Single event on this day: clean row without redundant boxed card border
+                            cardsHtml += `
+                                <div class="m1-single-event">
+                                    <div class="m1-single-title"><bdi dir="auto">${this.formatEventTitleHtml(ev.title)}</bdi></div>
+                                    <div class="m1-single-badges">
+                                        <span class="m1-type-badge ${badgeClass}">${dentEscapeHtml(typeLabel)}</span>
+                                        <span class="m1-countdown-badge ${countdownClass}">${dentEscapeHtml(countdownText)}</span>
+                                    </div>
                                 </div>
-                            </div>
-                        `;
+                            `;
+                        } else {
+                            // Multi-event day (2+): 2-column card with title on top and badges underneath
+                            cardsHtml += `
+                                <div class="m1-multi-card">
+                                    <div class="m1-card-title"><bdi dir="auto">${this.formatEventTitleHtml(ev.title)}</bdi></div>
+                                    <div class="m1-card-badges">
+                                        <span class="m1-type-badge ${badgeClass}">${dentEscapeHtml(typeLabel)}</span>
+                                        <span class="m1-countdown-badge ${countdownClass}">${dentEscapeHtml(countdownText)}</span>
+                                    </div>
+                                </div>
+                            `;
+                        }
                     });
 
-                    const gridStyle = dayData.events.length >= 2
-                        ? 'display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; width: 100%;'
-                        : 'display: grid; grid-template-columns: 1fr; gap: 6px; width: 100%;';
+                    const cellContentHtml = dayData.events.length >= 2
+                        ? `<div class="m1-events-grid">${cardsHtml}</div>`
+                        : cardsHtml;
 
                     rowsHtml += `
                         <tr>
@@ -1574,9 +1656,7 @@ const ScheduleApp = {
                                 <span class="m1-date-hijri">${dentEscapeHtml(hijriStr)}</span>
                             </td>
                             <td class="m1-events-cell">
-                                <div style="${gridStyle}">
-                                    ${cardsHtml}
-                                </div>
+                                ${cellContentHtml}
                             </td>
                         </tr>
                     `;
@@ -1609,8 +1689,9 @@ const ScheduleApp = {
         let announcementHtml = '';
         if (announcementText) {
             announcementHtml = `
-                <div style="margin-top: 12px; border: 1px solid #cbd5e1; border-right: 3px solid #334155; border-radius: 8px; padding: 9px 14px; background: #f8fafc; page-break-inside: avoid;">
-                    <div class="print-ann-body" style="font-size: 0.72rem; color: #1e293b; line-height: 1.5;">${announcementText}</div>
+                <div style="margin-top: 14px; border: 1px solid #cbd5e1; border-right: 4px solid #334155; border-radius: 8px; padding: 10px 14px; background: #f8fafc; page-break-inside: avoid;">
+                    <strong style="font-size: 0.74rem; color: #334155; display: block; margin-bottom: 4px;">تنبيهات الدفعة:</strong>
+                    <div class="print-ann-body" style="font-size: 0.72rem; color: #1e293b; line-height: 1.55;">${announcementText}</div>
                 </div>
             `;
         }
@@ -1619,24 +1700,33 @@ const ScheduleApp = {
         let notesHtml = '';
         if (customNotes) {
             notesHtml = `
-                <div style="margin-top: 12px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 9px 14px; background: #fafafa; page-break-inside: avoid;">
-                    <strong style="font-size: 0.72rem; color: #334155; display: block; margin-bottom: 4px;">ملاحظات وتذكيرات شخصية:</strong>
-                    <div style="font-size: 0.72rem; color: #1e293b; line-height: 1.5; white-space: pre-wrap;">${dentEscapeHtml(customNotes)}</div>
+                <div style="margin-top: 14px; border: 1px solid #cbd5e1; border-right: 4px solid #334155; border-radius: 8px; padding: 10px 14px; background: #fafafa; page-break-inside: avoid;">
+                    <strong style="font-size: 0.74rem; color: #334155; display: block; margin-bottom: 4px;">ملاحظات وتذكيرات شخصية:</strong>
+                    <div style="font-size: 0.72rem; color: #1e293b; line-height: 1.55; white-space: pre-wrap;">${dentEscapeHtml(customNotes)}</div>
                 </div>
             `;
         }
 
         const todayFormatted = today.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { year: 'numeric', month: 'long', day: 'numeric' });
+        const dynamicFileBase = this.getDynamicScheduleFileName('');
 
         return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dent2025 • تقويم الأسابيع الثلاثة القادمة</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>${dentEscapeHtml(dynamicFileBase)}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" crossorigin="anonymous">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            letter-spacing: normal !important;
+            word-spacing: normal !important;
+        }
         body {
             font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #ffffff;
@@ -1701,7 +1791,7 @@ const ScheduleApp = {
             }
             .a4-print-sheet {
                 background: #ffffff;
-                padding: ${isMobile ? '20px 16px' : '16mm 18mm'};
+                padding: ${isMobile ? '20px 16px' : '18mm 20mm'};
                 border-radius: 12px;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.08);
                 border: 1px solid #e2e8f0;
@@ -1743,19 +1833,25 @@ const ScheduleApp = {
             justify-content: space-between;
             padding-bottom: 10px;
             border-bottom: 2px solid #0f172a;
-            margin-bottom: 14px;
+            margin-bottom: 16px;
         }
         .doc-titles h1 {
-            font-size: 1.20rem;
+            font-size: 1.25rem;
             font-weight: 800;
             color: #0f172a;
             line-height: 1.25;
+            text-align: right;
+            letter-spacing: normal !important;
+            word-spacing: normal !important;
         }
         .doc-titles p {
-            font-size: 0.76rem;
+            font-size: 0.78rem;
             color: #64748b;
             font-weight: 600;
             margin-top: 3px;
+            text-align: right;
+            letter-spacing: normal !important;
+            word-spacing: normal !important;
         }
         .doc-meta-badge {
             text-align: left;
@@ -1781,7 +1877,7 @@ const ScheduleApp = {
             direction: rtl;
         }
         .m1-week-block {
-            margin-bottom: 12px;
+            margin-bottom: 14px;
             border: 1px solid #cbd5e1;
             border-radius: 8px;
             overflow: hidden;
@@ -1791,12 +1887,14 @@ const ScheduleApp = {
         .m1-week-header {
             background: #1e293b;
             color: #f8fafc;
-            padding: 5px 12px;
-            font-size: 0.76rem;
+            padding: 6px 14px;
+            font-size: 0.78rem;
             font-weight: 700;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            letter-spacing: normal !important;
+            word-spacing: normal !important;
         }
         .m1-table {
             width: 100%;
@@ -1812,38 +1910,46 @@ const ScheduleApp = {
             color: #475569;
             font-weight: 700;
             text-align: right;
-            padding: 5px 8px;
+            padding: 6px 10px;
             border-bottom: 1px solid #cbd5e1;
-            font-size: 0.68rem;
+            font-size: 0.70rem;
             white-space: nowrap;
+            letter-spacing: normal !important;
+            word-spacing: normal !important;
         }
-        .m1-th-day { width: 65px; }
-        .m1-th-date { width: 110px; }
+        .m1-th-day { width: 58px; }
+        .m1-th-date { width: 95px; }
         .m1-th-events { text-align: right; }
         .m1-table td {
-            padding: 4px 6px;
+            padding: 7px 10px;
             border-bottom: 1px solid #e2e8f0;
             vertical-align: middle;
             color: #1e293b;
+            letter-spacing: normal !important;
+            word-spacing: normal !important;
         }
         .m1-table tr:last-child td { border-bottom: none; }
         .m1-table tr:nth-child(even) { background-color: #fafafa; }
         .m1-day-col {
             font-weight: 700;
             color: #0f172a;
-            width: 65px;
-            font-size: 0.70rem;
+            width: 58px;
+            font-size: 0.72rem;
             vertical-align: middle;
+            text-align: right;
+            letter-spacing: normal !important;
+            word-spacing: normal !important;
         }
         .m1-date-col {
-            width: 110px;
+            width: 95px;
             vertical-align: middle;
-            line-height: 1.25;
+            line-height: 1.3;
+            text-align: right;
         }
         .m1-date-greg {
             display: block;
             font-family: 'Outfit', sans-serif;
-            font-size: 0.66rem;
+            font-size: 0.68rem;
             font-weight: 700;
             color: #1e293b;
             direction: ltr;
@@ -1852,43 +1958,78 @@ const ScheduleApp = {
         }
         .m1-date-hijri {
             display: block;
-            font-size: 0.60rem;
+            font-size: 0.62rem;
             color: #64748b;
             direction: rtl;
             text-align: right;
-            margin-top: 1px;
+            margin-top: 2px;
             unicode-bidi: isolate;
         }
         .m1-events-cell {
             vertical-align: middle;
-            padding: 4px 6px;
+            padding: 6px 10px;
         }
-        .m1-print-card {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            padding: 4px 8px;
+        .m1-events-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            width: 100%;
+            align-items: stretch;
+        }
+        .m1-single-event {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
+            gap: 12px;
+            width: 100%;
             box-sizing: border-box;
-            min-height: 28px;
+            padding: 2px 4px;
         }
-        .m1-card-title {
-            font-size: 0.69rem;
+        .m1-single-title {
+            font-size: 0.72rem;
             font-weight: 700;
             color: #0f172a;
-            line-height: 1.3;
+            line-height: 1.35;
             flex: 1;
             min-width: 0;
-            word-break: break-word;
+            text-align: right;
+            letter-spacing: normal !important;
+            word-spacing: normal !important;
         }
-        .m1-card-badges {
+        .m1-single-badges {
             display: flex;
             align-items: center;
             gap: 4px;
             flex-shrink: 0;
+        }
+        .m1-multi-card {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 6px 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 6px;
+            box-sizing: border-box;
+            min-height: 48px;
+        }
+        .m1-multi-card .m1-card-title {
+            font-size: 0.70rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.35;
+            width: 100%;
+            text-align: right;
+            letter-spacing: normal !important;
+            word-spacing: normal !important;
+        }
+        .m1-multi-card .m1-card-badges {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 4px;
+            width: 100%;
         }
         .m1-type-badge {
             display: inline-block;
@@ -1917,13 +2058,13 @@ const ScheduleApp = {
         .print-ann-body p { margin: 0 0 3px 0; }
         .print-ann-body p:last-child { margin-bottom: 0; }
         .doc-footer {
-            margin-top: 12px;
-            padding-top: 8px;
+            margin-top: 18px;
+            padding-top: 10px;
             border-top: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.68rem;
+            font-size: 0.70rem;
             color: #64748b;
             page-break-inside: avoid;
             break-inside: avoid;
