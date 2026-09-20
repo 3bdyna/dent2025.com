@@ -1792,9 +1792,9 @@ const ScheduleApp = {
             .a4-print-sheet {
                 background: #ffffff;
                 padding: ${isMobile ? '20px 16px' : '18mm 20mm'};
-                border-radius: 12px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-                border: 1px solid #e2e8f0;
+                border-radius: 0;
+                box-shadow: none;
+                border: none;
             }
         }
 
