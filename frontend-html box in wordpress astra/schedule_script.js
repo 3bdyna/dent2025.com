@@ -1297,7 +1297,9 @@ const ScheduleApp = {
 
             iframe = document.createElement('iframe');
             iframe.id = 'dent-image-render-iframe';
-            iframe.style.cssText = 'position:fixed; left:-9999px; top:0; width:860px; height:1200px; border:0; z-index:-99999;';
+            iframe.setAttribute('width', '860');
+            iframe.setAttribute('height', '1400');
+            iframe.style.cssText = 'position:fixed; left:-9999px; top:0; width:860px !important; min-width:860px !important; max-width:860px !important; height:1400px !important; border:0; z-index:-99999;';
             document.body.appendChild(iframe);
 
             const doc = iframe.contentWindow.document;
@@ -1305,13 +1307,30 @@ const ScheduleApp = {
             doc.write(printHtml);
             doc.close();
 
+            if (doc.documentElement) {
+                doc.documentElement.style.width = '860px';
+                doc.documentElement.style.minWidth = '860px';
+            }
+            if (doc.body) {
+                doc.body.style.width = '860px';
+                doc.body.style.minWidth = '860px';
+            }
+
             if (doc.fonts && doc.fonts.ready) {
                 await doc.fonts.ready.catch(() => {});
             }
-            await new Promise(resolve => setTimeout(resolve, 400));
+            await new Promise(resolve => setTimeout(resolve, 450));
 
             const targetEl = doc.querySelector('.a4-print-sheet');
             if (!targetEl) throw new Error('تعذر العثور على محتوى الجدول للتصدير.');
+
+            targetEl.style.width = '860px';
+            targetEl.style.minWidth = '860px';
+            targetEl.style.maxWidth = '860px';
+            targetEl.style.boxSizing = 'border-box';
+
+            const targetWidth = 860;
+            const targetHeight = targetEl.offsetHeight || targetEl.scrollHeight || 1200;
 
             let blob = null;
             // Primary high-fidelity rasterizer: html-to-image (SVG foreignObject preserves Arabic ligatures, word-spacing, BiDi)
@@ -1319,6 +1338,10 @@ const ScheduleApp = {
                 const htmlToImage = await this.loadHtmlToImage();
                 blob = await htmlToImage.toBlob(targetEl, {
                     pixelRatio: 2.5,
+                    width: targetWidth,
+                    height: targetHeight,
+                    canvasWidth: Math.round(targetWidth * 2.5),
+                    canvasHeight: Math.round(targetHeight * 2.5),
                     backgroundColor: '#ffffff'
                 });
             } catch(imgErr) {
@@ -1326,13 +1349,16 @@ const ScheduleApp = {
                 await this.loadHtml2Canvas();
                 const canvas = await window.html2canvas(targetEl, {
                     scale: 2.5,
+                    width: targetWidth,
+                    height: targetHeight,
+                    windowWidth: targetWidth,
+                    windowHeight: targetHeight,
                     useCORS: true,
                     allowTaint: true,
                     backgroundColor: '#ffffff',
                     logging: false,
                     scrollX: 0,
-                    scrollY: 0,
-                    windowWidth: 860
+                    scrollY: 0
                 });
                 blob = await new Promise((resolve, reject) => {
                     canvas.toBlob(b => {
@@ -1713,7 +1739,7 @@ const ScheduleApp = {
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=860, initial-scale=0.45, minimum-scale=0.2, maximum-scale=2.0">
     <title>${dentEscapeHtml(dynamicFileBase)}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1726,12 +1752,16 @@ const ScheduleApp = {
             letter-spacing: normal !important;
             word-spacing: normal !important;
         }
-        body {
+        html, body {
             font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #ffffff;
             color: #0f172a;
             direction: rtl;
             font-size: 12px;
+            width: 860px !important;
+            min-width: 860px !important;
+            -webkit-text-size-adjust: 100% !important;
+            text-size-adjust: 100% !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
@@ -1739,9 +1769,10 @@ const ScheduleApp = {
         @media screen {
             body {
                 background: ${isMobile ? '#0b0f17' : '#f8fafc'};
-                padding: ${isMobile ? '14px 12px 40px 12px' : '28px 16px'};
-                max-width: 860px;
+                padding: ${isMobile ? '14px 0 40px 0' : '28px 0'};
                 margin: 0 auto;
+                width: 860px !important;
+                min-width: 860px !important;
             }
             .dent-mobile-toolbar {
                 position: sticky;
@@ -1757,7 +1788,10 @@ const ScheduleApp = {
                 border: 1px solid rgba(255, 255, 255, 0.15);
                 padding: 10px 14px;
                 border-radius: 12px;
-                margin-bottom: 14px;
+                margin: 0 auto 14px auto;
+                width: 860px;
+                max-width: 860px;
+                box-sizing: border-box;
                 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
             }
             .dent-mobile-toolbar button {
@@ -1790,9 +1824,14 @@ const ScheduleApp = {
             }
             .a4-print-sheet {
                 background: #ffffff;
-                padding: ${isMobile ? '20px 16px' : '18mm 20mm'};
+                box-sizing: border-box !important;
+                width: 860px !important;
+                min-width: 860px !important;
+                max-width: 860px !important;
+                padding: 16mm 20mm !important;
+                margin: 0 auto !important;
                 border-radius: 0;
-                box-shadow: none;
+                box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
                 border: none;
             }
         }
@@ -1807,6 +1846,7 @@ const ScheduleApp = {
                 padding: 0 !important;
                 margin: 0 !important;
                 width: 100% !important;
+                min-width: 100% !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
@@ -1816,6 +1856,7 @@ const ScheduleApp = {
             .a4-print-sheet {
                 box-sizing: border-box !important;
                 width: 100% !important;
+                min-width: 100% !important;
                 max-width: 100% !important;
                 padding: 16mm 20mm !important;
                 margin: 0 auto !important;
