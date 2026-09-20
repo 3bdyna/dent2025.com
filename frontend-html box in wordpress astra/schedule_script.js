@@ -1077,16 +1077,24 @@ const ScheduleApp = {
         modal.id = 'dent-print-schedule-modal';
         modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 9999999; display: flex; justify-content: center; align-items: center; direction: rtl; font-family: \'Outfit\', \'Noto Kufi Arabic\', sans-serif; padding: 16px; box-sizing: border-box;';
         modal.innerHTML = `
+            <style>@keyframes dentSpin { to { transform: rotate(360deg); } }</style>
             <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 24px; width: 100%; max-width: 460px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: #fff; box-sizing: border-box;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
-                    <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #f8fafc;">طباعة تقويم الأسابيع الـ 3 القادمة (A4 PDF)</h3>
+                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #f8fafc;">طباعة وتصدير تقويم الأسابيع الـ 3 القادمة</h3>
                     <button type="button" onclick="document.getElementById('dent-print-schedule-modal').remove()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">×</button>
                 </div>
 
-                <button type="button" id="dent-exec-print-btn" onclick="ScheduleApp.executePrint()" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.95rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.35)'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.2)'; this.style.transform='none';">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                    <span>طباعة الآن (A4 PDF)</span>
-                </button>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px;">
+                    <button type="button" id="dent-exec-print-btn" onclick="ScheduleApp.executePrint()" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 7px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.35)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.2)';">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        <span>طباعة (A4 PDF)</span>
+                    </button>
+
+                    <button type="button" id="dent-exec-image-btn" onclick="ScheduleApp.executeSaveAsImage()" style="width: 100%; height: 46px; background: #2563eb; color: #ffffff; border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 7px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);" onmouseover="this.style.background='#1d4ed8'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#2563eb'; this.style.transform='none';">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        <span>حفظ كصورة (PNG)</span>
+                    </button>
+                </div>
 
                 <label style="display: flex; align-items: flex-start; gap: 10px; margin-top: 16px; padding: 10px 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; font-size: 0.80rem; color: #cbd5e1; cursor: pointer; user-select: none;">
                     <input type="checkbox" id="dent-print-inc-announcements" checked style="accent-color: #52525b; width: 16px; height: 16px; margin-top: 2px; cursor: pointer;">
@@ -1191,6 +1199,134 @@ const ScheduleApp = {
             doc.fonts.ready.then(() => setTimeout(doPrint, 250)).catch(() => setTimeout(doPrint, 400));
         } else {
             setTimeout(doPrint, 400);
+        }
+    },
+
+    loadHtml2Canvas: function() {
+        if (window.html2canvas) return Promise.resolve(window.html2canvas);
+        if (this._html2canvasPromise) return this._html2canvasPromise;
+        this._html2canvasPromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            script.crossOrigin = 'anonymous';
+            script.onload = () => resolve(window.html2canvas);
+            script.onerror = () => {
+                this._html2canvasPromise = null;
+                reject(new Error('تعذر تحميل مكتبة معالجة الصور، يرجى التحقق من اتصال الإنترنت.'));
+            };
+            document.head.appendChild(script);
+        });
+        return this._html2canvasPromise;
+    },
+
+    executeSaveAsImage: async function() {
+        const btn = document.getElementById('dent-exec-image-btn');
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: dentSpin 0.8s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
+                <span>جاري إنشاء الصورة...</span>
+            `;
+        }
+
+        try {
+            const notes = (document.getElementById('dent-print-custom-notes')?.value || '').trim();
+            const incAnnouncements = !!document.getElementById('dent-print-inc-announcements')?.checked;
+
+            let announcementText = '';
+            if (incAnnouncements) {
+                if (this._prefetchedAnnouncements !== null && this._prefetchedAnnouncements !== undefined) {
+                    announcementText = this._prefetchedAnnouncements;
+                } else {
+                    announcementText = await this.prefetchPrintAnnouncements();
+                }
+            }
+
+            await this.loadHtml2Canvas();
+
+            const printHtml = this.generateThreeWeeksPrintHtml(notes, announcementText, false);
+
+            let iframe = document.getElementById('dent-image-render-iframe');
+            if (iframe) iframe.remove();
+
+            iframe = document.createElement('iframe');
+            iframe.id = 'dent-image-render-iframe';
+            iframe.style.cssText = 'position:fixed; left:-9999px; top:0; width:800px; height:1200px; border:0; z-index:-99999;';
+            document.body.appendChild(iframe);
+
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(printHtml);
+            doc.close();
+
+            if (doc.fonts && doc.fonts.ready) {
+                await doc.fonts.ready.catch(() => {});
+            }
+            await new Promise(resolve => setTimeout(resolve, 350));
+
+            const targetEl = doc.querySelector('.a4-print-sheet');
+            if (!targetEl) throw new Error('تعذر العثور على محتوى الجدول للتصدير.');
+
+            const canvas = await window.html2canvas(targetEl, {
+                scale: 2.5,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: 800
+            });
+
+            if (iframe) iframe.remove();
+
+            const blob = await new Promise((resolve, reject) => {
+                canvas.toBlob(b => {
+                    if (b) resolve(b);
+                    else reject(new Error('فشل استخراج ملف الصورة.'));
+                }, 'image/png');
+            });
+
+            const fileName = `Dent2025_Schedule_${new Date().toISOString().slice(0, 10)}.png`;
+            const file = new File([blob], fileName, { type: 'image/png' });
+
+            const modal = document.getElementById('dent-print-schedule-modal');
+            if (modal) modal.remove();
+
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Dent2025 • تقويم الأسابيع القادمة',
+                        text: 'تقويم الأسابيع القادمة من منصة Dent2025'
+                    });
+                    return;
+                } catch(shareErr) {
+                    if (shareErr.name === 'AbortError') return;
+                    console.warn('Native share failed, falling back to download:', shareErr);
+                }
+            }
+
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
+            }, 3000);
+
+        } catch(err) {
+            console.error('Save as image error:', err);
+            alert('حدث خطأ أثناء إنشاء الصورة: ' + (err.message || err));
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
         }
     },
 
