@@ -26,6 +26,10 @@ $globalFile = __DIR__ . '/schedule_events.json';
 $scheduleId = '';
 if ($method === 'GET') {
     $scheduleId = $_GET['schedule_id'] ?? '';
+    // If empty or legacy 'global', default to primary cohort: dentistry_y3_s1
+    if (empty($scheduleId) || $scheduleId === 'global') {
+        $scheduleId = 'dentistry_y3_s1';
+    }
 } else {
     // For POST/DELETE, it will be in the JSON body
     $inputRaw = file_get_contents('php://input');
@@ -37,7 +41,7 @@ if ($method === 'GET') {
 $scheduleId = preg_replace('/[^a-zA-Z0-9_-]/', '', $scheduleId);
 
 $dataFile = $globalFile;
-if (!empty($scheduleId) && $scheduleId !== 'global') {
+if (!empty($scheduleId) && $scheduleId !== 'global_only') {
     $dataFile = __DIR__ . "/schedule_events_{$scheduleId}.json";
 }
 

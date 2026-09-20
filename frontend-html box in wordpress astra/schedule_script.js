@@ -6,17 +6,29 @@ function dentEscapeHtml(str) {
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 const ScheduleApp = {
-    scheduleId: (function() {
-        if (window.dentScheduleId) return window.dentScheduleId;
+    getScheduleId: function() {
+        if (window.dentScheduleId && window.dentScheduleId !== 'global') {
+            return window.dentScheduleId;
+        }
         try {
-            const data = localStorage.getItem('dent2025_selection');
-            if (data) {
-                const sel = JSON.parse(data);
-                return `${sel.specialty}_y${sel.year}_s${sel.semester}`;
+            const raw = localStorage.getItem('dent2025_selection');
+            if (raw) {
+                const sel = JSON.parse(raw);
+                if (sel && sel.specialty && sel.semester !== undefined) {
+                    const yr = (sel.year !== undefined && sel.year !== null && sel.year !== '') ? sel.year : (sel.specialty === 'pre-med' ? 1 : 3);
+                    return `${sel.specialty}_y${yr}_s${sel.semester}`;
+                }
             }
         } catch(e) {}
-        return 'global';
-    })(),
+
+        // Fallback default: Dentistry, Year 3, Semester 1 (Primary portal cohort)
+        const defaultSel = { specialty: 'dentistry', year: 3, semester: 1 };
+        try {
+            localStorage.setItem('dent2025_selection', JSON.stringify(defaultSel));
+        } catch(e) {}
+        return 'dentistry_y3_s1';
+    },
+    scheduleId: 'dentistry_y3_s1',
     apiUrl: window.location.origin + '/schedule_backend.php',
     containerId: 'schedule-content',
     typeColors: {
@@ -182,6 +194,14 @@ const ScheduleApp = {
     },
     init: async function() {
         try {
+            this.scheduleId = this.getScheduleId();
+
+            // Clear any legacy stale global cache so user is never stuck on 2 events
+            try {
+                localStorage.removeItem('dent2025_schedule_global');
+                localStorage.removeItem('dent2025_schedule_undefined_yundefined_sundefined');
+            } catch(e) {}
+
             if (!this.adminPassword) {
                 this.adminPassword = sessionStorage.getItem('dent2025_schedule_admin_pass') || sessionStorage.getItem('dent2025_admin_pass') || null;
             }
@@ -1283,6 +1303,9 @@ const ScheduleApp = {
     getDynamicScheduleFileName: function(ext = 'png') {
         let sel = {};
         try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
+        if (!sel || !sel.specialty) {
+            sel = { specialty: 'dentistry', year: 3, semester: 1 };
+        }
 
         let specPart = 'Schedule';
         if (sel.specialty === 'dentistry') specPart = 'Dentistry';
@@ -1668,8 +1691,12 @@ const ScheduleApp = {
         // Derive subtitles from saved student selection
         let sel = {};
         try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
+        if (!sel || !sel.specialty) {
+            sel = { specialty: 'dentistry', year: 3, semester: 1 };
+            try { localStorage.setItem('dent2025_selection', JSON.stringify(sel)); } catch(e) {}
+        }
         const specNames = { 'dentistry': 'كلية طب الأسنان', 'medicine': 'كلية الطب البشري', 'pre-med': 'السنة التحضيرية' };
-        const specTitle = specNames[sel.specialty] || 'البرنامج الأكاديمي';
+        const specTitle = specNames[sel.specialty] || 'كلية طب الأسنان';
         const yearText = (sel.specialty === 'pre-med' || !sel.year) ? '' : ` — السنة ${sel.year}`;
         const semText = sel.semester ? ` (الفصل الدراسي ${sel.semester === 1 || sel.semester === '1' ? 'الأول' : 'الثاني'})` : '';
         const subTitle = `${specTitle}${yearText}${semText}`;
