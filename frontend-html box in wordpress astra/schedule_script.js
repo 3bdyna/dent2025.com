@@ -193,6 +193,14 @@ const ScheduleApp = {
             const cacheKey = 'dent2025_schedule_' + this.scheduleId;
             const cachedData = localStorage.getItem(cacheKey); // Persist across closed tabs
             const cacheBuster = '&nocache=1&_t=' + Date.now();
+
+            // Idle preload export engines (html-to-image and jsPDF) so user export is instant
+            setTimeout(() => {
+                try {
+                    if (typeof this.loadHtmlToImage === 'function') this.loadHtmlToImage().catch(() => {});
+                    if (typeof this.loadJsPdf === 'function') this.loadJsPdf().catch(() => {});
+                } catch(e) {}
+            }, 1500);
             
             if (cachedData) {
                 this.eventsData = JSON.parse(cachedData);
@@ -1069,9 +1077,11 @@ const ScheduleApp = {
         let modal = document.getElementById('dent-print-schedule-modal');
         if (modal) modal.remove();
 
-        // Start prefetching announcements immediately in background
+        // Start prefetching announcements and scripts immediately in background for ultra-fast export
         this._prefetchedAnnouncements = null;
         this.prefetchPrintAnnouncements();
+        this.loadHtmlToImage().catch(() => {});
+        this.loadJsPdf().catch(() => {});
 
         modal = document.createElement('div');
         modal.id = 'dent-print-schedule-modal';
@@ -1080,21 +1090,23 @@ const ScheduleApp = {
             <style>@keyframes dentSpin { to { transform: rotate(360deg); } }</style>
             <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 24px; width: 100%; max-width: 460px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: #fff; box-sizing: border-box;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
-                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #f8fafc;">طباعة وتصدير تقويم الأسابيع الـ 3 القادمة</h3>
+                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #f8fafc;">تصدير وإرسال تقويم الأسابيع الـ 3 القادمة</h3>
                     <button type="button" onclick="document.getElementById('dent-print-schedule-modal').remove()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">×</button>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px;">
-                    <button type="button" id="dent-exec-print-btn" onclick="ScheduleApp.executePrint()" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.90rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.35)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.2)';">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px;">
+                    <button type="button" id="dent-exec-print-btn" onclick="ScheduleApp.executeSaveAsPdf()" style="width: 100%; height: 48px; background: #27272a; color: #ffffff; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.90rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);" onmouseover="this.style.background='#ef4444'; this.style.borderColor='#ef4444';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(239, 68, 68, 0.4)';">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                         <span>ملف PDF</span>
                     </button>
 
-                    <button type="button" id="dent-exec-image-btn" onclick="ScheduleApp.executeSaveAsImage()" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.90rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.35)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.2)';">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <button type="button" id="dent-exec-image-btn" onclick="ScheduleApp.executeSaveAsImage()" style="width: 100%; height: 48px; background: #27272a; color: #ffffff; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.90rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);" onmouseover="this.style.background='#2563eb'; this.style.borderColor='#2563eb';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(59, 130, 246, 0.4)';">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                         <span>صورة PNG</span>
                     </button>
                 </div>
+
+                <div style="font-size: 0.74rem; color: #94a3b8; text-align: center; margin: 8px 0 14px 0;">اختر الصيغة للمشاركة الفورية عبر واتساب أو الحفظ بجهازك</div>
 
                 <label style="display: flex; align-items: flex-start; gap: 10px; margin-top: 16px; padding: 10px 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; font-size: 0.80rem; color: #cbd5e1; cursor: pointer; user-select: none;">
                     <input type="checkbox" id="dent-print-inc-announcements" checked style="accent-color: #52525b; width: 16px; height: 16px; margin-top: 2px; cursor: pointer;">
@@ -1103,7 +1115,7 @@ const ScheduleApp = {
 
                 <div style="margin-top: 14px;">
                     <label style="font-size: 0.78rem; color: #a1a1aa; font-weight: 600; display: block; margin-bottom: 6px;">ملاحظات أو تذكيرات إضافية (اختياري):</label>
-                    <textarea id="dent-print-custom-notes" placeholder="اكتب أي ملاحظات أو تذكيرات ترغب في ظهورها أسفل الورقة (اختياري - ستختفي هذه المساحة تلقائياً عند الطباعة إذا تركتها فارغة)..." style="width: 100%; height: 80px; padding: 10px 12px; background: #121212; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 0.82rem; font-family: inherit; box-sizing: border-box; outline: none; resize: vertical; line-height: 1.5;"></textarea>
+                    <textarea id="dent-print-custom-notes" placeholder="اكتب أي ملاحظات أو تذكيرات ترغب في ظهورها أسفل الورقة (اختياري - ستختفي هذه المساحة تلقائياً عند التصدير إذا تركتها فارغة)..." style="width: 100%; height: 80px; padding: 10px 12px; background: #121212; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 0.82rem; font-family: inherit; box-sizing: border-box; outline: none; resize: vertical; line-height: 1.5;"></textarea>
                 </div>
 
                 <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
@@ -1114,92 +1126,158 @@ const ScheduleApp = {
         document.body.appendChild(modal);
     },
 
-    executePrint: async function() {
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-                         (window.matchMedia && window.matchMedia('(max-width: 768px)').matches && 'ontouchstart' in window);
+    loadJsPdf: function() {
+        if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+        if (this._jsPdfPromise) return this._jsPdfPromise;
+        this._jsPdfPromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+            script.crossOrigin = 'anonymous';
+            script.onload = () => {
+                if (window.jspdf && window.jspdf.jsPDF) resolve(window.jspdf.jsPDF);
+                else reject(new Error('فشل تهيئة مكتبة الـ PDF.'));
+            };
+            script.onerror = () => {
+                this._jsPdfPromise = null;
+                reject(new Error('تعذر تحميل مكتبة إنشاء الـ PDF، يرجى التحقق من الاتصال.'));
+            };
+            document.head.appendChild(script);
+        });
+        return this._jsPdfPromise;
+    },
 
-        // On mobile browsers (iOS Safari / Android Chrome), iframe printing delegates to the full webpage.
-        // Opening a blank tab synchronously inside the user touch handler guarantees no popup-blocking.
-        let mobileWindow = null;
-        if (isMobile) {
-            try {
-                mobileWindow = window.open('', '_blank');
-                if (mobileWindow) {
-                    mobileWindow.document.write('<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Dent2025 • تقويم الأسابيع الثلاثة</title><style>body{background:#0b0f17;color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:90vh;margin:0;text-align:center;direction:rtl;}.card{background:#18181b;padding:26px 20px;border-radius:14px;border:1px solid rgba(255,255,255,0.12);max-width:320px;box-shadow:0 10px 30px rgba(0,0,0,0.4);}.spinner{width:38px;height:38px;border:3px solid rgba(255,255,255,0.15);border-top-color:#38bdf8;border-radius:50%;animation:dentSpin 0.8s linear infinite;margin:0 auto 16px auto;}@keyframes dentSpin{to{transform:rotate(360deg);}}</style></head><body><div class="card"><div class="spinner"></div><div style="font-weight:700;font-size:1.05rem;margin-bottom:6px;">جاري تجهيز تقويم الأسابيع الثلاثة للطباعة...</div><div style="font-size:0.8rem;color:#94a3b8;">يرجى الانتظار ثانية واحدة</div></div></body></html>');
-                    mobileWindow.document.close();
+    executeSaveAsPdf: async function() {
+        const btn = document.getElementById('dent-exec-print-btn');
+        const imgBtn = document.getElementById('dent-exec-image-btn');
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: dentSpin 0.8s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
+                <span>جاري إنشاء PDF...</span>
+            `;
+        }
+        if (imgBtn) imgBtn.disabled = true;
+
+        try {
+            const notes = (document.getElementById('dent-print-custom-notes')?.value || '').trim();
+            const incAnnouncements = !!document.getElementById('dent-print-inc-announcements')?.checked;
+
+            let announcementText = '';
+            if (incAnnouncements) {
+                if (this._prefetchedAnnouncements !== null && this._prefetchedAnnouncements !== undefined) {
+                    announcementText = this._prefetchedAnnouncements;
+                } else {
+                    announcementText = await this.prefetchPrintAnnouncements();
                 }
-            } catch(e) {
-                console.warn('Could not open mobile window synchronously:', e);
             }
-        }
 
-        const printBtn = document.getElementById('dent-exec-print-btn');
-        if (printBtn) {
-            printBtn.disabled = true;
-            printBtn.innerHTML = 'جاري التجهيز...';
-        }
+            const printHtml = this.generateThreeWeeksPrintHtml(notes, announcementText, false);
 
-        const notes = (document.getElementById('dent-print-custom-notes')?.value || '').trim();
-        const incAnnouncements = !!document.getElementById('dent-print-inc-announcements')?.checked;
+            // Parallel load jspdf while creating DOM
+            const jsPdfPromise = this.loadJsPdf();
 
-        let announcementText = '';
-        if (incAnnouncements) {
-            if (this._prefetchedAnnouncements !== null && this._prefetchedAnnouncements !== undefined) {
-                announcementText = this._prefetchedAnnouncements;
+            let iframe = document.getElementById('dent-image-render-iframe');
+            if (iframe) iframe.remove();
+
+            iframe = document.createElement('iframe');
+            iframe.id = 'dent-image-render-iframe';
+            iframe.setAttribute('width', '860');
+            iframe.setAttribute('height', '1400');
+            iframe.style.cssText = 'position:fixed; left:-9999px; top:0; width:860px !important; min-width:860px !important; max-width:860px !important; height:1400px !important; border:0; z-index:-99999;';
+            document.body.appendChild(iframe);
+
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(printHtml);
+            doc.close();
+
+            if (doc.documentElement) {
+                doc.documentElement.style.width = '860px';
+                doc.documentElement.style.minWidth = '860px';
+            }
+            if (doc.body) {
+                doc.body.style.width = '860px';
+                doc.body.style.minWidth = '860px';
+            }
+
+            if (doc.fonts && doc.fonts.ready) {
+                await doc.fonts.ready.catch(() => {});
+            }
+            await new Promise(resolve => setTimeout(resolve, 120));
+
+            const targetEl = doc.querySelector('.a4-print-sheet');
+            if (!targetEl) throw new Error('تعذر العثور على محتوى الجدول للتصدير.');
+
+            targetEl.style.width = '860px';
+            targetEl.style.minWidth = '860px';
+            targetEl.style.maxWidth = '860px';
+            targetEl.style.boxSizing = 'border-box';
+
+            const targetWidth = 860;
+            const targetHeight = targetEl.offsetHeight || targetEl.scrollHeight || 1200;
+
+            const htmlToImage = await this.loadHtmlToImage();
+            const pngDataUrl = await htmlToImage.toPng(targetEl, {
+                pixelRatio: 2.0,
+                width: targetWidth,
+                height: targetHeight,
+                canvasWidth: Math.round(targetWidth * 2.0),
+                canvasHeight: Math.round(targetHeight * 2.0),
+                backgroundColor: '#ffffff'
+            });
+
+            if (iframe) iframe.remove();
+
+            const jsPdfClass = await jsPdfPromise;
+            const pdf = new jsPdfClass({
+                orientation: 'p',
+                unit: 'mm',
+                format: 'a4',
+                compress: true
+            });
+
+            const pdfPageWidth = 210;
+            const pdfPageHeight = 297;
+            const imgHeightMm = (targetHeight / targetWidth) * pdfPageWidth;
+
+            if (imgHeightMm <= pdfPageHeight) {
+                pdf.addImage(pngDataUrl, 'PNG', 0, 0, pdfPageWidth, imgHeightMm, undefined, 'FAST');
             } else {
-                announcementText = await this.prefetchPrintAnnouncements();
+                let heightLeft = imgHeightMm;
+                let position = 0;
+                pdf.addImage(pngDataUrl, 'PNG', 0, position, pdfPageWidth, imgHeightMm, undefined, 'FAST');
+                heightLeft -= pdfPageHeight;
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeightMm;
+                    pdf.addPage();
+                    pdf.addImage(pngDataUrl, 'PNG', 0, position, pdfPageWidth, imgHeightMm, undefined, 'FAST');
+                    heightLeft -= pdfPageHeight;
+                }
             }
-        }
 
-        const printHtml = this.generateThreeWeeksPrintHtml(notes, announcementText, isMobile);
+            const pdfBlob = pdf.output('blob');
+            const fileName = this.getDynamicScheduleFileName('pdf');
+            const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
-        const modal = document.getElementById('dent-print-schedule-modal');
-        if (modal) modal.remove();
+            const modal = document.getElementById('dent-print-schedule-modal');
+            if (modal) modal.remove();
 
-        if (isMobile && mobileWindow) {
-            try {
-                mobileWindow.document.open();
-                mobileWindow.document.write(printHtml);
-                mobileWindow.document.close();
-                return;
-            } catch(err) {
-                console.error('Error writing to mobile print window, falling back to iframe:', err);
+            await this.deliverExportedFile(file, pdfBlob, fileName, 'pdf');
+
+        } catch(err) {
+            console.error('Save as PDF error:', err);
+            alert('حدث خطأ أثناء إنشاء ملف الـ PDF: ' + (err.message || err));
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
             }
+            if (imgBtn) imgBtn.disabled = false;
         }
+    },
 
-        // Desktop / PC workflow: use seamless hidden iframe
-        let iframe = document.getElementById('dent-schedule-print-iframe');
-        if (iframe) iframe.remove();
-
-        iframe = document.createElement('iframe');
-        iframe.id = 'dent-schedule-print-iframe';
-        iframe.style.position = 'fixed';
-        iframe.style.right = '0';
-        iframe.style.bottom = '0';
-        iframe.style.width = '0';
-        iframe.style.height = '0';
-        iframe.style.border = '0';
-        document.body.appendChild(iframe);
-
-        const doc = iframe.contentWindow.document;
-        doc.open();
-        doc.write(printHtml);
-        doc.close();
-
-        const doPrint = () => {
-            try {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-            } catch(err) {
-                console.error('Print iframe error:', err);
-            }
-        };
-
-        if (doc.fonts && doc.fonts.ready) {
-            doc.fonts.ready.then(() => setTimeout(doPrint, 250)).catch(() => setTimeout(doPrint, 400));
-        } else {
-            setTimeout(doPrint, 400);
-        }
+    executePrint: async function() {
+        return this.executeSaveAsPdf();
     },
 
     getDynamicScheduleFileName: function(ext = 'png') {
@@ -1268,6 +1346,7 @@ const ScheduleApp = {
 
     executeSaveAsImage: async function() {
         const btn = document.getElementById('dent-exec-image-btn');
+        const pdfBtn = document.getElementById('dent-exec-print-btn');
         const origHtml = btn ? btn.innerHTML : '';
         if (btn) {
             btn.disabled = true;
@@ -1276,6 +1355,7 @@ const ScheduleApp = {
                 <span>جاري إنشاء الصورة...</span>
             `;
         }
+        if (pdfBtn) pdfBtn.disabled = true;
 
         try {
             const notes = (document.getElementById('dent-print-custom-notes')?.value || '').trim();
@@ -1319,7 +1399,7 @@ const ScheduleApp = {
             if (doc.fonts && doc.fonts.ready) {
                 await doc.fonts.ready.catch(() => {});
             }
-            await new Promise(resolve => setTimeout(resolve, 450));
+            await new Promise(resolve => setTimeout(resolve, 120));
 
             const targetEl = doc.querySelector('.a4-print-sheet');
             if (!targetEl) throw new Error('تعذر العثور على محتوى الجدول للتصدير.');
@@ -1337,18 +1417,18 @@ const ScheduleApp = {
             try {
                 const htmlToImage = await this.loadHtmlToImage();
                 blob = await htmlToImage.toBlob(targetEl, {
-                    pixelRatio: 2.5,
+                    pixelRatio: 2.0,
                     width: targetWidth,
                     height: targetHeight,
-                    canvasWidth: Math.round(targetWidth * 2.5),
-                    canvasHeight: Math.round(targetHeight * 2.5),
+                    canvasWidth: Math.round(targetWidth * 2.0),
+                    canvasHeight: Math.round(targetHeight * 2.0),
                     backgroundColor: '#ffffff'
                 });
             } catch(imgErr) {
                 console.warn('html-to-image failed or blocked, falling back to html2canvas:', imgErr);
                 await this.loadHtml2Canvas();
                 const canvas = await window.html2canvas(targetEl, {
-                    scale: 2.5,
+                    scale: 2.0,
                     width: targetWidth,
                     height: targetHeight,
                     windowWidth: targetWidth,
@@ -1378,31 +1458,7 @@ const ScheduleApp = {
             const modal = document.getElementById('dent-print-schedule-modal');
             if (modal) modal.remove();
 
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
-                try {
-                    await navigator.share({
-                        files: [file],
-                        title: fileName.replace(/\.[^.]+$/, ''),
-                        text: 'تقويم الأسابيع القادمة من منصة Dent2025'
-                    });
-                    return;
-                } catch(shareErr) {
-                    if (shareErr.name === 'AbortError') return;
-                    console.warn('Native share failed, falling back to download:', shareErr);
-                }
-            }
-
-            const blobUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-                document.body.removeChild(a);
-                URL.revokeObjectURL(blobUrl);
-            }, 3000);
+            await this.deliverExportedFile(file, blob, fileName, 'png');
 
         } catch(err) {
             console.error('Save as image error:', err);
@@ -1411,7 +1467,144 @@ const ScheduleApp = {
                 btn.disabled = false;
                 btn.innerHTML = origHtml;
             }
+            if (pdfBtn) pdfBtn.disabled = false;
         }
+    },
+
+    deliverExportedFile: async function(file, blob, fileName, fileType) {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                         (window.matchMedia && window.matchMedia('(max-width: 768px)').matches && 'ontouchstart' in window);
+
+        const blobUrl = URL.createObjectURL(blob);
+
+        // 1. On mobile devices, try native Web Share API immediately
+        if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({
+                    files: [file],
+                    title: fileName.replace(/\.[^.]+$/, ''),
+                    text: 'جدول الأسابيع القادمة • منصة Dent2025'
+                });
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+                return;
+            } catch(shareErr) {
+                if (shareErr.name === 'AbortError') {
+                    // User dismissed share sheet, continue to download/toast so file is not lost
+                } else {
+                    console.warn('Native share failed or gesture expired:', shareErr);
+                }
+            }
+        }
+
+        // 2. Direct automatic browser download
+        try {
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => document.body.removeChild(a), 500);
+        } catch(dlErr) {
+            console.warn('Download failed:', dlErr);
+        }
+
+        // 3. Show sleek toast prompting to send, copy, or view
+        this.showExportToast(file, blob, fileName, fileType, blobUrl);
+    },
+
+    showExportToast: function(file, blob, fileName, fileType, blobUrl) {
+        let old = document.getElementById('dent-export-toast');
+        if (old) old.remove();
+
+        const toast = document.createElement('div');
+        toast.id = 'dent-export-toast';
+        toast.style.cssText = 'position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 9999999; background: #18181b; border: 1px solid rgba(255,255,255,0.18); border-radius: 16px; padding: 14px 18px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); color: #fff; font-family: "Outfit", "Noto Kufi Arabic", sans-serif; direction: rtl; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; max-width: 94vw; width: 560px; box-sizing: border-box;';
+        
+        const canShareNative = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+        const canCopyImage = (fileType === 'png' && navigator.clipboard && window.ClipboardItem);
+        const typeLabel = (fileType === 'pdf' ? 'ملف الـ PDF' : 'ملف الصورة');
+
+        toast.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px; min-width: 220px; flex: 1;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); display: flex; align-items: center; justify-content: center; color: #4ade80; flex-shrink: 0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <div style="min-width: 0;">
+                    <div style="font-weight: 700; font-size: 0.90rem; color: #f8fafc;">تم تجهيز ${typeLabel} بنجاح!</div>
+                    <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">تم التنزيل وهو جاهز للإرسال الآن (${dentEscapeHtml(fileName)})</div>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px; flex-shrink: 0;">
+                ${canShareNative ? `
+                    <button id="dent-toast-share-btn" type="button" style="padding: 7px 13px; background: #059669; color: #fff; border: none; border-radius: 8px; font-family: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='#047857';" onmouseout="this.style.background='#059669';">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                        <span>مشاركة / إرسال</span>
+                    </button>
+                ` : ''}
+                ${canCopyImage ? `
+                    <button id="dent-toast-copy-btn" type="button" style="padding: 7px 13px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-family: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='#1d4ed8';" onmouseout="this.style.background='#2563eb';">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>نسخ للصق في واتساب</span>
+                    </button>
+                ` : ''}
+                <a href="${blobUrl}" target="_blank" rel="noopener noreferrer" style="padding: 7px 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #e2e8f0; text-decoration: none; border-radius: 8px; font-family: inherit; font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 5px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)';" onmouseout="this.style.background='rgba(255,255,255,0.08)';">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    <span>عرض الملف</span>
+                </a>
+                <button type="button" onclick="document.getElementById('dent-export-toast')?.remove()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer; padding: 4px 6px; line-height: 1;">✕</button>
+            </div>
+        `;
+
+        document.body.appendChild(toast);
+
+        if (canShareNative) {
+            const shareBtn = document.getElementById('dent-toast-share-btn');
+            if (shareBtn) {
+                shareBtn.onclick = async () => {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: fileName.replace(/\.[^.]+$/, ''),
+                            text: 'جدول الأسابيع القادمة • منصة Dent2025'
+                        });
+                    } catch(err) {
+                        if (err.name !== 'AbortError') console.warn('Toast share failed:', err);
+                    }
+                };
+            }
+        }
+
+        if (canCopyImage) {
+            const copyBtn = document.getElementById('dent-toast-copy-btn');
+            if (copyBtn) {
+                copyBtn.onclick = async () => {
+                    try {
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ 'image/png': blob })
+                        ]);
+                        copyBtn.innerHTML = '✓ تم النسخ!';
+                        copyBtn.style.background = '#16a34a';
+                        setTimeout(() => {
+                            if (toast.parentElement) toast.remove();
+                        }, 2500);
+                    } catch(err) {
+                        console.warn('Clipboard write failed:', err);
+                        copyBtn.innerHTML = 'تعذر النسخ التلقائي';
+                    }
+                };
+            }
+        }
+
+        setTimeout(() => {
+            if (toast && toast.parentElement) {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.4s';
+                setTimeout(() => {
+                    if (toast.parentElement) toast.remove();
+                    URL.revokeObjectURL(blobUrl);
+                }, 400);
+            }
+        }, 12000);
     },
 
     formatEventTitleHtml: function(rawTitle) {
@@ -1768,59 +1961,11 @@ const ScheduleApp = {
 
         @media screen {
             body {
-                background: ${isMobile ? '#0b0f17' : '#f8fafc'};
-                padding: ${isMobile ? '14px 0 40px 0' : '28px 0'};
+                background: #f8fafc;
+                padding: 24px 0;
                 margin: 0 auto;
                 width: 860px !important;
                 min-width: 860px !important;
-            }
-            .dent-mobile-toolbar {
-                position: sticky;
-                top: 8px;
-                z-index: 999999;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 10px;
-                background: rgba(24, 24, 27, 0.95);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                padding: 10px 14px;
-                border-radius: 12px;
-                margin: 0 auto 14px auto;
-                width: 860px;
-                max-width: 860px;
-                box-sizing: border-box;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-            }
-            .dent-mobile-toolbar button {
-                font-family: inherit;
-                cursor: pointer;
-                border-radius: 8px;
-                font-weight: 700;
-                transition: all 0.2s;
-            }
-            .dent-mobile-btn-print {
-                flex: 1;
-                height: 42px;
-                background: #2563eb;
-                color: #ffffff;
-                border: none;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                font-size: 0.90rem;
-                box-shadow: 0 3px 10px rgba(37, 99, 235, 0.35);
-            }
-            .dent-mobile-btn-close {
-                height: 42px;
-                padding: 0 16px;
-                background: rgba(255, 255, 255, 0.1);
-                color: #e2e8f0;
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                font-size: 0.85rem;
             }
             .a4-print-sheet {
                 background: #ffffff;
@@ -1850,7 +1995,7 @@ const ScheduleApp = {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
-            .no-print, .dent-mobile-toolbar {
+            .no-print {
                 display: none !important;
             }
             .a4-print-sheet {
@@ -2128,16 +2273,6 @@ const ScheduleApp = {
     </style>
 </head>
 <body>
-    ${isMobile ? `
-        <div class="dent-mobile-toolbar no-print">
-            <button type="button" class="dent-mobile-btn-print" onclick="window.print()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                <span>طباعة / حفظ PDF</span>
-            </button>
-            <button type="button" class="dent-mobile-btn-close" onclick="window.close()">✕ إغلاق</button>
-        </div>
-    ` : ''}
-
     <div class="a4-print-sheet">
         <div class="doc-header">
             <div class="doc-titles">
@@ -2161,32 +2296,6 @@ const ScheduleApp = {
             <span class="doc-footer-left">${dentEscapeHtml(todayFormatted)}</span>
         </div>
     </div>
-
-    ${isMobile ? `
-    <script>
-        (function() {
-            function autoPrint() {
-                try {
-                    window.focus();
-                    window.print();
-                } catch(e) {
-                    console.error('Auto print error:', e);
-                }
-            }
-            if (document.fonts && document.fonts.ready) {
-                document.fonts.ready.then(function() {
-                    setTimeout(autoPrint, 250);
-                }).catch(function() {
-                    setTimeout(autoPrint, 400);
-                });
-            } else {
-                window.addEventListener('load', function() {
-                    setTimeout(autoPrint, 400);
-                });
-            }
-        })();
-    <\/script>
-    ` : ''}
 </body>
 </html>`;
     }
