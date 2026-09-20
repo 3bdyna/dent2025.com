@@ -1631,7 +1631,7 @@ const ScheduleApp = {
                                 </div>
                             `;
                         } else {
-                            // Multi-event day (2+): 2-column card with title on top and badges underneath
+                            // Multi-event day (2+): compact single-row card with title and badges side-by-side
                             cardsHtml += `
                                 <div class="m1-multi-card">
                                     <div class="m1-card-title"><bdi dir="auto">${this.formatEventTitleHtml(ev.title)}</bdi></div>
@@ -1690,7 +1690,6 @@ const ScheduleApp = {
         if (announcementText) {
             announcementHtml = `
                 <div style="margin-top: 14px; border: 1px solid #cbd5e1; border-right: 4px solid #334155; border-radius: 8px; padding: 10px 14px; background: #f8fafc; page-break-inside: avoid;">
-                    <strong style="font-size: 0.74rem; color: #334155; display: block; margin-bottom: 4px;">تنبيهات الدفعة:</strong>
                     <div class="print-ann-body" style="font-size: 0.72rem; color: #1e293b; line-height: 1.55;">${announcementText}</div>
                 </div>
             `;
@@ -1967,14 +1966,14 @@ const ScheduleApp = {
         }
         .m1-events-cell {
             vertical-align: middle;
-            padding: 6px 10px;
+            padding: 4px 8px;
         }
         .m1-events-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
+            gap: 6px;
             width: 100%;
-            align-items: stretch;
+            align-items: center;
         }
         .m1-single-event {
             display: flex;
@@ -2006,20 +2005,22 @@ const ScheduleApp = {
             background: #ffffff;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
-            padding: 6px 8px;
+            padding: 3px 6px;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            align-items: center;
             justify-content: space-between;
             gap: 6px;
             box-sizing: border-box;
-            min-height: 48px;
+            min-height: 26px;
         }
         .m1-multi-card .m1-card-title {
-            font-size: 0.70rem;
+            font-size: 0.67rem;
             font-weight: 700;
             color: #0f172a;
-            line-height: 1.35;
-            width: 100%;
+            line-height: 1.25;
+            flex: 1;
+            min-width: 0;
             text-align: right;
             letter-spacing: normal !important;
             word-spacing: normal !important;
@@ -2027,23 +2028,22 @@ const ScheduleApp = {
         .m1-multi-card .m1-card-badges {
             display: flex;
             align-items: center;
-            justify-content: flex-start;
-            gap: 4px;
-            width: 100%;
+            gap: 3px;
+            flex-shrink: 0;
         }
         .m1-type-badge {
             display: inline-block;
-            font-size: 0.60rem;
+            font-size: 0.58rem;
             font-weight: 700;
-            padding: 2px 6px;
+            padding: 1px 5px;
             border-radius: 4px;
             white-space: nowrap;
         }
         .m1-countdown-badge {
             display: inline-block;
-            font-size: 0.60rem;
+            font-size: 0.58rem;
             font-weight: 700;
-            padding: 2px 6px;
+            padding: 1px 5px;
             border-radius: 4px;
             white-space: nowrap;
             border: 1px solid #e2e8f0;
