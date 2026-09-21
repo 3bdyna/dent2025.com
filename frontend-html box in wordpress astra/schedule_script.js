@@ -1823,7 +1823,18 @@ const ScheduleApp = {
                         }
                     }
 
-                    const rawHijri = firstEv.hijri ? this.formatHijriDate(firstEv.hijri) : this.hijriFromGregorian(firstEv.date);
+                    let rawHijri = '';
+                    if (firstEv.hijri) {
+                        rawHijri = this.formatHijriDate(firstEv.hijri);
+                    } else {
+                        const hStart = this.hijriFromGregorian(firstEv.date);
+                        if (firstEv.end_date) {
+                            const hEnd = this.hijriFromGregorian(firstEv.end_date);
+                            rawHijri = this.formatHijriDate(`${hStart} - ${hEnd}`);
+                        } else {
+                            rawHijri = this.formatHijriDate(hStart);
+                        }
+                    }
                     const hijriStr = rawHijri || '—';
 
                     let cellContentHtml = '';
