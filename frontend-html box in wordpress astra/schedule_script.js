@@ -1919,6 +1919,7 @@ const ScheduleApp = {
                             <td class="m1-day-col">${dentEscapeHtml(dayName)}</td>
                             <td class="m1-date-col">
                                 <span class="m1-date-greg" dir="ltr">${dentEscapeHtml(gregDateStr)}</span>
+                                <span class="m1-date-hijri">${dentEscapeHtml(hijriStr)}</span>
                             </td>
                             <td class="m1-events-cell">
                                 ${cellContentHtml}
@@ -1932,7 +1933,6 @@ const ScheduleApp = {
                 <div class="m1-week-block">
                     <div class="m1-week-header">
                         <span style="white-space: nowrap !important;"><bdi dir="rtl" style="display:inline; unicode-bidi:isolate; white-space: nowrap !important;">${dentEscapeHtml(groupData.weekName)}</bdi></span>
-                        <span style="white-space: nowrap !important;"><bdi dir="rtl" style="display:inline; unicode-bidi:isolate; white-space: nowrap !important;">${dentEscapeHtml(groupData.hijriLabel || '')}</bdi></span>
                     </div>
                     <table class="m1-table">
                         <thead>
@@ -2169,7 +2169,7 @@ const ScheduleApp = {
             text-align: center;
         }
         .m1-th-date {
-            width: 95px;
+            width: 105px;
             text-align: center;
         }
         .m1-th-events {
@@ -2195,18 +2195,30 @@ const ScheduleApp = {
             word-spacing: normal !important;
         }
         .m1-date-col {
-            width: 95px;
+            width: 105px;
             vertical-align: middle;
             text-align: center;
+            line-height: 1.15;
         }
         .m1-date-greg {
-            display: inline-block;
+            display: block;
             font-family: 'Outfit', sans-serif;
-            font-size: 0.74rem;
+            font-size: 0.72rem;
             font-weight: 700;
             color: #1e293b;
             direction: ltr;
             text-align: center;
+            unicode-bidi: isolate;
+            white-space: nowrap;
+        }
+        .m1-date-hijri {
+            display: block;
+            font-size: 0.64rem;
+            color: #64748b;
+            direction: rtl;
+            text-align: center;
+            margin-top: 1px;
+            line-height: 1.15;
             unicode-bidi: isolate;
             white-space: nowrap;
         }
