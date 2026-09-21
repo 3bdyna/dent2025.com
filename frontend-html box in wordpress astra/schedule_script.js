@@ -1951,7 +1951,7 @@ const ScheduleApp = {
         let announcementHtml = '';
         if (announcementText) {
             announcementHtml = `
-                <div style="margin-top: 14px; border: 1px solid #cbd5e1; border-right: 4px solid #334155; border-radius: 8px; padding: 10px 14px; background: #f8fafc; page-break-inside: avoid;">
+                <div style="margin-top: 10px; border: 1px solid #cbd5e1; border-right: 4px solid #334155; border-radius: 8px; padding: 6px 12px; background: #f8fafc; page-break-inside: avoid;">
                     <div class="print-ann-body" style="font-size: 0.72rem; color: #1e293b; line-height: 1.55;">${announcementText}</div>
                 </div>
             `;
@@ -2144,7 +2144,12 @@ const ScheduleApp = {
         }
         .m1-table tr:last-child td {
             border-bottom: none !important;
-            padding-bottom: 3px !important;
+            padding-bottom: 1px !important;
+        }
+        .m1-table tr:last-child .m1-single-event,
+        .m1-table tr:last-child .m1-events-grid {
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
         }
         .m1-table th {
             background: #f8fafc;
@@ -2169,7 +2174,7 @@ const ScheduleApp = {
             padding-right: 14px;
         }
         .m1-table td {
-            padding: 5px 10px;
+            padding: 3px 10px;
             vertical-align: middle;
             color: #1e293b;
             letter-spacing: normal !important;
@@ -2189,7 +2194,7 @@ const ScheduleApp = {
         .m1-date-col {
             width: 115px;
             vertical-align: middle;
-            line-height: 1.2;
+            line-height: 1.15;
             text-align: center;
         }
         .m1-date-greg {
@@ -2210,13 +2215,13 @@ const ScheduleApp = {
             direction: rtl;
             text-align: center;
             margin-top: 1px;
-            line-height: 1.2;
+            line-height: 1.15;
             unicode-bidi: isolate;
             white-space: nowrap;
         }
         .m1-events-cell {
             vertical-align: middle;
-            padding: 4px 10px;
+            padding: 2px 10px;
         }
         .m1-single-event {
             display: flex;
@@ -2225,7 +2230,7 @@ const ScheduleApp = {
             gap: 12px;
             width: 100%;
             box-sizing: border-box;
-            padding: 2px 0;
+            padding: 1px 0;
         }
         .m1-single-title {
             font-size: 0.70rem;
@@ -2249,7 +2254,7 @@ const ScheduleApp = {
             grid-template-columns: repeat(2, 1fr);
             gap: 8px;
             width: 100%;
-            align-items: center;
+            align-items: stretch;
             padding: 2px 0;
         }
         .m1-multi-card {
@@ -2264,6 +2269,7 @@ const ScheduleApp = {
             gap: 8px;
             box-sizing: border-box;
             min-height: 28px;
+            height: 100%;
         }
         .m1-multi-card .m1-card-title {
             font-size: 0.67rem;
@@ -2306,8 +2312,12 @@ const ScheduleApp = {
         .m1-countdown-urgent { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
         .m1-countdown-soon { background: #fff7ed; color: #c2410c; border-color: #ffedd5; }
         .m1-countdown-normal { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
-        .print-ann-body p { margin: 0 0 3px 0; }
-        .print-ann-body p:last-child { margin-bottom: 0; }
+        .print-ann-body p {
+            margin: 2px 0 !important;
+            line-height: 1.4 !important;
+        }
+        .print-ann-body p:first-child { margin-top: 0 !important; }
+        .print-ann-body p:last-child { margin-bottom: 0 !important; }
         .doc-footer {
             margin-top: 18px;
             padding-top: 10px;
@@ -2330,6 +2340,7 @@ const ScheduleApp = {
             font-family: 'Outfit', sans-serif;
             color: #64748b;
             direction: ltr;
+            white-space: nowrap !important;
         }
         .a4-print-sheet, .a4-print-sheet * {
             -webkit-print-color-adjust: exact !important;
