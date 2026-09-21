@@ -246,6 +246,12 @@ if (dent2025_is_frontend_head()) {
         $multi_specialty_mode = (bool) get_option('dent2025_multi_specialty_mode', true);
         $head .= "\n" . '<script id="dent-portal-config">window.DENT_MULTI_SPECIALTY_MODE = ' . ($multi_specialty_mode ? 'true' : 'false') . ';</script>' . "\n";
 
+        // Accelerate Google Drive iframe embed connection (DNS + TCP + TLS early warmup)
+        $head .= '<link rel="preconnect" href="https://drive.google.com" crossorigin>' . "\n" .
+            '<link rel="preconnect" href="https://docs.google.com" crossorigin>' . "\n" .
+            '<link rel="dns-prefetch" href="https://drive.google.com">' . "\n" .
+            '<link rel="dns-prefetch" href="https://docs.google.com">' . "\n";
+
         // Modern Speculation Rules API for instant pre-rendering of core academic portal pages
         $speculation_rules = [
             'prerender' => [
