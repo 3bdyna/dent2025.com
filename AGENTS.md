@@ -228,9 +228,9 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 |---|---|---|---|
 | **1. `landing page`** | `wolcome` | `[dent_component file="landing_page.html"]` | None |
 | **2. `الصفحة الرئيسية — Front Page`** | *(static front)* | `[dent_component file="study_timer_banner_widget.html"]`<br>`[dent_component file="gpa_calculator_elegant.txt"]`<br>`[dent_component file="absence_calculator.html"]`<br>`[dent_component file="admin_controls_main.html"]`<br>*(Optional modular: `[dent_component file="calendar_tomorrow_alert.html"]`)* | `admin_controls_main.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` and `<script src="/frontend_components/dashboard.js"></script>` |
-| **3. `التقويم الأكاديمي`** | `التقويم-الأكاديمي` | `[dent_component file="schedule_markup.html"]`<br>`[dent_component file="schedule_script.js"]`<br>`[dent_component file="admin_schedule_lock.html"]` | `admin_schedule_lock.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` |
-| **4. `المقررات والختبارات`** | `المقررات-والاختبارات` | `[dent_component file="chapters_dynamic.html"]`<br>`[dent_component file="quiz_app.html"]`<br>`[dent_component file="admin_controls.html"]` | `chapters_dynamic.html` embeds `<script src="/frontend_components/dashboard.js"></script>` |
-| **5. `جدول المحاضرات`** | `جدول-المحاضرات` | `[dent_component file="admin_classes_lock.html"]`<br>`<div id="dent-classes-target"></div>` | `admin_classes_lock.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` and `<script src="/frontend_components/dashboard.js"></script>` |
+| **3. `التقويم الدراسي`** | `التقويم-الدراسي` | `[dent_component file="schedule_markup.html"]`<br>`[dent_component file="schedule_script.js"]`<br>`[dent_component file="admin_schedule_lock.html"]` | `admin_schedule_lock.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` |
+| **4. `المقررات والاختبارات`** | `المقررات-والاختبارات` | `[dent_component file="chapters_dynamic.html"]`<br>`[dent_component file="quiz_app.html"]`<br>`[dent_component file="admin_controls.html"]` | `chapters_dynamic.html` embeds `<script src="/frontend_components/dashboard.js"></script>` |
+| **5. `الجدول الدراسي`** | `جدول-الدراسي` | `[dent_component file="admin_classes_lock.html"]`<br>`<div id="dent-classes-target"></div>` | `admin_classes_lock.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` and `<script src="/frontend_components/dashboard.js"></script>` |
 
 ---
 
@@ -386,9 +386,9 @@ All keys are strictly prefixed with `dent2025_`:
 |---|---|---|---|
 | **622** | `wolcome` | landing page | Selection screen (`dashboard.js` line 268 redirect target) |
 | **22** | *(static front)* | الصفحة الرئيسية | Main homepage (Settings > Reading) |
-| **2** | `المقررات-والاختبارات` | المقررات والختبارات | Courses & Quizzes page |
-| **118** | `التقويم-الأكاديمي` | التقويم الأكاديمي | Schedule timeline page |
-| **172** | `جدول-المحاضرات` | جدول المحاضرات | Weekly timetable page |
+| **940** | `المقررات-والاختبارات` | المقررات والاختبارات | Courses & Quizzes page |
+| **942** | `التقويم-الدراسي` | التقويم الدراسي | Schedule timeline page |
+| **943** | `جدول-الدراسي` | الجدول الدراسي | Weekly timetable page |
 
 ---
 
