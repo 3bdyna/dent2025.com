@@ -27,6 +27,7 @@ my website dent2025/
 ├── README.md                                   # Project Overview & Architecture Guide
 ├── MAIN_PAGE_DESIGN_SPEC.md                    # Homepage UI/UX specifications & layout guide
 ├── LICENSE                                     # MIT License
+├── .gitignore                                  # Git exclusion rules for secrets, caches & local dumps
 ├── deploy_config.example.json                  # Template SFTP/SSH configuration
 ├── dent2025_passwords.example.json             # Template RBAC passkeys
 ├── deploy_config.json                          # SFTP/SSH credentials (gitignored)
@@ -55,11 +56,11 @@ my website dent2025/
 │   ├── sync_cloud_events.py                    # Cloud-first dynamic data sync & smart-merge engine
 │   ├── sync_server_backups.py                  # Local sync engine for VPS database & file backups (14d rolling)
 │   └── test_system_logic.php                   # Comprehensive offline test suite (42/42 tests)
-├── backend/                                    # Standalone PDO Backend Module (RBAC-auth via dent2025_rbac.php)
+├── backend/                                    # Standalone PDO & Forwarding Backend Module
 │   ├── db_connect.php                          # PDO Database Connection, CORS headers, sendResponse()
-│   ├── api_data.php                            # Public data retrieval API (subjects + links)
-│   ├── api_manage.php                          # Admin management API (subjects, links, Google Drive)
-│   ├── api_ai_exam.php                         # AI exam generation backend (used by quiz_app.html)
+│   ├── api_data.php                            # Forwarding compatibility shim to dent2025_api.php
+│   ├── api_manage.php                          # Forwarding compatibility shim to dent2025_api.php
+│   ├── api_ai_exam.php                         # AI exam generation standalone PDO backend
 │   ├── setup_links_db.php                      # One-time DB schema setup for subject_links table
 │   ├── bin/                                    # Helper binaries (pdftotext)
 │   └── gemini_keys_data/                       # Gemini API key health cache
@@ -239,7 +240,7 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 
 ### ⭐ Shared Authentication Core (`dent2025_rbac.php` + `dent2025_passwords.json`)
 - **`dent2025_rbac.php`**: Loads `dent2025_passwords.json` and provides `dent2025_check_rbac_permission($pass, $permission, $specialty=null, $year=null, $semester=null)` and `dent2025_get_passkey_info($pass)`.
-- **`dent2025_passwords.json`** (~28 entries): Each entry = `{id, label, passkey, allowed_contexts, permissions}`. Passkeys can be 4-digit numeric PINs or alphanumeric strings.
+- **`dent2025_passwords.json`** (~28 entries in populated server cohort DB; baseline entries in local dev repository): Each entry = `{id, label, passkey, allowed_contexts, permissions}`. Passkeys can be 4-digit numeric PINs or alphanumeric strings.
 - **Universal Master Passkeys** (accepted everywhere, `allowed_contexts: ['*']`):
   Configured in untracked `dent2025_passwords.json` (see `dent2025_passwords.example.json`).
 - **Per-Context Leader Passkeys**: JSON entries scoped to `allowed_contexts` strings in `{specialty}_{year}_{semester}` format (e.g. `dentistry_1_1`, `medicine_3_1`, `pre-med_1_1`). These grant limited permissions (`edit_basic_subject`, `semester_events`, `semester_announcements`, `timetable`). There are **no algorithmic context passkeys** — a leader exists only if a JSON entry was explicitly created; check `dent2025_passwords.json` before assuming one exists.
@@ -256,16 +257,17 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 
 ### B. File-Based PHP APIs (`announcements_api.php`, `schedule_backend.php`, `history_api.php`)
 - Standalone PHP scripts — **no `wp-load.php` dependency**.
-- Local JSON file storage exclusively (no DB access).
+- `announcements_api.php` and `schedule_backend.php` use local JSON file storage exclusively (no DB access).
+- `history_api.php` uses local JSON storage for deployment and timer audit logs, but integrates with MySQL (`$wpdb` or PDO via `backend/db_connect.php`) to capture and restore full database snapshots (`subjects` and `subject_links`) during rollbacks.
 - Auth: same shared RBAC engine. `schedule_backend.php` requires `global_events` or `semester_events` permission for writes.
 - `history_api.php` also accepts the master passkeys directly for `manage_passkeys` actions.
 
-### C. Standalone PDO Backend (`backend/api_manage.php`, `backend/api_data.php`, `backend/api_ai_exam.php`)
-- Uses `backend/db_connect.php` for PDO MySQL connection (no WordPress dependency).
-- Database access via `$pdo->prepare()`.
-- Auth: **same shared RBAC engine** (`require_once __DIR__ . '/../dent2025_rbac.php'`). There is **no** `$CONTEXT_PASSWORDS` array anymore.
-- **GAS Webhook**: `backend/api_manage.php` uses `https://script.google.com/macros/s/AKfycbz908qgvF7CSBgoCzA-YAEofJ6kq5RsmZgZoi21bYtqdF_H4pt8cQbfXpYDi2SEYepOCQ/exec` (curl post).
-- `action=add_link` and `action=delete_link` now **enforce** RBAC permission — they are NOT open public endpoints.
+### C. Standalone PDO & Forwarding Backend (`backend/api_manage.php`, `backend/api_data.php`, `backend/api_ai_exam.php`)
+- **Forwarding Compatibility Shims**: As of SafeDeploy commit `262befe`, `backend/api_data.php` and `backend/api_manage.php` are streamlined forwarding compatibility shims that delegate all subject/link queries and mutations directly to the primary WordPress API (`dent2025_api.php` via `$wpdb`), ensuring unified caching and single-point-of-truth validation.
+- **Standalone PDO Exam AI Backend (`backend/api_ai_exam.php`)**: Operates independently with `backend/db_connect.php` for high-throughput AI quiz generation, PDF text extraction (`pdftotext`), and Gemini API caching (`quizzes_data/`).
+- Auth: **same shared RBAC engine** (`require_once __DIR__ . '/../dent2025_rbac.php'`).
+- **Unified GAS Webhook**: `dent2025_api.php` hosts the primary Google Apps Script webhook: `https://script.google.com/macros/s/AKfycbyGOFQWRmkBmJJ9ItdpzhzY5CgbEPjjI6joodT0GT_Sq--f287fcomqUBqRw-MxaKie/exec`.
+- `action=add_link` and `action=delete_link` enforce RBAC permissions via the unified backend engine.
 
 ---
 
@@ -371,6 +373,7 @@ All keys are strictly prefixed with `dent2025_`:
 | `dent2025_schedule_{scheduleId}` | Cached schedule events |
 | `dent2025_redirect_after` | Destination URL to return to after welcome selection |
 | `dent2025_permissions` | RBAC permission object returned by `check_auth` at admin login |
+| `dent2025_multi_specialty_mode` | Cached multi-specialty mode boolean returned from `portal_settings` |
 
 ---
 
@@ -381,7 +384,7 @@ All keys are strictly prefixed with `dent2025_`:
 
 | Page ID | Required Slug | Title | Purpose |
 |---|---|---|---|
-| **622** | `wolcome` | landing page | Selection screen (`dashboard.js` line 176 redirect target) |
+| **622** | `wolcome` | landing page | Selection screen (`dashboard.js` line 268 redirect target) |
 | **22** | *(static front)* | الصفحة الرئيسية | Main homepage (Settings > Reading) |
 | **2** | `المقررات-والاختبارات` | المقررات والختبارات | Courses & Quizzes page |
 | **118** | `التقويم-الأكاديمي` | التقويم الأكاديمي | Schedule timeline page |

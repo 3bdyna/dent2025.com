@@ -1,5 +1,5 @@
 <?php
-// scratch/test_system_logic.php
+// tools/test_system_logic.php
 // Comprehensive Offline Test Suite for Dent2025 Backend & Frontend Subsystem Logic
 
 error_reporting(E_ALL);
