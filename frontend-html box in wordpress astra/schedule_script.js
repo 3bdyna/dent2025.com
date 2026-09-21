@@ -2062,42 +2062,30 @@ const ScheduleApp = {
             border-bottom: 2px solid #0f172a;
             margin-bottom: 16px;
         }
-        .doc-title-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .doc-portal-pill {
-            background: #0f172a;
-            color: #ffffff !important;
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.72rem;
-            font-weight: 800;
-            padding: 3px 8px;
-            border-radius: 6px;
-            letter-spacing: 0.5px;
-            line-height: 1.2;
-            display: inline-block;
+        .doc-titles {
+            text-align: right;
         }
         .doc-main-heading {
-            font-size: 1.25rem !important;
+            font-size: 1.30rem !important;
             font-weight: 900 !important;
             color: #0f172a !important;
-            line-height: 1.2 !important;
-            margin: 0 !important;
-            letter-spacing: normal !important;
-            word-spacing: normal !important;
-            display: inline-block;
-        }
-        .doc-sub-heading {
-            font-size: 0.76rem;
-            color: #475569 !important;
-            font-weight: 600;
-            margin-top: 4px;
-            text-align: right;
+            line-height: 1.25 !important;
+            margin: 0 0 4px 0 !important;
             letter-spacing: normal !important;
             word-spacing: normal !important;
             white-space: nowrap !important;
+            display: block !important;
+        }
+        .doc-sub-heading {
+            font-size: 0.76rem !important;
+            color: #475569 !important;
+            font-weight: 600 !important;
+            margin: 0 !important;
+            text-align: right !important;
+            letter-spacing: normal !important;
+            word-spacing: normal !important;
+            white-space: nowrap !important;
+            display: block !important;
         }
         .doc-meta-badge {
             text-align: left;
@@ -2390,10 +2378,7 @@ const ScheduleApp = {
     <div class="a4-print-sheet">
         <div class="doc-header">
             <div class="doc-titles">
-                <div class="doc-title-row">
-                    <span class="doc-portal-pill">Dent2025</span>
-                    <span class="doc-main-heading">التقويم الأكاديمي</span>
-                </div>
+                <div class="doc-main-heading">التقويم الأكاديمي</div>
                 <div class="doc-sub-heading">${dentEscapeHtml(subTitle)}</div>
             </div>
             <div class="doc-meta-badge">
