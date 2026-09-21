@@ -2,6 +2,12 @@
 <!-- Zero Ampersand Version to defeat wpautop encoding -->
 
 <style>
+  /* Pure CSS subpage banner suppression - eliminates CLS and layout flashes */
+  body:not(.home):not(.front-page) #dent-timer-banner-trigger,
+  body:not(.home):not(.front-page) .dent-timer-banner-override {
+    display: none !important;
+  }
+
   /* --------------------------------------------------
      1. HOMEPAGE BANNER STYLES (Exact Match to GPA Calculator)
      -------------------------------------------------- */
@@ -1872,33 +1878,28 @@ document.addEventListener('click', function(e) {
     } catch(e) {}
   }
 
-  function updateClock() {
-    var elements = getEls();
-    var s = state.seconds;
+    function formatDuration(totalSeconds) {
+    var s = Math.max(0, parseInt(totalSeconds, 10) || 0);
     var h = Math.floor(s / 3600);
     var m = Math.floor((s % 3600) / 60);
     var sec = s % 60;
-    
-    var hStr = h < 10 ? '0' + h : '' + h;
-    var mStr = m < 10 ? '0' + m : '' + m;
-    var secStr = sec < 10 ? '0' + sec : '' + sec;
-    
-    var timeFormatted = hStr + ':' + mStr + ':' + secStr;
+    return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+
+  function updateClock() {
+    var elements = getEls();
+    var timeFormatted = formatDuration(state.seconds);
+
     var clockDigits = elements.clockDigits || $('dent-clock-digits');
     var miniClock = elements.miniClock || $('dent-mini-clock');
     var bannerSubtitle = elements.bannerSubtitle || $('dent-banner-subtitle');
     var subjectInput = elements.subjectInput || $('dent-subject-input');
 
-    if (clockDigits) { clockDigits.textContent = timeFormatted; }
-    if (miniClock) { miniClock.textContent = timeFormatted; }
+    if (clockDigits) clockDigits.textContent = timeFormatted;
+    if (miniClock) miniClock.textContent = timeFormatted;
     if (bannerSubtitle) {
       if (state.running) {
-        var subVal = 'مذاكرة';
-        if (subjectInput) {
-          if (subjectInput.value) {
-            subVal = subjectInput.value;
-          }
-        }
+        var subVal = (subjectInput ? subjectInput.value : '') || 'مذاكرة';
         bannerSubtitle.textContent = 'جاري تسجيل الجلسة كـ ' + subVal + ' (' + timeFormatted + ')';
       } else {
         bannerSubtitle.textContent = 'تتبع ساعات الدراسة، إحصائيات التركيز، والمزامنة عبر الأجهزة (رمز السجل)';
