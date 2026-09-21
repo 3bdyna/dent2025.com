@@ -5,6 +5,40 @@ function dentEscapeHtml(str) {
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+const DENT_A4_PRINT_CSS = " .a4-print-sheet,.a4-print-sheet *{box-sizing:border-box;letter-spacing:normal !important;word-spacing:normal !important;}.a4-print-sheet{font-family:'Cairo',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#ffffff;color:#0f172a;direction:rtl;font-size:12px;box-sizing:border-box !important;width:860px !important;min-width:860px !important;max-width:860px !important;padding:16mm 20mm !important;margin:0 auto !important;border-radius:0;box-shadow:0 4px 25px rgba(0,0,0,0.08);border:none;-webkit-text-size-adjust:100% !important;text-size-adjust:100% !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}@media print{@page{size:A4 portrait;margin:0;}.no-print{display:none !important;}.a4-print-sheet{box-sizing:border-box !important;width:100% !important;min-width:100% !important;max-width:100% !important;padding:16mm 20mm !important;margin:0 auto !important;box-shadow:none !important;border:none !important;border-radius:0 !important;background:#ffffff !important;}}.doc-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:2px solid #0f172a;margin-bottom:16px;}.doc-titles{text-align:right;}.doc-main-heading{font-size:1.30rem !important;font-weight:900 !important;color:#0f172a !important;line-height:1.25 !important;margin:0 0 4px 0 !important;letter-spacing:normal !important;word-spacing:normal !important;white-space:nowrap !important;display:block !important;}.doc-sub-heading{font-size:0.76rem !important;color:#475569 !important;font-weight:600 !important;margin:0 !important;text-align:right !important;letter-spacing:normal !important;word-spacing:normal !important;white-space:nowrap !important;display:block !important;}.doc-meta-badge{text-align:left;direction:ltr;display:flex;flex-direction:column;align-items:flex-start;gap:4px;}.doc-meta-badge .period{display:inline-block;background:#f1f5f9;border:1px solid #cbd5e1;padding:4px 10px;border-radius:6px;font-size:0.74rem;font-weight:700;color:#1e293b;font-family:'Outfit',sans-serif;white-space:nowrap !important;}.doc-meta-badge .subperiod{display:block;font-size:0.70rem;color:#64748b;text-align:left;direction:rtl;white-space:nowrap !important;}.m1-week-block{margin-bottom:14px;border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;page-break-inside:avoid;break-inside:avoid;}.m1-week-header{background:#1e293b;color:#f8fafc;padding:7px 14px;font-size:0.78rem;font-weight:700;display:flex;justify-content:space-between;align-items:center;white-space:nowrap !important;line-height:1.4;min-height:36px;box-sizing:border-box;letter-spacing:normal !important;word-spacing:normal !important;}.m1-week-header span{white-space:nowrap !important;display:inline-flex;align-items:center;}.m1-table{width:100%;border-collapse:collapse;font-size:0.72rem;}.m1-table tr{page-break-inside:avoid;break-inside:avoid;}.m1-table th,.m1-table td{border-top:none !important;border-right:none !important;border-left:1px solid #f1f5f9 !important;border-bottom:1px solid #e2e8f0 !important;}.m1-table th:first-child,.m1-table td:first-child{border-right:none !important;}.m1-table th:last-child,.m1-table td:last-child{border-left:none !important;}.m1-table tr:last-child td{border-bottom:none !important;padding-bottom:1px !important;}.m1-table tr:last-child .m1-single-event,.m1-table tr:last-child .m1-events-grid{padding-bottom:0 !important;margin-bottom:0 !important;}.m1-table th{background:#f8fafc;color:#475569;font-weight:700;padding:7px 12px;font-size:0.70rem;white-space:nowrap;letter-spacing:normal !important;word-spacing:normal !important;}.m1-th-day{width:75px;text-align:center;}.m1-th-date{width:105px;text-align:center;}.m1-th-events{text-align:right;padding-right:14px;}.m1-table td{padding:3px 10px;vertical-align:middle;color:#1e293b;letter-spacing:normal !important;word-spacing:normal !important;}.m1-table tr:nth-child(even){background-color:#fafafa;}.m1-day-col{font-weight:700;color:#0f172a;width:75px;font-size:0.72rem;vertical-align:middle;text-align:center;letter-spacing:normal !important;word-spacing:normal !important;}.m1-date-col{width:105px;vertical-align:middle;text-align:center;line-height:1.15;}.m1-date-greg{display:block;font-family:'Outfit',sans-serif;font-size:0.72rem;font-weight:700;color:#1e293b;direction:ltr;text-align:center;unicode-bidi:isolate;white-space:nowrap;}.m1-date-hijri{display:block;font-size:0.64rem;color:#64748b;direction:rtl;text-align:center;margin-top:1px;line-height:1.15;unicode-bidi:isolate;white-space:nowrap;}.m1-events-cell{vertical-align:middle;padding:2px 10px;}.m1-single-event{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;box-sizing:border-box;padding:1px 0;}.m1-single-title{font-size:0.70rem;font-weight:700;color:#0f172a;line-height:1.35;flex:1;min-width:0;text-align:right;letter-spacing:normal !important;word-spacing:normal !important;}.m1-single-badges{display:flex;align-items:center;gap:5px;flex-shrink:0;}.m1-events-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;width:100%;align-items:stretch;padding:2px 0;}.m1-multi-card{background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;padding:4px 8px;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:8px;box-sizing:border-box;min-height:28px;height:100%;}.m1-multi-card .m1-card-title{font-size:0.67rem;font-weight:700;color:#0f172a;line-height:1.25;flex:1;min-width:0;text-align:right;letter-spacing:normal !important;word-spacing:normal !important;}.m1-multi-card .m1-card-badges{display:flex;align-items:center;gap:4px;flex-shrink:0;}.m1-type-badge{display:inline-block;font-size:0.58rem;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;}.m1-countdown-badge{display:inline-block;font-size:0.58rem;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;border:1px solid #e2e8f0;background:#f8fafc;}.m1-badge-exam{background:#f8fafc;color:#881337;border:1px solid #fecdd3;}.m1-badge-holiday{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;}.m1-badge-payment{background:#fefce8;color:#854d0e;border:1px solid #fef08a;}.m1-countdown-urgent{background:#fef2f2;color:#991b1b;border-color:#fecaca;}.m1-countdown-soon{background:#fff7ed;color:#c2410c;border-color:#ffedd5;}.m1-countdown-normal{background:#f1f5f9;color:#475569;border-color:#e2e8f0;}.a4-print-sheet .print-ann-content{font-size:0.72rem;color:#1e293b;line-height:1.45;}.a4-print-sheet .print-ann-content p{margin-top:0 !important;margin-bottom:4px !important;line-height:1.4 !important;}.a4-print-sheet .print-ann-content p:last-child,.a4-print-sheet .print-ann-content ul:last-child,.a4-print-sheet .print-ann-content ol:last-child,.a4-print-sheet .print-ann-content>*:last-child{margin-bottom:0 !important;}.a4-print-sheet .print-ann-content p:empty,.a4-print-sheet .print-ann-content br:last-child{display:none !important;}.doc-footer{margin-top:18px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;font-size:0.70rem;color:#64748b;page-break-inside:avoid;break-inside:avoid;}.doc-footer-right{font-family:'Outfit',sans-serif;font-weight:600;color:#475569;direction:ltr;}.doc-footer-left{font-family:'Outfit',sans-serif;color:#64748b;direction:ltr;white-space:nowrap !important;}.a4-print-sheet,.a4-print-sheet *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}";
+
+const DENT_EVENT_TYPES = {
+    quiz: { label: 'كويز', badgeClass: 'badge-type-quiz', printClass: 'm1-badge-exam' },
+    assessment: { label: 'اسسمنت', badgeClass: 'badge-type-assessment', printClass: 'm1-badge-exam' },
+    research: { label: 'بحث / مشروع', badgeClass: 'badge-type-research', printClass: 'm1-badge-exam' },
+    homework: { label: 'واجب', badgeClass: 'badge-type-homework', printClass: 'm1-badge-exam' },
+    exam: { label: 'اختبار', badgeClass: 'badge-type-exam', printClass: 'm1-badge-exam' },
+    midterm: { label: 'اختبار نصفي', badgeClass: 'badge-type-midterm', printClass: 'm1-badge-exam' },
+    final: { label: 'اختبار نهائي', badgeClass: 'badge-type-final', printClass: 'm1-badge-exam' },
+    deadline: { label: 'موعد نهائي', badgeClass: 'badge-type-deadline', printClass: 'm1-badge-exam' },
+    holiday: { label: 'إجازة رسمية', badgeClass: 'badge-type-holiday', printClass: 'm1-badge-holiday' },
+    payment: { label: 'مكافأة', badgeClass: 'badge-type-payment', printClass: 'm1-badge-payment' },
+    start: { label: 'بداية دراسة', badgeClass: 'badge-type-start', printClass: 'm1-badge-holiday' },
+    other: { label: 'أخرى', badgeClass: 'badge-type-other', printClass: 'm1-badge-exam' },
+    defaultEvent: { label: 'حدث', badgeClass: 'badge-type-other', printClass: 'm1-badge-exam' }
+};
+
+const DENT_MONTHS_HIJRI = [
+    'محرم', 'صفر', 'ربيع الأول', 'ربيع الآخر', 'جمادى الأولى', 'جمادى الآخرة',
+    'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'
+];
+const DENT_MONTHS_GREG_AR = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+const DENT_MONTHS_GREG_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+function dentFormatCountdown(daysLeft) {
+    if (daysLeft < 0) return { text: 'انتهى', badgeClass: 'normal', isUrgent: false };
+    if (daysLeft === 0) return { text: 'اليوم', badgeClass: 'urgent', isUrgent: true };
+    if (daysLeft === 1) return { text: 'غداً', badgeClass: 'warning', isUrgent: false };
+    if (daysLeft === 2) return { text: 'بعد يومين', badgeClass: 'warning', isUrgent: false };
+    if (daysLeft >= 3 && daysLeft <= 10) return { text: 'بعد ' + daysLeft + ' أيام', badgeClass: 'normal', isUrgent: false };
+    return { text: 'بعد ' + daysLeft + ' يوماً', badgeClass: 'normal', isUrgent: false };
+}
+
 const ScheduleApp = {
     getScheduleId: function() {
         if (window.dentScheduleId && window.dentScheduleId !== 'global') {
@@ -39,64 +73,32 @@ const ScheduleApp = {
         'other': 'var(--color-other)'
     },
     getEventTypeMeta: function(ev) {
-        if (!ev) return { label: 'حدث', badgeClass: 'badge-type-other', printClass: 'm1-badge-exam' };
-        
-        const map = {
-            'quiz': { label: 'كويز', badgeClass: 'badge-type-quiz', printClass: 'm1-badge-exam' },
-            'assessment': { label: 'اسسمنت', badgeClass: 'badge-type-assessment', printClass: 'm1-badge-exam' },
-            'research': { label: 'بحث / مشروع', badgeClass: 'badge-type-research', printClass: 'm1-badge-exam' },
-            'homework': { label: 'واجب', badgeClass: 'badge-type-homework', printClass: 'm1-badge-exam' },
-            'exam': { label: 'اختبار', badgeClass: 'badge-type-exam', printClass: 'm1-badge-exam' },
-            'midterm': { label: 'اختبار نصفي', badgeClass: 'badge-type-midterm', printClass: 'm1-badge-exam' },
-            'final': { label: 'اختبار نهائي', badgeClass: 'badge-type-final', printClass: 'm1-badge-exam' },
-            'deadline': { label: 'موعد نهائي', badgeClass: 'badge-type-deadline', printClass: 'm1-badge-exam' },
-            'holiday': { label: 'إجازة رسمية', badgeClass: 'badge-type-holiday', printClass: 'm1-badge-holiday' },
-            'payment': { label: 'مكافأة', badgeClass: 'badge-type-payment', printClass: 'm1-badge-payment' },
-            'start': { label: 'بداية دراسة', badgeClass: 'badge-type-start', printClass: 'm1-badge-holiday' },
-            'other': { label: 'أخرى', badgeClass: 'badge-type-other', printClass: 'm1-badge-exam' }
-        };
-
+        if (!ev) return DENT_EVENT_TYPES.defaultEvent;
         const typeKey = (ev.type || '').toLowerCase();
 
         if (ev.type_label && String(ev.type_label).trim()) {
-            const customBadgeClass = map[typeKey] ? map[typeKey].badgeClass : 'badge-type-custom';
-            const customPrintClass = map[typeKey] ? map[typeKey].printClass : 'm1-badge-exam';
+            const meta = DENT_EVENT_TYPES[typeKey];
             return {
                 label: String(ev.type_label).trim(),
-                badgeClass: customBadgeClass,
-                printClass: customPrintClass
+                badgeClass: meta ? meta.badgeClass : 'badge-type-custom',
+                printClass: meta ? meta.printClass : 'm1-badge-exam'
             };
         }
 
-        if (map[typeKey]) {
-            return map[typeKey];
-        }
+        if (DENT_EVENT_TYPES[typeKey]) return DENT_EVENT_TYPES[typeKey];
 
         const title = (ev.title || '').toLowerCase();
-        if (title.includes('كويز') || title.includes('quiz')) {
-            return map['quiz'];
-        }
-        if (title.includes('واجب') || title.includes('رسم') || title.includes('homework')) {
-            return map['homework'];
-        }
-        if (title.includes('اسسمنت') || title.includes('تقييم') || title.includes('assessment')) {
-            return map['assessment'];
-        }
-        if (title.includes('بحث') || title.includes('مشروع') || title.includes('research')) {
-            return map['research'];
-        }
-        if (title.includes('نهائ') || title.includes('فاينل') || title.includes('final')) {
-            return map['final'];
-        }
-        if (title.includes('نصفي') || title.includes('ميد') || title.includes('midterm')) {
-            return map['midterm'];
-        }
+        if (title.includes('كويز') || title.includes('quiz')) return DENT_EVENT_TYPES.quiz;
+        if (title.includes('واجب') || title.includes('رسم') || title.includes('homework')) return DENT_EVENT_TYPES.homework;
+        if (title.includes('اسسمنت') || title.includes('تقييم') || title.includes('assessment')) return DENT_EVENT_TYPES.assessment;
+        if (title.includes('بحث') || title.includes('مشروع') || title.includes('research')) return DENT_EVENT_TYPES.research;
+        if (title.includes('نهائ') || title.includes('فاينل') || title.includes('final')) return DENT_EVENT_TYPES.final;
+        if (title.includes('نصفي') || title.includes('ميد') || title.includes('midterm')) return DENT_EVENT_TYPES.midterm;
 
         if (typeKey && typeKey !== 'other') {
             return { label: ev.type, badgeClass: 'badge-type-custom', printClass: 'm1-badge-exam' };
         }
-
-        return { label: 'حدث', badgeClass: 'badge-type-other', printClass: 'm1-badge-exam' };
+        return DENT_EVENT_TYPES.defaultEvent;
     },
     toggleCustomTypeInput: function(val) {
         const wrap = document.getElementById('ev-custom-type-wrap');
@@ -110,10 +112,7 @@ const ScheduleApp = {
             }
         }
     },
-    hijriMonths: [
-        "محرم", "صفر", "ربيع الأول", "ربيع الآخر", "جمادى الأولى", "جمادى الآخرة",
-        "رجب", "شعبان", "رمضان", "شوال", "ذو القعدة", "ذو الحجة"
-    ],
+    hijriMonths: DENT_MONTHS_HIJRI,
     formatHijriDate: function(hijriString) {
         if (!hijriString) return '';
         const parts = hijriString.split(' - ');
@@ -183,8 +182,8 @@ const ScheduleApp = {
         }
         return formatted;
     },
-    gregorianMonthsAR: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"],
-    gregorianMonthsEN: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    gregorianMonthsAR: DENT_MONTHS_GREG_AR,
+    gregorianMonthsEN: DENT_MONTHS_GREG_EN,
     getMonthName: function(dateString) {
         const dateObj = this.parseLocalDate(dateString);
         if (!dateObj) return '';
@@ -1193,10 +1192,11 @@ const ScheduleApp = {
         let styleContent = styleMatch ? styleMatch[1] : '';
         const sheetContent = sheetMatch ? sheetMatch[1] : '';
 
-        // Extra safeguard: strip any leftover global html/body rules
+        // Extra safeguard: strip any leftover global html/body tag selectors safely without corrupting class names
         styleContent = styleContent
-            .replace(/\bhtml\s*,\s*body\b/gi, '.a4-print-sheet')
-            .replace(/\bbody\b/gi, '.a4-print-sheet');
+            .replace(/(^|[\s,{}])html\s*,\s*body(?=[\s,{:]|$)/gi, '$1.a4-print-sheet')
+            .replace(/(^|[\s,{}])body(?=[\s,{:]|$)/gi, '$1.a4-print-sheet')
+            .replace(/(^|[\s,{}])html(?=[\s,{:]|$)/gi, '$1.a4-print-sheet');
 
         let old = document.getElementById('dent-render-sandbox');
         if (old) old.remove();
@@ -1953,11 +1953,17 @@ const ScheduleApp = {
         // Announcement section (if provided)
         let announcementHtml = '';
         if (announcementText) {
-            announcementHtml = `
-                <div style="margin-top: 10px; border: 1px solid #cbd5e1; border-right: 4px solid #334155; border-radius: 8px; padding: 6px 12px; background: #f8fafc; page-break-inside: avoid;">
-                    <div class="print-ann-body" style="font-size: 0.72rem; color: #1e293b; line-height: 1.55;">${announcementText}</div>
-                </div>
-            `;
+            const cleanAnn = String(announcementText)
+                .replace(/<p>\s*(?:<br\s*\/?>|&nbsp;|\s)*\s*<\/p>/gi, '')
+                .replace(/(?:<p>(?:<br\s*\/?>|&nbsp;|\s)*<\/p>|<br\s*\/?>|\s)+$/gi, '')
+                .trim();
+            if (cleanAnn && cleanAnn !== 'لا يوجد إعلانات حالياً.' && cleanAnn !== '<p></p>' && cleanAnn !== '<br>') {
+                announcementHtml = `
+                    <div class="print-ann-box" style="margin-top: 10px; border: 1px solid #cbd5e1; border-right: 4px solid #334155; border-radius: 8px; padding: 7px 12px 6px 12px; background: #f8fafc; page-break-inside: avoid;">
+                        <div class="print-ann-content" style="font-size: 0.72rem; color: #1e293b; line-height: 1.45;">${cleanAnn}</div>
+                    </div>
+                `;
+            }
         }
 
         // Notes section (omitted if empty)
@@ -1984,372 +1990,7 @@ const ScheduleApp = {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" crossorigin="anonymous">
-    <style>
-        .a4-print-sheet,
-        .a4-print-sheet * {
-            box-sizing: border-box;
-            letter-spacing: normal !important;
-            word-spacing: normal !important;
-        }
-        .a4-print-sheet {
-            font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #ffffff;
-            color: #0f172a;
-            direction: rtl;
-            font-size: 12px;
-            box-sizing: border-box !important;
-            width: 860px !important;
-            min-width: 860px !important;
-            max-width: 860px !important;
-            padding: 16mm 20mm !important;
-            margin: 0 auto !important;
-            border-radius: 0;
-            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
-            border: none;
-            -webkit-text-size-adjust: 100% !important;
-            text-size-adjust: 100% !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-        }
-
-        @media print {
-            @page {
-                size: A4 portrait;
-                margin: 0;
-            }
-            .no-print {
-                display: none !important;
-            }
-            .a4-print-sheet {
-                box-sizing: border-box !important;
-                width: 100% !important;
-                min-width: 100% !important;
-                max-width: 100% !important;
-                padding: 16mm 20mm !important;
-                margin: 0 auto !important;
-                box-shadow: none !important;
-                border: none !important;
-                border-radius: 0 !important;
-                background: #ffffff !important;
-            }
-        }
-
-        .doc-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #0f172a;
-            margin-bottom: 16px;
-        }
-        .doc-titles {
-            text-align: right;
-        }
-        .doc-main-heading {
-            font-size: 1.30rem !important;
-            font-weight: 900 !important;
-            color: #0f172a !important;
-            line-height: 1.25 !important;
-            margin: 0 0 4px 0 !important;
-            letter-spacing: normal !important;
-            word-spacing: normal !important;
-            white-space: nowrap !important;
-            display: block !important;
-        }
-        .doc-sub-heading {
-            font-size: 0.76rem !important;
-            color: #475569 !important;
-            font-weight: 600 !important;
-            margin: 0 !important;
-            text-align: right !important;
-            letter-spacing: normal !important;
-            word-spacing: normal !important;
-            white-space: nowrap !important;
-            display: block !important;
-        }
-        .doc-meta-badge {
-            text-align: left;
-            direction: ltr;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 4px;
-        }
-        .doc-meta-badge .period {
-            display: inline-block;
-            background: #f1f5f9;
-            border: 1px solid #cbd5e1;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.74rem;
-            font-weight: 700;
-            color: #1e293b;
-            font-family: 'Outfit', sans-serif;
-            white-space: nowrap !important;
-        }
-        .doc-meta-badge .subperiod {
-            display: block;
-            font-size: 0.70rem;
-            color: #64748b;
-            text-align: left;
-            direction: rtl;
-            white-space: nowrap !important;
-        }
-        .m1-week-block {
-            margin-bottom: 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            overflow: hidden;
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
-        .m1-week-header {
-            background: #1e293b;
-            color: #f8fafc;
-            padding: 7px 14px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            white-space: nowrap !important;
-            line-height: 1.4;
-            min-height: 36px;
-            box-sizing: border-box;
-            letter-spacing: normal !important;
-            word-spacing: normal !important;
-        }
-        .m1-week-header span {
-            white-space: nowrap !important;
-            display: inline-flex;
-            align-items: center;
-        }
-        .m1-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.72rem;
-        }
-        .m1-table tr {
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
-        .m1-table th, .m1-table td {
-            border-top: none !important;
-            border-right: none !important;
-            border-left: 1px solid #f1f5f9 !important;
-            border-bottom: 1px solid #e2e8f0 !important;
-        }
-        .m1-table th:first-child, .m1-table td:first-child {
-            border-right: none !important;
-        }
-        .m1-table th:last-child, .m1-table td:last-child {
-            border-left: none !important;
-        }
-        .m1-table tr:last-child td {
-            border-bottom: none !important;
-            padding-bottom: 1px !important;
-        }
-        .m1-table tr:last-child .m1-single-event,
-        .m1-table tr:last-child .m1-events-grid {
-            padding-bottom: 0 !important;
-            margin-bottom: 0 !important;
-        }
-        .m1-table th {
-            background: #f8fafc;
-            color: #475569;
-            font-weight: 700;
-            padding: 7px 12px;
-            font-size: 0.70rem;
-            white-space: nowrap;
-            letter-spacing: normal !important;
-            word-spacing: normal !important;
-        }
-        .m1-th-day {
-            width: 75px;
-            text-align: center;
-        }
-        .m1-th-date {
-            width: 105px;
-            text-align: center;
-        }
-        .m1-th-events {
-            text-align: right;
-            padding-right: 14px;
-        }
-        .m1-table td {
-            padding: 3px 10px;
-            vertical-align: middle;
-            color: #1e293b;
-            letter-spacing: normal !important;
-            word-spacing: normal !important;
-        }
-        .m1-table tr:nth-child(even) { background-color: #fafafa; }
-        .m1-day-col {
-            font-weight: 700;
-            color: #0f172a;
-            width: 75px;
-            font-size: 0.72rem;
-            vertical-align: middle;
-            text-align: center;
-            letter-spacing: normal !important;
-            word-spacing: normal !important;
-        }
-        .m1-date-col {
-            width: 105px;
-            vertical-align: middle;
-            text-align: center;
-            line-height: 1.15;
-        }
-        .m1-date-greg {
-            display: block;
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: #1e293b;
-            direction: ltr;
-            text-align: center;
-            unicode-bidi: isolate;
-            white-space: nowrap;
-        }
-        .m1-date-hijri {
-            display: block;
-            font-size: 0.64rem;
-            color: #64748b;
-            direction: rtl;
-            text-align: center;
-            margin-top: 1px;
-            line-height: 1.15;
-            unicode-bidi: isolate;
-            white-space: nowrap;
-        }
-        .m1-events-cell {
-            vertical-align: middle;
-            padding: 2px 10px;
-        }
-        .m1-single-event {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            width: 100%;
-            box-sizing: border-box;
-            padding: 1px 0;
-        }
-        .m1-single-title {
-            font-size: 0.70rem;
-            font-weight: 700;
-            color: #0f172a;
-            line-height: 1.35;
-            flex: 1;
-            min-width: 0;
-            text-align: right;
-            letter-spacing: normal !important;
-            word-spacing: normal !important;
-        }
-        .m1-single-badges {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            flex-shrink: 0;
-        }
-        .m1-events-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            width: 100%;
-            align-items: stretch;
-            padding: 2px 0;
-        }
-        .m1-multi-card {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            padding: 4px 8px;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            box-sizing: border-box;
-            min-height: 28px;
-            height: 100%;
-        }
-        .m1-multi-card .m1-card-title {
-            font-size: 0.67rem;
-            font-weight: 700;
-            color: #0f172a;
-            line-height: 1.25;
-            flex: 1;
-            min-width: 0;
-            text-align: right;
-            letter-spacing: normal !important;
-            word-spacing: normal !important;
-        }
-        .m1-multi-card .m1-card-badges {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            flex-shrink: 0;
-        }
-        .m1-type-badge {
-            display: inline-block;
-            font-size: 0.58rem;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 4px;
-            white-space: nowrap;
-        }
-        .m1-countdown-badge {
-            display: inline-block;
-            font-size: 0.58rem;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 4px;
-            white-space: nowrap;
-            border: 1px solid #e2e8f0;
-            background: #f8fafc;
-        }
-        .m1-badge-exam { background: #f8fafc; color: #881337; border: 1px solid #fecdd3; }
-        .m1-badge-holiday { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-        .m1-badge-payment { background: #fefce8; color: #854d0e; border: 1px solid #fef08a; }
-        .m1-countdown-urgent { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
-        .m1-countdown-soon { background: #fff7ed; color: #c2410c; border-color: #ffedd5; }
-        .m1-countdown-normal { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
-        .print-ann-body p {
-            margin: 2px 0 !important;
-            line-height: 1.4 !important;
-        }
-        .print-ann-body p:first-child { margin-top: 0 !important; }
-        .print-ann-body p:last-child { margin-bottom: 0 !important; }
-        .doc-footer {
-            margin-top: 18px;
-            padding-top: 10px;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.70rem;
-            color: #64748b;
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
-        .doc-footer-right {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 600;
-            color: #475569;
-            direction: ltr;
-        }
-        .doc-footer-left {
-            font-family: 'Outfit', sans-serif;
-            color: #64748b;
-            direction: ltr;
-            white-space: nowrap !important;
-        }
-        .a4-print-sheet, .a4-print-sheet * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-        }
-    </style>
+    <style>${DENT_A4_PRINT_CSS}</style>
 </head>
 <body>
     <div class="a4-print-sheet">
@@ -2379,6 +2020,9 @@ const ScheduleApp = {
 </html>`;
     }
 };
+
+window.ScheduleApp = ScheduleApp;
+window.dentEscapeHtml = dentEscapeHtml;
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => ScheduleApp.init());

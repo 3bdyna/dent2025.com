@@ -1886,6 +1886,14 @@ document.addEventListener('click', function(e) {
     return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
   }
 
+    function formatDuration(totalSeconds) {
+    var s = Math.max(0, parseInt(totalSeconds, 10) || 0);
+    var h = Math.floor(s / 3600);
+    var m = Math.floor((s % 3600) / 60);
+    var sec = s % 60;
+    return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+
   function updateClock() {
     var elements = getEls();
     var timeFormatted = formatDuration(state.seconds);
