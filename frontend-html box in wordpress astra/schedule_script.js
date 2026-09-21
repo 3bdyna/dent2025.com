@@ -1115,14 +1115,14 @@ const ScheduleApp = {
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px;">
-                    <button type="button" id="dent-exec-print-btn" onclick="ScheduleApp.executeSaveAsPdf()" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.25)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.12)';">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                        <span>ملف PDF</span>
+                    <button type="button" id="dent-exec-print-btn" onclick="ScheduleApp.executeSaveAsPdf()" style="width: 100%; height: 48px; min-height: 48px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); white-space: nowrap; padding: 0 14px;" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.25)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.12)';">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                        <span style="white-space: nowrap;">ملف PDF</span>
                     </button>
 
-                    <button type="button" id="dent-exec-image-btn" onclick="ScheduleApp.executeSaveAsImage()" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.25)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.12)';">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        <span>نسخ كصورة (للحافظة)</span>
+                    <button type="button" id="dent-exec-image-btn" onclick="ScheduleApp.executeSaveAsImage()" style="width: 100%; height: 48px; min-height: 48px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); white-space: nowrap; padding: 0 14px;" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.25)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.12)';">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="flex-shrink:0;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span style="white-space: nowrap;">نسخ كصورة</span>
                     </button>
                 </div>
 
@@ -1190,16 +1190,21 @@ const ScheduleApp = {
         const styleMatch = fullHtml.match(/<style>([\s\S]*?)<\/style>/i);
         const sheetMatch = fullHtml.match(/(<div class="a4-print-sheet"[\s\S]*?<\/div>\s*)<\/body>/i);
 
-        const styleContent = styleMatch ? styleMatch[1] : '';
+        let styleContent = styleMatch ? styleMatch[1] : '';
         const sheetContent = sheetMatch ? sheetMatch[1] : '';
+
+        // Extra safeguard: strip any leftover global html/body rules
+        styleContent = styleContent
+            .replace(/\bhtml\s*,\s*body\b/gi, '.a4-print-sheet')
+            .replace(/\bbody\b/gi, '.a4-print-sheet');
 
         let old = document.getElementById('dent-render-sandbox');
         if (old) old.remove();
 
         const sandbox = document.createElement('div');
         sandbox.id = 'dent-render-sandbox';
-        // Render in document tree with fixed width 860px, invisible to user, full layout calculation
-        sandbox.style.cssText = 'position: fixed; top: 0; left: 0; width: 860px !important; min-width: 860px !important; max-width: 860px !important; z-index: -99999; opacity: 0; pointer-events: none; overflow: hidden; background: #ffffff;';
+        // Render in document tree off-screen, completely invisible, isolated from layout
+        sandbox.style.cssText = 'position: fixed; top: -99999px; left: -99999px; width: 860px !important; min-width: 860px !important; max-width: 860px !important; z-index: -99999; opacity: 0; pointer-events: none; overflow: hidden; background: #ffffff;';
         sandbox.innerHTML = `<style>${styleContent}</style>${sheetContent}`;
         document.body.appendChild(sandbox);
 
@@ -1237,8 +1242,8 @@ const ScheduleApp = {
         if (btn) {
             btn.disabled = true;
             btn.innerHTML = `
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: dentSpin 0.8s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
-                <span>جاري إنشاء PDF...</span>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: dentSpin 0.8s linear infinite; flex-shrink: 0;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
+                <span style="white-space: nowrap;">جاري إنشاء PDF...</span>
             `;
         }
         if (imgBtn) imgBtn.disabled = true;
@@ -1326,8 +1331,8 @@ const ScheduleApp = {
         if (btn) {
             btn.disabled = true;
             btn.innerHTML = `
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: dentSpin 0.8s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
-                <span>جاري نسخ وتجهيز الصورة...</span>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: dentSpin 0.8s linear infinite; flex-shrink: 0;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
+                <span style="white-space: nowrap;">جاري تجهيز الصورة...</span>
             `;
         }
         if (pdfBtn) pdfBtn.disabled = true;
@@ -1977,62 +1982,37 @@ const ScheduleApp = {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" crossorigin="anonymous">
     <style>
-        * {
+        .a4-print-sheet,
+        .a4-print-sheet * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
             letter-spacing: normal !important;
             word-spacing: normal !important;
         }
-        html, body {
+        .a4-print-sheet {
             font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #ffffff;
             color: #0f172a;
             direction: rtl;
             font-size: 12px;
+            box-sizing: border-box !important;
             width: 860px !important;
             min-width: 860px !important;
+            max-width: 860px !important;
+            padding: 16mm 20mm !important;
+            margin: 0 auto !important;
+            border-radius: 0;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+            border: none;
             -webkit-text-size-adjust: 100% !important;
             text-size-adjust: 100% !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
 
-        @media screen {
-            body {
-                background: #f8fafc;
-                padding: 24px 0;
-                margin: 0 auto;
-                width: 860px !important;
-                min-width: 860px !important;
-            }
-            .a4-print-sheet {
-                background: #ffffff;
-                box-sizing: border-box !important;
-                width: 860px !important;
-                min-width: 860px !important;
-                max-width: 860px !important;
-                padding: 16mm 20mm !important;
-                margin: 0 auto !important;
-                border-radius: 0;
-                box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
-                border: none;
-            }
-        }
-
         @media print {
             @page {
                 size: A4 portrait;
                 margin: 0;
-            }
-            html, body {
-                background: #ffffff !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                width: 100% !important;
-                min-width: 100% !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
             }
             .no-print {
                 display: none !important;
@@ -2349,7 +2329,7 @@ const ScheduleApp = {
             color: #64748b;
             direction: rtl;
         }
-        * {
+        .a4-print-sheet, .a4-print-sheet * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
