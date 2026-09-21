@@ -29,9 +29,11 @@ premed-scan.json
 
 # 3. Legacy Local Snapshots & Zip Backups
 .deploy_backups/
+server_backups_dent2025_daily/
 *.zip
 *.tar
 *.gz
+
 
 # 4. WordPress Dynamic Uploads & OS Artifacts
 wp-content/uploads/
