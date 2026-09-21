@@ -2006,7 +2006,7 @@ function submitAddLink() {
     btn.innerText = "جاري الحفظ...";
     btn.disabled = true;
     
-    fetch(API_BASE + '/backend/api_manage.php?action=add_link', {
+    fetch('/dent2025_api.php?action=add_link', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ password: pass, subject_id: subjectId, title: title, url: url })
@@ -2034,7 +2034,7 @@ function deleteLink(linkId) {
     if (!confirm('هل أنت متأكد من حذف هذا الرابط؟')) return;
     const pass = sessionStorage.getItem('dent2025_admin_pass');
     
-    fetch(API_BASE + '/backend/api_manage.php?action=delete_link', {
+    fetch('/dent2025_api.php?action=delete_link', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ password: pass, link_id: linkId })

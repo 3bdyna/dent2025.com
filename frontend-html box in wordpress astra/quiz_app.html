@@ -1277,23 +1277,14 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             let subjects = [];
             
             try {
-                const url = `${QUIZ_API_BASE}/api_data.php?action=data` + String.fromCharCode(38) + `specialty=${sel.specialty}` + String.fromCharCode(38) + `year=${sel.year}` + String.fromCharCode(38) + `semester=${sel.semester}`;
+                const url = `/dent2025_api.php?action=data&specialty=${encodeURIComponent(sel.specialty)}&year=${encodeURIComponent(sel.year)}&semester=${encodeURIComponent(sel.semester)}`;
                 const res = await fetch(url);
                 const json = await res.json();
                 if (json.success && json.data && json.data.subjects && json.data.subjects.length > 0) {
                     subjects = json.data.subjects;
                 }
-            } catch(e) {}
-
-            if (subjects.length === 0) {
-                try {
-                    const fallbackUrl = `/dent2025_api.php?action=data` + String.fromCharCode(38) + `specialty=${sel.specialty}` + String.fromCharCode(38) + `year=${sel.year}` + String.fromCharCode(38) + `semester=${sel.semester}`;
-                    const fbRes = await fetch(fallbackUrl);
-                    const fbJson = await fbRes.json();
-                    if (fbJson.success && fbJson.data && fbJson.data.subjects) {
-                        subjects = fbJson.data.subjects;
-                    }
-                } catch(e) {}
+            } catch(e) {
+                console.error('Failed to load subjects for quiz:', e);
             }
             
             if (subjects.length > 0) {

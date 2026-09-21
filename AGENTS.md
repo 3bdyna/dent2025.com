@@ -13,8 +13,8 @@ Welcome to **Dent2025 (Medical & Dental Academic Portal)**! This file provides e
 - **Dentistry** (Years 2–6 — Semesters 1 & 2 each)
 
 ### Modern Workflow Outlook
-- **Zero-Friction AI Development**: All frontend components, JavaScript modules, CSS templates, and backend APIs reside on disk as local source files and are **automatically synced to the FTP server in 1–2 seconds via `deploy.py`**.
-- **Dynamic Component Loader (`dent2025-loader.php`)**: WordPress pages load components dynamically via simple shortcodes (`[dent_component file="..."]`). AI edits local code, `deploy.py` uploads it to FTP, and changes immediately reflect on the live site with automatic timestamp-based cache-busting. **Manual copy-pasting of code into WordPress Astra HTML blocks or Code Snippets is obsolete.**
+- **Zero-Friction AI Development**: All frontend components, JavaScript modules, CSS templates, and backend APIs reside on disk as local source files and are **automatically synced to the Azure cloud server (`/var/www/dent2025/`) in 1–2 seconds via `deploy.py` / `deploy_safe.py`** (using SFTP/SCP over Cloudflare Tunnel / SSH).
+- **Dynamic Component Loader (`dent2025-loader.php`)**: WordPress pages load components dynamically via simple shortcodes (`[dent_component file="..."]`). AI edits local code, `deploy_safe.py` uploads it to the server, and changes immediately reflect on the live site with automatic timestamp-based cache-busting. **Manual copy-pasting of code into WordPress Astra HTML blocks or Code Snippets is obsolete.**
 
 ---
 
@@ -23,13 +23,14 @@ Welcome to **Dent2025 (Medical & Dental Academic Portal)**! This file provides e
 ```
 my website dent2025/
 ├── AGENTS.md                                   # Master Agent Guidelines & Architecture Reference (this file)
-├── DEPLOYMENT_GUIDE.md                         # Complete FTP deployment documentation
+├── DEPLOYMENT_GUIDE.md                         # Complete Git SafeDeploy documentation
 ├── README.md                                   # Project Overview & Architecture Guide
 ├── LICENSE                                     # MIT License
-├── deploy_config.example.json                  # Template FTP configuration
+├── deploy_config.example.json                  # Template SFTP/SSH configuration
 ├── dent2025_passwords.example.json             # Template RBAC passkeys
-├── deploy_config.json                          # FTP credentials (gitignored)
+├── deploy_config.json                          # SFTP/SSH credentials (gitignored)
 ├── dent2025_passwords.json                     # ⭐ RBAC passkey store (gitignored)
+├── passwords.txt                               # Server & Cloudflare secrets (gitignored)
 ├── dent2025-loader.php                         # WordPress Component Loader plugin (shortcode [dent_component])
 ├── purge_cache.php                             # Standalone cache purge diagnostic script
 ├── dent2025_api.php                            # PRIMARY WordPress-Integrated Standalone API ($wpdb)
@@ -40,45 +41,52 @@ my website dent2025/
 ├── dent2025_rbac.php                           # ⭐ Shared RBAC permission engine (ALL backends use this)
 ├── admin_app.js                                # Admin Dashboard standalone client-side logic
 ├── admin_dashboard.html                        # Standalone Admin Dashboard HTML page
+├── dent2025_classes.json                       # Global class timetable groups data
 ├── schedule_events.json                        # Global timeline schedule events data
+├── schedule_events_dentistry_y3_s1.json        # Cohort timeline schedule events data
 ├── tools/                                      # Local deployment toolchain (NOT deployed to server)
 │   ├── _toolkit.py                             # Shared bootstrap: PROJECT_ROOT + tools/ sys.path helper
-│   ├── deploy.py                               # Base FTP uploader / rollback engine
+│   ├── deploy.py                               # Base SFTP/OpenSSH uploader / rollback engine
 │   ├── deploy_guard.py                         # Pre-flight validation (syntax, forbidden files, note)
 │   ├── deploy_order.py                         # Deployment priority ordering
 │   ├── deploy_health.py                        # Post-deploy API health probe
 │   ├── deploy_safe.py                          # Full Git-integrated SafeDeploy pipeline CLI
-│   └── test_system_logic.php                   # Comprehensive offline test suite
+│   ├── sync_cloud_events.py                    # Cloud-first dynamic data sync & smart-merge engine
+│   └── test_system_logic.php                   # Comprehensive offline test suite (42/42 tests)
 ├── backend/                                    # Standalone PDO Backend Module (RBAC-auth via dent2025_rbac.php)
 │   ├── db_connect.php                          # PDO Database Connection, CORS headers, sendResponse()
 │   ├── api_data.php                            # Public data retrieval API (subjects + links)
 │   ├── api_manage.php                          # Admin management API (subjects, links, Google Drive)
 │   ├── api_ai_exam.php                         # AI exam generation backend (used by quiz_app.html)
 │   ├── setup_links_db.php                      # One-time DB schema setup for subject_links table
-│   ├── bin/                                    # Helper binaries (e.g. pdftotext)
+│   ├── bin/                                    # Helper binaries (pdftotext)
 │   └── gemini_keys_data/                       # Gemini API key health cache
-├── logos/                                      # Specialty logos (deployed to server)
+├── logos/                                      # Specialty logos & social preview assets (deployed to server)
 │   ├── dentistry.webp                          # Dentistry specialty logo
 │   ├── medicine.webp                           # Medicine specialty logo
 │   ├── pre-med.webp                            # Pre-Med specialty logo
-│   └── logo of main page.webp                  # Main Portal Logo asset
-├── frontend-html box in wordpress astra/       # Local Source Frontend Components (FTP synced to /frontend_components/)
+│   ├── logo of main page.webp                  # Main Portal Logo asset
+│   └── og_share_preview.jpg                    # Standardized Open Graph social sharing banner (1200x630)
+├── frontend-html box in wordpress astra/       # Local Source Frontend Components (synced to /frontend_components/)
 │   ├── landing_page.html                       # Year/Specialty/Semester grid selection card template
 │   ├── chapters_dynamic.html                   # Subject chapters container & Google Drive folder embed layout
 │   ├── quiz_app.html                           # Interactive Quiz application (UI + CSS + JS)
-│   ├── study_timer_banner_widget.html          # Study Timer & Tracker widget + sitewide floating draggable badge
+│   ├── study_timer_banner_widget.html          # Study Timer & Tracker widget + floating draggable badge (~75 KB)
 │   ├── gpa_calculator_elegant.txt              # Saudi 5.0 scale GPA Calculator widget code
 │   ├── absence_calculator.html                 # Jazan University Absence & Denial Calculator widget
 │   ├── admin_controls_main.html                # Main page lock trigger (🔒) & admin logout button
 │   ├── admin_controls.html                     # Main Admin Modal panel (Subject CRUD & Google Drive linker)
 │   ├── admin_schedule_lock.html                # Schedule timeline lock trigger & event management modal
 │   ├── admin_classes_lock.html                 # Class schedule lock trigger & group management modal
+│   ├── calendar_tomorrow_alert.html            # Tomorrow's academic event / exam alert component (~10 KB)
+│   ├── dent_pin_modal.js                       # Universal dark-mode 4-digit PIN keypad modal (~25 KB)
 │   ├── schedule_markup.html                    # Academic calendar timeline container template & stats cards
-│   ├── schedule_script.js                      # Academic calendar timeline engine (~30 KB)
-│   ├── fonts/                                  # Self-hosted web fonts
-│   └── dashboard.js                            # Core Student Dashboard JS engine (~71 KB)
+│   ├── schedule_script.js                      # Academic calendar timeline & A4 export engine (~120 KB)
+│   ├── fonts/                                  # Self-hosted web fonts (Outfit & Noto Kufi Arabic WOFF2)
+│   └── dashboard.js                            # Core Student Dashboard JS engine (~111 KB)
 ├── announcements_data/                         # AUTO-CREATED at runtime by announcements_api.php (gitignored)
 ├── dent2025_study_data/                        # AUTO-CREATED at runtime by dent2025_api.php (gitignored)
+├── dent2025_analytics_data/                    # AUTO-CREATED at runtime for visitor & event metrics (gitignored)
 ├── quizzes_data/                               # AUTO-CREATED at runtime by api_ai_exam.php (gitignored)
 └── history_data/                               # Runtime audit/deployment history (local + server, gitignored)
 ```
@@ -87,57 +95,62 @@ my website dent2025/
 
 ---
 
-## 3. Automated Component Loader System & FTP Workflow
+## 3. Automated Component Loader System & Cloud Deployment Workflow
 
 ### A. The Component Loader Plugin (`dent2025-loader.php`)
 Installed on the live WordPress site at `wp-content/plugins/dent2025-loader/dent2025-loader.php`.
 - **Shortcode**: `[dent_component file="filename.ext"]`
 - **Security**: Strictly sanitizes input via `basename()` and regex whitelist `preg_replace('/[^a-zA-Z0-9_.-]/', '', $file)` to completely prevent directory traversal attacks (`../`).
 - **File Location**: Reads components from `ABSPATH . 'frontend_components/' . $safe_file`.
-- **Automatic Cache-Busting**: Appends dynamic `?v={filemtime}` query strings to JavaScript (`.js`), CSS (`.css`), and embedded `<script src="...">` / `<link href="...">` tags inside HTML blocks. When `deploy.py` uploads a new file, the modified timestamp updates instantly, forcing every browser and LiteSpeed Cache to download fresh code without stale cache glitches.
+- **Automatic Cache-Busting**: Appends dynamic `?v={filemtime}` query strings to JavaScript (`.js`), CSS (`.css`), and embedded `<script src="...">` / `<link href="...">` tags inside HTML blocks. When `deploy_safe.py` uploads a new file, the modified timestamp updates instantly, forcing every browser and LiteSpeed Cache to download fresh code without stale cache glitches.
 - **WordPress `wpautop` Protection**: Collapses internal whitespace inside `<style>` and `<script>` blocks and runs a high-priority `the_content` filter (priority 999) to strip `<p>` and `<br>` tags wrapped around CSS/JS, preventing raw code text walls from appearing on screen.
 - **Sitewide Study Timer Injection**: Injects `study_timer_banner_widget.html` into `wp_footer` on all non-welcome pages so the floating draggable timer badge follows students seamlessly across the entire website.
-- **Cache Purging**: Listens for `?purge=1` or `?nocache=1` query parameters to execute `do_action('litespeed_purge_all')` and clear WordPress transients.
+- **Self-Hosted Local Fonts Inlining & Preloading**: Strips external `fonts.googleapis.com` / `fonts.gstatic.com` requests to eliminate render-blocking LCP latency. Preloads `notokufiarabic-arabic.woff2` and `outfit-latin.woff2`, and inlines `/frontend_components/fonts/fonts.css`.
+- **Automated Social Open Graph & Twitter Cards**: Injects standardized, cache-busted social preview metadata pointing to `/logos/og_share_preview.jpg` (1200x630) for pristine previews when links are shared on WhatsApp, Telegram, or Twitter.
+- **Critical Script Deferral**: Defers Astra theme's `frontend.min.js` and delays Google Site Kit's `gtag.js` by 1000ms until after first render.
+- **Daily Cache Cron Sync**: Registers a daily WordPress cron schedule `dent2025_daily_noon` (at 12:00 PM AST / 09:00 UTC) that triggers `action=cron_sync` against `backend/api_ai_exam.php` to keep AI exam question caches warm.
+- **Cache Purging**: Listens for `?purge=1` or `?nocache=1` query parameters with an authorized admin token to execute `do_action('litespeed_purge_all')` and clear WordPress transients.
 
-### B. Deployment Automation Script (`tools/deploy.py`)
-Run from terminal to sync any file to the live FTP server in ~1 second:
+### B. Deployment Automation Script (`tools/deploy.py` & `tools/deploy_safe.py`)
+Run from terminal to sync any file to the live Azure server (`/var/www/dent2025/`) in ~1–2 seconds via SFTP (with OpenSSH SCP fallback via `azureuser@ssh.dent2025.com`):
 
 ```bash
-# Deploy a single frontend component:
-python tools/deploy.py "frontend-html box in wordpress astra/quiz_app.html"
+# Deploy a single frontend component with SafeDeploy:
+python tools/deploy_safe.py --note "Update quiz styling" "frontend-html box in wordpress astra/quiz_app.html"
 
 # Deploy backend APIs or loader plugin:
-python tools/deploy.py "dent2025_api.php" "dent2025-loader.php"
+python tools/deploy_safe.py --note "Fix API transient cache" "dent2025_api.php" "dent2025-loader.php"
 
 # Deploy multiple files at once:
-python tools/deploy.py "frontend-html box in wordpress astra/dashboard.js" "frontend-html box in wordpress astra/chapters_dynamic.html"
+python tools/deploy_safe.py --note "Enhance dashboard navigation" "frontend-html box in wordpress astra/dashboard.js" "frontend-html box in wordpress astra/chapters_dynamic.html"
 ```
 
 > **⚠️ MANDATORY — GIT COMMIT & PURGE ON EVERY DEPLOYMENT**: Every AI/agent update that touches website files **MUST** use the Git-integrated SafeDeploy pipeline.
 >
 > ### Modern Git SafeDeploy Workflow:
 > 1. **Deploy with Git Commit**: Run `python tools/deploy_safe.py --note "what changed" <file1> [file2...]`
+>    - **Stage 0**: Smart-merges dynamic runtime data (`schedule_events*.json`, `announcements_data/`) against Azure cloud state to prevent data loss (`sync_cloud_events.py`).
 >    - **Stage 1**: Validates PHP/JS/JSON syntax and ensures no secrets or forbidden files are staged (`deploy_guard.py`).
 >    - **Stage 2**: Automatically stages files, creates a semantic Git commit (`git commit -m "[SafeDeploy] ..."`), and pushes to GitHub (`origin/main`).
->    - **Stage 3**: Uploads the modified files to live FTP in ~1 second and triggers a LiteSpeed cache purge (`purge_remote_cache`).
->    - **Stage 4**: Executes post-deployment health probes to verify live APIs (`deploy_health.py`).
+>    - **Stage 3**: Uploads modified files to `/var/www/dent2025/` in ~1–2 seconds via SFTP/SCP and triggers a LiteSpeed cache purge (`purge_remote_cache`).
+>    - **Stage 4**: Executes post-deployment health probes against live endpoints (`deploy_health.py`).
 > 2. **Instant Rollback**: If an update causes an issue, simply run:
->    - `python tools/deploy_safe.py --rollback` (reverts `HEAD`, redeploys the clean state to FTP, and purges cache automatically).
+>    - `python tools/deploy_safe.py --rollback` (reverts `HEAD`, redeploys the clean state to server, and purges cache automatically).
 > 3. **Dry Run**: `python tools/deploy_safe.py --dry-run --note "test" <file1>...`
-> 4. **Check Status**: `python tools/deploy_safe.py --status` (shows Git branch, recent commits, uncommitted diffs, and API health).
+> 4. **Check Status**: `python tools/deploy_safe.py --status` (shows Git branch, recent commits, uncommitted diffs, and live API health).
 
 ### C. GitHub Repository & SSH Configuration
 - **Repository URL (SSH)**: `git@github.com:3bdyna/dent2025.com.git`
 - **Web Link**: `https://github.com/3bdyna/dent2025.com`
 - **Default Branch**: `main`
 - **SSH Key Location**: `~/.ssh/id_ed25519`
-- **Protected Secrets**: `deploy_config.json`, `dent2025_passwords.json`, `txt stuff to save/passwords.txt`, and runtime JSON storage directories are strictly excluded via `.gitignore` and must never be committed.
+- **Protected Secrets**: `deploy_config.json`, `dent2025_passwords.json`, `passwords.txt`, and runtime JSON storage directories are strictly excluded via `.gitignore` and must never be committed.
 
-#### FTP Routing Rules in `deploy.py`:
-- Files in `frontend-html box in wordpress astra/` → Auto-routed to `public_html/frontend_components/` (any subfolder inside is preserved, e.g. `frontend-html box in wordpress astra/fonts/fonts.css` → `frontend_components/fonts/fonts.css`)
-- `dent2025-loader.php` → Auto-routed to `public_html/wp-content/plugins/dent2025-loader/`
-- Backend files (`backend/*`) → Auto-routed to `public_html/backend/`
-- Root-level backend files (`dent2025_api.php`, `schedule_backend.php`, etc.) → Auto-routed to `public_html/` (web root)
+#### Server Routing Rules in `deploy.py`:
+- Files in `frontend-html box in wordpress astra/` → Auto-routed to `/var/www/dent2025/frontend_components/` (subfolders preserved, e.g. `fonts/fonts.css` → `/var/www/dent2025/frontend_components/fonts/fonts.css`)
+- `dent2025-loader.php` → Auto-routed to `/var/www/dent2025/wp-content/plugins/dent2025-loader/`
+- Backend files (`backend/*`) → Auto-routed to `/var/www/dent2025/backend/`
+- Root-level backend files (`dent2025_api.php`, `schedule_backend.php`, etc.) → Auto-routed to `/var/www/dent2025/` (web root)
 
 ### D. ⭐ Cloud-First Source of Truth for Dynamic Data (Zero Cloud Data Loss)
 > **CRITICAL RULE**: The live cloud (Azure `/var/www/dent2025/`) is the **absolute Source of Truth** for all dynamic runtime data:
@@ -187,10 +200,10 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 | WordPress Page Name | Page Slug | Required Shortcodes / Markup inside WordPress Block | Auto-Loaded Internal Scripts |
 |---|---|---|---|
 | **1. `landing page`** | `wolcome` | `[dent_component file="landing_page.html"]` | None |
-| **2. `الصفحة الرئيسية — Front Page`** | *(static front)* | `[dent_component file="study_timer_banner_widget.html"]`<br>`[dent_component file="gpa_calculator_elegant.txt"]`<br>`[dent_component file="absence_calculator.html"]`<br>`[dent_component file="admin_controls_main.html"]` | `admin_controls_main.html` embeds `<script src="/frontend_components/dashboard.js"></script>` |
-| **3. `التقويم الأكاديمي`** | `التقويم-الأكاديمي` | `[dent_component file="schedule_markup.html"]`<br>`[dent_component file="schedule_script.js"]`<br>`[dent_component file="admin_schedule_lock.html"]` | None |
+| **2. `الصفحة الرئيسية — Front Page`** | *(static front)* | `[dent_component file="study_timer_banner_widget.html"]`<br>`[dent_component file="gpa_calculator_elegant.txt"]`<br>`[dent_component file="absence_calculator.html"]`<br>`[dent_component file="admin_controls_main.html"]`<br>*(Optional modular: `[dent_component file="calendar_tomorrow_alert.html"]`)* | `admin_controls_main.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` and `<script src="/frontend_components/dashboard.js"></script>` |
+| **3. `التقويم الأكاديمي`** | `التقويم-الأكاديمي` | `[dent_component file="schedule_markup.html"]`<br>`[dent_component file="schedule_script.js"]`<br>`[dent_component file="admin_schedule_lock.html"]` | `admin_schedule_lock.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` |
 | **4. `المقررات والختبارات`** | `المقررات-والاختبارات` | `[dent_component file="chapters_dynamic.html"]`<br>`[dent_component file="quiz_app.html"]`<br>`[dent_component file="admin_controls.html"]` | `chapters_dynamic.html` embeds `<script src="/frontend_components/dashboard.js"></script>` |
-| **5. `جدول المحاضرات`** | `جدول-المحاضرات` | `[dent_component file="admin_classes_lock.html"]`<br>`<div id="dent-classes-target"></div>` | `admin_classes_lock.html` embeds `<script src="/frontend_components/dashboard.js"></script>` |
+| **5. `جدول المحاضرات`** | `جدول-المحاضرات` | `[dent_component file="admin_classes_lock.html"]`<br>`<div id="dent-classes-target"></div>` | `admin_classes_lock.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` and `<script src="/frontend_components/dashboard.js"></script>` |
 
 ---
 
@@ -200,11 +213,12 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 
 ### ⭐ Shared Authentication Core (`dent2025_rbac.php` + `dent2025_passwords.json`)
 - **`dent2025_rbac.php`**: Loads `dent2025_passwords.json` and provides `dent2025_check_rbac_permission($pass, $permission, $specialty=null, $year=null, $semester=null)` and `dent2025_get_passkey_info($pass)`.
-- **`dent2025_passwords.json`** (~28 entries): Each entry = `{id, label, passkey, allowed_contexts, permissions}`.
+- **`dent2025_passwords.json`** (~28 entries): Each entry = `{id, label, passkey, allowed_contexts, permissions}`. Passkeys can be 4-digit numeric PINs or alphanumeric strings.
 - **Universal Master Passkeys** (accepted everywhere, `allowed_contexts: ['*']`):
   Configured in untracked `dent2025_passwords.json` (see `dent2025_passwords.example.json`).
 - **Per-Context Leader Passkeys**: JSON entries scoped to `allowed_contexts` strings in `{specialty}_{year}_{semester}` format (e.g. `dentistry_1_1`, `medicine_3_1`, `pre-med_1_1`). These grant limited permissions (`edit_basic_subject`, `semester_events`, `semester_announcements`, `timetable`). There are **no algorithmic context passkeys** — a leader exists only if a JSON entry was explicitly created; check `dent2025_passwords.json` before assuming one exists.
 - **Permission names**: `add_subject`, `delete_subject`, `edit_core_subject`, `edit_basic_subject`, `global_events`, `semester_events`, `global_announcements`, `semester_announcements`, `timetable`, `manage_passwords`.
+- **Client-Side PIN Keypad UX (`dent_pin_modal.js`)**: All administrative lock triggers (`admin_controls_main.html`, `admin_schedule_lock.html`, `admin_classes_lock.html`, `admin_controls.html`) use `window.dentPromptPin()` to present a responsive dark-mode 4-digit PIN keypad with context pills and haptic/audio feedback, completely replacing browser-native `prompt()`. Successful authentication stores session passkeys in `sessionStorage` (`dent2025_admin_pass`, `dent2025_permissions`).
 
 ### A. WordPress-Integrated Backend (`dent2025_api.php`)
 - Bootstraps WordPress via `require_once dirname(__FILE__) . '/wp-load.php'`.
@@ -266,29 +280,43 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 
 ## 7. Frontend Engineering Standards & Key Modules
 
-### A. Main Dashboard Engine (`dashboard.js` — ~71 KB)
+### A. Main Dashboard Engine (`dashboard.js` — ~111 KB)
 - **API Base URL**: `const API_BASE_URL = API_BASE + '/dent2025_api.php'`.
-- **⭐ MULTI-SPECIALTY MASTER ON/OFF SWITCH (`DENT_MULTI_SPECIALTY_MODE`)**:
-  - **THE PORTAL HAS A SINGLE MASTER TOGGLE SWITCH AT LINE ~108 OF `frontend-html box in wordpress astra/dashboard.js`:**
-    - **`const DENT_MULTI_SPECIALTY_MODE = true;` -> [ON] MULTI-SPECIALTY PORTAL FULLY ACTIVE. ALLOWS PRE-MED, MEDICINE, AND DENTISTRY ACROSS ALL YEARS & SEMESTERS. USERS WITHOUT A SAVED PATH ARE PROMPTLY REDIRECTED TO THE WELCOME SELECTION SCREEN (`/wolcome/`), AND THE FLOATING PATH CHANGER PILL BAR IS INJECTED AT THE TOP SO STUDENTS CAN SWITCH SPECIALTIES AT ANY TIME.**
-    - **`const DENT_MULTI_SPECIALTY_MODE = false;` -> [OFF] FORCED SINGLE-TRACK MODE. LOCKS THE ENTIRE WEBSITE TO DENTISTRY YEAR 3 SEMESTER 1, INSTANTLY BYPASSES THE WELCOME SCREEN, AND HIDES THE PATH CHANGER PILL BAR.**
-  - **HOW TO TOGGLE BETWEEN MODES NEXT TIME**:
-    - **NEVER REWRITE CODE, REMOVE IIFES, OR COMMENT/UNCOMMENT CODE BLOCKS MANUALLY.**
-    - **SIMPLY OPEN `frontend-html box in wordpress astra/dashboard.js` AND TOGGLE `const DENT_MULTI_SPECIALTY_MODE = true;` (FOR ON) OR `false;` (FOR OFF).**
-    - **THEN DEPLOY: `python tools/deploy_safe.py --note "Toggle multi-specialty mode" "frontend-html box in wordpress astra/dashboard.js"`**
+- **⭐ MULTI-SPECIALTY MASTER SWITCH (`DENT_MULTI_SPECIALTY_MODE`)**:
+  - **SERVER-SIDE DYNAMIC SOURCE OF TRUTH**: The multi-specialty mode is persisted in the WordPress database options table (`dent2025_multi_specialty_mode`) via `dent2025_api.php`:
+    - **`GET ?action=portal_settings`**: Public endpoint returning `{"success": true, "data": {"multi_specialty_mode": true/false}}`.
+    - **`POST ?action=save_portal_settings`**: Admin endpoint to toggle mode; strictly requires `manage_passwords` permission.
+    - **Admin Dashboard Integration**: The mode can be toggled with 1 click directly in the Admin Dashboard UI (`admin_dashboard.html` / `admin_app.js`).
+  - **Client-Side Bootstrap in `dashboard.js`**:
+    - Starts with restricted fallback `let DENT_MULTI_SPECIALTY_MODE = false;` to prevent unauthorized tracks from momentarily flashing if network is slow.
+    - Asynchronously calls `dentLoadPortalMode()` on init, which syncs with `?action=portal_settings`.
+    - When `true`: Multi-specialty mode is active across Pre-Med, Medicine, and Dentistry. Uninitialized visitors are redirected to `/wolcome/` and the floating Path Changer pill bar is shown.
+    - When `false`: Single-track forced mode locks portal to Dentistry Year 3 Semester 1, bypasses the welcome screen, and hides the Path Changer pill bar.
+  - **HOW TO TOGGLE BETWEEN MODES**:
+    - **NEVER manually edit `dashboard.js` or rewrite code.**
+    - Toggle it via the **Admin Dashboard UI** or execute an authorized POST to `?action=save_portal_settings`.
 - **Sequential iFrame Queue**: `window.dentIframeQueue` loads Google Drive folder iframes sequentially with 1.0s delays to maintain fast browser performance.
 - **Path Changer Pill Bar**: Auto-minimizing pill bar showing current specialty/year/semester; click when expanded resets selection to allow switching tracks. Automatically controlled by `DENT_MULTI_SPECIALTY_MODE`.
 
-### B. Study Timer & Tracker (`study_timer_banner_widget.html` — ~64 KB)
+### B. Study Timer & Tracker (`study_timer_banner_widget.html` — ~75 KB)
 - **Singleton Guard**: `if (window.dentTimerScriptLoaded) return; window.dentTimerScriptLoaded = true;` ensures only one script instance executes, avoiding duplicate `setInterval` loops.
 - **Session State Clearing**: `stopTimerEngine()`, `finishTimer()`, and `resetTimer()` cleanly clear `KEY_ACTIVE_SESSION` from `localStorage` without race conditions.
 - **Cross-Tab Synchronization**: Uses `window.addEventListener('storage')` with recursion lock (`isRestoringSession`) to sync active timer states across browser tabs.
 - **Sitewide Floating Badge**: Draggable badge (`.dent-timer-draggable-badge`) injected into `document.body` follows students across all site pages when active.
 
-### C. Schedule Timetable Engine (`schedule_script.js` — ~30 KB)
-- **API Base URL**: `apiUrl: window.location.origin + '/schedule_backend.php'` (site-root-relative; the `/dev/` prefix path is obsolete).
-- **Schedule ID Derivation**: `${specialty}_y${year}_s${semester}`.
-- **Features**: Gregorian timeline with Hijri month labels, exam countdown cards, semester progress stats. The admin add/edit modal auto-derives the Hijri date from the Gregorian start date via `Intl.DateTimeFormat('en-u-ca-islamic-umalqura')`.
+### C. Universal 4-Digit PIN Modal Keypad (`dent_pin_modal.js` — ~25 KB)
+- **Singleton Guard**: `if (window.DentPinModal) return;`
+- **Modern Keypad UX**: Replaces unsightly browser-native `prompt()` dialogs with a sleek dark-mode keypad styled with Dent2025 dark zinc aesthetics.
+- **Universal API**: Invoked via `window.dentPromptPin({ title, subtitle, context, onSuccess })`.
+- **Embedded In**: All administrative triggers (`admin_controls_main.html`, `admin_schedule_lock.html`, `admin_classes_lock.html`, and `admin_controls.html`).
+
+### D. Academic Calendar & Timetable Engine (`schedule_script.js` — ~120 KB)
+- **API Base URL**: `apiUrl: window.location.origin + '/schedule_backend.php'`.
+- **Schedule ID Derivation**: `${specialty}_y${year}_s${semester}`. Falls back cleanly to primary portal cohort `dentistry_y3_s1`.
+- **Direct A4 Canvas & PDF/PNG Export**: Renders a dedicated 860px A4 canvas layout with 2.0x rasterization speed. Directly exports to PDF and PNG with native mobile sharing sheet (`navigator.share` / Web Share API), completely bypassing clumsy browser print dialogs.
+- **Arabic/English BiDi Text Shaping**: Formats and sanitizes mixed-direction strings to prevent flipped text or reversed Arabic numbers on canvas exports.
+- **Granular Event Badging & Print Styles**: Dedicated styling for `quiz`, `assessment`, `research`, `homework`, `exam`, `midterm`, `final`, `deadline`, `holiday`, `payment`, `start`, and custom labels.
+- **Hijri Integration**: Gregorian timeline with dynamic Hijri month labels and auto-derivation via `Intl.DateTimeFormat('en-u-ca-islamic-umalqura')`.
 
 ---
 
@@ -340,7 +368,7 @@ All keys are strictly prefixed with `dent2025_`:
 ### LiteSpeed Cache (LSCache) Rules:
 - Server uses **LiteSpeed Cache**. Dynamic API endpoints send `define('LSCACHE_NO_CACHE', true)` and `Cache-Control: no-cache` headers.
 - **Cache Purge Diagnostic Script**: Access `https://dent2025.com/purge_cache.php` or append `?purge=1` to any page URL to trigger `do_action('litespeed_purge_all')` and clear transients immediately.
-- **First Rule of Troubleshooting**: If a code fix is deployed via FTP but the live site still shows old behavior, **purge LiteSpeed cache first** before altering any code!
+- **First Rule of Troubleshooting**: If a code fix is deployed to the server but the live site still shows old behavior, **purge LiteSpeed cache first** before altering any code!
 
 ---
 
@@ -366,9 +394,9 @@ All keys are strictly prefixed with `dent2025_`:
 
 ---
 
-### Azure & Cloudflare Tunnel Hosting Infrastructure (As of Sept 13, 2026)
+## 12. Hosting Infrastructure & Server Architecture (Azure + Cloudflare Tunnel)
 
-### Hosting Architecture & Cost Optimization
+### A. Hosting Architecture & Cost Optimization (As of Sept 13, 2026)
 The website and Telegram Blackboard scraper bot run on an Azure Virtual Machine (`bb-bot-vm`) in **Poland Central** (`polandcentral`) with **24/7 continuous uptime** and **zero Azure Public IP costs**.
 
 **Current Architecture (Cloudflare Tunnel + 24/7 Azure VM)**
@@ -392,7 +420,7 @@ The website and Telegram Blackboard scraper bot run on an Azure Virtual Machine 
   - Server commands and diagnostics can be executed directly via Azure CLI (`az vm run-command invoke`) or Cloudflare Zero Trust.
   - Shared credentials and Cloudflare API tokens are securely persisted in untracked `passwords.txt` (gitignored).
 
-### Essential Server Paths & Local Configurations
+### B. Essential Server Paths & Local Configurations
 - **VM Name**: `bb-bot-vm` (Resource Group: `bb-bot-pl-rg`)
 - **VM Private IP**: `10.0.0.4` (Internal VNet)
 - **Web Root**: `/var/www/dent2025/`
@@ -401,7 +429,7 @@ The website and Telegram Blackboard scraper bot run on an Azure Virtual Machine 
 - **Database User**: `wpuser` (password: `wp_dent2025_sec!`)
 - **Gitignored Secrets**: `passwords.txt`, `deploy_config.json`, `dent2025_passwords.json`
 
-### Important System Changes
+### C. Important System Changes
 1. **File Ownership**: The WordPress files in `/var/www/dent2025/` are owned by `www-data:www-data`. The `azureuser` is part of the `www-data` group.
 2. **FS_METHOD**: The `wp-config.php` has `define('FS_METHOD', 'direct');` forced to bypass FTP permission prompts when installing plugins.
 3. **Upload Limits**: `php.ini` and `nginx.conf` are configured to allow 2GB file uploads to facilitate large site imports.
