@@ -197,7 +197,13 @@ python tools/deploy_safe.py --note "Enhance dashboard navigation" "frontend-html
 - **Local Mirror Folder**: `server_backups_dent2025_daily/` at the repository root stores an off-server copy of every database dump and dynamic file archive on your local Windows PC.
 - **14-Day Rolling Retention**: Matches the server policy—archives older than 14 days are automatically pruned locally during sync.
 - **Git Protection**: Fully excluded via `.gitignore` and `deploy_guard.py` to prevent sensitive database dumps from ever being committed or redeployed to the web root.
-- **How to Sync Local Backups**:
+- **Fully Automated Daily Windows Task (`Dent2025 Daily Backup Sync`)**:
+  - Registered in Windows Task Scheduler under task name `Dent2025 Daily Backup Sync`.
+  - Runs silently every morning at **07:00 AM AST** (30 minutes after VPS creates the 03:30 UTC backup).
+  - Uses `pythonw.exe` (100% background, zero popup windows).
+  - Configured with `StartWhenAvailable = true`: If your PC is off or asleep at 07:00 AM, it automatically runs the moment you wake or turn on your computer.
+  - Logs every run to `server_backups_dent2025_daily/sync.log`.
+- **Manual Sync Options (Optional)**:
   ```bash
   # Standalone backup sync:
   python tools/sync_server_backups.py
