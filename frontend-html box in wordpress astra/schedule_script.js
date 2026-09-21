@@ -1121,12 +1121,12 @@ const ScheduleApp = {
                     </button>
 
                     <button type="button" id="dent-exec-image-btn" onclick="ScheduleApp.executeSaveAsImage()" style="width: 100%; height: 48px; background: #27272a; color: #ffffff; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.90rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);" onmouseover="this.style.background='#2563eb'; this.style.borderColor='#2563eb';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(59, 130, 246, 0.4)';">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                        <span>صورة PNG</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>نسخ كصورة (للحافظة)</span>
                     </button>
                 </div>
 
-                <div style="font-size: 0.74rem; color: #94a3b8; text-align: center; margin: 8px 0 14px 0;">اختر الصيغة للمشاركة الفورية عبر واتساب أو الحفظ بجهازك</div>
+                <div style="font-size: 0.74rem; color: #94a3b8; text-align: center; margin: 8px 0 14px 0;">اختر ملف PDF للإرسال أو نسخ كصورة للصق الفوري في واتساب</div>
 
                 <label style="display: flex; align-items: flex-start; gap: 10px; margin-top: 16px; padding: 10px 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; font-size: 0.80rem; color: #cbd5e1; cursor: pointer; user-select: none;">
                     <input type="checkbox" id="dent-print-inc-announcements" checked style="accent-color: #52525b; width: 16px; height: 16px; margin-top: 2px; cursor: pointer;">
@@ -1166,6 +1166,70 @@ const ScheduleApp = {
         return this._jsPdfPromise;
     },
 
+    loadHtmlToImage: function() {
+        if (window.htmlToImage) return Promise.resolve(window.htmlToImage);
+        if (this._htmlToImagePromise) return this._htmlToImagePromise;
+        this._htmlToImagePromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js';
+            script.crossOrigin = 'anonymous';
+            script.onload = () => resolve(window.htmlToImage);
+            script.onerror = () => {
+                this._htmlToImagePromise = null;
+                reject(new Error('تعذر تحميل مكتبة معالجة الصور عالية الدقة.'));
+            };
+            document.head.appendChild(script);
+        });
+        return this._htmlToImagePromise;
+    },
+
+    renderSheetSandbox: async function(customNotes, announcementText) {
+        const fullHtml = this.generateThreeWeeksPrintHtml(customNotes, announcementText, false);
+
+        // Extract style block and sheet div
+        const styleMatch = fullHtml.match(/<style>([\s\S]*?)<\/style>/i);
+        const sheetMatch = fullHtml.match(/(<div class="a4-print-sheet"[\s\S]*?<\/div>\s*)<\/body>/i);
+
+        const styleContent = styleMatch ? styleMatch[1] : '';
+        const sheetContent = sheetMatch ? sheetMatch[1] : '';
+
+        let old = document.getElementById('dent-render-sandbox');
+        if (old) old.remove();
+
+        const sandbox = document.createElement('div');
+        sandbox.id = 'dent-render-sandbox';
+        // Render in document tree with fixed width 860px, invisible to user, full layout calculation
+        sandbox.style.cssText = 'position: fixed; top: 0; left: 0; width: 860px !important; min-width: 860px !important; max-width: 860px !important; z-index: -99999; opacity: 0; pointer-events: none; overflow: hidden; background: #ffffff;';
+        sandbox.innerHTML = `<style>${styleContent}</style>${sheetContent}`;
+        document.body.appendChild(sandbox);
+
+        if (document.fonts && document.fonts.ready) {
+            await document.fonts.ready.catch(() => {});
+        }
+        await new Promise(resolve => setTimeout(resolve, 80));
+
+        const targetEl = sandbox.querySelector('.a4-print-sheet');
+        if (!targetEl) {
+            sandbox.remove();
+            throw new Error('تعذر العثور على محتوى الجدول للتصدير.');
+        }
+
+        targetEl.style.width = '860px';
+        targetEl.style.minWidth = '860px';
+        targetEl.style.maxWidth = '860px';
+        targetEl.style.boxSizing = 'border-box';
+
+        const targetWidth = 860;
+        const targetHeight = targetEl.offsetHeight || targetEl.scrollHeight || 1200;
+
+        return {
+            sandbox,
+            targetEl,
+            width: targetWidth,
+            height: targetHeight
+        };
+    },
+
     executeSaveAsPdf: async function() {
         const btn = document.getElementById('dent-exec-print-btn');
         const imgBtn = document.getElementById('dent-exec-image-btn');
@@ -1192,62 +1256,21 @@ const ScheduleApp = {
                 }
             }
 
-            const printHtml = this.generateThreeWeeksPrintHtml(notes, announcementText, false);
-
-            // Parallel load jspdf while creating DOM
             const jsPdfPromise = this.loadJsPdf();
-
-            let iframe = document.getElementById('dent-image-render-iframe');
-            if (iframe) iframe.remove();
-
-            iframe = document.createElement('iframe');
-            iframe.id = 'dent-image-render-iframe';
-            iframe.setAttribute('width', '860');
-            iframe.setAttribute('height', '1400');
-            iframe.style.cssText = 'position:fixed; left:-9999px; top:0; width:860px !important; min-width:860px !important; max-width:860px !important; height:1400px !important; border:0; z-index:-99999;';
-            document.body.appendChild(iframe);
-
-            const doc = iframe.contentWindow.document;
-            doc.open();
-            doc.write(printHtml);
-            doc.close();
-
-            if (doc.documentElement) {
-                doc.documentElement.style.width = '860px';
-                doc.documentElement.style.minWidth = '860px';
-            }
-            if (doc.body) {
-                doc.body.style.width = '860px';
-                doc.body.style.minWidth = '860px';
-            }
-
-            if (doc.fonts && doc.fonts.ready) {
-                await doc.fonts.ready.catch(() => {});
-            }
-            await new Promise(resolve => setTimeout(resolve, 120));
-
-            const targetEl = doc.querySelector('.a4-print-sheet');
-            if (!targetEl) throw new Error('تعذر العثور على محتوى الجدول للتصدير.');
-
-            targetEl.style.width = '860px';
-            targetEl.style.minWidth = '860px';
-            targetEl.style.maxWidth = '860px';
-            targetEl.style.boxSizing = 'border-box';
-
-            const targetWidth = 860;
-            const targetHeight = targetEl.offsetHeight || targetEl.scrollHeight || 1200;
+            const { sandbox, targetEl, width, height } = await this.renderSheetSandbox(notes, announcementText);
 
             const htmlToImage = await this.loadHtmlToImage();
             const pngDataUrl = await htmlToImage.toPng(targetEl, {
                 pixelRatio: 2.0,
-                width: targetWidth,
-                height: targetHeight,
-                canvasWidth: Math.round(targetWidth * 2.0),
-                canvasHeight: Math.round(targetHeight * 2.0),
+                width: width,
+                height: height,
+                canvasWidth: Math.round(width * 2.0),
+                canvasHeight: Math.round(height * 2.0),
+                skipFonts: true,
                 backgroundColor: '#ffffff'
             });
 
-            if (iframe) iframe.remove();
+            sandbox.remove();
 
             const jsPdfClass = await jsPdfPromise;
             const pdf = new jsPdfClass({
@@ -1259,7 +1282,7 @@ const ScheduleApp = {
 
             const pdfPageWidth = 210;
             const pdfPageHeight = 297;
-            const imgHeightMm = (targetHeight / targetWidth) * pdfPageWidth;
+            const imgHeightMm = (height / width) * pdfPageWidth;
 
             if (imgHeightMm <= pdfPageHeight) {
                 pdf.addImage(pngDataUrl, 'PNG', 0, 0, pdfPageWidth, imgHeightMm, undefined, 'FAST');
@@ -1283,7 +1306,7 @@ const ScheduleApp = {
             const modal = document.getElementById('dent-print-schedule-modal');
             if (modal) modal.remove();
 
-            await this.deliverExportedFile(file, pdfBlob, fileName, 'pdf');
+            await this.deliverExportedFile(file, pdfBlob, fileName, 'pdf', false);
 
         } catch(err) {
             console.error('Save as PDF error:', err);
@@ -1293,6 +1316,82 @@ const ScheduleApp = {
                 btn.innerHTML = origHtml;
             }
             if (imgBtn) imgBtn.disabled = false;
+        }
+    },
+
+    executeSaveAsImage: async function() {
+        const btn = document.getElementById('dent-exec-image-btn');
+        const pdfBtn = document.getElementById('dent-exec-print-btn');
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: dentSpin 0.8s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
+                <span>جاري نسخ وتجهيز الصورة...</span>
+            `;
+        }
+        if (pdfBtn) pdfBtn.disabled = true;
+
+        try {
+            const notes = (document.getElementById('dent-print-custom-notes')?.value || '').trim();
+            const incAnnouncements = !!document.getElementById('dent-print-inc-announcements')?.checked;
+
+            let announcementText = '';
+            if (incAnnouncements) {
+                if (this._prefetchedAnnouncements !== null && this._prefetchedAnnouncements !== undefined) {
+                    announcementText = this._prefetchedAnnouncements;
+                } else {
+                    announcementText = await this.prefetchPrintAnnouncements();
+                }
+            }
+
+            const { sandbox, targetEl, width, height } = await this.renderSheetSandbox(notes, announcementText);
+
+            const htmlToImage = await this.loadHtmlToImage();
+            const blob = await htmlToImage.toBlob(targetEl, {
+                pixelRatio: 2.0,
+                width: width,
+                height: height,
+                canvasWidth: Math.round(width * 2.0),
+                canvasHeight: Math.round(height * 2.0),
+                skipFonts: true,
+                backgroundColor: '#ffffff'
+            });
+
+            sandbox.remove();
+
+            if (!blob) throw new Error('فشل إنشاء ملف الصورة.');
+
+            const fileName = this.getDynamicScheduleFileName('png');
+            const file = new File([blob], fileName, { type: 'image/png' });
+
+            const modal = document.getElementById('dent-print-schedule-modal');
+            if (modal) modal.remove();
+
+            // 1. Direct copy image to system clipboard (PC & phone)
+            let copiedToClipboard = false;
+            if (navigator.clipboard && window.ClipboardItem) {
+                try {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]);
+                    copiedToClipboard = true;
+                } catch(clipErr) {
+                    console.warn('Direct clipboard write failed:', clipErr);
+                }
+            }
+
+            // 2. Deliver file (triggers download and shows toast informing user of clipboard status)
+            await this.deliverExportedFile(file, blob, fileName, 'png', copiedToClipboard);
+
+        } catch(err) {
+            console.error('Save as image error:', err);
+            alert('حدث خطأ أثناء إنشاء الصورة: ' + (err.message || err));
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+            if (pdfBtn) pdfBtn.disabled = false;
         }
     },
 
@@ -1333,175 +1432,14 @@ const ScheduleApp = {
         return cleanExt ? `${baseName}.${cleanExt}` : baseName;
     },
 
-    loadHtmlToImage: function() {
-        if (window.htmlToImage) return Promise.resolve(window.htmlToImage);
-        if (this._htmlToImagePromise) return this._htmlToImagePromise;
-        this._htmlToImagePromise = new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js';
-            script.crossOrigin = 'anonymous';
-            script.onload = () => resolve(window.htmlToImage);
-            script.onerror = () => {
-                this._htmlToImagePromise = null;
-                reject(new Error('تعذر تحميل مكتبة معالجة الصور عالية الدقة.'));
-            };
-            document.head.appendChild(script);
-        });
-        return this._htmlToImagePromise;
-    },
-
-    loadHtml2Canvas: function() {
-        if (window.html2canvas) return Promise.resolve(window.html2canvas);
-        if (this._html2canvasPromise) return this._html2canvasPromise;
-        this._html2canvasPromise = new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-            script.crossOrigin = 'anonymous';
-            script.onload = () => resolve(window.html2canvas);
-            script.onerror = () => {
-                this._html2canvasPromise = null;
-                reject(new Error('تعذر تحميل مكتبة معالجة الصور، يرجى التحقق من اتصال الإنترنت.'));
-            };
-            document.head.appendChild(script);
-        });
-        return this._html2canvasPromise;
-    },
-
-    executeSaveAsImage: async function() {
-        const btn = document.getElementById('dent-exec-image-btn');
-        const pdfBtn = document.getElementById('dent-exec-print-btn');
-        const origHtml = btn ? btn.innerHTML : '';
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = `
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: dentSpin 0.8s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
-                <span>جاري إنشاء الصورة...</span>
-            `;
-        }
-        if (pdfBtn) pdfBtn.disabled = true;
-
-        try {
-            const notes = (document.getElementById('dent-print-custom-notes')?.value || '').trim();
-            const incAnnouncements = !!document.getElementById('dent-print-inc-announcements')?.checked;
-
-            let announcementText = '';
-            if (incAnnouncements) {
-                if (this._prefetchedAnnouncements !== null && this._prefetchedAnnouncements !== undefined) {
-                    announcementText = this._prefetchedAnnouncements;
-                } else {
-                    announcementText = await this.prefetchPrintAnnouncements();
-                }
-            }
-
-            const printHtml = this.generateThreeWeeksPrintHtml(notes, announcementText, false);
-
-            let iframe = document.getElementById('dent-image-render-iframe');
-            if (iframe) iframe.remove();
-
-            iframe = document.createElement('iframe');
-            iframe.id = 'dent-image-render-iframe';
-            iframe.setAttribute('width', '860');
-            iframe.setAttribute('height', '1400');
-            iframe.style.cssText = 'position:fixed; left:-9999px; top:0; width:860px !important; min-width:860px !important; max-width:860px !important; height:1400px !important; border:0; z-index:-99999;';
-            document.body.appendChild(iframe);
-
-            const doc = iframe.contentWindow.document;
-            doc.open();
-            doc.write(printHtml);
-            doc.close();
-
-            if (doc.documentElement) {
-                doc.documentElement.style.width = '860px';
-                doc.documentElement.style.minWidth = '860px';
-            }
-            if (doc.body) {
-                doc.body.style.width = '860px';
-                doc.body.style.minWidth = '860px';
-            }
-
-            if (doc.fonts && doc.fonts.ready) {
-                await doc.fonts.ready.catch(() => {});
-            }
-            await new Promise(resolve => setTimeout(resolve, 120));
-
-            const targetEl = doc.querySelector('.a4-print-sheet');
-            if (!targetEl) throw new Error('تعذر العثور على محتوى الجدول للتصدير.');
-
-            targetEl.style.width = '860px';
-            targetEl.style.minWidth = '860px';
-            targetEl.style.maxWidth = '860px';
-            targetEl.style.boxSizing = 'border-box';
-
-            const targetWidth = 860;
-            const targetHeight = targetEl.offsetHeight || targetEl.scrollHeight || 1200;
-
-            let blob = null;
-            // Primary high-fidelity rasterizer: html-to-image (SVG foreignObject preserves Arabic ligatures, word-spacing, BiDi)
-            try {
-                const htmlToImage = await this.loadHtmlToImage();
-                blob = await htmlToImage.toBlob(targetEl, {
-                    pixelRatio: 2.0,
-                    width: targetWidth,
-                    height: targetHeight,
-                    canvasWidth: Math.round(targetWidth * 2.0),
-                    canvasHeight: Math.round(targetHeight * 2.0),
-                    backgroundColor: '#ffffff'
-                });
-            } catch(imgErr) {
-                console.warn('html-to-image failed or blocked, falling back to html2canvas:', imgErr);
-                await this.loadHtml2Canvas();
-                const canvas = await window.html2canvas(targetEl, {
-                    scale: 2.0,
-                    width: targetWidth,
-                    height: targetHeight,
-                    windowWidth: targetWidth,
-                    windowHeight: targetHeight,
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#ffffff',
-                    logging: false,
-                    scrollX: 0,
-                    scrollY: 0
-                });
-                blob = await new Promise((resolve, reject) => {
-                    canvas.toBlob(b => {
-                        if (b) resolve(b);
-                        else reject(new Error('فشل استخراج ملف الصورة.'));
-                    }, 'image/png');
-                });
-            }
-
-            if (iframe) iframe.remove();
-
-            if (!blob) throw new Error('فشل إنشاء ملف الصورة.');
-
-            const fileName = this.getDynamicScheduleFileName('png');
-            const file = new File([blob], fileName, { type: 'image/png' });
-
-            const modal = document.getElementById('dent-print-schedule-modal');
-            if (modal) modal.remove();
-
-            await this.deliverExportedFile(file, blob, fileName, 'png');
-
-        } catch(err) {
-            console.error('Save as image error:', err);
-            alert('حدث خطأ أثناء إنشاء الصورة: ' + (err.message || err));
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = origHtml;
-            }
-            if (pdfBtn) pdfBtn.disabled = false;
-        }
-    },
-
-    deliverExportedFile: async function(file, blob, fileName, fileType) {
+    deliverExportedFile: async function(file, blob, fileName, fileType, copiedToClipboard = false) {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
                          (window.matchMedia && window.matchMedia('(max-width: 768px)').matches && 'ontouchstart' in window);
 
         const blobUrl = URL.createObjectURL(blob);
 
-        // 1. On mobile devices, try native Web Share API immediately
-        if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+        // 1. On mobile devices, for PDF try native Web Share API
+        if (fileType === 'pdf' && isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
             try {
                 await navigator.share({
                     files: [file],
@@ -1511,11 +1449,7 @@ const ScheduleApp = {
                 setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
                 return;
             } catch(shareErr) {
-                if (shareErr.name === 'AbortError') {
-                    // User dismissed share sheet, continue to download/toast so file is not lost
-                } else {
-                    console.warn('Native share failed or gesture expired:', shareErr);
-                }
+                if (shareErr.name !== 'AbortError') console.warn('Native share failed:', shareErr);
             }
         }
 
@@ -1532,29 +1466,44 @@ const ScheduleApp = {
         }
 
         // 3. Show sleek toast prompting to send, copy, or view
-        this.showExportToast(file, blob, fileName, fileType, blobUrl);
+        this.showExportToast(file, blob, fileName, fileType, blobUrl, copiedToClipboard);
     },
 
-    showExportToast: function(file, blob, fileName, fileType, blobUrl) {
+    showExportToast: function(file, blob, fileName, fileType, blobUrl, copiedToClipboard = false) {
         let old = document.getElementById('dent-export-toast');
         if (old) old.remove();
 
         const toast = document.createElement('div');
         toast.id = 'dent-export-toast';
         toast.style.cssText = 'position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 9999999; background: #18181b; border: 1px solid rgba(255,255,255,0.18); border-radius: 16px; padding: 14px 18px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); color: #fff; font-family: "Outfit", "Noto Kufi Arabic", sans-serif; direction: rtl; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; max-width: 94vw; width: 560px; box-sizing: border-box;';
-        
+
         const canShareNative = !!(navigator.canShare && navigator.canShare({ files: [file] }));
         const canCopyImage = (fileType === 'png' && navigator.clipboard && window.ClipboardItem);
-        const typeLabel = (fileType === 'pdf' ? 'ملف الـ PDF' : 'ملف الصورة');
+
+        let mainTitle = '';
+        let subText = '';
+
+        if (fileType === 'png') {
+            if (copiedToClipboard) {
+                mainTitle = '✓ تم نسخ صورة الجدول إلى الحافظة بنجاح!';
+                subText = 'يمكنك الآن لصق الصورة مباشرة (Ctrl+V أو Paste) في واتساب أو أي تطبيق. تم حفظ نسخة بجهازك أيضاً.';
+            } else {
+                mainTitle = 'تم حفظ صورة الجدول بنجاح!';
+                subText = 'تم تنزيل الصورة وهي جاهزة للإرسال والمشاركة الآن.';
+            }
+        } else {
+            mainTitle = 'تم تجهيز ملف الـ PDF بنجاح!';
+            subText = 'تم تنزيل الملف وهو جاهز للإرسال الآن (' + dentEscapeHtml(fileName) + ')';
+        }
 
         toast.innerHTML = `
             <div style="display: flex; align-items: center; gap: 12px; min-width: 220px; flex: 1;">
-                <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); display: flex; align-items: center; justify-content: center; color: #4ade80; flex-shrink: 0;">
+                <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); display: flex; align-items: center; justify-content: center; color: #4ade80; flex-shrink: 0;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
                 <div style="min-width: 0;">
-                    <div style="font-weight: 700; font-size: 0.90rem; color: #f8fafc;">تم تجهيز ${typeLabel} بنجاح!</div>
-                    <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">تم التنزيل وهو جاهز للإرسال الآن (${dentEscapeHtml(fileName)})</div>
+                    <div style="font-weight: 700; font-size: 0.90rem; color: ${copiedToClipboard ? '#4ade80' : '#f8fafc'};">${mainTitle}</div>
+                    <div style="font-size: 0.72rem; color: #cbd5e1; margin-top: 2px;">${subText}</div>
                 </div>
             </div>
             <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px; flex-shrink: 0;">
@@ -1564,7 +1513,7 @@ const ScheduleApp = {
                         <span>مشاركة / إرسال</span>
                     </button>
                 ` : ''}
-                ${canCopyImage ? `
+                ${(fileType === 'png' && canCopyImage && !copiedToClipboard) ? `
                     <button id="dent-toast-copy-btn" type="button" style="padding: 7px 13px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-family: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='#1d4ed8';" onmouseout="this.style.background='#2563eb';">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         <span>نسخ للصق في واتساب</span>
@@ -1597,7 +1546,7 @@ const ScheduleApp = {
             }
         }
 
-        if (canCopyImage) {
+        if (canCopyImage && !copiedToClipboard) {
             const copyBtn = document.getElementById('dent-toast-copy-btn');
             if (copyBtn) {
                 copyBtn.onclick = async () => {
