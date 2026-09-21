@@ -287,7 +287,9 @@ async function dentBootstrapDashboard() {
             dentInitDashboard();
         }
 
-        dentLoadPortalMode();
+        if (typeof window.DENT_MULTI_SPECIALTY_MODE !== 'boolean') {
+            dentLoadPortalMode();
+        }
     } else {
         document.documentElement.style.visibility = 'hidden';
         await dentLoadPortalMode();
@@ -347,7 +349,9 @@ function loadDashboardData(forceRefresh = false) {
 
     renderLogo(selection);
     loadAnnouncements(selection);
-    loadClassesData(selection);
+    if (document.getElementById('dent-classes-target')) {
+        loadClassesData(selection);
+    }
 
     const cacheKey = `dent2025_dashboard_data_${selection.specialty}_${selection.year}_${selection.semester}`;
     const cacheBuster = forceRefresh ? `&nocache=1&_t=${Date.now()}` : '';

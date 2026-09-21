@@ -242,30 +242,41 @@
             }, 1500);
         }
 
-        const gifPromise = fetch(gifUrl)
-            .then(res => {
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                return res.blob();
-            })
-            .then(blob => { cachedGifBlob = blob; });
+        function startStarPrefetch() {
+            const gifPromise = fetch(gifUrl)
+                .then(res => {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.blob();
+                })
+                .then(blob => { cachedGifBlob = blob; });
 
-        const audioPromise = fetch(audioUrl)
-            .then(res => {
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                return res.blob();
-            })
-            .then(blob => { 
-                audioBlobUrl = URL.createObjectURL(blob);
-                soundEffect.src = audioBlobUrl;
+            const audioPromise = fetch(audioUrl)
+                .then(res => {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.blob();
+                })
+                .then(blob => { 
+                    audioBlobUrl = URL.createObjectURL(blob);
+                    soundEffect.src = audioBlobUrl;
+                });
+
+            Promise.all([gifPromise, audioPromise]).then(() => {
+                triggerStarEntry();
+            }).catch(err => {
+                console.log("Easter egg prefetch fallback to direct URL:", err);
+                soundEffect.src = audioUrl;
+                triggerStarEntry();
             });
+        }
 
-        Promise.all([gifPromise, audioPromise]).then(() => {
-            triggerStarEntry();
-        }).catch(err => {
-            console.log("Easter egg prefetch fallback to direct URL:", err);
-            soundEffect.src = audioUrl;
-            triggerStarEntry();
-        });
+        // Defer Easter egg loading until after all academic content and images load
+        if (document.readyState === 'complete') {
+            setTimeout(startStarPrefetch, 1000);
+        } else {
+            window.addEventListener('load', function() {
+                setTimeout(startStarPrefetch, 1000);
+            }, { once: true });
+        }
 
         starBtn.addEventListener('click', function(e) {
             e.preventDefault();

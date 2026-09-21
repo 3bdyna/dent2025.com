@@ -300,14 +300,12 @@
 
         var scheduleId = selection.specialty + '_y' + selection.year + '_s' + selection.semester;
         var url = scheduleEndpoint
-            + '?schedule_id=' + encodeURIComponent(scheduleId)
-            + '&_t=' + Date.now();
+            + '?schedule_id=' + encodeURIComponent(scheduleId);
 
         var tomorrow = getTomorrow();
 
         fetch(url, {
             method: 'GET',
-            cache: 'no-store',
             headers: { 'Accept': 'application/json' }
         })
             .then(function (response) {
