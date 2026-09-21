@@ -1276,15 +1276,33 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             
             let subjects = [];
             
-            try {
-                const url = `/dent2025_api.php?action=data&specialty=${encodeURIComponent(sel.specialty)}&year=${encodeURIComponent(sel.year)}&semester=${encodeURIComponent(sel.semester)}`;
-                const res = await fetch(url);
-                const json = await res.json();
-                if (json.success && json.data && json.data.subjects && json.data.subjects.length > 0) {
-                    subjects = json.data.subjects;
+            // Check in-memory or localStorage cache first (0ms instant load)
+            if (window.currentSubjectsData && Array.isArray(window.currentSubjectsData) && window.currentSubjectsData.length > 0) {
+                subjects = window.currentSubjectsData;
+            } else {
+                try {
+                    const cacheKey = `dent2025_dashboard_data_${sel.specialty}_${sel.year}_${sel.semester}`;
+                    const cachedStr = localStorage.getItem(cacheKey);
+                    if (cachedStr) {
+                        const parsed = JSON.parse(cachedStr);
+                        if (parsed && Array.isArray(parsed.subjects) && parsed.subjects.length > 0) {
+                            subjects = parsed.subjects;
+                        }
+                    }
+                } catch(e) {}
+            }
+            
+            if (!subjects.length) {
+                try {
+                    const url = `/dent2025_api.php?action=data&specialty=${encodeURIComponent(sel.specialty)}&year=${encodeURIComponent(sel.year)}&semester=${encodeURIComponent(sel.semester)}`;
+                    const res = await fetch(url);
+                    const json = await res.json();
+                    if (json.success && json.data && json.data.subjects && json.data.subjects.length > 0) {
+                        subjects = json.data.subjects;
+                    }
+                } catch(e) {
+                    console.error('Failed to load subjects for quiz:', e);
                 }
-            } catch(e) {
-                console.error('Failed to load subjects for quiz:', e);
             }
             
             if (subjects.length > 0) {

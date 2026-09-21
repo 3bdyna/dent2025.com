@@ -4,9 +4,20 @@
 require_once __DIR__ . '/dent2025_rbac.php';
 require_once __DIR__ . '/history_helpers.php';
 
-define('LSCACHE_NO_CACHE', true);
 header('Content-Type: application/json');
-header('Cache-Control: no-cache, must-revalidate, max-age=0');
+
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$has_auth = !empty($_GET['password']) || !empty($_POST['password']);
+$is_nocache = !empty($_GET['nocache']) || !empty($_GET['_t']);
+
+if ($method === 'GET' && !$has_auth && !$is_nocache) {
+    header('Cache-Control: public, max-age=60, stale-while-revalidate=120');
+} else {
+    if (!defined('LSCACHE_NO_CACHE')) {
+        define('LSCACHE_NO_CACHE', true);
+    }
+    header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
+}
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, ['https://dent2025.com', 'https://www.dent2025.com'], true) || (strpos($origin, 'localhost') !== false)) {

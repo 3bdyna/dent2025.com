@@ -58,6 +58,11 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 // 1. GET: Send all announcements for a specific class (or all if requested)
 if ($method === 'GET') {
+    if (empty($_GET['nocache']) && empty($_GET['_t'])) {
+        header('Cache-Control: public, max-age=45, stale-while-revalidate=90');
+    } else {
+        header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
+    }
     $action = $_GET['action'] ?? 'get';
     
     if ($action === 'get_all') {

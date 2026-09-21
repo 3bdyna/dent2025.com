@@ -331,6 +331,8 @@ function dentInitDashboard() {
     loadDashboardData();
 }
 
+let _inFlightDashboardPromise = null;
+
 function loadDashboardData(forceRefresh = false) {
     const selection = dentGetSelection();
     if (!selection) return;
@@ -358,14 +360,23 @@ function loadDashboardData(forceRefresh = false) {
 
     const processData = (data) => {
         currentSubjectsData = data.subjects || [];
+        window.currentSubjectsData = currentSubjectsData;
         renderChapters(currentSubjectsData);
         renderMaterials(currentSubjectsData);
     };
 
     if (cachedData) {
-        processData(JSON.parse(cachedData));
+        try {
+            processData(JSON.parse(cachedData));
+        } catch(e) {}
+        
+        // Prevent duplicate background fetches for the same context
+        if (_inFlightDashboardPromise && _inFlightDashboardPromise._key === cacheKey) {
+            return;
+        }
+
         // Update cache in background and hot-refresh if server data was updated
-        fetch(`${API_BASE_URL}?action=data&specialty=${selection.specialty}&year=${selection.year}&semester=${selection.semester}${cacheBuster}`)
+        _inFlightDashboardPromise = fetch(`${API_BASE_URL}?action=data&specialty=${selection.specialty}&year=${selection.year}&semester=${selection.semester}${cacheBuster}`)
             .then(res => res.json())
             .then(data => { 
                 if (data.success && data.data && Array.isArray(data.data.subjects)) {
@@ -376,11 +387,20 @@ function loadDashboardData(forceRefresh = false) {
                     }
                 }
             })
-            .catch(() => {});
+            .catch(() => {})
+            .finally(() => {
+                _inFlightDashboardPromise = null;
+            });
+        _inFlightDashboardPromise._key = cacheKey;
         return;
     }
 
-    fetch(`${API_BASE_URL}?action=data&specialty=${selection.specialty}&year=${selection.year}&semester=${selection.semester}${cacheBuster}`)
+    // Prevent parallel duplicate network fetches for the same context
+    if (_inFlightDashboardPromise && _inFlightDashboardPromise._key === cacheKey) {
+        return;
+    }
+
+    _inFlightDashboardPromise = fetch(`${API_BASE_URL}?action=data&specialty=${selection.specialty}&year=${selection.year}&semester=${selection.semester}${cacheBuster}`)
         .then(res => {
             if (!res.ok) throw new Error(`Server returned ${res.status}`);
             return res.json();
@@ -400,7 +420,11 @@ function loadDashboardData(forceRefresh = false) {
             console.error("API Error:", err);
             showError('chapters', 'تعذر الاتصال بالسيرفر (' + err.message + ')');
             showError('materials', 'تعذر الاتصال بالسيرفر (' + err.message + ')');
+        })
+        .finally(() => {
+            _inFlightDashboardPromise = null;
         });
+    _inFlightDashboardPromise._key = cacheKey;
 }
 
 function showError(section, msg) {
@@ -1319,6 +1343,7 @@ window.saveAnnouncements = function() {
 // Classes Schedule Logic
 // ---------------------------------------------------------
 let currentClassesData = [];
+let _inFlightClassesPromise = null;
 
 function formatTime(time) {
     if (!time || typeof time !== 'string') return '';
@@ -1333,14 +1358,26 @@ function formatTime(time) {
 }
 
 function loadClassesData(selection) {
-    fetch(`${API_BASE_URL}?action=get_classes&specialty=${selection.specialty}&year=${selection.year}&semester=${selection.semester}`)
+    if (!selection) return Promise.resolve();
+    const key = `${selection.specialty}_${selection.year}_${selection.semester}`;
+    if (_inFlightClassesPromise && _inFlightClassesPromise._key === key) {
+        return _inFlightClassesPromise;
+    }
+
+    _inFlightClassesPromise = fetch(`${API_BASE_URL}?action=get_classes&specialty=${selection.specialty}&year=${selection.year}&semester=${selection.semester}`)
         .then(res => res.json())
         .then(data => {
             if (data.success) {
                 currentClassesData = data.data || [];
                 renderClassesWidget();
             }
-        }).catch(err => console.error("Classes API Error:", err));
+        })
+        .catch(err => console.error("Classes API Error:", err))
+        .finally(() => {
+            _inFlightClassesPromise = null;
+        });
+    _inFlightClassesPromise._key = key;
+    return _inFlightClassesPromise;
 }
 
 // Interactive Subject Spotlight for Weekly Schedule

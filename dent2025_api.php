@@ -76,6 +76,9 @@ $action = $_GET['action'] ?? '';
 // This setting is intentionally readable without authentication so the public
 // dashboard can determine its routing mode before rendering or redirecting.
 if ($action === 'portal_settings') {
+    if (empty($_GET['nocache'])) {
+        header('Cache-Control: public, max-age=120, stale-while-revalidate=300');
+    }
     $multi_specialty_mode = get_option('dent2025_multi_specialty_mode', true);
     echo json_encode([
         "success" => true,
@@ -88,6 +91,9 @@ if ($action === 'portal_settings') {
 
 // --- GET DATA ---
 if ($action === 'data') {
+    if (empty($_GET['nocache']) && empty($_GET['_t'])) {
+        header('Cache-Control: public, max-age=60, stale-while-revalidate=120');
+    }
     $specialty = sanitize_text_field($_GET['specialty'] ?? '');
     $year = intval($_GET['year'] ?? 0);
     $semester = intval($_GET['semester'] ?? 0);
@@ -137,6 +143,9 @@ if ($action === 'data') {
 
 // --- GET CLASSES ---
 if ($action === 'get_classes') {
+    if (empty($_GET['nocache']) && empty($_GET['_t'])) {
+        header('Cache-Control: public, max-age=60, stale-while-revalidate=120');
+    }
     $specialty = sanitize_text_field($_GET['specialty'] ?? '');
     $year = isset($_GET['year']) ? intval($_GET['year']) : null;
     $semester = isset($_GET['semester']) ? intval($_GET['semester']) : null;

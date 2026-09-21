@@ -253,9 +253,9 @@ if (dent2025_is_frontend_head()) {
                     'source' => 'list',
                     'urls'   => [
                         '/',
-                        '/التقويم-الأكاديمي/',
+                        '/التقويم-الدراسي/',
                         '/المقررات-والاختبارات/',
-                        '/جدول-المحاضرات/'
+                        '/جدول-الدراسي/'
                     ]
                 ],
                 [
@@ -337,6 +337,31 @@ if (dent2025_is_frontend_head()) {
         return $tag;
     }, 20, 3);
 }
+
+// --- Disable core WordPress emojis to eliminate render blocking scripts & external s.w.org requests ---
+add_action('init', function () {
+    remove_action('wp_head', 'print_emoji_detection_script', 7);
+    remove_action('admin_print_scripts', 'print_emoji_detection_script');
+    remove_action('wp_print_styles', 'print_emoji_styles');
+    remove_action('admin_print_styles', 'print_emoji_styles');
+    remove_filter('the_content_feed', 'wp_staticize_emoji');
+    remove_filter('comment_text_rss', 'wp_staticize_emoji');
+    remove_filter('wp_mail', 'wp_staticize_emoji_for_email');
+    add_filter('tiny_mce_plugins', function ($plugins) {
+        return is_array($plugins) ? array_diff($plugins, ['wpemoji']) : [];
+    });
+    add_filter('wp_resource_hints', function ($urls, $relation_type) {
+        if ('dns-prefetch' === $relation_type) {
+            $emoji_svg_url = 'https://s.w.org/images/core/emoji/';
+            foreach ($urls as $key => $url) {
+                if (strpos($url, $emoji_svg_url) !== false) {
+                    unset($urls[$key]);
+                }
+            }
+        }
+        return $urls;
+    }, 10, 2);
+});
 
 // --- Daily Cache Cron Sync at 12:00 PM AST (09:00 UTC) ---
 add_filter('cron_schedules', function ($schedules) {
