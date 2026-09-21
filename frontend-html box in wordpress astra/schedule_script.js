@@ -1592,16 +1592,23 @@ const ScheduleApp = {
     formatEventTitleHtml: function(rawTitle) {
         if (!rawTitle) return '';
         const escaped = dentEscapeHtml(rawTitle);
-        // Wrap English phrase runs (3+ letters) in an isolated inline LTR bdi element
-        // while preserving HTML entities (&amp;, &quot;, &#39;, &hellip;, etc.) intact
-        // so mixed BiDi Arabic-English titles never scramble parentheses or hyphens,
-        // while avoiding display:inline-block which causes wide empty gaps before closing parentheses on WebKit/iOS.
-        let formatted = escaped.replace(/(&[a-zA-Z0-9#]+;)|([A-Za-z][A-Za-z0-9\s\-_:\/,\.]{3,}[A-Za-z0-9])/g, function(match, entity, english) {
+
+        // Check if title has Arabic details followed by English topics inside parentheses
+        // e.g. "كويز تشخيص (المحاضرات 1 إلى 3 مقالي قصير: Infection control - Chair position - Patient history)"
+        const subMatch = escaped.match(/^(.*?)\((.*?):\s*([A-Za-z][A-Za-z0-9\s\-_:\/,\.]{3,})\)\s*$/);
+        if (subMatch) {
+            const mainArabic = subMatch[1].trim();
+            const noteArabic = subMatch[2].trim();
+            const englishTopics = subMatch[3].trim().replace(/\s*-\s*/g, ' • ');
+            return `<div class="m1-title-col"><span class="m1-title-main">${mainArabic} (${noteArabic})</span><span class="m1-title-sub" dir="ltr">${englishTopics}</span></div>`;
+        }
+
+        // For other titles, wrap English phrase runs in clean Unicode Directional Isolates (LRI \u2066 and PDI \u2069)
+        // so mixed BiDi Arabic-English never scrambles punctuation or flips parentheses
+        let formatted = escaped.replace(/(&[a-zA-Z0-9#]+;)|([A-Za-z][A-Za-z0-9\s\-_:\/,\.]{2,}[A-Za-z0-9])/g, function(match, entity, english) {
             if (entity) return entity;
-            return '<bdi dir="ltr" style="display:inline; unicode-bidi:isolate;">' + english + '</bdi>';
+            return '\u2066' + english + '\u2069';
         });
-        // Anchor closing parenthesis after an LTR run to RTL context so it never flips or detaches
-        formatted = formatted.replace(/(<\/bdi>\s*\))/g, '$1&rlm;');
         return formatted;
     },
 
@@ -1690,16 +1697,29 @@ const ScheduleApp = {
             const weekKey = `${sunYear}-${String(wSunday.getMonth() + 1).padStart(2, '0')}-${String(sunDay).padStart(2, '0')}`;
             const weekName = `الأسبوع ${wNum} — ${sunMonth}`;
 
-            // Derive Hijri label for week header
-            const hDateStr = this.hijriFromGregorian(`${sunYear}-${String(wSunday.getMonth() + 1).padStart(2, '0')}-${String(sunDay).padStart(2, '0')}`);
+            // Derive Hijri label for week header (exact week span, e.g. 9 – 15 ربيع الآخر 1448 هـ)
+            const hStart = this.hijriFromGregorian(`${sunYear}-${String(wSunday.getMonth() + 1).padStart(2, '0')}-${String(sunDay).padStart(2, '0')}`);
+            const wSat = new Date(wSunday);
+            wSat.setDate(wSunday.getDate() + 6);
+            const satYear = wSat.getFullYear();
+            const satMonth = String(wSat.getMonth() + 1).padStart(2, '0');
+            const satDay = String(wSat.getDate()).padStart(2, '0');
+            const hEnd = this.hijriFromGregorian(`${satYear}-${satMonth}-${satDay}`);
+
             let hijriLabel = '';
-            if (hDateStr) {
-                const parts = hDateStr.split('/');
-                if (parts.length >= 2) {
-                    const mIndex = parseInt(parts[1], 10) - 1;
-                    if (mIndex >= 0 && mIndex < 12) {
-                        const cleanYear = String(parts[0]).replace(/[.\s]+$/, '');
-                        hijriLabel = `${this.hijriMonths[mIndex]} ${cleanYear} هـ`;
+            if (hStart && hEnd) {
+                const p1 = hStart.split('/');
+                const p2 = hEnd.split('/');
+                if (p1.length >= 3 && p2.length >= 3) {
+                    const mIdx1 = parseInt(p1[1], 10) - 1;
+                    const mIdx2 = parseInt(p2[1], 10) - 1;
+                    const d1 = parseInt(p1[2], 10);
+                    const d2 = parseInt(p2[2], 10);
+                    const y = p2[0].replace(/[.\s]+$/, '');
+                    if (mIdx1 === mIdx2 && mIdx2 >= 0 && mIdx2 < 12) {
+                        hijriLabel = `${d1} – ${d2} ${this.hijriMonths[mIdx2]} ${y} هـ`;
+                    } else if (mIdx1 >= 0 && mIdx1 < 12 && mIdx2 >= 0 && mIdx2 < 12) {
+                        hijriLabel = `${d1} ${this.hijriMonths[mIdx1]} – ${d2} ${this.hijriMonths[mIdx2]} ${y} هـ`;
                     }
                 }
             }
@@ -1735,7 +1755,7 @@ const ScheduleApp = {
             }
             groupedWeeks[weekKey].events.push(ev);
 
-            if (ev.hijri) {
+            if (ev.hijri && !groupedWeeks[weekKey].hijriLabel) {
                 const rawParts = ev.hijri.split(/[\/\-]/);
                 if (rawParts.length >= 2) {
                     let hYear = rawParts[0];
@@ -1801,8 +1821,54 @@ const ScheduleApp = {
                     const rawHijri = firstEv.hijri ? this.formatHijriDate(firstEv.hijri) : this.hijriFromGregorian(firstEv.date);
                     const hijriStr = rawHijri || '—';
 
-                    let cardsHtml = '';
-                    dayData.events.forEach((ev, evIdx) => {
+                    let cellContentHtml = '';
+                    if (dayData.events.length >= 2) {
+                        // Multi-event day (2+ events): compact side-by-side card grid
+                        let cardsHtml = '';
+                        dayData.events.forEach(ev => {
+                            const targetDate = this.parseLocalDate(ev.date) || new Date();
+                            targetDate.setHours(0,0,0,0);
+                            const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+                            let countdownText = '';
+                            let countdownClass = 'm1-countdown-normal';
+                            if (diffDays === 0) {
+                                countdownText = 'اليوم';
+                                countdownClass = 'm1-countdown-urgent';
+                            } else if (diffDays === 1) {
+                                countdownText = 'غداً';
+                                countdownClass = 'm1-countdown-urgent';
+                            } else if (diffDays === 2) {
+                                countdownText = 'بعد يومين';
+                                countdownClass = 'm1-countdown-soon';
+                            } else if (diffDays >= 3 && diffDays <= 10) {
+                                countdownText = `بعد ${diffDays} أيام`;
+                            } else if (diffDays > 10) {
+                                countdownText = `بعد ${diffDays} يوماً`;
+                            } else if (diffDays < 0) {
+                                countdownText = 'انتهى';
+                                countdownClass = 'm1-countdown-normal';
+                            } else {
+                                countdownText = 'اليوم';
+                            }
+
+                            const typeMeta = this.getEventTypeMeta(ev);
+                            const typeLabel = typeMeta.label;
+                            const badgeClass = typeMeta.printClass;
+
+                            cardsHtml += `
+                                <div class="m1-multi-card">
+                                    <div class="m1-card-title"><bdi dir="auto">${this.formatEventTitleHtml(ev.title)}</bdi></div>
+                                    <div class="m1-card-badges">
+                                        <span class="m1-type-badge ${badgeClass}">${dentEscapeHtml(typeLabel)}</span>
+                                        <span class="m1-countdown-badge ${countdownClass}">${dentEscapeHtml(countdownText)}</span>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        cellContentHtml = `<div class="m1-events-grid">${cardsHtml}</div>`;
+                    } else {
+                        // Single event on this day: clean row
+                        const ev = dayData.events[0];
                         const targetDate = this.parseLocalDate(ev.date) || new Date();
                         targetDate.setHours(0,0,0,0);
                         const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
@@ -1831,20 +1897,17 @@ const ScheduleApp = {
                         const typeMeta = this.getEventTypeMeta(ev);
                         const typeLabel = typeMeta.label;
                         const badgeClass = typeMeta.printClass;
-                        const isSubsequent = (evIdx > 0);
 
-                        cardsHtml += `
-                            <div class="m1-event-row${isSubsequent ? ' m1-event-row-subsequent' : ''}">
-                                <div class="m1-event-title"><bdi dir="auto">${this.formatEventTitleHtml(ev.title)}</bdi></div>
-                                <div class="m1-event-badges">
+                        cellContentHtml = `
+                            <div class="m1-single-event">
+                                <div class="m1-single-title"><bdi dir="auto">${this.formatEventTitleHtml(ev.title)}</bdi></div>
+                                <div class="m1-single-badges">
                                     <span class="m1-type-badge ${badgeClass}">${dentEscapeHtml(typeLabel)}</span>
                                     <span class="m1-countdown-badge ${countdownClass}">${dentEscapeHtml(countdownText)}</span>
                                 </div>
                             </div>
                         `;
-                    });
-
-                    const cellContentHtml = `<div class="m1-events-list">${cardsHtml}</div>`;
+                    }
 
                     rowsHtml += `
                         <tr>
@@ -1872,12 +1935,7 @@ const ScheduleApp = {
                             <tr>
                                 <th class="m1-th-day">اليوم</th>
                                 <th class="m1-th-date">التاريخ</th>
-                                <th class="m1-th-events">
-                                    <div class="m1-th-events-inner">
-                                        <span class="m1-th-events-label">الأحداث والمقررات المجدولة</span>
-                                        <span class="m1-th-status-label">النوع والمتبقي</span>
-                                    </div>
-                                </th>
+                                <th class="m1-th-events">الأحداث والمقررات المجدولة</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2011,9 +2069,9 @@ const ScheduleApp = {
         }
         .doc-portal-pill {
             background: #0f172a;
-            color: #ffffff;
+            color: #ffffff !important;
             font-family: 'Outfit', sans-serif;
-            font-size: 0.70rem;
+            font-size: 0.72rem;
             font-weight: 800;
             padding: 3px 8px;
             border-radius: 6px;
@@ -2022,22 +2080,24 @@ const ScheduleApp = {
             display: inline-block;
         }
         .doc-main-heading {
-            font-size: 1.25rem;
-            font-weight: 900;
-            color: #0f172a;
-            line-height: 1.2;
-            margin: 0;
+            font-size: 1.25rem !important;
+            font-weight: 900 !important;
+            color: #0f172a !important;
+            line-height: 1.2 !important;
+            margin: 0 !important;
             letter-spacing: normal !important;
             word-spacing: normal !important;
+            display: inline-block;
         }
         .doc-sub-heading {
-            font-size: 0.78rem;
-            color: #64748b;
+            font-size: 0.76rem;
+            color: #475569 !important;
             font-weight: 600;
             margin-top: 4px;
             text-align: right;
             letter-spacing: normal !important;
             word-spacing: normal !important;
+            white-space: nowrap !important;
         }
         .doc-meta-badge {
             text-align: left;
@@ -2057,6 +2117,7 @@ const ScheduleApp = {
             font-weight: 700;
             color: #1e293b;
             font-family: 'Outfit', sans-serif;
+            white-space: nowrap !important;
         }
         .doc-meta-badge .subperiod {
             display: block;
@@ -2064,6 +2125,7 @@ const ScheduleApp = {
             color: #64748b;
             text-align: left;
             direction: rtl;
+            white-space: nowrap !important;
         }
         .m1-week-block {
             margin-bottom: 14px;
@@ -2076,15 +2138,15 @@ const ScheduleApp = {
         .m1-week-header {
             background: #1e293b;
             color: #f8fafc;
-            padding: 8px 14px;
-            font-size: 0.80rem;
+            padding: 7px 14px;
+            font-size: 0.78rem;
             font-weight: 700;
             display: flex;
             justify-content: space-between;
             align-items: center;
             white-space: nowrap !important;
             line-height: 1.4;
-            min-height: 38px;
+            min-height: 36px;
             box-sizing: border-box;
             letter-spacing: normal !important;
             word-spacing: normal !important;
@@ -2122,7 +2184,7 @@ const ScheduleApp = {
             background: #f8fafc;
             color: #475569;
             font-weight: 700;
-            padding: 8px 12px;
+            padding: 7px 12px;
             font-size: 0.70rem;
             white-space: nowrap;
             letter-spacing: normal !important;
@@ -2138,24 +2200,10 @@ const ScheduleApp = {
         }
         .m1-th-events {
             text-align: right;
-            padding-left: 12px;
-        }
-        .m1-th-events-inner {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-        .m1-th-events-label {
-            font-weight: 700;
-        }
-        .m1-th-status-label {
-            font-size: 0.64rem;
-            color: #94a3b8;
-            font-weight: 600;
+            padding-right: 14px;
         }
         .m1-table td {
-            padding: 8px 12px;
+            padding: 7px 12px;
             vertical-align: middle;
             color: #1e293b;
             letter-spacing: normal !important;
@@ -2201,29 +2249,19 @@ const ScheduleApp = {
         }
         .m1-events-cell {
             vertical-align: middle;
-            padding: 8px 12px;
+            padding: 6px 12px;
         }
-        .m1-events-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            width: 100%;
-        }
-        .m1-event-row {
+        .m1-single-event {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
             width: 100%;
             box-sizing: border-box;
+            padding: 2px 0;
         }
-        .m1-event-row-subsequent {
-            border-top: 1px dashed #cbd5e1;
-            padding-top: 6px;
-            margin-top: 2px;
-        }
-        .m1-event-title {
-            font-size: 0.69rem;
+        .m1-single-title {
+            font-size: 0.70rem;
             font-weight: 700;
             color: #0f172a;
             line-height: 1.35;
@@ -2233,11 +2271,65 @@ const ScheduleApp = {
             letter-spacing: normal !important;
             word-spacing: normal !important;
         }
-        .m1-event-badges {
+        .m1-single-badges {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+        .m1-events-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            width: 100%;
+            align-items: center;
+            padding: 2px 0;
+        }
+        .m1-multi-card {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 4px 8px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            box-sizing: border-box;
+            min-height: 28px;
+        }
+        .m1-multi-card .m1-card-title {
+            font-size: 0.67rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.25;
+            flex: 1;
+            min-width: 0;
+            text-align: right;
+            letter-spacing: normal !important;
+            word-spacing: normal !important;
+        }
+        .m1-multi-card .m1-card-badges {
             display: flex;
             align-items: center;
             gap: 4px;
             flex-shrink: 0;
+        }
+        .m1-title-col {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .m1-title-main {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 0.70rem;
+        }
+        .m1-title-sub {
+            font-size: 0.63rem;
+            color: #64748b;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
         }
         .m1-type-badge {
             display: inline-block;
@@ -2300,7 +2392,7 @@ const ScheduleApp = {
             <div class="doc-titles">
                 <div class="doc-title-row">
                     <span class="doc-portal-pill">Dent2025</span>
-                    <h1 class="doc-main-heading">التقويم الأكاديمي</h1>
+                    <span class="doc-main-heading">التقويم الأكاديمي</span>
                 </div>
                 <div class="doc-sub-heading">${dentEscapeHtml(subTitle)}</div>
             </div>
