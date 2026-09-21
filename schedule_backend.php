@@ -15,10 +15,36 @@ if (in_array($origin, ['https://dent2025.com', 'https://www.dent2025.com'], true
     header('Access-Control-Allow-Origin: https://dent2025.com');
 }
 
-header('Access-Control-Allow-Methods: GET, POST, DELETE');
+header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-$method = $_SERVER['REQUEST_METHOD'];
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+if ($method === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// Helper function to parse cohort context from a schedule ID
+if (!function_exists('dent2025_parse_schedule_id')) {
+    function dent2025_parse_schedule_id($id) {
+        if (preg_match('/^([a-zA-Z-]+)_(?:y)?(\d+)_(?:s)?(\d+)$/', (string)$id, $m)) {
+            $code = strtolower($m[1]);
+            $specialty = match($code) {
+                'dent', 'dentistry' => 'dentistry',
+                'med', 'medicine' => 'medicine',
+                'pre', 'pre-med' => 'pre-med',
+                default => $m[1]
+            };
+            return [
+                'specialty' => $specialty,
+                'year' => intval($m[2]),
+                'semester' => intval($m[3])
+            ];
+        }
+        return null;
+    }
+}
 
 $globalFile = __DIR__ . '/schedule_events.json';
 
@@ -41,7 +67,7 @@ if ($method === 'GET') {
 $scheduleId = preg_replace('/[^a-zA-Z0-9_-]/', '', $scheduleId);
 
 $dataFile = $globalFile;
-if (!empty($scheduleId) && $scheduleId !== 'global_only') {
+if (!empty($scheduleId) && $scheduleId !== 'global' && $scheduleId !== 'global_only') {
     $dataFile = __DIR__ . "/schedule_events_{$scheduleId}.json";
 }
 
@@ -74,17 +100,10 @@ if ($method === 'GET') {
             
             $localData = json_decode(file_get_contents($file), true);
             if (is_array($localData)) {
-                $specialty = null; $year = null; $semester = null;
-                if (preg_match('/^([a-zA-Z-]+)_(?:y)?(\d+)_(?:s)?(\d+)$/', $subScheduleId, $m)) {
-                    $code = strtolower($m[1]);
-                    if ($code === 'dent' || $code === 'dentistry') $specialty = 'dentistry';
-                    elseif ($code === 'med' || $code === 'medicine') $specialty = 'medicine';
-                    elseif ($code === 'pre' || $code === 'pre-med') $specialty = 'pre-med';
-                    else $specialty = $m[1];
-
-                    $year = intval($m[2]);
-                    $semester = intval($m[3]);
-                }
+                $parsed = dent2025_parse_schedule_id($subScheduleId);
+                $specialty = $parsed['specialty'] ?? null;
+                $year = $parsed['year'] ?? null;
+                $semester = $parsed['semester'] ?? null;
 
                 foreach ($localData as $ev) {
                     $ev['is_global'] = false;
@@ -102,17 +121,10 @@ if ($method === 'GET') {
         if ($dataFile !== $globalFile && file_exists($dataFile)) {
             $localData = json_decode(file_get_contents($dataFile), true);
             if (is_array($localData)) {
-                $specialty = null; $year = null; $semester = null;
-                if (preg_match('/^([a-zA-Z-]+)_(?:y)?(\d+)_(?:s)?(\d+)$/', $scheduleId, $m)) {
-                    $code = strtolower($m[1]);
-                    if ($code === 'dent' || $code === 'dentistry') $specialty = 'dentistry';
-                    elseif ($code === 'med' || $code === 'medicine') $specialty = 'medicine';
-                    elseif ($code === 'pre' || $code === 'pre-med') $specialty = 'pre-med';
-                    else $specialty = $m[1];
-
-                    $year = intval($m[2]);
-                    $semester = intval($m[3]);
-                }
+                $parsed = dent2025_parse_schedule_id($scheduleId);
+                $specialty = $parsed['specialty'] ?? null;
+                $year = $parsed['year'] ?? null;
+                $semester = $parsed['semester'] ?? null;
 
                 foreach ($localData as $ev) {
                     $ev['is_global'] = false;
@@ -152,6 +164,7 @@ if ($method === 'POST' || $method === 'DELETE') {
                  || empty($scheduleId);
 
     if ($is_global) {
+        $dataFile = $globalFile;
         $is_auth = dent2025_check_rbac_permission($password, 'global_events');
     } else {
         $specialty = $input['specialty'] ?? null;
@@ -159,15 +172,11 @@ if ($method === 'POST' || $method === 'DELETE') {
         $semester = isset($input['semester']) ? intval($input['semester']) : null;
 
         if ($specialty === null || $year === null || $semester === null) {
-            if (preg_match('/^([a-zA-Z-]+)_(?:y)?(\d+)_(?:s)?(\d+)$/', $scheduleId, $m)) {
-                $code = strtolower($m[1]);
-                if ($code === 'dent' || $code === 'dentistry') $specialty = 'dentistry';
-                elseif ($code === 'med' || $code === 'medicine') $specialty = 'medicine';
-                elseif ($code === 'pre' || $code === 'pre-med') $specialty = 'pre-med';
-                else $specialty = $m[1];
-
-                $year = intval($m[2]);
-                $semester = intval($m[3]);
+            $parsed = dent2025_parse_schedule_id($scheduleId);
+            if ($parsed) {
+                $specialty = $parsed['specialty'];
+                $year = $parsed['year'];
+                $semester = $parsed['semester'];
             }
         }
 

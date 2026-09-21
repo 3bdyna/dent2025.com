@@ -1634,8 +1634,12 @@ const ScheduleApp = {
         if (!rawTitle) return '';
         const escaped = dentEscapeHtml(rawTitle);
         // Wrap English phrase runs (3+ letters) in an isolated inline-block LTR span
-        // so mixed BiDi Arabic-English titles never scramble parentheses or hyphens when wrapping lines
-        return escaped.replace(/([A-Za-z][A-Za-z0-9\s\-_:\/,\.]{3,}[A-Za-z0-9])/g, '<span dir="ltr" style="display:inline-block; max-width:100%;">$1</span>');
+        // while preserving HTML entities (&amp;, &quot;, &#39;, &hellip;, etc.) intact
+        // so mixed BiDi Arabic-English titles never scramble parentheses or hyphens when wrapping lines.
+        return escaped.replace(/(&[a-zA-Z0-9#]+;)|([A-Za-z][A-Za-z0-9\s\-_:\/,\.]{3,}[A-Za-z0-9])/g, function(match, entity, english) {
+            if (entity) return entity;
+            return '<span dir="ltr" style="display:inline-block; max-width:100%;">' + english + '</span>';
+        });
     },
 
     generateTwoWeeksPrintHtml: function(customNotes, announcementText, isMobile = false) {

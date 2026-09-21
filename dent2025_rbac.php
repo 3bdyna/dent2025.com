@@ -157,7 +157,7 @@ if (!function_exists('dent2025_get_passkey_info')) {
         }
         $passwords = dent2025_load_passwords();
         foreach ($passwords as $entry) {
-            if (isset($entry['passkey']) && $entry['passkey'] === $passkey) {
+            if (isset($entry['passkey']) && is_string($entry['passkey']) && hash_equals($entry['passkey'], $passkey)) {
                 return $entry;
             }
         }
