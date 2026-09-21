@@ -1600,21 +1600,11 @@ const ScheduleApp = {
         if (!rawTitle) return '';
         const escaped = dentEscapeHtml(rawTitle);
 
-        // Check if title has Arabic details followed by English topics inside parentheses
-        // e.g. "كويز تشخيص (المحاضرات 1 إلى 3 مقالي قصير: Infection control - Chair position - Patient history)"
-        const subMatch = escaped.match(/^(.*?)\((.*?):\s*([A-Za-z][A-Za-z0-9\s\-_:\/,\.]{3,})\)\s*$/);
-        if (subMatch) {
-            const mainArabic = subMatch[1].trim();
-            const noteArabic = subMatch[2].trim();
-            const englishTopics = subMatch[3].trim().replace(/\s*-\s*/g, ' • ');
-            return `<div class="m1-title-col"><span class="m1-title-main">${mainArabic} (${noteArabic})</span><span class="m1-title-sub" dir="ltr">${englishTopics}</span></div>`;
-        }
-
-        // For other titles, wrap English phrase runs in clean Unicode Directional Isolates (LRI \u2066 and PDI \u2069)
-        // so mixed BiDi Arabic-English never scrambles punctuation or flips parentheses
-        let formatted = escaped.replace(/(&[a-zA-Z0-9#]+;)|([A-Za-z][A-Za-z0-9\s\-_:\/,\.]{2,}[A-Za-z0-9])/g, function(match, entity, english) {
+        // Wrap English phrase runs in clean dir="ltr" spans so mixed BiDi Arabic-English
+        // never scrambles punctuation or flips parentheses when wrapping
+        let formatted = escaped.replace(/(&[a-zA-Z0-9#]+;)|([A-Za-z][A-Za-z0-9\s\-_:\/,\.]{2,}[A-Za-z0-9]\)?)/g, function(match, entity, english) {
             if (entity) return entity;
-            return '\u2066' + english + '\u2069';
+            return '<span dir="ltr">' + english + '</span>';
         });
         return formatted;
     },
@@ -2309,22 +2299,6 @@ const ScheduleApp = {
             align-items: center;
             gap: 4px;
             flex-shrink: 0;
-        }
-        .m1-title-col {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .m1-title-main {
-            font-weight: 700;
-            color: #0f172a;
-            font-size: 0.70rem;
-        }
-        .m1-title-sub {
-            font-size: 0.63rem;
-            color: #64748b;
-            font-family: 'Outfit', sans-serif;
-            font-weight: 600;
         }
         .m1-type-badge {
             display: inline-block;
