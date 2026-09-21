@@ -25,14 +25,6 @@
     "type_label": "إجازة"
   },
   {
-    "id": "evt_pay_sep",
-    "date": "2026-09-27",
-    "hijri": "1448/04/15",
-    "title": "مكافأة شهر سبتمبر",
-    "type": "payment",
-    "type_label": "مكافأة"
-  },
-  {
     "id": "evt_pay_oct",
     "date": "2026-10-27",
     "hijri": "1448/05/16",
