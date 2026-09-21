@@ -157,7 +157,28 @@ python tools/deploy.py "frontend-html box in wordpress astra/dashboard.js" "fron
 > - **Auto-Merge in SafeDeploy (`deploy_safe.py`)**: Stage 0 automatically pulls the cloud and merges any local additions without deleting any existing cloud events.
 > - **Zero Deletion Guarantee**: Cloud events are never deleted unless explicit `--allow-delete` flag is passed after creating a server-side backup snapshot.
 
+### E. 🛡️ Multi-Tier Safeguards & Destructive Command Policy (Zero Codebase Loss Guarantee)
+> **CORE DIRECTIVE**: AI agents must adhere to strict defense-in-depth safeguards. High-velocity rapid development must proceed without friction, but catastrophic destructive operations are mechanically and procedurally forbidden.
+
+#### 1. Strictly Forbidden Commands for AI Agents
+- **Local Filesystem**:
+  - `rm -rf <dir>`, `Remove-Item -Recurse -Force <dir>`, `del /f /s /q` targeting non-scratch directories.
+  - `git clean -fdx` (wipes untracked files without recovery).
+  - `git reset --hard` (unless explicitly instructed by the user with a specific commit hash for intentional rollback).
+- **Git Remote**:
+  - `git push --force` or `--force-with-lease` to `main` (never rewrite remote history).
+- **Remote Server (Azure VPS via SSH)**:
+  - Raw SSH bulk directory removal (`rm -rf /var/www/...`, `rm -rf /`).
+  - Raw SQL dropping or truncating tables (`DROP DATABASE`, `DROP TABLE`, `TRUNCATE`).
+  - Deployments must strictly use `python tools/deploy_safe.py` or `python tools/sync_cloud_events.py` rather than manual ad-hoc SSH overwriting.
+
+#### 2. Server-Side Infrastructure Protections in Place
+- **`safe-rm` Active on VPS**: `/usr/local/bin/rm` is symlinked to `safe-rm` with `/etc/safe-rm.conf` actively protecting `/`, `/var/www`, `/var/www/dent2025`, `/etc`, and `/home`. Any attempted recursive wipe is rejected automatically.
+- **Automated Nightly Backups**: `/usr/local/bin/dent2025_backup.sh` runs every night at 03:30 UTC via root crontab, backing up the MySQL `wordpress` database and dynamic JSON files into `/var/backups/dent2025_daily/` with a rolling 14-day retention.
+- **Azure Hypervisor Disk Snapshots**: VM OS disk snapshots in Azure Resource Group `BB-BOT-PL-RG` provide 1-click total disaster recovery without relying on server OS integrity.
+
 ---
+
 
 ## 4. Frontend Component Page-by-Page Mapping Matrix
 
