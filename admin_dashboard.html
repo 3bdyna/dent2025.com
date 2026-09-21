@@ -412,7 +412,7 @@
  </div>
 
  <!-- Loading Overlay -->
- <div id="loading" class="absolute inset-0 bg-dark/50 backdrop-blur-sm z-40 hidden flex-col items-center justify-center">
+ <div id="loading" class="absolute inset-0 bg-dark/50 backdrop-blur-sm z-40 hidden flex flex-col items-center justify-center">
  <div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
  <p class="mt-4 text-gray-300 animate-pulse text-sm">جاري التحميل...</p>
  </div>
@@ -1822,6 +1822,13 @@
   .ql-editor { font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif; font-size: 1rem; }
   </style>
 
-  <script src="admin_app.js?v=20260921_02"></script>
+  <script>
+    (function() {
+      var s = document.createElement('script');
+      s.src = 'admin_app.js?v=' + Date.now();
+      s.async = false;
+      document.body.appendChild(s);
+    })();
+  </script>
 </body>
 </html>

@@ -686,8 +686,13 @@ window.AdminApp = {
     showLoading(show) {
         const loader = document.getElementById('loading');
         if (loader) {
-            if (show) loader.classList.remove('hidden');
-            else loader.classList.add('hidden');
+            if (show) {
+                loader.classList.remove('hidden');
+                loader.classList.add('flex');
+            } else {
+                loader.classList.add('hidden');
+                loader.classList.remove('flex');
+            }
         }
     },
 
@@ -3814,20 +3819,18 @@ window.AdminApp = {
 
         this.fetchGeminiApi('action=gemini_status')
         .then(res => {
-            if (!hasCached) this.showLoading(false);
+            this.showLoading(false);
             if (res.success && res.data) {
                 this.geminiData = res.data;
                 this.renderGeminiUI(res.data);
-            } else if (!hasCached) {
+            } else {
                 this.showToast(res.message || 'فشل في تحميل حالة مفاتيح المعالجة الذكية', true);
             }
         })
         .catch(e => {
-            if (!hasCached) {
-                this.showLoading(false);
-                console.error('Error loading Gemini status:', e);
-                this.showToast('خطأ بالاتصال أثناء جلب حالة المعالجة الذكية (' + (e.message || '') + ')', true);
-            }
+            this.showLoading(false);
+            console.error('Error loading Gemini status:', e);
+            this.showToast('خطأ بالاتصال أثناء جلب حالة المعالجة الذكية (' + (e.message || '') + ')', true);
         });
     },
 
@@ -4058,6 +4061,7 @@ window.AdminApp = {
 
         this.fetchGeminiApi(query)
         .then(res => {
+            this.showLoading(false);
             if (isSingleKey) {
                 setKeyCardLoading(keyIndex, false);
             } else {
@@ -4099,6 +4103,7 @@ window.AdminApp = {
             }
         })
         .catch(e => {
+            this.showLoading(false);
             if (isSingleKey) {
                 setKeyCardLoading(keyIndex, false);
                 if (this.geminiKeysData && this.geminiKeysData[keyIndex]) {
