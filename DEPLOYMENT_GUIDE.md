@@ -23,9 +23,10 @@ python tools/deploy_safe.py --note "Detailed description of what changed" "path/
    - Automatically stages changed files.
    - Creates a clean, semantic Git commit tagged with your change note.
    - Automatically pushes to your private GitHub repository (`origin/main`).
-4. **Fast 1-Second FTP Upload & LiteSpeed Cache Purge**:
-   - Uploads modified files directly to `public_html/` on the live server.
-   - Triggers the LiteSpeed remote cache purge endpoint with passkey so changes reflect instantly for all users.
+4. **High-Speed Single-Connection SSH Streaming & Instant Cache Purge**:
+   - Packages all target files into an in-memory gzipped stream and transfers them over **one single SSH connection** via Cloudflare Tunnel (`ssh.dent2025.com`).
+   - Uploads and extracts files in ~1.8–2.3 seconds directly to `/var/www/dent2025/`.
+   - Triggers LiteSpeed cache purge and Dent2025 transient purge via server CLI in the same connection without WAF blocks.
 5. **Post-flight Health Inspection (`tools/deploy_health.py`)**:
    - Probes live server APIs (`dent2025_api.php`, `announcements_api.php`, `schedule_backend.php`, `history_api.php`, `backend/api_data.php`, `backend/api_manage.php`, `backend/api_ai_exam.php`).
    - If an issue is detected, flags diagnostic cause and provides immediate 1-command rollback.
