@@ -3831,146 +3831,293 @@ window.AdminApp = {
         });
     },
 
+    getGeminiStatusBadge(status) {
+        if (status === 'active') {
+            return '<span class="px-2.5 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">نشط</span>';
+        } else if (status === 'quota_exhausted') {
+            return '<span class="px-2.5 py-1 text-xs rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">متجاوز للكوتا (429)</span>';
+        } else if (status === 'invalid') {
+            return '<span class="px-2.5 py-1 text-xs rounded-full bg-red-500/10 text-red-400 border border-red-500/20">غير صالح</span>';
+        }
+        return '<span class="px-2.5 py-1 text-xs rounded-full bg-gray-500/10 text-gray-400 border border-gray-500/20">غير معروف</span>';
+    },
+
+    updateGeminiSummaryCounters() {
+        if (!this.geminiKeysData) return;
+        let active = 0, exhausted = 0, invalid = 0;
+        this.geminiKeysData.forEach(k => {
+            if (k.status === 'active') active++;
+            else if (k.status === 'quota_exhausted') exhausted++;
+            else if (k.status === 'invalid') invalid++;
+            else active++;
+        });
+        const actEl = document.getElementById('gemini-stat-active');
+        if (actEl) actEl.innerText = active + ' / ' + this.geminiKeysData.length;
+        const exhEl = document.getElementById('gemini-stat-exhausted');
+        if (exhEl) exhEl.innerText = (exhausted + invalid);
+    },
+
     renderGeminiUI(data) {
         if (!data) return;
         const summary = data.summary || {};
         this.geminiKeysData = data.keys || [];
 
-                const reqEl = document.getElementById('gemini-stat-requests');
-                if (reqEl) reqEl.innerText = (summary.total_requests_today || 0).toLocaleString();
+        const reqEl = document.getElementById('gemini-stat-requests');
+        if (reqEl) reqEl.innerText = (summary.total_requests_today || 0).toLocaleString();
 
-                const tokEl = document.getElementById('gemini-stat-tokens');
-                if (tokEl) tokEl.innerText = (summary.total_tokens_today || 0).toLocaleString();
+        const tokEl = document.getElementById('gemini-stat-tokens');
+        if (tokEl) tokEl.innerText = (summary.total_tokens_today || 0).toLocaleString();
 
-                const actEl = document.getElementById('gemini-stat-active');
-                if (actEl) actEl.innerText = (summary.active_keys || 0) + ' / ' + (summary.total_keys || 0);
+        const actEl = document.getElementById('gemini-stat-active');
+        if (actEl) actEl.innerText = (summary.active_keys || 0) + ' / ' + (summary.total_keys || 0);
 
-                const exhEl = document.getElementById('gemini-stat-exhausted');
-                if (exhEl) exhEl.innerText = ((summary.exhausted_keys || 0) + (summary.invalid_keys || 0));
+        const exhEl = document.getElementById('gemini-stat-exhausted');
+        if (exhEl) exhEl.innerText = ((summary.exhausted_keys || 0) + (summary.invalid_keys || 0));
 
-                // Render Keys Grid
-                const gridEl = document.getElementById('gemini-keys-grid');
-                if (gridEl) {
-                    if (data.keys && data.keys.length > 0) {
-                        gridEl.innerHTML = data.keys.map(k => {
-                            let statusBadge = '<span class="px-2.5 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">نشط</span>';
-                            if (k.status === 'quota_exhausted') {
-                                statusBadge = '<span class="px-2.5 py-1 text-xs rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">متجاوز للكوتا (429)</span>';
-                            } else if (k.status === 'invalid') {
-                                statusBadge = '<span class="px-2.5 py-1 text-xs rounded-full bg-red-500/10 text-red-400 border border-red-500/20">غير صالح</span>';
-                            }
+        // Render Keys Grid
+        const gridEl = document.getElementById('gemini-keys-grid');
+        if (gridEl) {
+            if (data.keys && data.keys.length > 0) {
+                gridEl.innerHTML = data.keys.map(k => {
+                    const statusBadge = this.getGeminiStatusBadge(k.status);
 
-                            const rpdPct = Math.min(100, Math.round(((k.requests_today || 0) / (k.rpd_limit || 1500)) * 100));
-                            let barColor = 'bg-emerald-500';
-                            if (rpdPct >= 90) barColor = 'bg-red-500';
-                            else if (rpdPct >= 75) barColor = 'bg-amber-500';
+                    const rpdPct = Math.min(100, Math.round(((k.requests_today || 0) / (k.rpd_limit || 1500)) * 100));
+                    let barColor = 'bg-emerald-500';
+                    if (rpdPct >= 90) barColor = 'bg-red-500';
+                    else if (rpdPct >= 75) barColor = 'bg-amber-500';
 
-                            const latencyText = k.latency_ms ? (k.latency_ms + ' ms') : 'غير مختبر';
+                    const latencyText = k.latency_ms ? (k.latency_ms + ' ms') : 'غير مختبر';
 
-                            return `
-                                <div class="glass p-5 rounded-2xl border border-white/10 space-y-3 relative flex flex-col justify-between">
-                                    <div>
-                                        <div class="flex justify-between items-start mb-2">
-                                            <div class="min-w-0 flex-1">
-                                                <h4 class="font-bold text-white text-base truncate">${this.escapeHtml(k.label)}</h4>
-                                                <div class="flex items-center gap-2 mt-1">
-                                                    <span id="gemini-key-display-${k.index}" class="text-xs font-mono text-gray-400 select-all">${k.key_masked}</span>
-                                                    <button onclick="AdminApp.toggleGeminiKeyMask(${k.index})" class="text-gray-400 hover:text-white text-xs p-1 rounded transition" title="إظهار / إخفاء المفتاح">
-                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                                    </button>
-                                                    <button onclick="AdminApp.copyGeminiKey(${k.index})" class="text-gray-400 hover:text-white text-xs p-1 rounded transition" title="نسخ المفتاح">
-                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div class="shrink-0 mr-2">${statusBadge}</div>
-                                        </div>
-
-                                        <div class="mt-3">
-                                            <div class="flex justify-between text-xs text-gray-400 mb-1">
-                                                <span>الطلبات اليوم</span>
-                                                <span class="font-mono text-white">${k.requests_today} / ${k.rpd_limit} RPD</span>
-                                            </div>
-                                            <div class="w-full bg-black/40 h-2 rounded-full overflow-hidden border border-white/5">
-                                                <div class="${barColor} h-full transition-all duration-500" style="width: ${rpdPct}%"></div>
-                                            </div>
+                    return `
+                        <div id="gemini-key-card-${k.index}" class="glass p-5 rounded-2xl border border-white/10 space-y-3 relative flex flex-col justify-between transition-all duration-300">
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="font-bold text-white text-base truncate">${this.escapeHtml(k.label)}</h4>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span id="gemini-key-display-${k.index}" class="text-xs font-mono text-gray-400 select-all">${k.key_masked}</span>
+                                            <button onclick="AdminApp.toggleGeminiKeyMask(${k.index})" class="text-gray-400 hover:text-white text-xs p-1 rounded transition" title="إظهار / إخفاء المفتاح">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                            </button>
+                                            <button onclick="AdminApp.copyGeminiKey(${k.index})" class="text-gray-400 hover:text-white text-xs p-1 rounded transition" title="نسخ المفتاح">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                            </button>
                                         </div>
                                     </div>
+                                    <div id="gemini-key-status-${k.index}" class="shrink-0 mr-2">${statusBadge}</div>
+                                </div>
 
-                                    <div class="pt-3 border-t border-white/5 flex flex-col gap-2">
-                                        <div class="flex justify-between items-center text-xs text-gray-400">
-                                            <span>الاستجابة: <strong class="font-mono text-white">${latencyText}</strong></span>
-                                            <span class="text-[10px] text-gray-500">${k.last_tested ? k.last_tested.split(' ')[1] : ''}</span>
-                                        </div>
-                                        <div class="flex gap-1.5 pt-1">
-                                            <button onclick="AdminApp.testGeminiKeys(${k.index})" class="btn btn-secondary text-xs px-2.5 py-1 flex-1 flex items-center justify-center gap-1">
-                                                <span>فحص</span>
-                                            </button>
-                                            <button onclick="AdminApp.openEditGeminiKeyModal(${k.index})" class="btn btn-secondary text-xs px-2.5 py-1 flex-1 flex items-center justify-center gap-1 border-white/10 hover:border-white/30 text-white">
-                                                <span>تعديل</span>
-                                            </button>
-                                            <button onclick="AdminApp.deleteGeminiKey(${k.index})" class="btn btn-danger text-xs px-2.5 py-1 flex items-center justify-center gap-1" title="حذف المفتاح">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                <span>حذف</span>
-                                            </button>
-                                        </div>
+                                <div class="mt-3">
+                                    <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                        <span>الطلبات اليوم</span>
+                                        <span class="font-mono text-white">${k.requests_today} / ${k.rpd_limit} RPD</span>
+                                    </div>
+                                    <div class="w-full bg-black/40 h-2 rounded-full overflow-hidden border border-white/5">
+                                        <div class="${barColor} h-full transition-all duration-500" style="width: ${rpdPct}%"></div>
                                     </div>
                                 </div>
-                            `;
-                        }).join('');
-                    } else {
-                        gridEl.innerHTML = '<p class="text-gray-400 text-center py-4 col-span-3">لا توجد مفاتيح مسجلة</p>';
-                    }
-                }
+                            </div>
 
-                // Render Logs Table
-                const logsBody = document.getElementById('gemini-logs-body');
-                if (logsBody) {
-                    if (data.recent_logs && data.recent_logs.length > 0) {
-                        logsBody.innerHTML = data.recent_logs.map(log => {
-                            let statusTag = '<span class="text-emerald-400">200 OK</span>';
-                            if (log.http_code === 429) {
-                                statusTag = '<span class="text-amber-400">429 Exceeded</span>';
-                            } else if (log.http_code >= 400) {
-                                statusTag = `<span class="text-red-400">${log.http_code} Error</span>`;
-                            }
+                            <div class="pt-3 border-t border-white/5 flex flex-col gap-2">
+                                <div class="flex justify-between items-center text-xs text-gray-400">
+                                    <span>الاستجابة: <strong id="gemini-key-latency-${k.index}" class="font-mono text-white">${latencyText}</strong></span>
+                                    <span id="gemini-key-tested-${k.index}" class="text-[10px] text-gray-500">${k.last_tested ? k.last_tested.split(' ')[1] : ''}</span>
+                                </div>
+                                <div class="flex gap-1.5 pt-1">
+                                    <button id="gemini-key-test-btn-${k.index}" onclick="AdminApp.testGeminiKeys(${k.index})" class="btn btn-secondary text-xs px-2.5 py-1 flex-1 flex items-center justify-center gap-1 transition">
+                                        <span>فحص</span>
+                                    </button>
+                                    <button onclick="AdminApp.openEditGeminiKeyModal(${k.index})" class="btn btn-secondary text-xs px-2.5 py-1 flex-1 flex items-center justify-center gap-1 border-white/10 hover:border-white/30 text-white">
+                                        <span>تعديل</span>
+                                    </button>
+                                    <button onclick="AdminApp.deleteGeminiKey(${k.index})" class="btn btn-danger text-xs px-2.5 py-1 flex items-center justify-center gap-1" title="حذف المفتاح">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        <span>حذف</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                gridEl.innerHTML = '<p class="text-gray-400 text-center py-4 col-span-3">لا توجد مفاتيح مسجلة</p>';
+            }
+        }
 
-                            return `
-                                <tr class="hover:bg-white/5 transition">
-                                    <td class="p-3 font-mono text-xs text-gray-300">${log.timestamp}</td>
-                                    <td class="p-3 font-mono text-xs text-gray-400">${log.key_masked}</td>
-                                    <td class="p-3 font-mono text-white">${log.num_questions || '-'}</td>
-                                    <td class="p-3 font-mono text-blue-300">${(log.total_tokens || 0).toLocaleString()}</td>
-                                    <td class="p-3 font-mono text-gray-300">${log.latency_ms || 0} ms</td>
-                                    <td class="p-3 font-mono">${statusTag}</td>
-                                </tr>
-                            `;
-                        }).join('');
-                    } else {
-                        logsBody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500 font-sans">لا توجد سجلات طلبات حتى الآن</td></tr>';
+        // Render Logs Table
+        const logsBody = document.getElementById('gemini-logs-body');
+        if (logsBody) {
+            if (data.recent_logs && data.recent_logs.length > 0) {
+                logsBody.innerHTML = data.recent_logs.map(log => {
+                    let statusTag = '<span class="text-emerald-400">200 OK</span>';
+                    if (log.http_code === 429) {
+                        statusTag = '<span class="text-amber-400">429 Exceeded</span>';
+                    } else if (log.http_code >= 400) {
+                        statusTag = `<span class="text-red-400">${log.http_code} Error</span>`;
                     }
-                }
+
+                    return `
+                        <tr class="hover:bg-white/5 transition">
+                            <td class="p-3 font-mono text-xs text-gray-300">${log.timestamp}</td>
+                            <td class="p-3 font-mono text-xs text-gray-400">${log.key_masked}</td>
+                            <td class="p-3 font-mono text-white">${log.num_questions || '-'}</td>
+                            <td class="p-3 font-mono text-blue-300">${(log.total_tokens || 0).toLocaleString()}</td>
+                            <td class="p-3 font-mono text-gray-300">${log.latency_ms || 0} ms</td>
+                            <td class="p-3 font-mono">${statusTag}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                logsBody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500 font-sans">لا توجد سجلات طلبات حتى الآن</td></tr>';
+            }
+        }
     },
 
     testGeminiKeys(keyIndex) {
-        this.showLoading(true);
+        const isSingleKey = (keyIndex !== undefined && keyIndex !== null && keyIndex >= 0);
         let query = 'action=test_keys';
-        if (keyIndex !== undefined && keyIndex >= 0) {
+        if (isSingleKey) {
             query += '&key_index=' + keyIndex;
+        }
+
+        const setKeyCardLoading = (idx, loading) => {
+            const cardEl = document.getElementById('gemini-key-card-' + idx);
+            const statusEl = document.getElementById('gemini-key-status-' + idx);
+            const btnEl = document.getElementById('gemini-key-test-btn-' + idx);
+
+            if (loading) {
+                if (cardEl) {
+                    cardEl.classList.add('border-blue-500/40', 'ring-1', 'ring-blue-500/20');
+                }
+                if (statusEl) {
+                    statusEl.innerHTML = '<span class="px-2.5 py-1 text-xs rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/25 inline-flex items-center gap-1.5 animate-pulse"><svg class="animate-spin w-3 h-3 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg><span>جاري الفحص...</span></span>';
+                }
+                if (btnEl) {
+                    btnEl.disabled = true;
+                    btnEl.classList.add('opacity-60', 'cursor-not-allowed');
+                    btnEl.innerHTML = '<svg class="animate-spin w-3 h-3 text-white shrink-0" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg><span>فحص...</span>';
+                }
+            } else {
+                if (cardEl) {
+                    cardEl.classList.remove('border-blue-500/40', 'ring-1', 'ring-blue-500/20');
+                }
+                if (btnEl) {
+                    btnEl.disabled = false;
+                    btnEl.classList.remove('opacity-60', 'cursor-not-allowed');
+                    btnEl.innerHTML = '<span>فحص</span>';
+                }
+            }
+        };
+
+        const updateKeyCardResult = (item) => {
+            if (!item || item.index === undefined) return;
+            const idx = item.index;
+            const statusEl = document.getElementById('gemini-key-status-' + idx);
+            const latEl = document.getElementById('gemini-key-latency-' + idx);
+            const testDateEl = document.getElementById('gemini-key-tested-' + idx);
+
+            if (statusEl) {
+                statusEl.innerHTML = this.getGeminiStatusBadge(item.status);
+            }
+            if (latEl) {
+                latEl.innerText = item.latency_ms ? (item.latency_ms + ' ms') : '0 ms';
+            }
+            if (testDateEl && item.last_tested) {
+                testDateEl.innerText = item.last_tested.split(' ')[1] || '';
+            }
+
+            // Update in-memory models
+            if (this.geminiKeysData && this.geminiKeysData[idx]) {
+                this.geminiKeysData[idx].status = item.status;
+                this.geminiKeysData[idx].latency_ms = item.latency_ms;
+                this.geminiKeysData[idx].last_tested = item.last_tested;
+            }
+            if (this.geminiData && this.geminiData.keys && this.geminiData.keys[idx]) {
+                this.geminiData.keys[idx].status = item.status;
+                this.geminiData.keys[idx].latency_ms = item.latency_ms;
+                this.geminiData.keys[idx].last_tested = item.last_tested;
+            }
+        };
+
+        const topTestBtn = document.getElementById('gemini-test-all-btn');
+
+        if (isSingleKey) {
+            // Target only the single card that was clicked - absolutely no full page loader
+            setKeyCardLoading(keyIndex, true);
+        } else {
+            // Target all cards inline without global full-page overlay
+            if (topTestBtn) {
+                topTestBtn.disabled = true;
+                topTestBtn.dataset.originalText = topTestBtn.innerHTML;
+                topTestBtn.innerHTML = '<svg class="animate-spin w-3 h-3 text-white inline ml-1 shrink-0" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg><span>جاري الاختبار...</span>';
+            }
+            if (this.geminiKeysData && this.geminiKeysData.length > 0) {
+                this.geminiKeysData.forEach(k => setKeyCardLoading(k.index, true));
+            }
         }
 
         this.fetchGeminiApi(query)
         .then(res => {
-            this.showLoading(false);
-            if (res.success && res.data) {
-                this.showToast('تم اختبار مفاتيح المعالجة الذكية بنجاح');
-                this.loadGeminiStatus();
+            if (isSingleKey) {
+                setKeyCardLoading(keyIndex, false);
             } else {
+                if (topTestBtn) {
+                    topTestBtn.disabled = false;
+                    topTestBtn.innerHTML = topTestBtn.dataset.originalText || 'اختبار';
+                }
+                if (this.geminiKeysData && this.geminiKeysData.length > 0) {
+                    this.geminiKeysData.forEach(k => setKeyCardLoading(k.index, false));
+                }
+            }
+
+            if (res.success && res.data && Array.isArray(res.data.tested)) {
+                res.data.tested.forEach(item => updateKeyCardResult(item));
+                this.updateGeminiSummaryCounters();
+
+                if (isSingleKey) {
+                    const item = res.data.tested.find(t => t.index === keyIndex) || res.data.tested[0];
+                    if (item) {
+                        if (item.status === 'active') {
+                            this.showToast(`المفتاح نشط وجاهز للاستخدام (${item.latency_ms || 0} ms)`);
+                        } else if (item.status === 'quota_exhausted') {
+                            this.showToast('المفتاح تجاوز حد الكوتا (429 Quota Exhausted)', true);
+                        } else {
+                            this.showToast(`المفتاح غير صالح أو ملغى (HTTP ${item.http_code || 400})`, true);
+                        }
+                    } else {
+                        this.showToast('تم فحص المفتاح بنجاح');
+                    }
+                } else {
+                    this.showToast('تم اختبار جميع مفاتيح المعالجة الذكية بنجاح');
+                }
+            } else {
+                if (isSingleKey && this.geminiKeysData && this.geminiKeysData[keyIndex]) {
+                    const statusEl = document.getElementById('gemini-key-status-' + keyIndex);
+                    if (statusEl) statusEl.innerHTML = this.getGeminiStatusBadge(this.geminiKeysData[keyIndex].status);
+                }
                 this.showToast(res.message || 'فشل اختبار المفاتيح', true);
             }
         })
         .catch(e => {
-            this.showLoading(false);
+            if (isSingleKey) {
+                setKeyCardLoading(keyIndex, false);
+                if (this.geminiKeysData && this.geminiKeysData[keyIndex]) {
+                    const statusEl = document.getElementById('gemini-key-status-' + keyIndex);
+                    if (statusEl) statusEl.innerHTML = this.getGeminiStatusBadge(this.geminiKeysData[keyIndex].status);
+                }
+            } else {
+                if (topTestBtn) {
+                    topTestBtn.disabled = false;
+                    topTestBtn.innerHTML = topTestBtn.dataset.originalText || 'اختبار';
+                }
+                if (this.geminiKeysData && this.geminiKeysData.length > 0) {
+                    this.geminiKeysData.forEach(k => {
+                        setKeyCardLoading(k.index, false);
+                        const statusEl = document.getElementById('gemini-key-status-' + k.index);
+                        if (statusEl) statusEl.innerHTML = this.getGeminiStatusBadge(k.status);
+                    });
+                }
+            }
             console.error('Error testing Gemini keys:', e);
             this.showToast('خطأ بالاتصال أثناء اختبار المفاتيح (' + (e.message || '') + ')', true);
         });
