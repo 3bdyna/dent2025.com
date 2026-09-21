@@ -632,7 +632,7 @@
         // If no cached subjects, attempt fetch from API
         if (dentGpaSelection) {
             if (apiSubjects.length === 0) {
-                const apiBase = (window.location.pathname === '/dev' || window.location.pathname.startsWith('/dev/')) ? '/dev' : '';
+                const apiBase = '';
                 fetch(`${apiBase}/dent2025_api.php?action=data&specialty=${dentGpaSelection.specialty}&year=${dentGpaSelection.year}&semester=${dentGpaSelection.semester}`)
                     .then(res => res.json())
                     .then(resData => {

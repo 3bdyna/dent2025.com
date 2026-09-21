@@ -1,8 +1,8 @@
-const API_BASE = (window.location.pathname === '/dev' || window.location.pathname.startsWith('/dev/')) ? '/dev' : '';
+const API_BASE = '';
 // dashboard.js
 // This script fetches data from the PHP API and dynamically builds the chapters and materials blocks.
 
-const API_BASE_URL = API_BASE + '/dent2025_api.php';
+const API_BASE_URL = '/dent2025_api.php';
 
 // Safe HTML entity escaping helper
 function dentEscapeHtml(str) {
@@ -213,7 +213,7 @@ function dentInitDashboard() {
 
     if (isWelcomePage) return; // Nothing to do on the welcome page
 
-    const isMainPage = window.location.pathname === API_BASE + '/' || window.location.pathname === '/dev';
+    const isMainPage = window.location.pathname === '/';
     
     // On the main page, only swap logo and load announcements (no chapters/materials)
     if (isMainPage) {

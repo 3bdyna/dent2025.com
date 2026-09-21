@@ -949,7 +949,7 @@ document.addEventListener('click', function(e) {
   if (window.dentTimerScriptLoaded) return;
   window.dentTimerScriptLoaded = true;
   
-  var API_URL = (window.location.origin || '') + (window.location.pathname.startsWith('/dev') ? '/dev' : '') + '/dent2025_api.php';
+  var API_URL = (window.location.origin || '') + '/dent2025_api.php';
   var KEY_PIN = 'dent2025_timer_pin';
   var KEY_LOGS = 'dent2025_timer_logs';
   var KEY_POS = 'dent2025_timer_badge_pos';
@@ -1068,7 +1068,7 @@ document.addEventListener('click', function(e) {
 
   function cleanupDuplicates() {
     try {
-      var isHome = window.location.pathname === '/' || window.location.pathname === '/dev' || window.location.pathname === '/dev/' || document.body.classList.contains('home') || document.body.classList.contains('front-page');
+      var isHome = window.location.pathname === '/' || document.body.classList.contains('home') || document.body.classList.contains('front-page');
       var banners = document.querySelectorAll('.dent-timer-banner-override');
       if (!isHome) {
         // Hide large banner on inner subpages since only floating draggable badge is meant for subpages

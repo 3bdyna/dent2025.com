@@ -67,7 +67,7 @@
         const pass = prompt("أدخل رمز PIN للمشرف:");
         if (!pass) return;
 
-        const apiBase = window.location.pathname.startsWith('/dev') ? '/dev' : '';
+        const apiBase = '';
         fetch(apiBase + '/dent2025_api.php?action=check_auth', {
             method: 'POST',
             body: JSON.stringify({ password: pass, specialty: sel.specialty, year: sel.year, semester: sel.semester })

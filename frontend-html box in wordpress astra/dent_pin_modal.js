@@ -8,7 +8,7 @@
     if (window.DentPinModal) return;
 
     const PIN_LENGTH = 4;
-    const API_BASE = (window.location.pathname === '/dev' || window.location.pathname.startsWith('/dev/')) ? '/dev' : '';
+    const API_BASE = '';
 
     const STYLES = `
         .dent-pin-overlay {

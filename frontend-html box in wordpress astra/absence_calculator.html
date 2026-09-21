@@ -1284,7 +1284,7 @@
     }
 
     function loadAbsenceData() {
-        const apiBase = (window.location.pathname === '/dev' || window.location.pathname.startsWith('/dev/')) ? '/dev' : '';
+        const apiBase = '';
         
         let classPromise = Promise.resolve([]);
         if (window.currentClassesData && Array.isArray(window.currentClassesData) && window.currentClassesData.length > 0) {

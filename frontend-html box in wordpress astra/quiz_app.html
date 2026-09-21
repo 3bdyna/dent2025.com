@@ -555,8 +555,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
 <script>
 (() => {
-    const APP_DEV_PREFIX = window.location.pathname.startsWith('/dev') ? '/dev' : '';
-    let QUIZ_API_BASE = APP_DEV_PREFIX + '/backend';
+    const QUIZ_API_BASE = '/backend';
     
     function escapeHtml(str) {
         if (str == null) return '';
@@ -1288,7 +1287,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
             if (subjects.length === 0) {
                 try {
-                    const fallbackUrl = `${APP_DEV_PREFIX}/dent2025_api.php?action=data` + String.fromCharCode(38) + `specialty=${sel.specialty}` + String.fromCharCode(38) + `year=${sel.year}` + String.fromCharCode(38) + `semester=${sel.semester}`;
+                    const fallbackUrl = `/dent2025_api.php?action=data` + String.fromCharCode(38) + `specialty=${sel.specialty}` + String.fromCharCode(38) + `year=${sel.year}` + String.fromCharCode(38) + `semester=${sel.semester}`;
                     const fbRes = await fetch(fallbackUrl);
                     const fbJson = await fbRes.json();
                     if (fbJson.success && fbJson.data && fbJson.data.subjects) {

@@ -1,8 +1,5 @@
 const API_BASE = (function() {
     let p = window.location.pathname;
-    if (p.includes('/dev')) {
-        return '/dev';
-    }
     if (p.endsWith('.html') || p.endsWith('.php')) {
         p = p.substring(0, p.lastIndexOf('/'));
     }
