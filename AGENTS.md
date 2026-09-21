@@ -52,6 +52,7 @@ my website dent2025/
 │   ├── deploy_health.py                        # Post-deploy API health probe
 │   ├── deploy_safe.py                          # Full Git-integrated SafeDeploy pipeline CLI
 │   ├── sync_cloud_events.py                    # Cloud-first dynamic data sync & smart-merge engine
+│   ├── sync_server_backups.py                  # Local sync engine for VPS database & file backups (14d rolling)
 │   └── test_system_logic.php                   # Comprehensive offline test suite (42/42 tests)
 ├── backend/                                    # Standalone PDO Backend Module (RBAC-auth via dent2025_rbac.php)
 │   ├── db_connect.php                          # PDO Database Connection, CORS headers, sendResponse()
@@ -88,7 +89,8 @@ my website dent2025/
 ├── dent2025_study_data/                        # AUTO-CREATED at runtime by dent2025_api.php (gitignored)
 ├── dent2025_analytics_data/                    # AUTO-CREATED at runtime for visitor & event metrics (gitignored)
 ├── quizzes_data/                               # AUTO-CREATED at runtime by api_ai_exam.php (gitignored)
-└── history_data/                               # Runtime audit/deployment history (local + server, gitignored)
+├── history_data/                               # Runtime audit/deployment history (local + server, gitignored)
+└── server_backups_dent2025_daily/              # ⭐ Local mirror of VPS nightly database & dynamic file backups (14d rolling, gitignored)
 ```
 
 > **NOTE**: The old `dev/` directory was **removed** (snapshot `snap_20260805_210759_remove_legacy_dev_path_delete_`). All backend files now live at the **project root**, and `dev/backend/*` → `backend/*`. Deploy routing in `tools/deploy.py` reflects this (root-relative → same dir on server).
@@ -186,9 +188,27 @@ python tools/deploy_safe.py --note "Enhance dashboard navigation" "frontend-html
   - Deployments must strictly use `python tools/deploy_safe.py` or `python tools/sync_cloud_events.py` rather than manual ad-hoc SSH overwriting.
 
 #### 2. Server-Side Infrastructure Protections in Place
-- **`safe-rm` Active on VPS**: `/usr/local/bin/rm` is symlinked to `safe-rm` with `/etc/safe-rm.conf` actively protecting `/`, `/var/www`, `/var/www/dent2025`, `/etc`, and `/home`. Any attempted recursive wipe is rejected automatically.
-- **Automated Nightly Backups**: `/usr/local/bin/dent2025_backup.sh` runs every night at 03:30 UTC via root crontab, backing up the MySQL `wordpress` database and dynamic JSON files into `/var/backups/dent2025_daily/` with a rolling 14-day retention.
-- **Azure Hypervisor Disk Snapshots**: VM OS disk snapshots in Azure Resource Group `BB-BOT-PL-RG` provide 1-click total disaster recovery without relying on server OS integrity.
+- **`safe-rm` Active on VPS**: `/usr/local/bin/rm` is symlinked to `safe-rm` with `/etc/safe-rm.conf` actively protecting `/`, `/var/www`, `/var/www/dent2025`, `/etc`, and `/home`. Any attempted recursive wipe is rejected automatically (`safe-rm: Skipping /var/www/dent2025.`).
+- **Automated Nightly Server Backups**: `/usr/local/bin/dent2025_backup.sh` runs every night at 03:30 UTC via root crontab, backing up the MySQL `wordpress` database (`db_wordpress_*.sql.gz`) and dynamic JSON files (`data_*.tar.gz`) into `/var/backups/dent2025_daily/` with a rolling 14-day retention.
+- **Azure Hypervisor Disk Snapshots**: VM OS disk snapshots in Azure Resource Group `BB-BOT-PL-RG` (baseline: `snapshot-baseline-safe-rm-20260921`) provide 1-click total disaster recovery without relying on server OS integrity.
+
+#### 3. Local Machine Backup Mirror (`server_backups_dent2025_daily/`)
+- **Local Mirror Folder**: `server_backups_dent2025_daily/` at the repository root stores an off-server copy of every database dump and dynamic file archive on your local Windows PC.
+- **14-Day Rolling Retention**: Matches the server policy—archives older than 14 days are automatically pruned locally during sync.
+- **Git Protection**: Fully excluded via `.gitignore` and `deploy_guard.py` to prevent sensitive database dumps from ever being committed or redeployed to the web root.
+- **How to Sync Local Backups**:
+  ```bash
+  # Standalone backup sync:
+  python tools/sync_server_backups.py
+
+  # Or via SafeDeploy flag:
+  python tools/deploy_safe.py --sync-backups
+  ```
+- **Disaster Recovery from Local Backup**:
+  If the live database or JSON data is ever accidentally corrupted or deleted:
+  1. Pick the desired timestamp from `server_backups_dent2025_daily/`.
+  2. Extract dynamic data: `tar -xzf data_<TIMESTAMP>.tar.gz`
+  3. Restore database on server: `zcat db_wordpress_<TIMESTAMP>.sql.gz | ssh azureuser@ssh.dent2025.com "sudo mysql wordpress"`
 
 ---
 

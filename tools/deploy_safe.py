@@ -21,6 +21,7 @@ import deploy_guard
 import deploy_order
 import deploy_health
 import deploy
+import sync_server_backups
 
 PROJECT_ROOT = _toolkit.PROJECT_ROOT
 
@@ -287,6 +288,11 @@ if __name__ == '__main__':
         print("  python tools/deploy_safe.py --rollback [commit_hash]")
         print("  python tools/deploy_safe.py --status")
         print("  python tools/deploy_safe.py --health-check")
+        print("  python tools/deploy_safe.py --sync-backups")
+        sys.exit(0)
+
+    if '--sync-backups' in args:
+        sync_server_backups.sync_backups()
         sys.exit(0)
 
     if '--status' in args or '--log' in args:

@@ -55,7 +55,7 @@ def is_forbidden_path(path):
         return True
     if norm.startswith('.git/') or '/.git/' in norm:
         return True
-    if 'gemini_keys_data' in norm or '.deploy_backups' in norm:
+    if 'gemini_keys_data' in norm or '.deploy_backups' in norm or 'server_backups_dent2025_daily' in norm:
         return True
     return False
 
