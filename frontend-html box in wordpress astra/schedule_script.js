@@ -1735,7 +1735,7 @@ const ScheduleApp = {
             }
             groupedWeeks[weekKey].events.push(ev);
 
-            if (ev.hijri && !groupedWeeks[weekKey].hijriLabel) {
+            if (ev.hijri) {
                 const rawParts = ev.hijri.split(/[\/\-]/);
                 if (rawParts.length >= 2) {
                     let hYear = rawParts[0];
@@ -1872,7 +1872,12 @@ const ScheduleApp = {
                             <tr>
                                 <th class="m1-th-day">اليوم</th>
                                 <th class="m1-th-date">التاريخ</th>
-                                <th class="m1-th-events">الأحداث والمقررات المجدولة</th>
+                                <th class="m1-th-events">
+                                    <div class="m1-th-events-inner">
+                                        <span class="m1-th-events-label">الأحداث والمقررات المجدولة</span>
+                                        <span class="m1-th-status-label">النوع والمتبقي</span>
+                                    </div>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1999,20 +2004,37 @@ const ScheduleApp = {
             border-bottom: 2px solid #0f172a;
             margin-bottom: 16px;
         }
-        .doc-titles h1 {
-            font-size: 1.25rem;
+        .doc-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .doc-portal-pill {
+            background: #0f172a;
+            color: #ffffff;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.70rem;
             font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+            display: inline-block;
+        }
+        .doc-main-heading {
+            font-size: 1.25rem;
+            font-weight: 900;
             color: #0f172a;
-            line-height: 1.25;
-            text-align: right;
+            line-height: 1.2;
+            margin: 0;
             letter-spacing: normal !important;
             word-spacing: normal !important;
         }
-        .doc-titles p {
+        .doc-sub-heading {
             font-size: 0.78rem;
             color: #64748b;
             font-weight: 600;
-            margin-top: 3px;
+            margin-top: 4px;
             text-align: right;
             letter-spacing: normal !important;
             word-spacing: normal !important;
@@ -2020,6 +2042,10 @@ const ScheduleApp = {
         .doc-meta-badge {
             text-align: left;
             direction: ltr;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
         }
         .doc-meta-badge .period {
             display: inline-block;
@@ -2036,8 +2062,7 @@ const ScheduleApp = {
             display: block;
             font-size: 0.70rem;
             color: #64748b;
-            margin-top: 3px;
-            text-align: right;
+            text-align: left;
             direction: rtl;
         }
         .m1-week-block {
@@ -2078,46 +2103,80 @@ const ScheduleApp = {
             page-break-inside: avoid;
             break-inside: avoid;
         }
+        .m1-table th, .m1-table td {
+            border-top: none !important;
+            border-right: none !important;
+            border-left: 1px solid #f1f5f9 !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+        .m1-table th:first-child, .m1-table td:first-child {
+            border-right: none !important;
+        }
+        .m1-table th:last-child, .m1-table td:last-child {
+            border-left: none !important;
+        }
+        .m1-table tr:last-child td {
+            border-bottom: none !important;
+        }
         .m1-table th {
             background: #f8fafc;
             color: #475569;
             font-weight: 700;
-            text-align: right;
             padding: 8px 12px;
-            border-bottom: 1px solid #cbd5e1;
             font-size: 0.70rem;
             white-space: nowrap;
             letter-spacing: normal !important;
             word-spacing: normal !important;
         }
-        .m1-th-day { width: 65px; }
-        .m1-th-date { width: 110px; }
-        .m1-th-events { text-align: right; }
+        .m1-th-day {
+            width: 75px;
+            text-align: center;
+        }
+        .m1-th-date {
+            width: 115px;
+            text-align: center;
+        }
+        .m1-th-events {
+            text-align: right;
+            padding-left: 12px;
+        }
+        .m1-th-events-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .m1-th-events-label {
+            font-weight: 700;
+        }
+        .m1-th-status-label {
+            font-size: 0.64rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
         .m1-table td {
             padding: 8px 12px;
-            border-bottom: 1px solid #e2e8f0;
             vertical-align: middle;
             color: #1e293b;
             letter-spacing: normal !important;
             word-spacing: normal !important;
         }
-        .m1-table tr:last-child td { border-bottom: none; }
         .m1-table tr:nth-child(even) { background-color: #fafafa; }
         .m1-day-col {
             font-weight: 700;
             color: #0f172a;
-            width: 65px;
+            width: 75px;
             font-size: 0.72rem;
             vertical-align: middle;
-            text-align: right;
+            text-align: center;
             letter-spacing: normal !important;
             word-spacing: normal !important;
         }
         .m1-date-col {
-            width: 110px;
+            width: 115px;
             vertical-align: middle;
             line-height: 1.4;
-            text-align: right;
+            text-align: center;
         }
         .m1-date-greg {
             display: block;
@@ -2126,7 +2185,7 @@ const ScheduleApp = {
             font-weight: 700;
             color: #1e293b;
             direction: ltr;
-            text-align: right;
+            text-align: center;
             unicode-bidi: isolate;
             white-space: nowrap;
         }
@@ -2135,7 +2194,7 @@ const ScheduleApp = {
             font-size: 0.64rem;
             color: #64748b;
             direction: rtl;
-            text-align: right;
+            text-align: center;
             margin-top: 2px;
             unicode-bidi: isolate;
             white-space: nowrap;
@@ -2159,12 +2218,12 @@ const ScheduleApp = {
             box-sizing: border-box;
         }
         .m1-event-row-subsequent {
-            border-top: 1px dashed #e2e8f0;
+            border-top: 1px dashed #cbd5e1;
             padding-top: 6px;
             margin-top: 2px;
         }
         .m1-event-title {
-            font-size: 0.73rem;
+            font-size: 0.69rem;
             font-weight: 700;
             color: #0f172a;
             line-height: 1.35;
@@ -2239,8 +2298,11 @@ const ScheduleApp = {
     <div class="a4-print-sheet">
         <div class="doc-header">
             <div class="doc-titles">
-                <h1>Dent2025 • جدول الأسابيع الثلاثة القادمة</h1>
-                <p>${dentEscapeHtml(subTitle)}</p>
+                <div class="doc-title-row">
+                    <span class="doc-portal-pill">Dent2025</span>
+                    <h1 class="doc-main-heading">التقويم الأكاديمي</h1>
+                </div>
+                <div class="doc-sub-heading">${dentEscapeHtml(subTitle)}</div>
             </div>
             <div class="doc-meta-badge">
                 <span class="period" dir="ltr">${dentEscapeHtml(rangeStr)}</span>
