@@ -1605,11 +1605,10 @@ const ScheduleApp = {
         if (!rawTitle) return '';
         const escaped = dentEscapeHtml(rawTitle);
 
-        // Wrap English phrase runs in clean dir="ltr" spans so mixed BiDi Arabic-English
-        // never scrambles punctuation or flips parentheses when wrapping
-        let formatted = escaped.replace(/(&[a-zA-Z0-9#]+;)|([A-Za-z][A-Za-z0-9\s\-_:\/,\.]{2,}[A-Za-z0-9]\)?)/g, function(match, entity, english) {
+        // Wrap English phrase runs in clean dir="ltr" spans without capturing punctuation or closing parentheses
+        let formatted = escaped.replace(/(&[a-zA-Z0-9#]+;)|([A-Za-z][A-Za-z0-9\s\-_:\/,\.]*[A-Za-z0-9])/g, function(match, entity, english) {
             if (entity) return entity;
-            return '<span dir="ltr">' + english + '</span>';
+            return '<span dir="ltr">' + english.trim() + '</span>';
         });
         return formatted;
     },
@@ -1969,7 +1968,8 @@ const ScheduleApp = {
             `;
         }
 
-        const todayFormatted = today.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { year: 'numeric', month: 'long', day: 'numeric' });
+        const todayMonth = today.toLocaleDateString('en-US', { month: 'short' });
+        const todayFormatted = `${today.getDate()} ${todayMonth} ${today.getFullYear()}`;
         const dynamicFileBase = this.getDynamicScheduleFileName('');
 
         return `<!DOCTYPE html>
@@ -2144,6 +2144,7 @@ const ScheduleApp = {
         }
         .m1-table tr:last-child td {
             border-bottom: none !important;
+            padding-bottom: 3px !important;
         }
         .m1-table th {
             background: #f8fafc;
@@ -2168,7 +2169,7 @@ const ScheduleApp = {
             padding-right: 14px;
         }
         .m1-table td {
-            padding: 7px 12px;
+            padding: 5px 10px;
             vertical-align: middle;
             color: #1e293b;
             letter-spacing: normal !important;
@@ -2188,7 +2189,7 @@ const ScheduleApp = {
         .m1-date-col {
             width: 115px;
             vertical-align: middle;
-            line-height: 1.4;
+            line-height: 1.2;
             text-align: center;
         }
         .m1-date-greg {
@@ -2208,13 +2209,14 @@ const ScheduleApp = {
             color: #64748b;
             direction: rtl;
             text-align: center;
-            margin-top: 2px;
+            margin-top: 1px;
+            line-height: 1.2;
             unicode-bidi: isolate;
             white-space: nowrap;
         }
         .m1-events-cell {
             vertical-align: middle;
-            padding: 6px 12px;
+            padding: 4px 10px;
         }
         .m1-single-event {
             display: flex;
@@ -2325,9 +2327,9 @@ const ScheduleApp = {
             direction: ltr;
         }
         .doc-footer-left {
-            font-family: 'Outfit', 'Cairo', sans-serif;
+            font-family: 'Outfit', sans-serif;
             color: #64748b;
-            direction: rtl;
+            direction: ltr;
         }
         .a4-print-sheet, .a4-print-sheet * {
             -webkit-print-color-adjust: exact !important;
@@ -2356,7 +2358,7 @@ const ScheduleApp = {
 
         <div class="doc-footer">
             <span class="doc-footer-right">dent2025.com</span>
-            <span class="doc-footer-left">${dentEscapeHtml(todayFormatted)}</span>
+            <span class="doc-footer-left" dir="ltr">${dentEscapeHtml(todayFormatted)}</span>
         </div>
     </div>
 </body>
