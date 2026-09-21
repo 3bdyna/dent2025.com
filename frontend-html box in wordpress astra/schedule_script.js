@@ -1115,13 +1115,13 @@ const ScheduleApp = {
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px;">
-                    <button type="button" id="dent-exec-print-btn" onclick="ScheduleApp.executeSaveAsPdf()" style="width: 100%; height: 48px; background: #27272a; color: #ffffff; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.90rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);" onmouseover="this.style.background='#ef4444'; this.style.borderColor='#ef4444';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(239, 68, 68, 0.4)';">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                    <button type="button" id="dent-exec-print-btn" onclick="ScheduleApp.executeSaveAsPdf()" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.25)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.12)';">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                         <span>ملف PDF</span>
                     </button>
 
-                    <button type="button" id="dent-exec-image-btn" onclick="ScheduleApp.executeSaveAsImage()" style="width: 100%; height: 48px; background: #27272a; color: #ffffff; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.90rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);" onmouseover="this.style.background='#2563eb'; this.style.borderColor='#2563eb';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(59, 130, 246, 0.4)';">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <button type="button" id="dent-exec-image-btn" onclick="ScheduleApp.executeSaveAsImage()" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.25)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.12)';">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         <span>نسخ كصورة (للحافظة)</span>
                     </button>
                 </div>
@@ -1477,10 +1477,6 @@ const ScheduleApp = {
         let old = document.getElementById('dent-export-toast');
         if (old) old.remove();
 
-        const toast = document.createElement('div');
-        toast.id = 'dent-export-toast';
-        toast.style.cssText = 'position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 9999999; background: #18181b; border: 1px solid rgba(255,255,255,0.18); border-radius: 16px; padding: 14px 18px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); color: #fff; font-family: "Outfit", "Noto Kufi Arabic", sans-serif; direction: rtl; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; max-width: 94vw; width: 560px; box-sizing: border-box;';
-
         const canShareNative = !!(navigator.canShare && navigator.canShare({ files: [file] }));
         const canCopyImage = (fileType === 'png' && navigator.clipboard && window.ClipboardItem);
 
@@ -1489,51 +1485,53 @@ const ScheduleApp = {
 
         if (fileType === 'png') {
             if (copiedToClipboard) {
-                mainTitle = '✓ تم نسخ صورة الجدول إلى الحافظة بنجاح!';
-                subText = 'يمكنك الآن لصق الصورة مباشرة (Ctrl+V أو Paste) في واتساب أو أي تطبيق.';
+                mainTitle = 'تم نسخ صورة الجدول';
+                subText = '(جاهزة للصق)';
             } else {
-                mainTitle = 'تم حفظ صورة الجدول بنجاح!';
-                subText = 'تم تنزيل الصورة وهي جاهزة للإرسال والمشاركة الآن.';
+                mainTitle = 'تم تنزيل صورة الجدول';
+                subText = '';
             }
         } else {
-            mainTitle = 'تم تجهيز ملف الـ PDF بنجاح!';
-            subText = 'تم تنزيل الملف وهو جاهز للإرسال الآن (' + dentEscapeHtml(fileName) + ')';
+            mainTitle = 'تم تجهيز ملف PDF';
+            subText = '';
         }
 
+        const toast = document.createElement('div');
+        toast.id = 'dent-export-toast';
+        toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999999; background: rgba(24, 24, 27, 0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 7px 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55); color: #f8fafc; font-family: "Outfit", "Noto Kufi Arabic", sans-serif; direction: rtl; display: flex; align-items: center; justify-content: space-between; gap: 8px; max-width: min(520px, calc(100vw - 20px)); width: max-content; box-sizing: border-box; opacity: 1; transition: opacity 0.25s ease, transform 0.25s ease;';
+
+        const btnStyle = 'padding: 4px 8px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; text-decoration: none; border-radius: 6px; font-family: inherit; font-size: 0.74rem; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.15s; white-space: nowrap; line-height: 1.3;';
+
         toast.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 12px; min-width: 220px; flex: 1;">
-                <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); display: flex; align-items: center; justify-content: center; color: #4ade80; flex-shrink: 0;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-                <div style="min-width: 0;">
-                    <div style="font-weight: 700; font-size: 0.90rem; color: ${copiedToClipboard ? '#4ade80' : '#f8fafc'};">${mainTitle}</div>
-                    <div style="font-size: 0.72rem; color: #cbd5e1; margin-top: 2px;">${subText}</div>
-                </div>
+            <div style="display: flex; align-items: center; gap: 7px; min-width: 0; flex-shrink: 0;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span style="font-weight: 600; font-size: 0.82rem; color: #f8fafc; white-space: nowrap;">${mainTitle}</span>
+                ${subText ? `<span style="font-size: 0.72rem; color: #94a3b8; white-space: nowrap;">${subText}</span>` : ''}
             </div>
-            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
                 ${canShareNative ? `
-                    <button id="dent-toast-share-btn" type="button" style="padding: 7px 13px; background: #059669; color: #fff; border: none; border-radius: 8px; font-family: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='#047857';" onmouseout="this.style.background='#059669';">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-                        <span>مشاركة / إرسال</span>
+                    <button id="dent-toast-share-btn" type="button" style="${btnStyle}" onmouseover="this.style.background='rgba(255,255,255,0.14)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.07)'; this.style.color='#cbd5e1';" title="مشاركة">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                        <span>مشاركة</span>
                     </button>
                 ` : ''}
                 ${(fileType === 'png' && canCopyImage && !copiedToClipboard) ? `
-                    <button id="dent-toast-copy-btn" type="button" style="padding: 7px 13px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-family: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='#1d4ed8';" onmouseout="this.style.background='#2563eb';">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        <span>نسخ للصق في واتساب</span>
+                    <button id="dent-toast-copy-btn" type="button" style="${btnStyle}" onmouseover="this.style.background='rgba(255,255,255,0.14)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.07)'; this.style.color='#cbd5e1';" title="نسخ للحافظة">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>نسخ</span>
                     </button>
                 ` : ''}
                 ${(fileType === 'png' && copiedToClipboard) ? `
-                    <a href="${blobUrl}" download="${dentEscapeHtml(fileName)}" style="padding: 7px 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; text-decoration: none; border-radius: 8px; font-family: inherit; font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 5px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#cbd5e1';">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        <span>حفظ كملف</span>
+                    <a href="${blobUrl}" download="${dentEscapeHtml(fileName)}" style="${btnStyle}" onmouseover="this.style.background='rgba(255,255,255,0.14)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.07)'; this.style.color='#cbd5e1';" title="تنزيل كملف">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>حفظ</span>
                     </a>
                 ` : ''}
-                <a href="${blobUrl}" target="_blank" rel="noopener noreferrer" style="padding: 7px 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #e2e8f0; text-decoration: none; border-radius: 8px; font-family: inherit; font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 5px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)';" onmouseout="this.style.background='rgba(255,255,255,0.08)';">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                    <span>عرض الملف</span>
+                <a href="${blobUrl}" target="_blank" rel="noopener noreferrer" style="${btnStyle}" onmouseover="this.style.background='rgba(255,255,255,0.14)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.07)'; this.style.color='#cbd5e1';" title="عرض الملف">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    <span>عرض</span>
                 </a>
-                <button type="button" onclick="document.getElementById('dent-export-toast')?.remove()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer; padding: 4px 6px; line-height: 1;">✕</button>
+                <button type="button" onclick="document.getElementById('dent-export-toast')?.remove()" style="background: transparent; border: none; color: #71717a; font-size: 1rem; cursor: pointer; padding: 2px 4px; line-height: 1; transition: color 0.15s;" onmouseover="this.style.color='#e2e8f0';" onmouseout="this.style.color='#71717a';" title="إغلاق">✕</button>
             </div>
         `;
 
@@ -1565,28 +1563,37 @@ const ScheduleApp = {
                             new ClipboardItem({ 'image/png': blob })
                         ]);
                         copyBtn.innerHTML = '✓ تم النسخ!';
-                        copyBtn.style.background = '#16a34a';
+                        copyBtn.style.background = 'rgba(34, 197, 94, 0.15)';
+                        copyBtn.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+                        copyBtn.style.color = '#4ade80';
                         setTimeout(() => {
                             if (toast.parentElement) toast.remove();
-                        }, 2500);
+                        }, 2000);
                     } catch(err) {
                         console.warn('Clipboard write failed:', err);
-                        copyBtn.innerHTML = 'تعذر النسخ التلقائي';
+                        copyBtn.innerHTML = 'تعذر النسخ';
                     }
                 };
             }
         }
 
-        setTimeout(() => {
+        const dismissToast = () => {
             if (toast && toast.parentElement) {
                 toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.4s';
+                toast.style.transform = 'translate(-50%, 6px)';
                 setTimeout(() => {
                     if (toast.parentElement) toast.remove();
                     URL.revokeObjectURL(blobUrl);
-                }, 400);
+                }, 250);
             }
-        }, 12000);
+        };
+
+        let autoTimer = setTimeout(dismissToast, 4500);
+        toast.addEventListener('mouseenter', () => clearTimeout(autoTimer));
+        toast.addEventListener('mouseleave', () => {
+            clearTimeout(autoTimer);
+            autoTimer = setTimeout(dismissToast, 2500);
+        });
     },
 
     formatEventTitleHtml: function(rawTitle) {
