@@ -8,7 +8,9 @@ header('Cache-Control: no-cache, must-revalidate, max-age=0');
 require_once __DIR__ . '/dent2025_rbac.php';
 $token = isset($_GET['token']) ? $_GET['token'] : (isset($_POST['token']) ? $_POST['token'] : '');
 $auth_ok = false;
-if ($token !== '') {
+if (php_sapi_name() === 'cli') {
+    $auth_ok = true;
+} elseif ($token !== '') {
     $info = dent2025_get_passkey_info($token);
     $auth_ok = ($info !== null);
 }
