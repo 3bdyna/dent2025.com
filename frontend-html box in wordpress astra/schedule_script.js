@@ -1454,15 +1454,19 @@ const ScheduleApp = {
         }
 
         // 2. Direct automatic browser download
-        try {
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => document.body.removeChild(a), 500);
-        } catch(dlErr) {
-            console.warn('Download failed:', dlErr);
+        // Download automatically ONLY if it's a PDF, or if it's an image that failed clipboard copy.
+        // If image was successfully copied to clipboard, DO NOT trigger automatic download so user is not prompted/annoyed.
+        if (fileType === 'pdf' || !copiedToClipboard) {
+            try {
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => document.body.removeChild(a), 500);
+            } catch(dlErr) {
+                console.warn('Download failed:', dlErr);
+            }
         }
 
         // 3. Show sleek toast prompting to send, copy, or view
@@ -1486,7 +1490,7 @@ const ScheduleApp = {
         if (fileType === 'png') {
             if (copiedToClipboard) {
                 mainTitle = '✓ تم نسخ صورة الجدول إلى الحافظة بنجاح!';
-                subText = 'يمكنك الآن لصق الصورة مباشرة (Ctrl+V أو Paste) في واتساب أو أي تطبيق. تم حفظ نسخة بجهازك أيضاً.';
+                subText = 'يمكنك الآن لصق الصورة مباشرة (Ctrl+V أو Paste) في واتساب أو أي تطبيق.';
             } else {
                 mainTitle = 'تم حفظ صورة الجدول بنجاح!';
                 subText = 'تم تنزيل الصورة وهي جاهزة للإرسال والمشاركة الآن.';
@@ -1518,6 +1522,12 @@ const ScheduleApp = {
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         <span>نسخ للصق في واتساب</span>
                     </button>
+                ` : ''}
+                ${(fileType === 'png' && copiedToClipboard) ? `
+                    <a href="${blobUrl}" download="${dentEscapeHtml(fileName)}" style="padding: 7px 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; text-decoration: none; border-radius: 8px; font-family: inherit; font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 5px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#cbd5e1';">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>حفظ كملف</span>
+                    </a>
                 ` : ''}
                 <a href="${blobUrl}" target="_blank" rel="noopener noreferrer" style="padding: 7px 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #e2e8f0; text-decoration: none; border-radius: 8px; font-family: inherit; font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 5px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)';" onmouseout="this.style.background='rgba(255,255,255,0.08)';">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
@@ -1586,10 +1596,13 @@ const ScheduleApp = {
         // while preserving HTML entities (&amp;, &quot;, &#39;, &hellip;, etc.) intact
         // so mixed BiDi Arabic-English titles never scramble parentheses or hyphens,
         // while avoiding display:inline-block which causes wide empty gaps before closing parentheses on WebKit/iOS.
-        return escaped.replace(/(&[a-zA-Z0-9#]+;)|([A-Za-z][A-Za-z0-9\s\-_:\/,\.]{3,}[A-Za-z0-9])/g, function(match, entity, english) {
+        let formatted = escaped.replace(/(&[a-zA-Z0-9#]+;)|([A-Za-z][A-Za-z0-9\s\-_:\/,\.]{3,}[A-Za-z0-9])/g, function(match, entity, english) {
             if (entity) return entity;
             return '<bdi dir="ltr" style="display:inline; unicode-bidi:isolate;">' + english + '</bdi>';
         });
+        // Anchor closing parenthesis after an LTR run to RTL context so it never flips or detaches
+        formatted = formatted.replace(/(<\/bdi>\s*\))/g, '$1&rlm;');
+        return formatted;
     },
 
     generateTwoWeeksPrintHtml: function(customNotes, announcementText, isMobile = false) {
@@ -1789,7 +1802,7 @@ const ScheduleApp = {
                     const hijriStr = rawHijri || '—';
 
                     let cardsHtml = '';
-                    dayData.events.forEach(ev => {
+                    dayData.events.forEach((ev, evIdx) => {
                         const targetDate = this.parseLocalDate(ev.date) || new Date();
                         targetDate.setHours(0,0,0,0);
                         const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
@@ -1818,35 +1831,20 @@ const ScheduleApp = {
                         const typeMeta = this.getEventTypeMeta(ev);
                         const typeLabel = typeMeta.label;
                         const badgeClass = typeMeta.printClass;
+                        const isSubsequent = (evIdx > 0);
 
-                        if (dayData.events.length === 1) {
-                            // Single event on this day: clean row without redundant boxed card border
-                            cardsHtml += `
-                                <div class="m1-single-event">
-                                    <div class="m1-single-title"><bdi dir="auto">${this.formatEventTitleHtml(ev.title)}</bdi></div>
-                                    <div class="m1-single-badges">
-                                        <span class="m1-type-badge ${badgeClass}">${dentEscapeHtml(typeLabel)}</span>
-                                        <span class="m1-countdown-badge ${countdownClass}">${dentEscapeHtml(countdownText)}</span>
-                                    </div>
+                        cardsHtml += `
+                            <div class="m1-event-row${isSubsequent ? ' m1-event-row-subsequent' : ''}">
+                                <div class="m1-event-title"><bdi dir="auto">${this.formatEventTitleHtml(ev.title)}</bdi></div>
+                                <div class="m1-event-badges">
+                                    <span class="m1-type-badge ${badgeClass}">${dentEscapeHtml(typeLabel)}</span>
+                                    <span class="m1-countdown-badge ${countdownClass}">${dentEscapeHtml(countdownText)}</span>
                                 </div>
-                            `;
-                        } else {
-                            // Multi-event day (2+): compact single-row card with title and badges side-by-side
-                            cardsHtml += `
-                                <div class="m1-multi-card">
-                                    <div class="m1-card-title"><bdi dir="auto">${this.formatEventTitleHtml(ev.title)}</bdi></div>
-                                    <div class="m1-card-badges">
-                                        <span class="m1-type-badge ${badgeClass}">${dentEscapeHtml(typeLabel)}</span>
-                                        <span class="m1-countdown-badge ${countdownClass}">${dentEscapeHtml(countdownText)}</span>
-                                    </div>
-                                </div>
-                            `;
-                        }
+                            </div>
+                        `;
                     });
 
-                    const cellContentHtml = dayData.events.length >= 2
-                        ? `<div class="m1-events-grid">${cardsHtml}</div>`
-                        : cardsHtml;
+                    const cellContentHtml = `<div class="m1-events-list">${cardsHtml}</div>`;
 
                     rowsHtml += `
                         <tr>
@@ -1866,8 +1864,8 @@ const ScheduleApp = {
             weeksHtml += `
                 <div class="m1-week-block">
                     <div class="m1-week-header">
-                        <span>${dentEscapeHtml(groupData.weekName)}</span>
-                        <span>${dentEscapeHtml(groupData.hijriLabel || '')}</span>
+                        <span style="white-space: nowrap !important;"><bdi dir="rtl" style="display:inline; unicode-bidi:isolate; white-space: nowrap !important;">${dentEscapeHtml(groupData.weekName)}</bdi></span>
+                        <span style="white-space: nowrap !important;"><bdi dir="rtl" style="display:inline; unicode-bidi:isolate; white-space: nowrap !important;">${dentEscapeHtml(groupData.hijriLabel || '')}</bdi></span>
                     </div>
                     <table class="m1-table">
                         <thead>
@@ -2053,14 +2051,23 @@ const ScheduleApp = {
         .m1-week-header {
             background: #1e293b;
             color: #f8fafc;
-            padding: 6px 14px;
-            font-size: 0.78rem;
+            padding: 8px 14px;
+            font-size: 0.80rem;
             font-weight: 700;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            white-space: nowrap !important;
+            line-height: 1.4;
+            min-height: 38px;
+            box-sizing: border-box;
             letter-spacing: normal !important;
             word-spacing: normal !important;
+        }
+        .m1-week-header span {
+            white-space: nowrap !important;
+            display: inline-flex;
+            align-items: center;
         }
         .m1-table {
             width: 100%;
@@ -2076,18 +2083,18 @@ const ScheduleApp = {
             color: #475569;
             font-weight: 700;
             text-align: right;
-            padding: 6px 10px;
+            padding: 8px 12px;
             border-bottom: 1px solid #cbd5e1;
             font-size: 0.70rem;
             white-space: nowrap;
             letter-spacing: normal !important;
             word-spacing: normal !important;
         }
-        .m1-th-day { width: 58px; }
-        .m1-th-date { width: 95px; }
+        .m1-th-day { width: 65px; }
+        .m1-th-date { width: 110px; }
         .m1-th-events { text-align: right; }
         .m1-table td {
-            padding: 7px 10px;
+            padding: 8px 12px;
             border-bottom: 1px solid #e2e8f0;
             vertical-align: middle;
             color: #1e293b;
@@ -2099,7 +2106,7 @@ const ScheduleApp = {
         .m1-day-col {
             font-weight: 700;
             color: #0f172a;
-            width: 58px;
+            width: 65px;
             font-size: 0.72rem;
             vertical-align: middle;
             text-align: right;
@@ -2107,52 +2114,57 @@ const ScheduleApp = {
             word-spacing: normal !important;
         }
         .m1-date-col {
-            width: 95px;
+            width: 110px;
             vertical-align: middle;
-            line-height: 1.3;
+            line-height: 1.4;
             text-align: right;
         }
         .m1-date-greg {
             display: block;
             font-family: 'Outfit', sans-serif;
-            font-size: 0.68rem;
+            font-size: 0.70rem;
             font-weight: 700;
             color: #1e293b;
             direction: ltr;
             text-align: right;
             unicode-bidi: isolate;
+            white-space: nowrap;
         }
         .m1-date-hijri {
             display: block;
-            font-size: 0.62rem;
+            font-size: 0.64rem;
             color: #64748b;
             direction: rtl;
             text-align: right;
             margin-top: 2px;
             unicode-bidi: isolate;
+            white-space: nowrap;
         }
         .m1-events-cell {
             vertical-align: middle;
-            padding: 4px 8px;
+            padding: 8px 12px;
         }
-        .m1-events-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+        .m1-events-list {
+            display: flex;
+            flex-direction: column;
             gap: 6px;
             width: 100%;
-            align-items: center;
         }
-        .m1-single-event {
+        .m1-event-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
             width: 100%;
             box-sizing: border-box;
-            padding: 2px 4px;
         }
-        .m1-single-title {
-            font-size: 0.72rem;
+        .m1-event-row-subsequent {
+            border-top: 1px dashed #e2e8f0;
+            padding-top: 6px;
+            margin-top: 2px;
+        }
+        .m1-event-title {
+            font-size: 0.73rem;
             font-weight: 700;
             color: #0f172a;
             line-height: 1.35;
@@ -2162,47 +2174,17 @@ const ScheduleApp = {
             letter-spacing: normal !important;
             word-spacing: normal !important;
         }
-        .m1-single-badges {
+        .m1-event-badges {
             display: flex;
             align-items: center;
             gap: 4px;
-            flex-shrink: 0;
-        }
-        .m1-multi-card {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            padding: 3px 6px;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            gap: 6px;
-            box-sizing: border-box;
-            min-height: 26px;
-        }
-        .m1-multi-card .m1-card-title {
-            font-size: 0.67rem;
-            font-weight: 700;
-            color: #0f172a;
-            line-height: 1.25;
-            flex: 1;
-            min-width: 0;
-            text-align: right;
-            letter-spacing: normal !important;
-            word-spacing: normal !important;
-        }
-        .m1-multi-card .m1-card-badges {
-            display: flex;
-            align-items: center;
-            gap: 3px;
             flex-shrink: 0;
         }
         .m1-type-badge {
             display: inline-block;
             font-size: 0.58rem;
             font-weight: 700;
-            padding: 1px 5px;
+            padding: 2px 6px;
             border-radius: 4px;
             white-space: nowrap;
         }
@@ -2210,7 +2192,7 @@ const ScheduleApp = {
             display: inline-block;
             font-size: 0.58rem;
             font-weight: 700;
-            padding: 1px 5px;
+            padding: 2px 6px;
             border-radius: 4px;
             white-space: nowrap;
             border: 1px solid #e2e8f0;
