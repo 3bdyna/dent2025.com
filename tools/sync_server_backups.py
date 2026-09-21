@@ -32,6 +32,19 @@ SSH_USER = "azureuser"
 SSH_HOST = "ssh.dent2025.com"
 RETENTION_DAYS = 14
 
+def log(msg):
+    """Outputs to console and writes to persistent local sync.log."""
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    formatted = f"[{ts}] {msg}"
+    print(formatted, flush=True)
+    try:
+        ensure_local_dir()
+        log_path = os.path.join(LOCAL_BACKUP_DIR, "sync.log")
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(formatted + "\n")
+    except Exception:
+        pass
+
 def ensure_local_dir():
     os.makedirs(LOCAL_BACKUP_DIR, exist_ok=True)
 
@@ -79,27 +92,27 @@ def prune_old_local_backups():
         if (now - mtime) > cutoff_seconds:
             try:
                 os.remove(fpath)
-                print(f"[RETENTION] Pruned old local backup (>14d): {fname}")
+                log(f"[RETENTION] Pruned old local backup (>14d): {fname}")
                 pruned_count += 1
             except Exception as e:
-                print(f"[RETENTION] Failed to prune {fname}: {e}")
+                log(f"[RETENTION] Failed to prune {fname}: {e}")
     return pruned_count
 
 def sync_backups():
     """Performs full sync of server backups to local machine."""
     ensure_local_dir()
-    print("=== DENT2025 LOCAL SERVER BACKUP SYNC ===")
-    print(f"Target Local Folder: {LOCAL_BACKUP_DIR}")
-    print(f"Retention Policy   : {RETENTION_DAYS} days rolling window\n")
+    log("=== DENT2025 LOCAL SERVER BACKUP SYNC ===")
+    log(f"Target Local Folder: {LOCAL_BACKUP_DIR}")
+    log(f"Retention Policy   : {RETENTION_DAYS} days rolling window")
     
-    print("[1/3] Checking available backups on Azure VPS...", flush=True)
+    log("[1/3] Checking available backups on Azure VPS...")
     remote_files = list_remote_backups()
     if not remote_files:
-        print("[NOTICE] No backup archives found on server or server unreachable.")
+        log("[NOTICE] No backup archives found on server or server unreachable.")
         prune_old_local_backups()
         return
 
-    print(f"Found {len(remote_files)} remote archive(s). Checking local cache...", flush=True)
+    log(f"Found {len(remote_files)} remote archive(s). Checking local cache...")
     downloaded = 0
     for rpath in remote_files:
         fname = os.path.basename(rpath)
@@ -107,33 +120,33 @@ def sync_backups():
         if os.path.exists(lpath) and os.path.getsize(lpath) > 0:
             continue  # Already downloaded
         
-        print(f"  ⬇ Downloading: {fname}...", end="", flush=True)
+        log(f"  ⬇ Downloading: {fname}...")
         t_start = time.time()
         ok = download_file(rpath, lpath)
         if ok and os.path.exists(lpath) and os.path.getsize(lpath) > 0:
             sz_kb = os.path.getsize(lpath) / 1024
-            print(f" Done ({sz_kb:.1f} KB in {time.time() - t_start:.1f}s)")
+            log(f"    Done ({sz_kb:.1f} KB in {time.time() - t_start:.1f}s)")
             downloaded += 1
         else:
-            print(" FAILED")
+            log(f"    FAILED to download {fname}")
 
-    print(f"\n[2/3] Local synchronization complete. {downloaded} new archive(s) downloaded.")
+    log(f"[2/3] Local synchronization complete. {downloaded} new archive(s) downloaded.")
     
     # Prune old local backups
-    print("\n[3/3] Enforcing 14-day retention policy...", flush=True)
+    log("[3/3] Enforcing 14-day retention policy...")
     pruned = prune_old_local_backups()
     if pruned == 0:
-        print("All existing backups are within the 14-day retention window.")
+        log("All existing backups are within the 14-day retention window.")
 
     # Show summary
-    local_files = [f for f in os.listdir(LOCAL_BACKUP_DIR) if os.path.isfile(os.path.join(LOCAL_BACKUP_DIR, f))]
+    local_files = [f for f in os.listdir(LOCAL_BACKUP_DIR) if os.path.isfile(os.path.join(LOCAL_BACKUP_DIR, f)) and f != "sync.log"]
     total_sz_mb = sum(os.path.getsize(os.path.join(LOCAL_BACKUP_DIR, f)) for f in local_files) / (1024 * 1024)
-    print(f"\n=== BACKUP STATUS: {len(local_files)} files stored locally ({total_sz_mb:.2f} MB total) ===")
+    log(f"=== BACKUP STATUS: {len(local_files)} archives stored locally ({total_sz_mb:.2f} MB total) ===")
     for f in sorted(local_files, reverse=True)[:6]:
         sz_kb = os.path.getsize(os.path.join(LOCAL_BACKUP_DIR, f)) / 1024
-        print(f"  - {f} ({sz_kb:.1f} KB)")
+        log(f"  - {f} ({sz_kb:.1f} KB)")
     if len(local_files) > 6:
-        print(f"  ... and {len(local_files) - 6} more file(s)")
+        log(f"  ... and {len(local_files) - 6} more file(s)")
 
 if __name__ == '__main__':
     sync_backups()

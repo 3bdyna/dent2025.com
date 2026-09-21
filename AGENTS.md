@@ -25,6 +25,7 @@ my website dent2025/
 ├── AGENTS.md                                   # Master Agent Guidelines & Architecture Reference (this file)
 ├── DEPLOYMENT_GUIDE.md                         # Complete Git SafeDeploy documentation
 ├── README.md                                   # Project Overview & Architecture Guide
+├── MAIN_PAGE_DESIGN_SPEC.md                    # Homepage UI/UX specifications & layout guide
 ├── LICENSE                                     # MIT License
 ├── deploy_config.example.json                  # Template SFTP/SSH configuration
 ├── dent2025_passwords.example.json             # Template RBAC passkeys
@@ -212,7 +213,6 @@ python tools/deploy_safe.py --note "Enhance dashboard navigation" "frontend-html
 
 ---
 
-
 ## 4. Frontend Component Page-by-Page Mapping Matrix
 
 Below is the definitive reference mapping all 5 WordPress pages to their target components and shortcodes:
@@ -287,7 +287,7 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 | `subject_id` | INT NOT NULL | Foreign Key → `subjects.id` (CASCADE delete) |
 | `url` | VARCHAR(1000) | Link URL |
 | `title` | VARCHAR(255) | Link display title |
-| `type` | VARCHAR(50) | Auto-detected: `'youtube'`, `'drive'`, or `'link'` |
+| `type` | VARCHAR(50) | Auto-detected: `'youtube'`, `'drive'`, `'telegram'`, or `'link'` |
 | `created_at` | TIMESTAMP | Auto-generated |
 
 ### File-Based JSON Storage Inventory
@@ -301,7 +301,7 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 ## 7. Frontend Engineering Standards & Key Modules
 
 ### A. Main Dashboard Engine (`dashboard.js` — ~111 KB)
-- **API Base URL**: `const API_BASE_URL = API_BASE + '/dent2025_api.php'`.
+- **API Base URL**: `const API_BASE_URL = '/dent2025_api.php'` (with `const API_BASE = ''` site-root relative).
 - **⭐ MULTI-SPECIALTY MASTER SWITCH (`DENT_MULTI_SPECIALTY_MODE`)**:
   - **SERVER-SIDE DYNAMIC SOURCE OF TRUTH**: The multi-specialty mode is persisted in the WordPress database options table (`dent2025_multi_specialty_mode`) via `dent2025_api.php`:
     - **`GET ?action=portal_settings`**: Public endpoint returning `{"success": true, "data": {"multi_specialty_mode": true/false}}`.
@@ -375,7 +375,7 @@ All keys are strictly prefixed with `dent2025_`:
 
 | Page ID | Required Slug | Title | Purpose |
 |---|---|---|---|
-| **622** | `wolcome` | landing page | Selection screen (`dashboard.js` line 52 redirect target) |
+| **622** | `wolcome` | landing page | Selection screen (`dashboard.js` line 176 redirect target) |
 | **22** | *(static front)* | الصفحة الرئيسية | Main homepage (Settings > Reading) |
 | **2** | `المقررات-والاختبارات` | المقررات والختبارات | Courses & Quizzes page |
 | **118** | `التقويم-الأكاديمي` | التقويم الأكاديمي | Schedule timeline page |
@@ -387,7 +387,7 @@ All keys are strictly prefixed with `dent2025_`:
 
 ### LiteSpeed Cache (LSCache) Rules:
 - Server uses **LiteSpeed Cache**. Dynamic API endpoints send `define('LSCACHE_NO_CACHE', true)` and `Cache-Control: no-cache` headers.
-- **Cache Purge Diagnostic Script**: Access `https://dent2025.com/purge_cache.php` or append `?purge=1` to any page URL to trigger `do_action('litespeed_purge_all')` and clear transients immediately.
+- **Cache Purge Diagnostic Script**: Access `https://dent2025.com/purge_cache.php?token=<admin_passkey>` or append `?purge=1&token=<admin_passkey>` to any page URL to trigger `do_action('litespeed_purge_all')` and clear transients immediately (requires a valid admin passkey token).
 - **First Rule of Troubleshooting**: If a code fix is deployed to the server but the live site still shows old behavior, **purge LiteSpeed cache first** before altering any code!
 
 ---
