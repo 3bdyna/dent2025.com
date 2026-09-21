@@ -216,11 +216,11 @@
 
         // Position star wrapper right near the dynamic announcements container at top of page
         const announcementsContainer = document.getElementById('dynamic-announcements-container');
-        if (starWrapper && announcementsContainer && announcementsContainer.parentNode && starWrapper.parentNode !== announcementsContainer.parentNode) {
+        if (starWrapper && announcementsContainer && announcementsContainer.parentNode && announcementsContainer.nextSibling !== starWrapper) {
             announcementsContainer.parentNode.insertBefore(starWrapper, announcementsContainer.nextSibling);
         } else if (starWrapper && !announcementsContainer) {
             const content = document.querySelector('.entry-content') || document.querySelector('main');
-            if (content && starWrapper.parentNode !== content) {
+            if (content && content.firstChild !== starWrapper) {
                 content.insertBefore(starWrapper, content.firstChild);
             }
         }
