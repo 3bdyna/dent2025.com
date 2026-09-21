@@ -1696,7 +1696,7 @@ const ScheduleApp = {
             const sunDay = wSunday.getDate();
             const sunYear = wSunday.getFullYear();
             const weekKey = `${sunYear}-${String(wSunday.getMonth() + 1).padStart(2, '0')}-${String(sunDay).padStart(2, '0')}`;
-            const weekName = `الأسبوع ${wNum} — ${sunMonth}`;
+            const weekName = `الأسبوع ${wNum}`;
 
             // Derive Hijri label for week header (exact week span, e.g. 9 – 15 ربيع الآخر 1448 هـ)
             const hStart = this.hijriFromGregorian(`${sunYear}-${String(wSunday.getMonth() + 1).padStart(2, '0')}-${String(sunDay).padStart(2, '0')}`);
@@ -1749,7 +1749,7 @@ const ScheduleApp = {
                 const weekNum = Math.floor((sundayDate - startSunday) / (1000 * 60 * 60 * 24 * 7)) + 1;
                 groupedWeeks[weekKey] = {
                     weekNum: weekNum,
-                    weekName: `الأسبوع ${weekNum} — ${sunMonth}`,
+                    weekName: `الأسبوع ${weekNum}`,
                     hijriLabel: '',
                     events: []
                 };
@@ -1810,12 +1810,16 @@ const ScheduleApp = {
                     const dDate = this.parseLocalDate(firstEv.date) || new Date();
                     const dayName = dDate.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { weekday: 'long' });
                     const monthShort = this.gregorianMonthsEN[dDate.getMonth()].substring(0, 3);
-                    let gregDateStr = `${dDate.getDate()} ${monthShort} ${dDate.getFullYear()}`;
+                    let gregDateStr = `${dDate.getDate()} ${monthShort}`;
                     if (firstEv.end_date) {
                         const eDate = this.parseLocalDate(firstEv.end_date);
                         if (eDate) {
                             const eMonthShort = this.gregorianMonthsEN[eDate.getMonth()].substring(0, 3);
-                            gregDateStr = `${dDate.getDate()} – ${eDate.getDate()} ${eMonthShort} ${eDate.getFullYear()}`;
+                            if (dDate.getMonth() === eDate.getMonth()) {
+                                gregDateStr = `${dDate.getDate()} – ${eDate.getDate()} ${eMonthShort}`;
+                            } else {
+                                gregDateStr = `${dDate.getDate()} ${monthShort} – ${eDate.getDate()} ${eMonthShort}`;
+                            }
                         }
                     }
 
@@ -1915,7 +1919,6 @@ const ScheduleApp = {
                             <td class="m1-day-col">${dentEscapeHtml(dayName)}</td>
                             <td class="m1-date-col">
                                 <span class="m1-date-greg" dir="ltr">${dentEscapeHtml(gregDateStr)}</span>
-                                <span class="m1-date-hijri">${dentEscapeHtml(hijriStr)}</span>
                             </td>
                             <td class="m1-events-cell">
                                 ${cellContentHtml}
@@ -2166,7 +2169,7 @@ const ScheduleApp = {
             text-align: center;
         }
         .m1-th-date {
-            width: 115px;
+            width: 95px;
             text-align: center;
         }
         .m1-th-events {
@@ -2192,30 +2195,18 @@ const ScheduleApp = {
             word-spacing: normal !important;
         }
         .m1-date-col {
-            width: 115px;
+            width: 95px;
             vertical-align: middle;
-            line-height: 1.15;
             text-align: center;
         }
         .m1-date-greg {
-            display: block;
+            display: inline-block;
             font-family: 'Outfit', sans-serif;
-            font-size: 0.70rem;
+            font-size: 0.74rem;
             font-weight: 700;
             color: #1e293b;
             direction: ltr;
             text-align: center;
-            unicode-bidi: isolate;
-            white-space: nowrap;
-        }
-        .m1-date-hijri {
-            display: block;
-            font-size: 0.64rem;
-            color: #64748b;
-            direction: rtl;
-            text-align: center;
-            margin-top: 1px;
-            line-height: 1.15;
             unicode-bidi: isolate;
             white-space: nowrap;
         }
