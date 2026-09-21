@@ -23,6 +23,12 @@ window.AdminApp = {
     classesData: [],
     announcementsData: [],
     historyData: [],
+    quizzesData: [],
+    geminiData: null,
+    cacheStatsData: null,
+    _classesCohort: null,
+    _quillLoadingPromise: null,
+    _prefetchScheduled: false,
     visibleKeys: {}, // To track visible passkeys in passwords tab
     portalMultiSpecialtyMode: null,
 
@@ -258,11 +264,165 @@ window.AdminApp = {
         }
     },
 
+    loadQuill() {
+        if (typeof window.Quill !== 'undefined') return Promise.resolve(window.Quill);
+        if (this._quillLoadingPromise) return this._quillLoadingPromise;
+        this._quillLoadingPromise = new Promise((resolve, reject) => {
+            if (!document.getElementById('quill-css')) {
+                const link = document.createElement('link');
+                link.id = 'quill-css';
+                link.rel = 'stylesheet';
+                link.href = 'https://cdn.quilljs.com/1.3.7/quill.snow.css';
+                document.head.appendChild(link);
+            }
+            const s = document.createElement('script');
+            s.src = 'https://cdn.quilljs.com/1.3.7/quill.min.js';
+            s.async = true;
+            s.onload = () => resolve(window.Quill);
+            s.onerror = (err) => reject(err);
+            document.body.appendChild(s);
+        });
+        return this._quillLoadingPromise;
+    },
+
+    scheduleBackgroundPrefetch() {
+        if (this._prefetchScheduled) return;
+        this._prefetchScheduled = true;
+
+        const runTask = (fn, delayMs) => {
+            if (typeof window.requestIdleCallback === 'function') {
+                setTimeout(() => window.requestIdleCallback(fn, { timeout: 3000 }), delayMs);
+            } else {
+                setTimeout(fn, delayMs);
+            }
+        };
+
+        // Step 1: Preload Quill assets quietly in background (600ms)
+        runTask(() => this.loadQuill().catch(() => {}), 600);
+
+        // Step 2: Prefetch Timetable Classes for active track (1000ms)
+        runTask(() => this.prefetchClasses(), 1000);
+
+        // Step 3: Prefetch Calendar Events (1600ms)
+        runTask(() => this.prefetchEvents(), 1600);
+
+        // Step 4: Prefetch Announcements (2200ms)
+        runTask(() => this.prefetchAnnouncements(), 2200);
+
+        // Step 5: Prefetch Quizzes list (2800ms)
+        runTask(() => this.prefetchQuizzes(), 2800);
+
+        // Step 6: Master-only datasets (if authorized)
+        const canManageMaster = !!(this.permissions && this.permissions.manage_passwords);
+        if (canManageMaster) {
+            runTask(() => this.prefetchPasswords(), 3400);
+            runTask(() => this.prefetchGemini(), 4000);
+            runTask(() => this.prefetchHistory(), 4600);
+            runTask(() => this.prefetchCacheStats(), 5200);
+        }
+    },
+
+    prefetchClasses() {
+        if (this.classesData && this.classesData.length) return;
+        let spec = (this.focusMode && this.focusMode.specialty) || 'dentistry';
+        let year = (this.focusMode && String(this.focusMode.year)) || '3';
+        let sem = (this.focusMode && String(this.focusMode.semester)) || '1';
+        fetch(`${API_BASE}/dent2025_api.php?action=get_classes&specialty=${spec}&year=${year}&semester=${sem}`)
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && Array.isArray(res.data)) {
+                this.classesData = res.data;
+                this._classesCohort = `${spec}_${year}_${sem}`;
+            }
+        }).catch(() => {});
+    },
+
+    prefetchEvents() {
+        if (this.eventsData && this.eventsData.length) return;
+        fetch(`${API_BASE}/schedule_backend.php?schedule_id=all&_t=${Date.now()}`)
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && Array.isArray(res.data)) {
+                this.eventsData = res.data;
+            }
+        }).catch(() => {});
+    },
+
+    prefetchAnnouncements() {
+        if (this.announcementsData && this.announcementsData.length) return;
+        fetch(API_BASE + '/announcements_api.php?action=get_all')
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && res.data) {
+                this.announcementsData = res.data;
+            }
+        }).catch(() => {});
+    },
+
+    prefetchQuizzes() {
+        if (this.quizzesData && this.quizzesData.length) return;
+        fetch(API_BASE + '/backend/api_ai_exam.php?action=list_quizzes')
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && Array.isArray(res.data)) {
+                this.quizzesData = res.data;
+            }
+        }).catch(() => {});
+    },
+
+    prefetchPasswords() {
+        if (this.passwordsData && this.passwordsData.length) return;
+        fetch(API_BASE + '/dent2025_api.php?action=get_passwords', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: this.pass })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && Array.isArray(res.data)) {
+                this.passwordsData = res.data;
+            }
+        }).catch(() => {});
+    },
+
+    prefetchGemini() {
+        if (this.geminiData) return;
+        this.fetchGeminiApi('action=gemini_status')
+        .then(res => {
+            if (res && res.success && res.data) {
+                this.geminiData = res.data;
+            }
+        }).catch(() => {});
+    },
+
+    prefetchHistory() {
+        if (this.historyData && this.historyData.length) return;
+        fetch(API_BASE + '/history_api.php?action=get_history', { headers: { 'X-Admin-Pass': this.pass || '' } })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && Array.isArray(res.data)) {
+                this.historyData = res.data.filter(h => h.action_type !== 'manual_save');
+            }
+        }).catch(() => {});
+    },
+
+    prefetchCacheStats() {
+        if (this.cacheStatsData) return;
+        fetch(this.aiExamUrl('get_cache_stats'), { headers: { 'X-Admin-Pass': this.pass || '' } })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && res.data) {
+                this.cacheStatsData = res.data;
+            }
+        }).catch(() => {});
+    },
+
     showMain() {
         this.initFocusMode();
         this.loadPortalSettings();
         let initialTab = 'subjects';
         this.switchTab(this.currentTab && this.currentTab !== 'dashboard' ? this.currentTab : initialTab);
+        this.scheduleBackgroundPrefetch();
     },
 
     switchTab(tabId) {
@@ -357,19 +517,28 @@ window.AdminApp = {
             } else if (tabId === 'classes') {
                 this.loadClasses();
             } else if (tabId === 'announcements') {
-                if (typeof Quill !== 'undefined') {
-                    this.quill = new Quill('#ann-editor-container', {
-                        theme: 'snow',
-                        placeholder: 'اكتب الإعلان هنا...',
-                        modules: {
-                            toolbar: [
-                                ['bold', 'italic', 'underline', 'strike'],
-                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                                [{ 'color': [] }, { 'background': [] }],
-                                ['link', 'clean']
-                            ]
+                const initEditor = () => {
+                    if (typeof window.Quill !== 'undefined' && document.getElementById('ann-editor-container')) {
+                        if (!this.quill) {
+                            this.quill = new window.Quill('#ann-editor-container', {
+                                theme: 'snow',
+                                placeholder: 'اكتب الإعلان هنا...',
+                                modules: {
+                                    toolbar: [
+                                        ['bold', 'italic', 'underline', 'strike'],
+                                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                        [{ 'color': [] }, { 'background': [] }],
+                                        ['link', 'clean']
+                                    ]
+                                }
+                            });
                         }
-                    });
+                    }
+                };
+                if (typeof window.Quill !== 'undefined') {
+                    initEditor();
+                } else {
+                    this.loadQuill().then(() => initEditor()).catch(console.error);
                 }
                 this.loadAnnouncements();
             } else if (tabId === 'history') {
@@ -1044,25 +1213,33 @@ window.AdminApp = {
     // --- TAB 1: PASSWORDS & ACCESS ---
 
     loadPasswords() {
-        this.showLoading(true);
+        const hasCached = Array.isArray(this.passwordsData) && this.passwordsData.length > 0;
+        if (hasCached) {
+            this.renderPasswords();
+        } else {
+            this.showLoading(true);
+        }
+
         fetch(API_BASE + '/dent2025_api.php?action=get_passwords', {
             method: 'POST',
             body: JSON.stringify({ password: this.pass })
         })
         .then(r => r.json())
         .then(res => {
-            this.showLoading(false);
+            if (!hasCached) this.showLoading(false);
             if (res.success && Array.isArray(res.data)) {
                 this.passwordsData = res.data;
                 this.renderPasswords();
-            } else {
+            } else if (!hasCached) {
                 this.showToast(res.message || 'فشل تحميل كلمات المرور', true);
             }
         })
         .catch(e => {
-            this.showLoading(false);
-            console.error('loadPasswords error:', e);
-            this.showToast('خطأ في الاتصال بالخادم', true);
+            if (!hasCached) {
+                this.showLoading(false);
+                console.error('loadPasswords error:', e);
+                this.showToast('خطأ في الاتصال بالخادم', true);
+            }
         });
     },
 
@@ -1340,22 +1517,31 @@ window.AdminApp = {
             if (scopeEl) scopeEl.value = 'all';
             if (yearEl) yearEl.value = 'all';
         }
-        this.showLoading(true);
+
+        const hasCached = Array.isArray(this.eventsData) && this.eventsData.length > 0;
+        if (hasCached) {
+            this.renderEvents();
+        } else {
+            this.showLoading(true);
+        }
+
         fetch(`${API_BASE}/schedule_backend.php?schedule_id=all&_t=${Date.now()}`)
         .then(r => r.json())
         .then(res => {
-            this.showLoading(false);
+            if (!hasCached) this.showLoading(false);
             if (res.success && Array.isArray(res.data)) {
                 this.eventsData = res.data;
                 this.renderEvents();
-            } else {
+            } else if (!hasCached) {
                 this.showToast(res.message || 'فشل تحميل الأحداث', true);
             }
         })
         .catch(e => {
-            this.showLoading(false);
-            console.error('loadEvents error:', e);
-            this.showToast('خطأ في الاتصال بالخادم', true);
+            if (!hasCached) {
+                this.showLoading(false);
+                console.error('loadEvents error:', e);
+                this.showToast('خطأ في الاتصال بالخادم', true);
+            }
         });
     },
 
@@ -2262,22 +2448,32 @@ window.AdminApp = {
             if (semEl) sem = semEl.value;
         }
 
-        this.showLoading(true);
+        const targetCohort = `${spec}_${year}_${sem}`;
+        const hasCached = Array.isArray(this.classesData) && this.classesData.length > 0 && this._classesCohort === targetCohort;
+        if (hasCached) {
+            this.renderClasses();
+        } else {
+            this.showLoading(true);
+        }
+
         fetch(`${API_BASE}/dent2025_api.php?action=get_classes&specialty=${spec}&year=${year}&semester=${sem}`)
         .then(r => r.json())
         .then(res => {
-            this.showLoading(false);
+            if (!hasCached) this.showLoading(false);
             if (res.success && Array.isArray(res.data)) {
                 this.classesData = res.data;
+                this._classesCohort = targetCohort;
                 this.renderClasses();
-            } else {
+            } else if (!hasCached) {
                 this.showToast(res.message || 'فشل تحميل الجدول الدراسي', true);
             }
         })
         .catch(e => {
-            this.showLoading(false);
-            console.error('loadClasses error:', e);
-            this.showToast('خطأ في الاتصال بالخادم', true);
+            if (!hasCached) {
+                this.showLoading(false);
+                console.error('loadClasses error:', e);
+                this.showToast('خطأ في الاتصال بالخادم', true);
+            }
         });
     },
 
@@ -2532,20 +2728,28 @@ window.AdminApp = {
             if (filterSem) filterSem.value = 'all';
         }
 
-        this.showLoading(true);
+        const hasCached = Array.isArray(this.announcementsData) && this.announcementsData.length > 0;
+        if (hasCached) {
+            this.renderAnnouncements();
+        } else {
+            this.showLoading(true);
+        }
+
         fetch(API_BASE + '/announcements_api.php?action=get_all')
         .then(r => r.json())
         .then(res => {
-            this.showLoading(false);
+            if (!hasCached) this.showLoading(false);
             if (res.success && res.data) {
                 this.announcementsData = res.data;
                 this.renderAnnouncements();
             }
         })
         .catch(e => {
-            this.showLoading(false);
-            console.error('Announcements load error:', e);
-            this.showToast('خطأ في تحميل الإعلانات', true);
+            if (!hasCached) {
+                this.showLoading(false);
+                console.error('Announcements load error:', e);
+                this.showToast('خطأ في تحميل الإعلانات', true);
+            }
         });
     },
 
@@ -2930,11 +3134,23 @@ window.AdminApp = {
     },
 
     loadHistory() {
-        this.showLoading(true);
+        const hasCached = Array.isArray(this.historyData) && this.historyData.length > 0;
+        if (hasCached) {
+            const hasRollback = this.historyData.some(h => h.action_type === 'safety_backup' || h.action_type === 'rollback');
+            const undoBtn = document.getElementById('btn-undo-rollback');
+            if (undoBtn) {
+                if (hasRollback) undoBtn.classList.remove('hidden');
+                else undoBtn.classList.add('hidden');
+            }
+            this.filterHistory();
+        } else {
+            this.showLoading(true);
+        }
+
         fetch(API_BASE + '/history_api.php?action=get_history', { headers: { 'X-Admin-Pass': this.pass || '' } })
             .then(r => r.json())
             .then(res => {
-                this.showLoading(false);
+                if (!hasCached) this.showLoading(false);
                 if (res.success) {
                     // Filter out manual saves from the main auto log
                     const allData = res.data || [];
@@ -2949,14 +3165,16 @@ window.AdminApp = {
                     }
 
                     this.filterHistory();
-                } else {
+                } else if (!hasCached) {
                     this.showToast(res.message || 'فشل تحميل سجل التغييرات', true);
                 }
             })
             .catch(e => {
-                this.showLoading(false);
-                console.error('History load error:', e);
-                this.showToast('خطأ بالاتصال أثناء تحميل سجل التغييرات', true);
+                if (!hasCached) {
+                    this.showLoading(false);
+                    console.error('History load error:', e);
+                    this.showToast('خطأ بالاتصال أثناء تحميل سجل التغييرات', true);
+                }
             });
     },
 
@@ -3587,14 +3805,36 @@ window.AdminApp = {
     },
 
     loadGeminiStatus() {
-        this.showLoading(true);
+        const hasCached = !!this.geminiData;
+        if (hasCached) {
+            this.renderGeminiUI(this.geminiData);
+        } else {
+            this.showLoading(true);
+        }
+
         this.fetchGeminiApi('action=gemini_status')
         .then(res => {
-            this.showLoading(false);
+            if (!hasCached) this.showLoading(false);
             if (res.success && res.data) {
-                const data = res.data;
-                const summary = data.summary || {};
-                this.geminiKeysData = data.keys || [];
+                this.geminiData = res.data;
+                this.renderGeminiUI(res.data);
+            } else if (!hasCached) {
+                this.showToast(res.message || 'فشل في تحميل حالة مفاتيح المعالجة الذكية', true);
+            }
+        })
+        .catch(e => {
+            if (!hasCached) {
+                this.showLoading(false);
+                console.error('Error loading Gemini status:', e);
+                this.showToast('خطأ بالاتصال أثناء جلب حالة المعالجة الذكية (' + (e.message || '') + ')', true);
+            }
+        });
+    },
+
+    renderGeminiUI(data) {
+        if (!data) return;
+        const summary = data.summary || {};
+        this.geminiKeysData = data.keys || [];
 
                 const reqEl = document.getElementById('gemini-stat-requests');
                 if (reqEl) reqEl.innerText = (summary.total_requests_today || 0).toLocaleString();
@@ -3710,15 +3950,6 @@ window.AdminApp = {
                         logsBody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500 font-sans">لا توجد سجلات طلبات حتى الآن</td></tr>';
                     }
                 }
-            } else {
-                this.showToast(res.message || 'فشل في تحميل حالة مفاتيح المعالجة الذكية', true);
-            }
-        })
-        .catch(e => {
-            this.showLoading(false);
-            console.error('Error loading Gemini status:', e);
-            this.showToast('خطأ بالاتصال أثناء جلب حالة المعالجة الذكية (' + (e.message || '') + ')', true);
-        });
     },
 
     testGeminiKeys(keyIndex) {
@@ -3908,9 +4139,14 @@ window.AdminApp = {
         }
     },
 
-    // --- QUIZZES MANAGEMENT METHODS ---
     loadQuizzes() {
-        this.showLoading(true);
+        const hasCached = Array.isArray(this.quizzesData) && this.quizzesData.length > 0;
+        if (hasCached) {
+            this.renderQuizzesTable(this.quizzesData);
+        } else {
+            this.showLoading(true);
+        }
+
         let params = new URLSearchParams({ action: 'list_quizzes' });
 
         fetch(API_BASE + '/backend/api_ai_exam.php?' + params.toString())
@@ -3919,10 +4155,12 @@ window.AdminApp = {
             return r.text();
         })
         .then(text => {
-            this.showLoading(false);
+            if (!hasCached) this.showLoading(false);
             if (!text || text.trim() === '') {
-                console.error('Empty response from API');
-                this.showToast('الخادم لم يرد بأي بيانات - تحقق من سجلات الخادم', true);
+                if (!hasCached) {
+                    console.error('Empty response from API');
+                    this.showToast('الخادم لم يرد بأي بيانات - تحقق من سجلات الخادم', true);
+                }
                 return;
             }
             try {
@@ -3930,19 +4168,22 @@ window.AdminApp = {
                 if (res.success && Array.isArray(res.data)) {
                     this.quizzesData = res.data;
                     this.renderQuizzesTable(res.data);
-                } else {
+                } else if (!hasCached) {
                     this.showToast(res.message || 'فشل تحميل الاختبارات', true);
                 }
             } catch (parseErr) {
-                console.error('JSON Parse Error:', parseErr);
-                console.error('Response text:', text);
-                this.showToast('خطأ في تحليل البيانات: ' + text.substring(0, 100), true);
+                if (!hasCached) {
+                    console.error('JSON Parse Error:', parseErr);
+                    this.showToast('خطأ في تحليل البيانات: ' + text.substring(0, 100), true);
+                }
             }
         })
         .catch(e => {
-            this.showLoading(false);
-            console.error('Error loading quizzes:', e);
-            this.showToast('خطأ في الاتصال بالخادم: ' + e.message, true);
+            if (!hasCached) {
+                this.showLoading(false);
+                console.error('Error loading quizzes:', e);
+                this.showToast('خطأ في الاتصال بالخادم: ' + e.message, true);
+            }
         });
     },
 
@@ -4180,29 +4421,39 @@ window.AdminApp = {
     },
 
     loadCacheStats() {
-        this.showLoading(true);
+        const hasCached = !!this.cacheStatsData;
+        if (hasCached) {
+            this.renderCacheTab(this.cacheStatsData);
+        } else {
+            this.showLoading(true);
+        }
+
         fetch(this.aiExamUrl('get_cache_stats'), {
             headers: { 'X-Admin-Pass': this.pass || '' }
         })
         .then(r => r.json())
         .then(res => {
-            this.showLoading(false);
+            if (!hasCached) this.showLoading(false);
             if (res.success && res.data) {
+                this.cacheStatsData = res.data;
                 this.renderCacheTab(res.data);
-            } else {
+            } else if (!hasCached) {
                 this.showToast(res.message || 'فشل جلب إحصائيات الكاش', true);
             }
         })
         .catch(err => {
-            this.showLoading(false);
-            console.error('Error loading cache stats:', err);
-            this.showToast('خطأ في الاتصال بالسيرفر أثناء جلب الكاش', true);
+            if (!hasCached) {
+                this.showLoading(false);
+                console.error('Error loading cache stats:', err);
+                this.showToast('خطأ في الاتصال بالسيرفر أثناء جلب الكاش', true);
+            }
         });
     },
 
-    scanDriveCatalog() {
+    scanDriveCatalog(force = true) {
         this.showLoading(true);
-        fetch(this.aiExamUrl('scan_cache_catalog'), {
+        const action = force ? 'scan_cache_catalog&force=1' : 'scan_cache_catalog';
+        fetch(this.aiExamUrl(action), {
             headers: { 'X-Admin-Pass': this.pass || '' }
         })
         .then(r => r.json())
@@ -4211,6 +4462,7 @@ window.AdminApp = {
             if (res.success && res.data) {
                 this.showToast('تم تحديث وفهرسة ملفات قوقل درايف بنجاح');
                 if (res.data.stats) {
+                    this.cacheStatsData = res.data.stats;
                     this.renderCacheTab(res.data.stats);
                 } else {
                     this.loadCacheStats();

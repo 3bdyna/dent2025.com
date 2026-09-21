@@ -24,9 +24,10 @@
  }
  }
  </script>
- <!-- Google Fonts -->
- <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
- <style>
+    <!-- Self-Hosted Fonts & Favicon (Zero External Latency) -->
+    <link rel="icon" type="image/webp" href="/logos/dentistry.webp">
+    <link rel="stylesheet" href="/frontend_components/fonts/fonts.css">
+    <style>
  body { 
  background-color: #121212; 
  background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px); 
@@ -1811,18 +1812,16 @@
     </button>
   </nav>
 
- <!-- Quill JS -->
- <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
- <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
- <style>
- .ql-toolbar.ql-snow { border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.4); border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; }
- .ql-container.ql-snow { border: 1px solid rgba(255, 255, 255, 0.1); border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
- .ql-snow .ql-stroke { stroke: #e2e8f0; }
- .ql-snow .ql-fill { fill: #e2e8f0; }
- .ql-snow .ql-picker { color: #e2e8f0; }
- .ql-editor { font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif; font-size: 1rem; }
- </style>
+  <!-- Quill JS (Lazy-Loaded Dynamically on Announcements Tab) -->
+  <style>
+  .ql-toolbar.ql-snow { border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.4); border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; }
+  .ql-container.ql-snow { border: 1px solid rgba(255, 255, 255, 0.1); border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
+  .ql-snow .ql-stroke { stroke: #e2e8f0; }
+  .ql-snow .ql-fill { fill: #e2e8f0; }
+  .ql-snow .ql-picker { color: #e2e8f0; }
+  .ql-editor { font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif; font-size: 1rem; }
+  </style>
 
- <script src="admin_app.js?v=20260920_01"></script>
+  <script src="admin_app.js?v=20260921_02"></script>
 </body>
 </html>

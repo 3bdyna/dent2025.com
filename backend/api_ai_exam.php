@@ -3658,14 +3658,26 @@ if ($action === 'prewarm_subject') {
 if ($action === 'scan_cache_catalog') {
     if (!$pdo) sendResponse(false, "Database connection unavailable.");
 
-    $table_subs = getAiExamSubjectsTable($pdo);
-    $stmt = $pdo->query("SELECT id, name, specialty, year, semester, chapters_folder_id FROM {$table_subs} WHERE chapters_folder_id IS NOT NULL AND chapters_folder_id != '' ORDER BY specialty, year, semester, id ASC");
-    $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+    $force = !empty($_GET['force']) || !empty($_POST['force']);
     $metaStore = getCacheMetaStore();
     if (!isset($metaStore['files_meta']) || !is_array($metaStore['files_meta'])) {
         $metaStore['files_meta'] = [];
     }
+
+    // Fast-path: Return cached catalog summary if available and scanned within the last 12 hours
+    $lastScan = $metaStore['catalog_summary']['last_scan_time'] ?? null;
+    if (!$force && !empty($metaStore['catalog_summary']) && $lastScan && (time() - strtotime($lastScan) < 43200)) {
+        sendResponse(true, [
+            'summary' => $metaStore['catalog_summary'],
+            'pruned_count' => 0,
+            'stats' => getSystemCacheStats(),
+            'cached' => true
+        ]);
+    }
+
+    $table_subs = getAiExamSubjectsTable($pdo);
+    $stmt = $pdo->query("SELECT id, name, specialty, year, semester, chapters_folder_id FROM {$table_subs} WHERE chapters_folder_id IS NOT NULL AND chapters_folder_id != '' ORDER BY specialty, year, semester, id ASC");
+    $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $cacheDir = __DIR__ . '/gemini_keys_data/text_cache';
     $cachedDiskIds = [];
