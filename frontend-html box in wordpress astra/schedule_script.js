@@ -1633,12 +1633,13 @@ const ScheduleApp = {
     formatEventTitleHtml: function(rawTitle) {
         if (!rawTitle) return '';
         const escaped = dentEscapeHtml(rawTitle);
-        // Wrap English phrase runs (3+ letters) in an isolated inline-block LTR span
+        // Wrap English phrase runs (3+ letters) in an isolated inline LTR bdi element
         // while preserving HTML entities (&amp;, &quot;, &#39;, &hellip;, etc.) intact
-        // so mixed BiDi Arabic-English titles never scramble parentheses or hyphens when wrapping lines.
+        // so mixed BiDi Arabic-English titles never scramble parentheses or hyphens,
+        // while avoiding display:inline-block which causes wide empty gaps before closing parentheses on WebKit/iOS.
         return escaped.replace(/(&[a-zA-Z0-9#]+;)|([A-Za-z][A-Za-z0-9\s\-_:\/,\.]{3,}[A-Za-z0-9])/g, function(match, entity, english) {
             if (entity) return entity;
-            return '<span dir="ltr" style="display:inline-block; max-width:100%;">' + english + '</span>';
+            return '<bdi dir="ltr" style="display:inline; unicode-bidi:isolate;">' + english + '</bdi>';
         });
     },
 
