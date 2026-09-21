@@ -1,7 +1,14 @@
-const API_BASE = '';
-// dashboard.js
-// This script fetches data from the PHP API and dynamically builds the chapters and materials blocks.
+/**
+ * dashboard.js - Dent2025 Student Portal Client Engine
+ * Handles routing, hydration, chapters & materials hub, Google Drive iframe streaming,
+ * announcements, classes timetable, and in-place administrative controls.
+ */
 
+// Universal safe API base definitions
+if (typeof window.API_BASE === 'undefined') {
+    window.API_BASE = '';
+}
+var API_BASE = window.API_BASE;
 const API_BASE_URL = '/dent2025_api.php';
 
 // Safe HTML entity escaping helper
@@ -49,6 +56,93 @@ function dentSanitizeRichText(dirtyHtml) {
     }
 }
 
+// Idempotent stylesheet injector (mounts once in <head>, preventing innerHTML churn)
+function dentEnsureStyle(id, cssText) {
+    if (!document.getElementById(id)) {
+        const style = document.createElement('style');
+        style.id = id;
+        style.textContent = cssText;
+        document.head.appendChild(style);
+    }
+}
+
+// Centralized check for unloaded or placeholder iframes
+function dentIsIframeUnloaded(iframe) {
+    return !!(iframe && (!iframe.src || iframe.src === 'about:blank' || iframe.src === window.location.href));
+}
+
+// Centralized safe iframe source loader
+function dentEnsureIframeSrc(iframe) {
+    if (dentIsIframeUnloaded(iframe)) {
+        const dataSrc = iframe.getAttribute('data-src');
+        if (dataSrc) {
+            iframe.src = dataSrc;
+            return true;
+        }
+    }
+    return false;
+}
+
+// Safe cohort selection reader
+function dentGetSelection() {
+    try {
+        const raw = localStorage.getItem('dent2025_selection');
+        return raw ? JSON.parse(raw) : null;
+    } catch(e) {
+        return null;
+    }
+}
+
+// Centralized localized academic context helper
+function dentFormatContext(selection) {
+    if (!selection || !selection.specialty) {
+        return {
+            specName: 'طب الأسنان',
+            specNameFull: 'طب الأسنان',
+            yearText: 'السنة الثالثة',
+            semText: 'السنة 3 - الفصل 1',
+            changerExtra: ' | السنة 3 | الفصل 1',
+            subTitle: 'السنة الثالثة • طب الأسنان',
+            fullNav: 'طب الأسنان - السنة 3 - الفصل 1'
+        };
+    }
+    const spec = selection.specialty;
+    const year = Number(selection.year) || 1;
+    const sem = Number(selection.semester) || 1;
+    
+    const specNames = { dentistry: 'طب الأسنان', medicine: 'الطب البشري', 'pre-med': 'التحضيري' };
+    const specNamesFull = { dentistry: 'طب الأسنان', medicine: 'الطب البشري', 'pre-med': 'السنة التحضيرية' };
+    const yearNames = { 0: 'السنة الأولى', 1: 'السنة الأولى', 2: 'السنة الثانية', 3: 'السنة الثالثة', 4: 'السنة الرابعة', 5: 'السنة الخامسة', 6: 'السنة السادسة' };
+    
+    const specName = specNames[spec] || spec;
+    const specNameFull = specNamesFull[spec] || spec;
+    const yearText = yearNames[year] || `السنة ${year}`;
+    
+    let semText = `السنة ${year} - الفصل ${sem}`;
+    let changerExtra = ` | السنة ${year} | الفصل ${sem}`;
+    
+    if (spec === 'medicine') {
+        const semLevel = sem === 1 ? (year * 2 - 1) : (year * 2);
+        semText = `السنة ${year} - الفصل ${sem} (مستوى ${semLevel} - جزء ${sem})`;
+        changerExtra = ` | السنة ${year} | الفصل ${sem} (مستوى ${semLevel} - جزء ${sem})`;
+    } else if (spec === 'pre-med') {
+        semText = `السنة التحضيرية - الفصل ${sem}`;
+        changerExtra = ` | الفصل ${sem}`;
+    }
+    
+    const subTitle = spec === 'pre-med' ? `${specNameFull} • الفصل ${sem}` : `${yearText} • ${specNameFull}`;
+    
+    return {
+        specName,
+        specNameFull,
+        yearText,
+        semText,
+        changerExtra,
+        subTitle,
+        fullNav: `${specName} - ${semText}`
+    };
+}
+
 let currentSubjectsData = [];
 
 // Global queue for background iframe loading
@@ -63,11 +157,7 @@ function processDentIframeQueue() {
     window.isDentIframeProcessing = true;
     
     let iframe = window.dentIframeQueue.shift();
-    if (iframe && (iframe.src === '' || iframe.src === 'about:blank' || iframe.src === window.location.href)) {
-        const dataSrc = iframe.getAttribute('data-src');
-        if (dataSrc) {
-            iframe.src = dataSrc;
-        }
+    if (iframe && dentEnsureIframeSrc(iframe)) {
         // Responsive interval between sequential background iframe loads
         setTimeout(processDentIframeQueue, 800);
     } else {
@@ -78,13 +168,11 @@ function processDentIframeQueue() {
 function dentPreloadSubjectIframe(det, includeInactiveTab = false) {
     if (!det) return;
     const visibleIframe = det.querySelector('.dent-tab-panel.active iframe') || det.querySelector('iframe');
-    if (visibleIframe && (visibleIframe.src === '' || visibleIframe.src === 'about:blank' || visibleIframe.src === window.location.href)) {
-        const dataSrc = visibleIframe.getAttribute('data-src');
-        if (dataSrc) visibleIframe.src = dataSrc;
-    }
+    dentEnsureIframeSrc(visibleIframe);
+
     if (includeInactiveTab) {
         const otherIframe = det.querySelector('.dent-tab-panel:not(.active) iframe');
-        if (otherIframe && (otherIframe.src === '' || otherIframe.src === 'about:blank' || otherIframe.src === window.location.href)) {
+        if (dentIsIframeUnloaded(otherIframe)) {
             if (!window.dentIframeQueue.includes(otherIframe)) {
                 window.dentIframeQueue.push(otherIframe);
                 if (!window.isDentIframeProcessing) {
@@ -112,14 +200,7 @@ function dentTrack(type, data) {
 
 // =========================================================================
 // 🔘 MULTI-SPECIALTY MASTER SWITCH (ON / OFF)
-// -------------------------------------------------------------------------
-// true  (ON)  -> Multi-Specialty Active: Pre-Med, Medicine & Dentistry.
-//                Redirects new students to /wolcome/ and shows Path Changer.
-// false (OFF) -> Single-Track Forced: Locks portal to Dentistry Year 3 Semester 1
-//                and instantly bypasses the welcome screen.
 // =========================================================================
-// The server-side admin setting is the source of truth. Check synchronous
-// window variable or sessionStorage first so page transitions NEVER blank out.
 let DENT_MULTI_SPECIALTY_MODE = false;
 
 // Synchronously hydrate portal mode from window (injected by loader) or sessionStorage
@@ -147,12 +228,11 @@ async function dentLoadPortalMode() {
             try { sessionStorage.setItem('dent2025_multi_specialty_mode', DENT_MULTI_SPECIALTY_MODE ? '1' : '0'); } catch(e){}
         }
     } catch (e) {
-        // Keep the restricted fallback when the setting endpoint is unavailable.
         console.warn('Unable to load portal mode; using restricted mode.', e);
     }
 }
 
-// IMMEDIATE SELECTION CHECK (after the server setting has loaded or hydrated):
+// IMMEDIATE SELECTION CHECK:
 function dentApplyPortalModeRouting() {
     const isWelcomePage = window.location.pathname.includes('wolcome') || window.location.pathname.includes('welcome');
 
@@ -164,12 +244,12 @@ function dentApplyPortalModeRouting() {
         // If user lands on welcome page directly, kick them to main page
         if (isWelcomePage) {
             document.documentElement.style.visibility = 'hidden';
-            window.location.replace(API_BASE + '/');
+            window.location.replace('/');
             return true;
         }
     } else {
         // [ON MODE]: Full multi-specialty portal
-        if (isWelcomePage) return false; // Don't redirect from welcome page itself
+        if (isWelcomePage) return false;
 
         let isValidSelection = false;
         try {
@@ -183,10 +263,9 @@ function dentApplyPortalModeRouting() {
         } catch (e) {}
 
         if (!isValidSelection) {
-            // Save intended page to redirect back after selecting specialty
             sessionStorage.setItem('dent2025_redirect_after', window.location.pathname);
             document.documentElement.style.visibility = 'hidden';
-            window.location.replace(API_BASE + '/wolcome/');
+            window.location.replace('/wolcome/');
             return true;
         }
     }
@@ -198,24 +277,18 @@ async function dentBootstrapDashboard() {
                         (sessionStorage.getItem('dent2025_multi_specialty_mode') !== null);
 
     if (isKnownMode) {
-        // Mode is known: evaluate routing immediately with ZERO flash/blank screen
         const redirected = dentApplyPortalModeRouting();
         if (redirected) return;
 
-        // Ensure document remains visible immediately
         document.documentElement.style.visibility = '';
-
-        // Initialize dashboard without blocking on network
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', dentInitDashboard, { once: true });
         } else {
             dentInitDashboard();
         }
 
-        // Revalidate setting in background (non-blocking)
         dentLoadPortalMode();
     } else {
-        // Fallback for first load if window/sessionStorage was not populated
         document.documentElement.style.visibility = 'hidden';
         await dentLoadPortalMode();
 
@@ -235,25 +308,20 @@ dentBootstrapDashboard();
 
 function dentInitDashboard() {
     const isWelcomePage = window.location.pathname.includes('wolcome') || window.location.pathname.includes('welcome');
-    let selectionData = null;
-    try {
-        const raw = localStorage.getItem('dent2025_selection');
-        if (raw) selectionData = JSON.parse(raw);
-    } catch(e) {}
+    const selection = dentGetSelection();
     
-    // Inject the path changer only if multi-specialty mode is ON
-    if (DENT_MULTI_SPECIALTY_MODE && !isWelcomePage && selectionData && selectionData.specialty) {
-        injectPathChanger(selectionData);
+    // Inject path changer only if multi-specialty mode is ON
+    if (DENT_MULTI_SPECIALTY_MODE && !isWelcomePage && selection && selection.specialty) {
+        injectPathChanger(selection);
     }
 
-    if (isWelcomePage) return; // Nothing to do on the welcome page
+    if (isWelcomePage) return;
 
-    const isMainPage = window.location.pathname === '/';
+    const isMainPage = window.location.pathname === '/' || window.location.pathname === '/index.php';
     
     // On the main page, only swap logo and load announcements (no chapters/materials)
     if (isMainPage) {
-        if (selectionData) {
-            const selection = selectionData;
+        if (selection) {
             renderLogo(selection);
             loadAnnouncements(selection);
         }
@@ -264,26 +332,15 @@ function dentInitDashboard() {
 }
 
 function loadDashboardData(forceRefresh = false) {
-    const selectionData = localStorage.getItem('dent2025_selection');
-    if (!selectionData) return;
+    const selection = dentGetSelection();
+    if (!selection) return;
 
-    const selection = JSON.parse(selectionData);
     dentTrack('context_select', { ctx: { specialty: selection.specialty, year: selection.year, semester: selection.semester } });
 
-    // Update top nav if you have an element for it
+    // Update top nav if present
     const navText = document.getElementById('current-selection-text');
     if (navText) {
-        let specName = selection.specialty === 'dentistry' ? 'طب الأسنان' : (selection.specialty === 'medicine' ? 'الطب البشري' : 'التحضيري');
-        let semText = `السنة ${selection.year} - الفصل ${selection.semester}`;
-        if (selection.specialty === 'medicine') {
-            let levelPart1 = (selection.year * 2) - 1;
-            let levelPart2 = selection.year * 2;
-            let semLevel = selection.semester == 1 ? levelPart1 : levelPart2;
-            semText = `السنة ${selection.year} - الفصل ${selection.semester} (مستوى ${semLevel} - جزء ${selection.semester})`;
-        } else if (selection.specialty === 'pre-med') {
-            semText = `السنة التحضيرية - الفصل ${selection.semester}`;
-        }
-        navText.innerText = `${specName} - ${semText}`;
+        navText.innerText = dentFormatContext(selection).fullNav;
     }
 
     renderLogo(selection);
@@ -297,14 +354,12 @@ function loadDashboardData(forceRefresh = false) {
         localStorage.removeItem(cacheKey);
     }
 
-    // Fetch data with localStorage caching unless the caller requested a hard refresh
     const cachedData = forceRefresh ? null : localStorage.getItem(cacheKey);
 
     const processData = (data) => {
         currentSubjectsData = data.subjects || [];
         renderChapters(currentSubjectsData);
         renderMaterials(currentSubjectsData);
-        loadClassesData(selection);
     };
 
     if (cachedData) {
@@ -321,7 +376,7 @@ function loadDashboardData(forceRefresh = false) {
                     }
                 }
             })
-            .catch(e => {});
+            .catch(() => {});
         return;
     }
 
@@ -365,7 +420,6 @@ function isAdmin() {
 }
 
 // Determine "master" (full) admin privileges from server-granted permissions
-// returned by check_auth at login -- NEVER from hardcoded client-side passkeys.
 function dentIsMaster() {
     if (!isAdmin()) return false;
     let perms = {};
@@ -373,16 +427,62 @@ function dentIsMaster() {
     return !!perms.edit_core_subject || !!perms.delete_subject || !!perms.manage_passwords;
 }
 
+// Ensure base UI styles for subject admin buttons & modals
+function dentEnsureBaseStyles() {
+    dentEnsureStyle('dent-base-ui-styles', `
+        .dent-chapter-admin-actions {
+            margin-top: 15px; display: flex; gap: 8px; justify-content: flex-end;
+            border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 12px;
+        }
+        .dent-admin-sub-btn {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            padding: 6px 12px; border-radius: 8px; color: #cbd5e1; cursor: pointer;
+            transition: all 0.2s ease; font-family: inherit; font-size: 0.9rem;
+        }
+        .dent-admin-sub-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+        .dent-admin-sub-del {
+            background: rgba(185,28,28,0.12); border-color: rgba(185,28,28,0.25); color: #ef4444;
+        }
+        .dent-admin-sub-del:hover { background: rgba(185,28,28,0.25); color: #fca5a5; }
+        .dent-modal-input {
+            width: 100%; box-sizing: border-box; background: #121212;
+            border: 1px solid rgba(255,255,255,0.12); padding: 10px 14px; border-radius: 10px;
+            color: #fff; font-size: 0.9rem; outline: none; font-family: inherit; transition: all 0.2s;
+        }
+        .dent-modal-input:focus {
+            border-color: rgba(255,255,255,0.4); box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
+        }
+        .dent-modal-input-danger {
+            border-color: rgba(239,68,68,0.3);
+        }
+        .dent-modal-input-danger:focus {
+            border-color: #f87171; box-shadow: 0 0 0 3px rgba(239,68,68,0.15);
+        }
+        .dent-modal-btn-cancel {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            padding: 10px 18px; border-radius: 10px; color: #cbd5e1; font-weight: 500;
+            font-size: 0.9rem; cursor: pointer; transition: all 0.2s; font-family: inherit;
+        }
+        .dent-modal-btn-cancel:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .dent-modal-btn-save {
+            background: #27272a; color: #f8fafc; border: 1px solid rgba(255,255,255,0.15);
+            padding: 10px 22px; border-radius: 10px; font-weight: 600; font-size: 0.9rem;
+            cursor: pointer; transition: all 0.2s; font-family: inherit;
+        }
+        .dent-modal-btn-save:hover { background: #3f3f46; border-color: rgba(255,255,255,0.25); }
+    `);
+}
+
 // Generate Admin Action Buttons HTML
 function getAdminButtons(sub) {
     if (!isAdmin()) return '';
+    dentEnsureBaseStyles();
     const isMaster = dentIsMaster();
-    
-    const deleteBtn = isMaster ? `<button onclick="deleteSubject(${sub.id})" style="background: rgba(185,28,28,0.12); border: 1px solid rgba(185,28,28,0.25); padding: 6px 12px; border-radius: 8px; color: #ef4444; cursor: pointer; transition: all 0.2s ease; font-family: inherit; font-size: 0.9rem;" onmouseover="this.style.background='rgba(185,28,28,0.25)'" onmouseout="this.style.background='rgba(185,28,28,0.12)'">حذف (Delete)</button>` : '';
+    const deleteBtn = isMaster ? `<button type="button" onclick="deleteSubject(${sub.id})" class="dent-admin-sub-btn dent-admin-sub-del">حذف (Delete)</button>` : '';
 
     return `
-        <div style="margin-top: 15px; display: flex; gap: 8px; justify-content: flex-end; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 12px;">
-            <button onclick="editSubject(${sub.id})" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 8px; color: #cbd5e1; cursor: pointer; transition: all 0.2s ease; font-family: inherit; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">تعديل (Edit)</button>
+        <div class="dent-chapter-admin-actions">
+            <button type="button" onclick="editSubject(${sub.id})" class="dent-admin-sub-btn">تعديل (Edit)</button>
             ${deleteBtn}
         </div>
     `;
@@ -416,15 +516,7 @@ window.switchDentTab = function(subId, tabType, event) {
     const activePanel = document.getElementById(`dent-panel-${tabType}-${subId}`);
     if (activePanel) {
         activePanel.classList.add('active');
-
-        // Lazy-load iframe if not loaded yet
-        const iframe = activePanel.querySelector('iframe');
-        if (iframe && (iframe.src === '' || iframe.src === 'about:blank' || iframe.src === window.location.href)) {
-            const dataSrc = iframe.getAttribute('data-src');
-            if (dataSrc) {
-                iframe.src = dataSrc;
-            }
-        }
+        dentEnsureIframeSrc(activePanel.querySelector('iframe'));
     }
 };
 
@@ -549,7 +641,6 @@ function renderChapters(subjects) {
     const details = container.querySelectorAll('.dent-chapter-details');
 
     // Smart Predictive Preloader:
-    // 1. Hover & Touch-Start: Instantly start loading before user even finishes clicking!
     details.forEach((det) => {
         const summary = det.querySelector('.dent-chapter-summary');
         const triggerInstantPreload = () => {
@@ -566,16 +657,14 @@ function renderChapters(subjects) {
                 const sub = currentSubjectsData.find(s => s.id == subId);
                 dentTrack('subject_open', { subject: sub ? sub.name : 'مادة' });
 
-                // Immediately ensure active tab is loaded & queue secondary tab
                 dentPreloadSubjectIframe(det, true);
 
-                // Preload the next adjacent subject card so scrolling down is instantaneous
                 const nextDet = det.nextElementSibling && det.nextElementSibling.matches('.dent-chapter-details')
                     ? det.nextElementSibling
                     : null;
                 if (nextDet) {
                     const nextIframe = nextDet.querySelector('.dent-tab-panel.active iframe');
-                    if (nextIframe && (nextIframe.src === '' || nextIframe.src === 'about:blank' || nextIframe.src === window.location.href)) {
+                    if (dentIsIframeUnloaded(nextIframe)) {
                         if (!window.dentIframeQueue.includes(nextIframe)) {
                             window.dentIframeQueue.push(nextIframe);
                             if (!window.isDentIframeProcessing) {
@@ -589,31 +678,27 @@ function renderChapters(subjects) {
         });
     });
 
-    // 2. Device-Aware Idle Background Queue:
-    // Waits 1.2s until initial page rendering is completely idle
+    // Device-Aware Idle Background Queue:
     setTimeout(() => {
         const allDetails = Array.from(container.querySelectorAll('.dent-chapter-details'));
         if (allDetails.length === 0) return;
 
         const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
 
-        // On Mobile: silently preload the first 2 subjects' Chapters
-        // On Desktop: queue all subjects' Chapters sequentially
         const limit = isMobile ? Math.min(2, allDetails.length) : allDetails.length;
         for (let i = 0; i < limit; i++) {
             const iframe = allDetails[i].querySelector('.dent-tab-panel[id^="dent-panel-chapters-"] iframe');
-            if (iframe && (iframe.src === '' || iframe.src === 'about:blank' || iframe.src === window.location.href)) {
+            if (dentIsIframeUnloaded(iframe)) {
                 if (!window.dentIframeQueue.includes(iframe)) {
                     window.dentIframeQueue.push(iframe);
                 }
             }
         }
 
-        // On desktop with abundant memory, queue secondary materials folders after chapters
         if (!isMobile) {
             allDetails.forEach(det => {
                 const matIframe = det.querySelector('.dent-tab-panel[id^="dent-panel-materials-"] iframe');
-                if (matIframe && (matIframe.src === '' || matIframe.src === 'about:blank' || matIframe.src === window.location.href)) {
+                if (dentIsIframeUnloaded(matIframe)) {
                     if (!window.dentIframeQueue.includes(matIframe)) {
                         window.dentIframeQueue.push(matIframe);
                     }
@@ -629,7 +714,7 @@ function renderChapters(subjects) {
 }
 
 // ---------------------------------------------------------
-// Render Materials (Clears & Hides second container)
+// Render Materials (Hides second container)
 // ---------------------------------------------------------
 function renderMaterials(subjects) {
     const container = document.getElementById('dynamic-materials-container');
@@ -666,10 +751,10 @@ window.toggleIframeExpand = function(containerId, btn) {
 
 // API calls for Edit and Delete
 window.editSubject = function(id) {
+    dentEnsureBaseStyles();
     const sub = currentSubjectsData.find(s => s.id == id);
     if (!sub) return;
     
-    // Parse hours to get theory and practical (e.g. "2 نظري، 1 عملي" or "3 نظري")
     let th = 0, pr = 0;
     if (sub.hours) {
         const tMatch = sub.hours.match(/(\d+)\s*نظري/);
@@ -683,25 +768,24 @@ window.editSubject = function(id) {
     
     const isMaster = dentIsMaster();
     
-    // Re-create modal HTML dynamically so master fields render appropriately
     let modal = document.getElementById('dent-admin-modal');
     if (modal) modal.remove();
     
     const masterFieldsHTML = isMaster ? `
         <div style="margin-bottom:16px;">
             <label style="font-size:0.8rem; color:#f87171; font-weight:500; display:block; margin-bottom:6px;">رابط/ID مجلد الشابترات (خيارات الماستر)</label>
-            <input type="text" id="dent-modal-chapters-id" placeholder="الصق ID مجلد الشابترات هنا" style="width:100%; box-sizing:border-box; background:#121212; border:1px solid rgba(239,68,68,0.3); padding:10px 14px; border-radius:10px; color:#fff; font-size:0.9rem; outline:none; transition:all 0.2s;" onfocus="this.style.borderColor='#f87171'; this.style.boxShadow='0 0 0 3px rgba(239,68,68,0.15)';" onblur="this.style.borderColor='rgba(239,68,68,0.3)'; this.style.boxShadow='none';">
+            <input type="text" id="dent-modal-chapters-id" placeholder="الصق ID مجلد الشابترات هنا" class="dent-modal-input dent-modal-input-danger">
         </div>
         <div style="margin-bottom:20px;">
             <label style="font-size:0.8rem; color:#f87171; font-weight:500; display:block; margin-bottom:6px;">رابط/ID مجلد المصادر الإضافية (خيارات الماستر)</label>
-            <input type="text" id="dent-modal-materials-id" placeholder="الصق ID مجلد المصادر هنا" style="width:100%; box-sizing:border-box; background:#121212; border:1px solid rgba(239,68,68,0.3); padding:10px 14px; border-radius:10px; color:#fff; font-size:0.9rem; outline:none; transition:all 0.2s;" onfocus="this.style.borderColor='#f87171'; this.style.boxShadow='0 0 0 3px rgba(239,68,68,0.15)';" onblur="this.style.borderColor='rgba(239,68,68,0.3)'; this.style.boxShadow='none';">
+            <input type="text" id="dent-modal-materials-id" placeholder="الصق ID مجلد المصادر هنا" class="dent-modal-input dent-modal-input-danger">
         </div>
     ` : '';
     
     const nameInputHTML = isMaster ? `
-        <input type="text" id="dent-modal-name" style="width:100%; box-sizing:border-box; background:#121212; border:1px solid rgba(255,255,255,0.12); padding:10px 14px; border-radius:10px; color:#fff; font-size:0.9rem; outline:none; transition:all 0.2s;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)'; this.style.boxShadow='0 0 0 3px rgba(255,255,255,0.08)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)'; this.style.boxShadow='none';">
+        <input type="text" id="dent-modal-name" class="dent-modal-input">
     ` : `
-        <input type="text" id="dent-modal-name" readonly style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:10px 14px; border-radius:10px; color:#94a3b8; font-size:0.9rem; outline:none; cursor:not-allowed;">
+        <input type="text" id="dent-modal-name" readonly class="dent-modal-input" style="background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.08); color:#94a3b8; cursor:not-allowed;">
         <span style="font-size:0.75rem; color:#64748b; margin-top:4px; display:block;">(تعديل اسم المادة متاح لحساب الماستر فقط)</span>
     `;
 
@@ -710,7 +794,7 @@ window.editSubject = function(id) {
         <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 28px; width: 90%; max-width: 420px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); color: #fff;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 22px;">
                 <h3 style="margin:0; font-size:1.15rem; font-weight:600; color:#f8fafc;">تعديل بيانات المادة</h3>
-                <button type="button" onclick="document.getElementById('dent-admin-modal').style.display='none'" style="background:rgba(255,255,255,0.06); border:none; color:#9ca3af; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.color='#9ca3af';">×</button>
+                <button type="button" onclick="document.getElementById('dent-admin-modal').style.display='none'" style="background:rgba(255,255,255,0.06); border:none; color:#9ca3af; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;" title="إغلاق">×</button>
             </div>
             <input type="hidden" id="dent-modal-id">
             
@@ -722,11 +806,11 @@ window.editSubject = function(id) {
             <div style="display:flex; gap:12px; margin-bottom:16px;">
                 <div style="width:50%;">
                     <label style="font-size:0.8rem; color:#9ca3af; font-weight:500; display:block; margin-bottom:6px;">ساعات النظري</label>
-                    <input type="number" id="dent-modal-th" min="0" style="width:100%; box-sizing:border-box; background:#121212; border:1px solid rgba(255,255,255,0.12); padding:10px 14px; border-radius:10px; color:#fff; font-size:0.9rem; outline:none; transition:all 0.2s;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)'; this.style.boxShadow='0 0 0 3px rgba(255,255,255,0.08)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)'; this.style.boxShadow='none';">
+                    <input type="number" id="dent-modal-th" min="0" class="dent-modal-input">
                 </div>
                 <div style="width:50%;">
                     <label style="font-size:0.8rem; color:#9ca3af; font-weight:500; display:block; margin-bottom:6px;">ساعات العملي</label>
-                    <input type="number" id="dent-modal-pr" min="0" style="width:100%; box-sizing:border-box; background:#121212; border:1px solid rgba(255,255,255,0.12); padding:10px 14px; border-radius:10px; color:#fff; font-size:0.9rem; outline:none; transition:all 0.2s;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)'; this.style.boxShadow='0 0 0 3px rgba(255,255,255,0.08)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)'; this.style.boxShadow='none';">
+                    <input type="number" id="dent-modal-pr" min="0" class="dent-modal-input">
                 </div>
             </div>
             <div style="font-size:0.73rem; color:#94a3b8; margin-top:-10px; margin-bottom:16px; line-height:1.4;">
@@ -735,14 +819,14 @@ window.editSubject = function(id) {
             
             <div style="margin-bottom:20px;">
                 <label style="font-size:0.8rem; color:#9ca3af; font-weight:500; display:block; margin-bottom:6px;">توزيع الدرجات (Marks)</label>
-                <input type="text" id="dent-modal-marks" style="width:100%; box-sizing:border-box; background:#121212; border:1px solid rgba(255,255,255,0.12); padding:10px 14px; border-radius:10px; color:#fff; font-size:0.9rem; outline:none; transition:all 0.2s;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)'; this.style.boxShadow='0 0 0 3px rgba(255,255,255,0.08)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)'; this.style.boxShadow='none';">
+                <input type="text" id="dent-modal-marks" class="dent-modal-input">
             </div>
             
             ${masterFieldsHTML}
             
             <div style="display:flex; gap:12px; justify-content:flex-end;">
-                <button type="button" onclick="document.getElementById('dent-admin-modal').style.display='none'" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px 18px; border-radius:10px; color:#cbd5e1; font-weight:500; font-size:0.9rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#cbd5e1';">إلغاء</button>
-                <button type="button" onclick="saveAdminModal()" style="background:#27272a; color:#f8fafc; border:1px solid rgba(255,255,255,0.15); padding:10px 22px; border-radius:10px; font-weight:600; font-size:0.9rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255,255,255,0.25)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255,255,255,0.15)';">حفظ التعديلات</button>
+                <button type="button" onclick="document.getElementById('dent-admin-modal').style.display='none'" class="dent-modal-btn-cancel">إلغاء</button>
+                <button type="button" onclick="saveAdminModal()" class="dent-modal-btn-save">حفظ التعديلات</button>
             </div>
         </div>
     </div>
@@ -801,18 +885,14 @@ window.saveAdminModal = function() {
         payload.materials_folder_id = extractId(matInput.value.trim());
     }
     
-    fetch(API_BASE + '/dent2025_api.php?action=edit', {
+    fetch(API_BASE_URL + '?action=edit', {
         method: 'POST',
         body: JSON.stringify(payload)
     }).then(r=>r.json()).then(res => {
         if(res.success) {
-            // Clear session cache for current selection so updated subject details reload cleanly
-            const selData = localStorage.getItem('dent2025_selection');
-            if (selData) {
-                try {
-                    const sel = JSON.parse(selData);
-                    localStorage.removeItem(`dent2025_dashboard_data_${sel.specialty}_${sel.year}_${sel.semester}`);
-                } catch(e) {}
+            const sel = dentGetSelection();
+            if (sel) {
+                localStorage.removeItem(`dent2025_dashboard_data_${sel.specialty}_${sel.year}_${sel.semester}`);
             }
             loadDashboardData(true);
         } else {
@@ -825,7 +905,7 @@ window.deleteSubject = function(id) {
     if (!confirm("هل أنت متأكد من حذف هذه المادة؟ (لن تحذف المجلدات من درايف)")) return;
 
     const pass = sessionStorage.getItem('dent2025_admin_pass');
-    fetch(API_BASE + '/dent2025_api.php?action=delete', {
+    fetch(API_BASE_URL + '?action=delete', {
         method: 'POST',
         body: JSON.stringify({ password: pass, id: id })
     }).then(r=>r.json()).then(res => {
@@ -840,16 +920,9 @@ window.deleteSubject = function(id) {
 function injectPathChanger(selection) {
     if (document.getElementById('dent-path-changer')) return;
 
-    let specName = selection.specialty === 'dentistry' ? 'طب الأسنان' : (selection.specialty === 'medicine' ? 'الطب البشري' : 'التحضيري');
-    let extraText = ` | السنة ${selection.year} | الفصل ${selection.semester}`;
-    if (selection.specialty === 'medicine') {
-        let levelPart1 = (selection.year * 2) - 1;
-        let levelPart2 = selection.year * 2;
-        let semLevel = selection.semester == 1 ? levelPart1 : levelPart2;
-        extraText = ` | السنة ${selection.year} | الفصل ${selection.semester} (مستوى ${semLevel} - جزء ${selection.semester})`;
-    } else if (selection.specialty === 'pre-med') {
-        extraText = ` | الفصل ${selection.semester}`;
-    }
+    const ctx = dentFormatContext(selection);
+    const specName = ctx.specName;
+    const extraText = ctx.changerExtra;
 
     const changer = document.createElement('div');
     changer.id = 'dent-path-changer';
@@ -865,8 +938,7 @@ function injectPathChanger(selection) {
         </div>
     `;
 
-    const style = document.createElement('style');
-    style.textContent = `
+    dentEnsureStyle('dent-path-changer-styles', `
         #dent-path-changer {
             position: fixed;
             top: max(10px, env(safe-area-inset-top, 10px));
@@ -972,8 +1044,7 @@ function injectPathChanger(selection) {
                 font-size: 0.75rem;
             }
         }
-    `;
-    document.head.appendChild(style);
+    `);
     document.body.appendChild(changer);
 
     const contentBox = changer.querySelector('.dent-path-changer-content');
@@ -984,20 +1055,18 @@ function injectPathChanger(selection) {
         contentBox.classList.add('minimized');
     }, 2500);
 
-    contentBox.addEventListener('click', (e) => {
+    contentBox.addEventListener('click', () => {
         if (contentBox.classList.contains('minimized')) {
-            // First click (when minimized): Expand it
             contentBox.classList.remove('minimized');
             clearTimeout(expandTimeout);
             expandTimeout = setTimeout(() => {
                 contentBox.classList.add('minimized');
             }, 3000);
         } else {
-            // Second click (when already expanded): Go to landing page
             window.getSelection().removeAllRanges();
             localStorage.removeItem('dent2025_selection');
             document.documentElement.style.visibility = 'hidden';
-            window.location.href = API_BASE + '/wolcome/';
+            window.location.href = '/wolcome/';
         }
     });
 }
@@ -1006,21 +1075,20 @@ function injectPathChanger(selection) {
 // Render Dynamic Logo & Announcements
 // ---------------------------------------------------------
 function renderLogo(selection) {
-    let logoPath = '/logos/dent2025.png'; // default fallback
-    if (selection.specialty === 'dentistry') logoPath = API_BASE + '/logos/dentistry.webp';
-    else if (selection.specialty === 'medicine') logoPath = API_BASE + '/logos/medicine.webp';
-    else if (selection.specialty === 'pre-med') logoPath = API_BASE + '/logos/pre-med.webp';
+    let logoPath = '/logos/dent2025.png';
+    if (selection.specialty === 'dentistry') logoPath = '/logos/dentistry.webp';
+    else if (selection.specialty === 'medicine') logoPath = '/logos/medicine.webp';
+    else if (selection.specialty === 'pre-med') logoPath = '/logos/pre-med.webp';
     
-    // Replace the main Astra theme logo in the header
     const siteLogos = document.querySelectorAll('.site-logo img, .custom-logo');
     siteLogos.forEach(img => {
         img.src = logoPath;
-        img.removeAttribute('srcset'); // Prevent WP from loading a smaller fallback
+        img.removeAttribute('srcset');
     });
 
     let container = document.getElementById('dynamic-logo-container');
     if (container) {
-        container.innerHTML = ''; // Clear out the container so the big logo doesn't show
+        container.innerHTML = '';
     }
 }
 
@@ -1030,15 +1098,13 @@ function loadAnnouncements(selection) {
     
     container.innerHTML = `<div style="text-align:center; color:#94a3b8; margin-top: 24px; margin-bottom: 20px;">جاري تحميل المهام...</div>`;
     
-    fetch(`${API_BASE}/announcements_api.php?specialty=${selection.specialty}&year=${selection.year}&semester=${selection.semester}`)
+    fetch(`/announcements_api.php?specialty=${selection.specialty}&year=${selection.year}&semester=${selection.semester}`)
         .then(res => res.json())
         .then(data => {
-            // Always render — even if success is false, show empty state so non-admins don't see a blank/spinner
             renderAnnouncements(data.success ? (data.data || {}) : {}, selection);
         })
         .catch(err => {
             console.error("Announcements Error:", err);
-            // On network/parse failure, still render the empty state instead of going blank
             renderAnnouncements({}, selection);
         });
 }
@@ -1071,22 +1137,7 @@ function renderAnnouncements(dataObj, selection) {
     const container = document.getElementById('dynamic-announcements-container');
     if (!container) return;
     
-    // Default text if empty
-    let content = dataObj.content || "لا يوجد إعلانات حالياً.";
-    let hasActualContent = dataObj.content && dataObj.content.trim() !== '' && dataObj.content.trim() !== '<p></p>' && dataObj.content.trim() !== '<br>';
-    
-    let timeAgoText = '';
-    let dateTooltip = '';
-    if (hasActualContent && dataObj.last_updated) {
-        timeAgoText = formatAnnouncementsTimeAgo(dataObj.last_updated);
-        try {
-            const d = new Date(Number(dataObj.last_updated) * 1000);
-            dateTooltip = d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'numeric', day: 'numeric' });
-        } catch(e) {}
-    }
-    
-    let html = `
-    <style>
+    dentEnsureStyle('dent-announcements-styles', `
         .dent-announcements-simple {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.05);
@@ -1115,11 +1166,9 @@ function renderAnnouncements(dataObj, selection) {
         .dent-ann-content[contenteditable="true"] {
             background: rgba(0,0,0,0.3); border: 1px dashed #4f8cff; padding: 15px; border-radius: 8px; outline: none; min-height: 40px;
         }
-        
         .dent-ann-toolbar { display: none; gap: 8px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
         .dent-toolbar-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; padding: 5px 10px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; font-family: inherit; font-weight: bold; }
         .dent-toolbar-btn:hover { background: rgba(255,255,255,0.15); }
-        
         .dent-ann-top-left {
             position: absolute;
             top: 15px;
@@ -1151,6 +1200,7 @@ function renderAnnouncements(dataObj, selection) {
             font-size: 0.75rem;
             cursor: pointer;
             transition: all 0.2s;
+            font-family: inherit;
         }
         .dent-ann-edit-btn:hover { background: rgba(255,255,255,0.1); }
         .dent-ann-save-btn {
@@ -1163,29 +1213,44 @@ function renderAnnouncements(dataObj, selection) {
             font-weight: 600;
             cursor: pointer;
             display: none;
+            font-family: inherit;
         }
-    </style>
+    `);
+
+    let content = dataObj.content || "لا يوجد إعلانات حالياً.";
+    let hasActualContent = dataObj.content && dataObj.content.trim() !== '' && dataObj.content.trim() !== '<p></p>' && dataObj.content.trim() !== '<br>';
+    
+    let timeAgoText = '';
+    let dateTooltip = '';
+    if (hasActualContent && dataObj.last_updated) {
+        timeAgoText = formatAnnouncementsTimeAgo(dataObj.last_updated);
+        try {
+            const d = new Date(Number(dataObj.last_updated) * 1000);
+            dateTooltip = d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'numeric', day: 'numeric' });
+        } catch(e) {}
+    }
+    
+    container.innerHTML = `
     <div class="dent-announcements-simple">
         <div class="dent-ann-top-left">
             ${timeAgoText ? `<span class="dent-ann-time-badge" ${dateTooltip ? `title="آخر تحديث: ${dateTooltip}"` : ''}>${timeAgoText}</span>` : ''}
-            ${isAdmin() ? `<button id="btn-edit-ann" class="dent-ann-edit-btn" onclick="toggleEditAnnouncements()">تعديل</button>
-                           <button id="btn-save-ann" class="dent-ann-save-btn" onclick="saveAnnouncements()">حفظ</button>` : ''}
+            ${isAdmin() ? `<button type="button" id="btn-edit-ann" class="dent-ann-edit-btn" onclick="toggleEditAnnouncements()">تعديل</button>
+                           <button type="button" id="btn-save-ann" class="dent-ann-save-btn" onclick="saveAnnouncements()">حفظ</button>` : ''}
         </div>
         
         <div id="dent-ann-toolbar" class="dent-ann-toolbar">
-            <button class="dent-toolbar-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('bold', false, null)" title="عريض (Bold)">B</button>
-            <button class="dent-toolbar-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('italic', false, null)" style="font-style: italic;" title="مائل (Italic)">I</button>
-            <button class="dent-toolbar-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('underline', false, null)" style="text-decoration: underline;" title="تسطير (Underline)">U</button>
+            <button type="button" class="dent-toolbar-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('bold', false, null)" title="عريض (Bold)">B</button>
+            <button type="button" class="dent-toolbar-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('italic', false, null)" style="font-style: italic;" title="مائل (Italic)">I</button>
+            <button type="button" class="dent-toolbar-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('underline', false, null)" style="text-decoration: underline;" title="تسطير (Underline)">U</button>
             <span style="color:rgba(255,255,255,0.2);">|</span>
-            <button class="dent-toolbar-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('fontSize', false, '5')" title="نص كبير (Large Text)">كبير</button>
-            <button class="dent-toolbar-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('fontSize', false, '3')" title="نص عادي (Normal Text)">عادي</button>
-            <button class="dent-toolbar-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('insertUnorderedList', false, null)" title="قائمة نقطية (Bullet List)">• قائمة</button>
+            <button type="button" class="dent-toolbar-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('fontSize', false, '5')" title="نص كبير (Large Text)">كبير</button>
+            <button type="button" class="dent-toolbar-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('fontSize', false, '3')" title="نص عادي (Normal Text)">عادي</button>
+            <button type="button" class="dent-toolbar-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('insertUnorderedList', false, null)" title="قائمة نقطية (Bullet List)">• قائمة</button>
         </div>
 
         <div id="dent-ann-display" class="dent-ann-content">${content}</div>
     </div>
     `;
-    container.innerHTML = html;
 }
 
 window.toggleEditAnnouncements = function() {
@@ -1195,17 +1260,14 @@ window.toggleEditAnnouncements = function() {
     const toolbar = document.getElementById('dent-ann-toolbar');
     
     if (display.getAttribute('contenteditable') === 'true') {
-        // Cancel edit
         display.setAttribute('contenteditable', 'false');
         toolbar.style.display = 'none';
         btnEdit.style.display = 'block';
         btnSave.style.display = 'none';
         
-        // Quick reload to discard unsaved changes
-        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        const sel = dentGetSelection() || {};
         loadAnnouncements(sel);
     } else {
-        // Start edit
         display.setAttribute('contenteditable', 'true');
         toolbar.style.display = 'flex';
         display.focus();
@@ -1218,7 +1280,6 @@ window.saveAnnouncements = function() {
     const display = document.getElementById('dent-ann-display');
     let content = display.innerHTML || '';
     
-    // Safely sanitize HTML to prevent script injection while preserving formatting
     content = dentSanitizeRichText(content);
     content = content.replace(/(?:<p>(?:<br\s*\/?>|&nbsp;|\s)*<\/p>|<br\s*\/?>|\s)+$/gi, '').trim();
     if (!content || content === '<br>' || content === '<p></p>') {
@@ -1226,26 +1287,29 @@ window.saveAnnouncements = function() {
     }
     
     const pass = sessionStorage.getItem('dent2025_admin_pass');
-    const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+    const sel = dentGetSelection() || {};
     
     const btnSave = document.getElementById('btn-save-ann');
     const oldText = btnSave.innerText;
     btnSave.innerText = 'جاري الحفظ...';
+    btnSave.disabled = true;
 
-    fetch(API_BASE + '/announcements_api.php', {
+    fetch('/announcements_api.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ specialty: sel.specialty, year: sel.year, semester: sel.semester, content: content, password: pass })
     })
     .then(r => r.json())
     .then(res => {
+        btnSave.disabled = false;
         if(res.success) {
             loadAnnouncements(sel);
         } else {
             btnSave.innerText = oldText;
             alert("Error: " + res.message);
         }
-    }).catch(err => {
+    }).catch(() => {
+        btnSave.disabled = false;
         btnSave.innerText = oldText;
         alert("حدث خطأ في الاتصال");
     });
@@ -1279,7 +1343,6 @@ function loadClassesData(selection) {
         }).catch(err => console.error("Classes API Error:", err));
 }
 
-// Interactive Subject Spotlight for Weekly Schedule
 // Interactive Subject Spotlight for Weekly Schedule
 window.dentHighlightedClassSubject = null;
 
@@ -1359,6 +1422,14 @@ function isClassInGroup(c, targetGroup) {
     return g === targetGroup.trim();
 }
 
+function dentIsClassActiveNow(c, currentMins) {
+    if (!c || !c.start_time || !c.end_time || !c.start_time.includes(':') || !c.end_time.includes(':')) return false;
+    const [sh, sm] = c.start_time.split(':').map(Number);
+    const [eh, em] = c.end_time.split(':').map(Number);
+    if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return false;
+    return currentMins >= (sh * 60 + sm) && currentMins <= (eh * 60 + em);
+}
+
 function renderClassesWidget() {
     let container = document.getElementById('dynamic-classes-container');
     if (!container) {
@@ -1368,37 +1439,11 @@ function renderClassesWidget() {
             container.id = 'dynamic-classes-container';
             target.appendChild(container);
         } else {
-            return; // Only render where the target div is placed!
+            return;
         }
     }
-    
-    let rawGroups = [...new Set(currentClassesData.map(c => (c && c.group_name ? String(c.group_name).trim() : '')))].filter(Boolean);
-    let specificGroups = rawGroups.filter(g => g !== 'الدفعة كاملة' && g !== 'الكل' && g !== 'كل الدفعة');
-    let groups = specificGroups.length > 0 ? specificGroups : (rawGroups.length > 0 ? rawGroups : ["المجموعة A"]);
-    
-    let savedGroup = localStorage.getItem('dent2025_selected_group') || groups[0];
-    if (!groups.includes(savedGroup)) savedGroup = groups[0];
-    
-    const daysAr = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس"];
-    const daysEn = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
-    
-    const now = new Date();
-    const currentDayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 4 = Thursday
-    const currentMins = now.getHours() * 60 + now.getMinutes();
-    
-    // Inclusive filtering: match group or universal (الدفعة كاملة / empty)
-    const weekClasses = currentClassesData.filter(c => isClassInGroup(c, savedGroup));
-    
-    let selObj = {};
-    try { selObj = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
-    const specNamesAr = { 'dentistry': 'طب الأسنان', 'medicine': 'الطب البشري', 'pre-med': 'السنة التحضيرية' };
-    const yearNamesAr = { 0: 'السنة الأولى', 1: 'السنة الأولى', 2: 'السنة الثانية', 3: 'السنة الثالثة', 4: 'السنة الرابعة', 5: 'السنة الخامسة', 6: 'السنة السادسة' };
-    const subTitleText = (selObj.specialty && selObj.year) 
-        ? `${yearNamesAr[selObj.year] || ('السنة ' + selObj.year)} • ${specNamesAr[selObj.specialty] || selObj.specialty}`
-        : 'السنة الثالثة • طب الأسنان';
 
-    let html = `
-    <style>
+    dentEnsureStyle('dent-classes-widget-styles', `
         .dent-classes-widget {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1431,8 +1476,6 @@ function renderClassesWidget() {
         .dent-classes-group-select:focus {
             border-color: rgba(255,255,255,0.35);
         }
-
-        /* Spotlight Bar */
         .dent-spotlight-bar {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.18);
@@ -1451,68 +1494,37 @@ function renderClassesWidget() {
             to { opacity: 1; transform: translateY(0); }
         }
         .dent-spotlight-bar-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            text-align: right;
+            display: flex; flex-direction: column; gap: 4px; text-align: right;
         }
         .dent-spotlight-bar-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
+            font-size: 0.95rem; font-weight: 700; color: #ffffff; display: flex;
+            align-items: center; gap: 8px; flex-wrap: wrap;
         }
         .dent-spotlight-count-badge {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #cbd5e1;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            padding: 2px 8px;
-            border-radius: 6px;
+            font-size: 0.75rem; font-weight: 600; color: #cbd5e1; background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.12); padding: 2px 8px; border-radius: 6px;
         }
         .dent-spotlight-bar-days {
-            font-size: 0.8rem;
-            color: #94a3b8;
-            line-height: 1.45;
+            font-size: 0.8rem; color: #94a3b8; line-height: 1.45;
         }
         .dent-spotlight-bar-days b {
-            color: #f8fafc;
-            font-weight: 600;
+            color: #f8fafc; font-weight: 600;
         }
         .dent-spotlight-clear-btn {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #f8fafc;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.2s;
-            font-family: inherit;
+            background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #f8fafc; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem;
+            font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s; font-family: inherit;
         }
         .dent-spotlight-clear-btn:hover {
-            background: rgba(239, 68, 68, 0.2);
-            border-color: rgba(239, 68, 68, 0.4);
-            color: #fca5a5;
+            background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;
         }
-        
-        /* Vertical Day Blocks (Monochrome) */
         .dent-day-block {
-            background: rgba(0, 0, 0, 0.22);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 14px; padding: 18px 20px; margin-bottom: 18px;
-            transition: all 0.25s ease;
+            background: rgba(0, 0, 0, 0.22); border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px; padding: 18px 20px; margin-bottom: 18px; transition: all 0.25s ease;
             scroll-margin-top: 80px;
         }
         .dent-day-block.is-today {
-            border-color: rgba(255, 255, 255, 0.22);
-            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.04);
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
         .dent-day-header {
@@ -1530,56 +1542,39 @@ function renderClassesWidget() {
             padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.15);
         }
         .dent-day-count {
-            font-size: 0.75rem; font-weight: 500; color: #94a3b8;
-            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 2px 8px; border-radius: 6px;
+            font-size: 0.75rem; font-weight: 500; color: #94a3b8; background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08); padding: 2px 8px; border-radius: 6px;
         }
-        
-        /* Class Items (Monochrome) */
         .dent-class-item {
-            cursor: pointer; user-select: none;
-            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer; user-select: none; transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
         }
         .dent-class-item:hover {
-            transform: translateX(-3px);
-            border-color: rgba(255, 255, 255, 0.22) !important;
+            transform: translateX(-3px); border-color: rgba(255, 255, 255, 0.22) !important;
             background: rgba(255, 255, 255, 0.08) !important;
         }
         .dent-class-item.dent-spotlight-active {
-            background: rgba(255, 255, 255, 0.14) !important;
-            border-color: rgba(255, 255, 255, 0.45) !important;
+            background: rgba(255, 255, 255, 0.14) !important; border-color: rgba(255, 255, 255, 0.45) !important;
             box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3), 0 6px 20px rgba(0, 0, 0, 0.4) !important;
-            transform: scale(1.012) !important;
-            opacity: 1 !important;
-            filter: none !important;
+            transform: scale(1.012) !important; opacity: 1 !important; filter: none !important;
         }
         .dent-class-item.dent-spotlight-active .dent-class-subject {
-            color: #ffffff !important;
-            font-weight: 700 !important;
-            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+            color: #ffffff !important; font-weight: 700 !important; text-shadow: 0 0 10px rgba(255,255,255,0.3);
         }
         .dent-class-item.dent-spotlight-dimmed {
-            opacity: 0.22 !important;
-            filter: grayscale(0.9) !important;
-            transform: scale(0.99) !important;
+            opacity: 0.22 !important; filter: grayscale(0.9) !important; transform: scale(0.99) !important;
         }
-        
         .dent-class-card {
             display: flex; justify-content: space-between; align-items: center;
             padding: 12px 16px; border-radius: 10px; margin-bottom: 9px;
-            background: rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            gap: 12px;
+            background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.06); gap: 12px;
         }
         .dent-class-card.active-now {
-            background: rgba(255, 255, 255, 0.12) !important;
-            border-color: rgba(255, 255, 255, 0.35) !important;
+            background: rgba(255, 255, 255, 0.12) !important; border-color: rgba(255, 255, 255, 0.35) !important;
             box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2), 0 4px 20px rgba(0, 0, 0, 0.35);
         }
         .dent-class-card.active-now .dent-class-subject {
-            color: #ffffff;
-            font-weight: 700;
+            color: #ffffff; font-weight: 700;
         }
         .dent-class-info {
             display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -1587,15 +1582,11 @@ function renderClassesWidget() {
         .dent-class-subject {
             font-size: 0.95rem; font-weight: 600; margin: 0; color: #f8fafc;
         }
-        
-        /* Type Badges (Monochrome) */
         .dent-type-badge {
             font-size: 0.72rem; padding: 2px 8px; border-radius: 5px; font-weight: 500;
-            background: rgba(255, 255, 255, 0.06); color: #cbd5e1;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.06); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.1);
             display: inline-block;
         }
-        
         .dent-class-time-wrap {
             display: flex; align-items: center; gap: 8px; flex-shrink: 0;
         }
@@ -1607,17 +1598,35 @@ function renderClassesWidget() {
         .dent-class-time {
             font-size: 0.82rem; color: #cbd5e1; direction: ltr; font-weight: 600; font-family: monospace;
         }
-        
         .dent-classes-empty-day {
             color: #64748b; font-size: 0.84rem; text-align: center; padding: 14px;
-            background: rgba(255,255,255,0.015); border-radius: 8px;
-            border: 1px dashed rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.015); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.06);
         }
         .dent-classes-hint {
             font-size: 0.78rem; color: #64748b; margin-top: 18px; text-align: center;
             background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 8px;
         }
-    </style>
+    `);
+    
+    let rawGroups = [...new Set(currentClassesData.map(c => (c && c.group_name ? String(c.group_name).trim() : '')))].filter(Boolean);
+    let specificGroups = rawGroups.filter(g => g !== 'الدفعة كاملة' && g !== 'الكل' && g !== 'كل الدفعة');
+    let groups = specificGroups.length > 0 ? specificGroups : (rawGroups.length > 0 ? rawGroups : ["المجموعة A"]);
+    
+    let savedGroup = localStorage.getItem('dent2025_selected_group') || groups[0];
+    if (!groups.includes(savedGroup)) savedGroup = groups[0];
+    
+    const daysAr = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس"];
+    
+    const now = new Date();
+    const currentDayOfWeek = now.getDay();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+    
+    const weekClasses = currentClassesData.filter(c => isClassInGroup(c, savedGroup));
+    
+    const selObj = dentGetSelection() || {};
+    const subTitleText = dentFormatContext(selObj).subTitle;
+
+    let html = `
     <div class="dent-classes-widget">
         <div class="dent-classes-header">
             <div class="dent-classes-title-wrap">
@@ -1625,7 +1634,7 @@ function renderClassesWidget() {
                 <div class="dent-classes-subtitle">${dentEscapeHtml(subTitleText)}</div>
             </div>
             <div class="dent-classes-controls">
-                ${isAdmin() ? `<button class="dent-admin-btn-small" onclick="openClassesAdminModal()" style="display:block;">إدارة الفصول</button>` : ''}
+                ${isAdmin() ? `<button type="button" class="dent-admin-btn-small" onclick="openClassesAdminModal()" style="display:block;">إدارة الفصول</button>` : ''}
                 ${groups.length > 1 ? `<select class="dent-classes-group-select" onchange="changeClassGroup(this.value)">
                     ${groups.map(g => `<option value="${g}" ${g===savedGroup?'selected':''}>${g}</option>`).join('')}
                 </select>` : ''}
@@ -1660,16 +1669,7 @@ function renderClassesWidget() {
                 html += `<div class="dent-classes-empty-day">لا توجد محاضرات مجدولة في هذا اليوم.</div>`;
             } else {
                 dayClasses.forEach(c => {
-                    let isActive = false;
-                    if (isToday) {
-                        if (c.start_time && c.end_time && c.start_time.includes(':') && c.end_time.includes(':')) {
-                            let [sh, sm] = c.start_time.split(':').map(Number);
-                            let [eh, em] = c.end_time.split(':').map(Number);
-                            if (!isNaN(sh) && !isNaN(sm) && !isNaN(eh) && !isNaN(em)) {
-                                if (currentMins >= (sh*60+sm) && currentMins <= (eh*60+em)) isActive = true;
-                            }
-                        }
-                    }
+                    const isActive = isToday && dentIsClassActiveNow(c, currentMins);
                     const rawSub = encodeURIComponent(c.subject || '');
                     const cleanType = String(c.type || '').replace(/\s*\([^)]*\)/g, '').trim();
                     
@@ -1716,7 +1716,6 @@ function buildClassesModals(group) {
     }
     const daysAr = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس"];
     
-    // Inclusive filtering: match group or universal (الدفعة كاملة / empty)
     const weekClasses = currentClassesData.filter(c => isClassInGroup(c, group));
     let weekHtml = '';
     daysAr.forEach(day => {
@@ -1758,7 +1757,7 @@ function buildClassesModals(group) {
         currentClassesData.forEach(c => {
             adminListHtml += `<div style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.05); padding:8px; margin-bottom:5px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
                 <div style="font-size:0.8rem; color:#fff;">${c.day} - ${c.group_name} - ${c.subject}</div>
-                <button onclick="deleteClassEntry('${c.id}')" style="background:rgba(239,68,68,0.2); border:none; color:#f87171; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.75rem;">حذف</button>
+                <button type="button" onclick="deleteClassEntry('${c.id}')" style="background:rgba(239,68,68,0.2); border:none; color:#f87171; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.75rem;">حذف</button>
             </div>`;
         });
     }
@@ -1768,7 +1767,7 @@ function buildClassesModals(group) {
             <div class="dent-modal" style="background:#1e1e1e; border:1px solid rgba(255,255,255,0.1); border-radius:16px; width:90%; max-width:550px; padding:30px; max-height:85vh; overflow-y:auto; box-shadow:0 20px 50px rgba(0,0,0,0.5);">
                 <div class="dent-modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                     <h2 class="dent-classes-title" style="margin:0; font-size:1.1rem; color:#fff;">الجدول الدراسي${group && group !== 'الدفعة كاملة' ? ` (${group})` : ''}</h2>
-                    <button class="dent-modal-close" style="background:rgba(255,255,255,0.05); border:none; color:#9ca3af; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;" onclick="document.getElementById('week-modal').style.display='none'">×</button>
+                    <button type="button" class="dent-modal-close" style="background:rgba(255,255,255,0.05); border:none; color:#9ca3af; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;" onclick="document.getElementById('week-modal').style.display='none'">×</button>
                 </div>
                 <div id="dent-week-spotlight-container"></div>
                 ${weekHtml}
@@ -1779,9 +1778,9 @@ function buildClassesModals(group) {
                 <div class="dent-modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
                     <div style="display:flex; align-items:center; gap: 10px;">
                         <h2 class="dent-classes-title" style="margin:0; font-size:1.1rem; color:#fff;">إدارة الفصول</h2>
-                        <button onclick="logoutClassesAdmin()" style="background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.2); padding:4px 8px; border-radius:6px; font-size:0.75rem; cursor:pointer; font-family:inherit;">تسجيل الخروج</button>
+                        <button type="button" onclick="logoutClassesAdmin()" style="background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.2); padding:4px 8px; border-radius:6px; font-size:0.75rem; cursor:pointer; font-family:inherit;">تسجيل الخروج</button>
                     </div>
-                    <button class="dent-modal-close" style="background:rgba(255,255,255,0.05); border:none; color:#9ca3af; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;" onclick="document.getElementById('classes-admin-modal').style.display='none'">×</button>
+                    <button type="button" class="dent-modal-close" style="background:rgba(255,255,255,0.05); border:none; color:#9ca3af; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;" onclick="document.getElementById('classes-admin-modal').style.display='none'">×</button>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);">
                     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
@@ -1832,7 +1831,10 @@ function openWeekModal() {
         updateClassHighlights();
     }
 }
-function openClassesAdminModal() { let m = document.getElementById('classes-admin-modal'); if (m) m.style.display = 'flex'; }
+function openClassesAdminModal() { 
+    let m = document.getElementById('classes-admin-modal'); 
+    if (m) m.style.display = 'flex'; 
+}
 
 function logoutClassesAdmin() {
     sessionStorage.removeItem('dent2025_admin_pass');
@@ -1845,7 +1847,7 @@ function logoutClassesAdmin() {
 }
 
 function saveClassEntry() {
-    const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+    const sel = dentGetSelection() || {};
     const pass = sessionStorage.getItem('dent2025_admin_pass');
     
     const payload = {
@@ -1857,7 +1859,7 @@ function saveClassEntry() {
     
     if (!payload.subject || !payload.start_time || !payload.end_time || !payload.group_name) return alert("الرجاء تعبئة جميع الحقول");
     
-    fetch(API_BASE + '/dent2025_api.php?action=save_classes', {
+    fetch(API_BASE_URL + '?action=save_classes', {
         method: 'POST', body: JSON.stringify(payload), headers: {'Content-Type':'application/json'}
     }).then(r=>r.json()).then(res=>{
         if (res.success) { loadClassesData(sel); } else { alert(res.message); }
@@ -1870,8 +1872,8 @@ function saveClassEntry() {
 function deleteClassEntry(id) {
     if (!confirm('هل أنت متأكد من حذف هذا الفصل؟')) return;
     const pass = sessionStorage.getItem('dent2025_admin_pass');
-    const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
-    fetch(API_BASE + '/dent2025_api.php?action=save_classes', {
+    const sel = dentGetSelection() || {};
+    fetch(API_BASE_URL + '?action=save_classes', {
         method: 'POST',
         body: JSON.stringify({
             password: pass,
@@ -1891,9 +1893,6 @@ function deleteClassEntry(id) {
     });
 }
 
-
-// ---------------------------------------------------------
-
 // ---------------------------------------------------------
 // Links Management (Materials)
 // ---------------------------------------------------------
@@ -1902,21 +1901,46 @@ function generateLinksHtml(links) {
         return '<div style="color: #64748b; font-size: 0.78rem; padding: 4px 0;">لا توجد روابط مساعدة مضافة بعد.</div>';
     }
 
-    // Helper to identify special master reference links
+    dentEnsureStyle('dent-links-grid-styles', `
+        .dent-links-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 8px;
+        }
+        .dent-link-card {
+            background: rgba(255, 255, 255, 0.025); border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px; display: flex; align-items: center; justify-content: space-between;
+            gap: 8px; transition: all 0.2s ease; box-sizing: border-box;
+        }
+        .dent-link-card:hover {
+            background: rgba(255, 255, 255, 0.055); border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-1px);
+        }
+        .dent-link-anchor {
+            text-decoration: none; color: #cbd5e1; display: flex; align-items: center;
+            gap: 8px; flex: 1; min-width: 0;
+        }
+        .dent-link-anchor:hover { color: #ffffff; }
+        .dent-link-icon-badge {
+            border-radius: 5px; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .dent-link-title-text {
+            flex: 1; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;
+        }
+    `);
+
     const isSpecialLink = (l) => {
         const u = (l.url || '').toLowerCase();
         const t = (l.title || '');
         return u.includes('1wnc1sfs4cik9jwyqqok67thsvqcodliu') || t.includes('⭐') || t.includes('الدليل والمراجع الشاملة');
     };
 
-    // Helper to identify Telegram links
     const isTelegramLink = (l) => {
         const u = (l.url || '').toLowerCase();
         const t = (l.title || '').toLowerCase();
         return l.type === 'telegram' || u.includes('t.me') || u.includes('telegram') || t.includes('تيليجرام') || t.includes('telegram');
     };
 
-    // Sort: Special/Master links first, then Telegram / other links
     const sortedLinks = [...links].sort((a, b) => {
         const specialA = isSpecialLink(a) ? 1 : 0;
         const specialB = isSpecialLink(b) ? 1 : 0;
@@ -1924,15 +1948,11 @@ function generateLinksHtml(links) {
         return 0;
     });
 
-    let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 8px;">';
+    let html = '<div class="dent-links-grid">';
     sortedLinks.forEach(link => {
         let icon = '';
         let color = '#3b82f6';
         let bg = 'rgba(59, 130, 246, 0.1)';
-        let cardBg = 'rgba(255, 255, 255, 0.025)';
-        let cardBorder = 'rgba(255, 255, 255, 0.06)';
-        let cardHoverBg = 'rgba(255, 255, 255, 0.055)';
-        let cardHoverBorder = 'rgba(255, 255, 255, 0.12)';
         let cardPadding = '7px 12px';
         let fontSize = '0.8rem';
         let iconSize = '22px';
@@ -1941,12 +1961,10 @@ function generateLinksHtml(links) {
         const telegram = isTelegramLink(link);
 
         if (special) {
-            // Clean star icon with neutral card styling
             icon = '<svg viewBox="0 0 24 24" fill="currentColor" style="width:13px;height:13px;"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>';
             color = '#e2e8f0';
             bg = 'rgba(255, 255, 255, 0.1)';
         } else if (telegram) {
-            // Smaller, sleek Telegram link
             icon = '<svg viewBox="0 0 24 24" fill="currentColor" style="width:12px;height:12px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.52 2.77-1.18 3.35-1.38 3.73-1.39.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>';
             color = '#38bdf8';
             bg = 'rgba(56, 189, 248, 0.12)';
@@ -1968,9 +1986,8 @@ function generateLinksHtml(links) {
         }
 
         const safeUrl = dentSafeUrl(link.url);
-        const adminBtn = isAdmin() ? `<button onclick="event.preventDefault(); event.stopPropagation(); deleteLink(${link.id});" style="background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.2); color: #f87171; width: 20px; height: 20px; min-width: 20px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; margin-right: 4px; transition: all 0.2s;" title="حذف الرابط" onmouseover="this.style.background='rgba(239,68,68,0.25)'" onmouseout="this.style.background='rgba(239,68,68,0.12)'">✕</button>` : '';
+        const adminBtn = isAdmin() ? `<button type="button" onclick="event.preventDefault(); event.stopPropagation(); deleteLink(${link.id});" style="background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.2); color: #f87171; width: 20px; height: 20px; min-width: 20px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; margin-right: 4px; transition: all 0.2s;" title="حذف الرابط" onmouseover="this.style.background='rgba(239,68,68,0.25)'" onmouseout="this.style.background='rgba(239,68,68,0.12)'">✕</button>` : '';
 
-        // Clean display title (avoid double star and strip English translations in parentheses)
         let displayTitle = (link.title || '');
         if (special) {
             displayTitle = displayTitle.replace(/^⭐\s*/, '');
@@ -1978,10 +1995,10 @@ function generateLinksHtml(links) {
         displayTitle = displayTitle.replace(/\s*\([A-Za-z0-9\s&,.'\-_/]+\)\s*$/, '').trim();
 
         html += `
-        <div style="background: ${cardBg}; border: 1px solid ${cardBorder}; border-radius: 8px; padding: ${cardPadding}; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: all 0.2s ease; box-sizing: border-box;" onmouseover="this.style.background='${cardHoverBg}'; this.style.borderColor='${cardHoverBorder}'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='${cardBg}'; this.style.borderColor='${cardBorder}'; this.style.transform='translateY(0)';">
-            <a href="${safeUrl}" target="_blank" rel="noopener" style="text-decoration: none; color: #cbd5e1; display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;" onmouseover="this.style.color='#ffffff';" onmouseout="this.style.color='#cbd5e1';">
-                <span style="background: ${bg}; color: ${color}; border-radius: 5px; display: flex; align-items: center; justify-content: center; width: ${iconSize}; height: ${iconSize}; min-width: ${iconSize}; flex-shrink: 0;">${icon}</span>
-                <span style="flex: 1; font-size: ${fontSize}; font-weight: ${special ? '600' : '500'}; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;" title="${dentEscapeHtml(displayTitle)}">${dentEscapeHtml(displayTitle)}</span>
+        <div class="dent-link-card" style="padding: ${cardPadding};">
+            <a href="${safeUrl}" target="_blank" rel="noopener" class="dent-link-anchor">
+                <span class="dent-link-icon-badge" style="background: ${bg}; color: ${color}; width: ${iconSize}; height: ${iconSize}; min-width: ${iconSize};">${icon}</span>
+                <span class="dent-link-title-text" style="font-size: ${fontSize}; font-weight: ${special ? '600' : '500'};" title="${dentEscapeHtml(displayTitle)}">${dentEscapeHtml(displayTitle)}</span>
             </a>
             ${adminBtn}
         </div>`;
@@ -1991,6 +2008,7 @@ function generateLinksHtml(links) {
 }
 
 function openAddLinkModal(subjectId) {
+    dentEnsureBaseStyles();
     let modal = document.getElementById('add-link-modal');
     if (!modal) {
         modal = document.createElement('div');
@@ -2000,23 +2018,23 @@ function openAddLinkModal(subjectId) {
             <div style="background: #18181b; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 28px; width: 90%; max-width: 420px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); color: #fff;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
                     <h3 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: #f8fafc;">إضافة رابط مساعد</h3>
-                    <button type="button" onclick="document.getElementById('add-link-modal').style.display='none'" style="background:rgba(255,255,255,0.06); border:none; color:#9ca3af; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.color='#9ca3af';">×</button>
+                    <button type="button" onclick="document.getElementById('add-link-modal').style.display='none'" style="background:rgba(255,255,255,0.06); border:none; color:#9ca3af; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;" title="إغلاق">×</button>
                 </div>
                 <input type="hidden" id="link-sub-id">
                 
                 <div style="margin-bottom: 16px;">
                     <label style="font-size:0.8rem; color:#9ca3af; font-weight:500; display:block; margin-bottom:6px;">عنوان الرابط</label>
-                    <input type="text" id="link-title" placeholder="مثال: شرح شابتر 1" style="width: 100%; padding: 10px 14px; background: #121212; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 0.9rem; font-family: inherit; box-sizing: border-box; outline: none; transition: all 0.2s;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)'; this.style.boxShadow='0 0 0 3px rgba(255,255,255,0.08)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)'; this.style.boxShadow='none';">
+                    <input type="text" id="link-title" placeholder="مثال: شرح شابتر 1" class="dent-modal-input">
                 </div>
                 
                 <div style="margin-bottom: 24px;">
                     <label style="font-size:0.8rem; color:#9ca3af; font-weight:500; display:block; margin-bottom:6px;">رابط المادة</label>
-                    <input type="url" id="link-url" placeholder="https://youtube.com/..." style="width: 100%; padding: 10px 14px; background: #121212; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 0.9rem; font-family: inherit; box-sizing: border-box; text-align: left; direction: ltr; outline: none; transition: all 0.2s;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)'; this.style.boxShadow='0 0 0 3px rgba(255,255,255,0.08)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)'; this.style.boxShadow='none';">
+                    <input type="url" id="link-url" placeholder="https://youtube.com/..." class="dent-modal-input" style="text-align: left; direction: ltr;">
                 </div>
                 
                 <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                    <button type="button" onclick="document.getElementById('add-link-modal').style.display='none'" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 500; font-size: 0.9rem; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#cbd5e1';">إلغاء</button>
-                    <button id="btn-save-link" type="button" onclick="submitAddLink()" style="background: #27272a; color: #f8fafc; border: 1px solid rgba(255,255,255,0.15); padding: 10px 22px; border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255,255,255,0.25)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255,255,255,0.15)';">حفظ الرابط</button>
+                    <button type="button" onclick="document.getElementById('add-link-modal').style.display='none'" class="dent-modal-btn-cancel">إلغاء</button>
+                    <button id="btn-save-link" type="button" onclick="submitAddLink()" class="dent-modal-btn-save">حفظ الرابط</button>
                 </div>
             </div>
         `;
@@ -2041,7 +2059,7 @@ function submitAddLink() {
     btn.innerText = "جاري الحفظ...";
     btn.disabled = true;
     
-    fetch('/dent2025_api.php?action=add_link', {
+    fetch(`${API_BASE_URL}?action=add_link`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ password: pass, subject_id: subjectId, title: title, url: url })
@@ -2052,7 +2070,7 @@ function submitAddLink() {
         btn.disabled = false;
         if (res.success) {
             document.getElementById('add-link-modal').style.display = 'none';
-            loadDashboardData(true); // Refresh UI
+            loadDashboardData(true);
         } else {
             alert(res.message);
         }
@@ -2069,7 +2087,7 @@ function deleteLink(linkId) {
     if (!confirm('هل أنت متأكد من حذف هذا الرابط؟')) return;
     const pass = sessionStorage.getItem('dent2025_admin_pass');
     
-    fetch('/dent2025_api.php?action=delete_link', {
+    fetch(`${API_BASE_URL}?action=delete_link`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ password: pass, link_id: linkId })
@@ -2088,5 +2106,52 @@ function deleteLink(linkId) {
     });
 }
 
-
-
+// =========================================================================
+// Explicit Global Bindings (Preserving 100% Sibling Script & HTML Compatibility)
+// =========================================================================
+window.loadDashboardData = loadDashboardData;
+window.renderChapters = renderChapters;
+window.renderMaterials = renderMaterials;
+window.renderClassesWidget = renderClassesWidget;
+window.loadClassesData = loadClassesData;
+window.renderLogo = renderLogo;
+window.loadAnnouncements = loadAnnouncements;
+window.renderAnnouncements = renderAnnouncements;
+window.formatTime = formatTime;
+window.changeClassGroup = changeClassGroup;
+window.buildClassesModals = buildClassesModals;
+window.openWeekModal = openWeekModal;
+window.openClassesAdminModal = openClassesAdminModal;
+window.logoutClassesAdmin = logoutClassesAdmin;
+window.saveClassEntry = saveClassEntry;
+window.deleteClassEntry = deleteClassEntry;
+window.openAddLinkModal = openAddLinkModal;
+window.submitAddLink = submitAddLink;
+window.deleteLink = deleteLink;
+window.dentEscapeHtml = dentEscapeHtml;
+window.dentSafeUrl = dentSafeUrl;
+window.dentSanitizeRichText = dentSanitizeRichText;
+window.dentBootstrapDashboard = dentBootstrapDashboard;
+window.dentInitDashboard = dentInitDashboard;
+window.dentApplyPortalModeRouting = dentApplyPortalModeRouting;
+window.dentLoadPortalMode = dentLoadPortalMode;
+window.isAdmin = isAdmin;
+window.dentIsMaster = dentIsMaster;
+window.injectPathChanger = injectPathChanger;
+window.loadSubjectIframes = loadSubjectIframes;
+window.dentPreloadSubjectIframe = dentPreloadSubjectIframe;
+window.processDentIframeQueue = processDentIframeQueue;
+window.showError = showError;
+window.getAdminButtons = getAdminButtons;
+window.generateLinksHtml = generateLinksHtml;
+window.formatAnnouncementsTimeAgo = formatAnnouncementsTimeAgo;
+window.isClassInGroup = isClassInGroup;
+window.updateClassHighlights = updateClassHighlights;
+window.dentEnsureStyle = dentEnsureStyle;
+window.dentIsIframeUnloaded = dentIsIframeUnloaded;
+window.dentEnsureIframeSrc = dentEnsureIframeSrc;
+window.dentGetSelection = dentGetSelection;
+window.dentFormatContext = dentFormatContext;
+window.dentIsClassActiveNow = dentIsClassActiveNow;
+window.API_BASE = API_BASE;
+window.API_BASE_URL = API_BASE_URL;
