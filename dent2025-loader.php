@@ -242,6 +242,79 @@ if (dent2025_is_frontend_head()) {
             '<meta name="twitter:description" content="' . $invisible_desc . '">' . "\n" .
             '<meta name="twitter:image" content="' . esc_url($og_url) . '">' . "\n";
 
+        // Synchronously expose portal multi-specialty mode to eliminate render-blocking JS API fetch
+        $multi_specialty_mode = (bool) get_option('dent2025_multi_specialty_mode', true);
+        $head .= "\n" . '<script id="dent-portal-config">window.DENT_MULTI_SPECIALTY_MODE = ' . ($multi_specialty_mode ? 'true' : 'false') . ';</script>' . "\n";
+
+        // Modern Speculation Rules API for instant pre-rendering of core academic portal pages
+        $speculation_rules = [
+            'prerender' => [
+                [
+                    'source' => 'list',
+                    'urls'   => [
+                        '/',
+                        '/التقويم-الأكاديمي/',
+                        '/المقررات-والاختبارات/',
+                        '/جدول-المحاضرات/'
+                    ]
+                ],
+                [
+                    'where' => [
+                        'and' => [
+                            ['href_matches' => '/*'],
+                            ['not' => ['href_matches' => '/*wp-admin*']],
+                            ['not' => ['href_matches' => '/*wp-login*']],
+                            ['not' => ['href_matches' => '/*purge*']],
+                            ['not' => ['href_matches' => '/*nocache*']],
+                            ['not' => ['href_matches' => '/*.pdf']],
+                            ['not' => ['href_matches' => '/*.zip']],
+                            ['not' => ['href_matches' => '/*.jpg']],
+                            ['not' => ['href_matches' => '/*.webp']],
+                            ['not' => ['href_matches' => '/*.png']]
+                        ]
+                    ],
+                    'eagerness' => 'moderate'
+                ]
+            ]
+        ];
+        $head .= '<script type="speculationrules">' . json_encode($speculation_rules, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>' . "\n";
+
+        // Fallback instant hover/touch prefetcher for Safari / Firefox (zero dependency, ~0.4KB)
+        $head .= '<script id="dent-instant-nav">
+(function(){
+    if(!("fetch" in window)) return;
+    var prefetched = new Set();
+    function prefetch(url){
+        if(!url || prefetched.has(url)) return;
+        try{
+            var u = new URL(url, window.location.origin);
+            if(u.origin !== window.location.origin) return;
+            if(u.pathname === window.location.pathname) return;
+            if(/\\.(pdf|zip|jpg|jpeg|png|webp|mp4|webm)$/i.test(u.pathname)) return;
+            if(/\\?(.*&)?(purge|nocache|action)=/i.test(u.search)) return;
+            if(/\\/(wp-admin|wp-login)/i.test(u.pathname)) return;
+            prefetched.add(url);
+            var link = document.createElement("link");
+            link.rel = "prefetch";
+            link.href = url;
+            document.head.appendChild(link);
+        }catch(e){}
+    }
+    var hoverTimer = null;
+    document.addEventListener("mouseover", function(e){
+        var a = e.target.closest("a");
+        if(!a || !a.href) return;
+        clearTimeout(hoverTimer);
+        hoverTimer = setTimeout(function(){ prefetch(a.href); }, 65);
+    }, {passive: true});
+    document.addEventListener("mouseout", function(){ clearTimeout(hoverTimer); }, {passive: true});
+    document.addEventListener("touchstart", function(e){
+        var a = e.target.closest("a");
+        if(a && a.href) prefetch(a.href);
+    }, {passive: true});
+})();
+</script>' . "\n";
+
         echo $head;
     }, 99);
 

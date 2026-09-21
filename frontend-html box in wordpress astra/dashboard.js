@@ -118,10 +118,22 @@ function dentTrack(type, data) {
 // false (OFF) -> Single-Track Forced: Locks portal to Dentistry Year 3 Semester 1
 //                and instantly bypasses the welcome screen.
 // =========================================================================
-// The server-side admin setting is the source of truth. Keep the fallback
-// restricted until the setting has been loaded, so a failed request never
-// accidentally enables a broader public portal mode.
+// The server-side admin setting is the source of truth. Check synchronous
+// window variable or sessionStorage first so page transitions NEVER blank out.
 let DENT_MULTI_SPECIALTY_MODE = false;
+
+// Synchronously hydrate portal mode from window (injected by loader) or sessionStorage
+if (typeof window.DENT_MULTI_SPECIALTY_MODE === 'boolean') {
+    DENT_MULTI_SPECIALTY_MODE = window.DENT_MULTI_SPECIALTY_MODE;
+    try { sessionStorage.setItem('dent2025_multi_specialty_mode', DENT_MULTI_SPECIALTY_MODE ? '1' : '0'); } catch(e){}
+} else {
+    try {
+        const cachedMode = sessionStorage.getItem('dent2025_multi_specialty_mode');
+        if (cachedMode !== null) {
+            DENT_MULTI_SPECIALTY_MODE = (cachedMode === '1' || cachedMode === 'true');
+        }
+    } catch(e){}
+}
 
 async function dentLoadPortalMode() {
     try {
@@ -132,6 +144,7 @@ async function dentLoadPortalMode() {
         const payload = await response.json();
         if (payload && payload.success && payload.data && typeof payload.data.multi_specialty_mode === 'boolean') {
             DENT_MULTI_SPECIALTY_MODE = payload.data.multi_specialty_mode;
+            try { sessionStorage.setItem('dent2025_multi_specialty_mode', DENT_MULTI_SPECIALTY_MODE ? '1' : '0'); } catch(e){}
         }
     } catch (e) {
         // Keep the restricted fallback when the setting endpoint is unavailable.
@@ -139,7 +152,7 @@ async function dentLoadPortalMode() {
     }
 }
 
-// IMMEDIATE SELECTION CHECK (after the server setting has loaded):
+// IMMEDIATE SELECTION CHECK (after the server setting has loaded or hydrated):
 function dentApplyPortalModeRouting() {
     const isWelcomePage = window.location.pathname.includes('wolcome') || window.location.pathname.includes('welcome');
 
@@ -181,18 +194,40 @@ function dentApplyPortalModeRouting() {
 }
 
 async function dentBootstrapDashboard() {
-    // Prevent a flash of the wrong page while the admin setting is loading.
-    document.documentElement.style.visibility = 'hidden';
-    await dentLoadPortalMode();
+    const isKnownMode = (typeof window.DENT_MULTI_SPECIALTY_MODE === 'boolean') || 
+                        (sessionStorage.getItem('dent2025_multi_specialty_mode') !== null);
 
-    const redirected = dentApplyPortalModeRouting();
-    if (redirected) return;
+    if (isKnownMode) {
+        // Mode is known: evaluate routing immediately with ZERO flash/blank screen
+        const redirected = dentApplyPortalModeRouting();
+        if (redirected) return;
 
-    document.documentElement.style.visibility = '';
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', dentInitDashboard, { once: true });
+        // Ensure document remains visible immediately
+        document.documentElement.style.visibility = '';
+
+        // Initialize dashboard without blocking on network
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', dentInitDashboard, { once: true });
+        } else {
+            dentInitDashboard();
+        }
+
+        // Revalidate setting in background (non-blocking)
+        dentLoadPortalMode();
     } else {
-        dentInitDashboard();
+        // Fallback for first load if window/sessionStorage was not populated
+        document.documentElement.style.visibility = 'hidden';
+        await dentLoadPortalMode();
+
+        const redirected = dentApplyPortalModeRouting();
+        if (redirected) return;
+
+        document.documentElement.style.visibility = '';
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', dentInitDashboard, { once: true });
+        } else {
+            dentInitDashboard();
+        }
     }
 }
 
