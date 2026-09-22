@@ -234,12 +234,19 @@ def smart_merge_events(local_data, remote_data, allow_delete=False):
     merged_map = dict(rem_map)
 
     # 1. Check for deletions if allow_delete is False
+    missing_ids = [eid for eid in rem_map if eid not in loc_map]
     if not allow_delete:
-        missing_ids = [eid for eid in rem_map if eid not in loc_map]
         if missing_ids:
             print(f"[SMART MERGE] Preserving {len(missing_ids)} cloud events not present locally:")
             for mid in missing_ids:
                 print(f"  * Preserved: [{mid}] {rem_map[mid].get('title')}")
+    else:
+        if missing_ids:
+            print(f"[SMART MERGE] Explicitly removing {len(missing_ids)} cloud event(s) (--allow-delete):")
+            for mid in missing_ids:
+                print(f"  - Deleted: [{mid}] {rem_map[mid].get('title')}")
+                if mid in merged_map:
+                    del merged_map[mid]
 
     # 2. Apply local edits or additions
     added_count = 0

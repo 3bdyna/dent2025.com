@@ -71,10 +71,11 @@ def is_dynamic_data_file(path):
         return True
     return False
 
-def check_dynamic_data_safety(file_path):
+def check_dynamic_data_safety(file_path, allow_delete=False):
     """
     Guarantees cloud data cannot be deleted or overwritten by an outdated local file.
-    Validates that every event/item currently on Azure exists in the local file.
+    Validates that every event/item currently on Azure exists in the local file,
+    unless allow_delete is explicitly True.
     """
     if not is_dynamic_data_file(file_path):
         return True, "OK"
@@ -120,16 +121,19 @@ def check_dynamic_data_safety(file_path):
         rem_ids = {e.get('id') for e in remote_data if isinstance(e, dict) and 'id' in e}
         missing_ids = rem_ids - loc_ids
         if missing_ids:
-            sample = list(missing_ids)[:3]
-            return False, (
-                f"Cloud Protection Alert: Local '{fname}' is missing {len(missing_ids)} event(s) "
-                f"present in the Cloud (e.g. {sample}). The website is the source of truth! "
-                f"Aborting deployment to prevent cloud data loss. Run 'python tools/sync_cloud_events.py --pull' or '--merge-and-deploy {fname}' first."
-            )
+            if not allow_delete:
+                sample = list(missing_ids)[:3]
+                return False, (
+                    f"Cloud Protection Alert: Local '{fname}' is missing {len(missing_ids)} event(s) "
+                    f"present in the Cloud (e.g. {sample}). The website is the source of truth! "
+                    f"Aborting deployment to prevent cloud data loss. Run 'python tools/sync_cloud_events.py --pull' or '--merge-and-deploy {fname}' first."
+                )
+            else:
+                print(f"[GUARD NOTICE] Allowing deletion of {len(missing_ids)} event(s) in '{fname}' (--allow-delete).")
 
     return True, "OK"
 
-def validate_deployment(file_paths, note):
+def validate_deployment(file_paths, note, allow_delete=False):
     """Full validation of files and deployment note."""
     errors = []
     
@@ -148,7 +152,7 @@ def validate_deployment(file_paths, note):
             errors.append(msg)
             continue
 
-        is_safe, msg_safe = check_dynamic_data_safety(path)
+        is_safe, msg_safe = check_dynamic_data_safety(path, allow_delete=allow_delete)
         if not is_safe:
             errors.append(msg_safe)
             

@@ -185,7 +185,7 @@ def show_status():
     deploy_health.run_health_probe()
     print("-" * 50)
 
-def run_safe_deployment(files, note, dry_run=False):
+def run_safe_deployment(files, note, dry_run=False, allow_delete=False):
     t_start = time.time()
     print("=== DENT2025 GIT + SAFEDEPLOY PIPELINE ===", flush=True)
     print(f"AI Note      : {note}")
@@ -210,7 +210,7 @@ def run_safe_deployment(files, note, dry_run=False):
                         loc_d = json.load(lf)
                     rem_d = json.loads(rem_raw)
                     if isinstance(loc_d, list) and isinstance(rem_d, list):
-                        merged, added, updated = sync_cloud_events.smart_merge_events(loc_d, rem_d, allow_delete=False)
+                        merged, added, updated = sync_cloud_events.smart_merge_events(loc_d, rem_d, allow_delete=allow_delete)
                         with open(loc_path, 'w', encoding='utf-8') as lf:
                             json.dump(merged, lf, ensure_ascii=False, indent=2)
                             lf.write('\n')
@@ -221,7 +221,7 @@ def run_safe_deployment(files, note, dry_run=False):
     # Stage 1: Pre-flight Guard Check
     t1 = time.time()
     print("\n[Stage 1/4] Pre-flight Guard & Syntax Validation...", flush=True)
-    is_valid, errors = deploy_guard.validate_deployment(files, note)
+    is_valid, errors = deploy_guard.validate_deployment(files, note, allow_delete=allow_delete)
     if not is_valid:
         print("DEPLOYMENT ABORTED due to pre-flight guard errors:")
         for err in errors:
@@ -318,6 +318,10 @@ if __name__ == '__main__':
         show_status()
         sys.exit(0)
 
+    allow_delete = '--allow-delete' in args
+    if allow_delete:
+        args.remove('--allow-delete')
+
     dry_run = '--dry-run' in args
     if dry_run:
         args.remove('--dry-run')
@@ -335,4 +339,4 @@ if __name__ == '__main__':
         print("Error: No files specified for deployment.")
         sys.exit(1)
 
-    run_safe_deployment(files, note, dry_run=dry_run)
+    run_safe_deployment(files, note, dry_run=dry_run, allow_delete=allow_delete)
