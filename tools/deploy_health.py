@@ -72,20 +72,6 @@ ENDPOINTS_TO_PROBE = [
         'auth': True
     },
     {
-        'name': 'Standalone PDO Data API (backend/api_data.php)',
-        'urls': [
-            'https://dent2025.com/backend/api_data.php'
-        ],
-        'require_json_key': 'success'
-    },
-    {
-        'name': 'Standalone PDO Manage API (backend/api_manage.php)',
-        'urls': [
-            'https://dent2025.com/backend/api_manage.php'
-        ],
-        'require_json_key': 'success'
-    },
-    {
         'name': 'AI Exam Generation API (backend/api_ai_exam.php)',
         'urls': [
             'https://dent2025.com/backend/api_ai_exam.php'

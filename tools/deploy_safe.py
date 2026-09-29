@@ -25,23 +25,8 @@ import sync_server_backups
 
 PROJECT_ROOT = _toolkit.PROJECT_ROOT
 
-def purge_remote_cache(config=None):
-    """Triggers LiteSpeed remote cache purge via purge_cache.php with passkey."""
-    token = ""
-    if config and isinstance(config, dict):
-        token = config.get('health_passkey', '')
-    if not token:
-        token = os.environ.get('DENT2025_PURGE_KEY', '')
-    if not token:
-        return
-    url = f"https://dent2025.com/purge_cache.php?token={urllib.parse.quote(token)}"
-    try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Dent2025-SafeDeploy/2.0'})
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            resp_text = resp.read().decode('utf-8', errors='ignore').strip()
-            print(f"[CACHE PURGE] {resp_text}", flush=True)
-    except Exception as e:
-        print(f"[CACHE PURGE] Notice: {e}", flush=True)
+# Reuse deploy.py's canonical cache purge implementation (SSH fast-path + HTTP fallback)
+purge_remote_cache = deploy.purge_remote_cache
 
 def run_git_cmd(cmd, check=False):
     """Executes a git command in the project root."""

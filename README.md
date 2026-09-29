@@ -28,8 +28,6 @@ dent2025/
 ├── dent2025_api.php                            # Primary WordPress-integrated backend API
 ├── dent2025_rbac.php                           # Shared RBAC permission engine
 ├── backend/                                    # Standalone PDO backend services
-│   ├── api_data.php                            # Public subject & link data retrieval API
-│   ├── api_manage.php                          # Administrative management API
 │   ├── api_ai_exam.php                         # AI exam generation backend
 │   └── db_connect.php                          # Safe dynamic PDO MySQL connection
 ├── frontend-html box in wordpress astra/       # Local frontend components & scripts

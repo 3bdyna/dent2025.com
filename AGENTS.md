@@ -56,12 +56,9 @@ my website dent2025/
 │   ├── sync_cloud_events.py                    # Cloud-first dynamic data sync & smart-merge engine
 │   ├── sync_server_backups.py                  # Local sync engine for VPS database & file backups (14d rolling)
 │   └── test_system_logic.php                   # Comprehensive offline test suite (42/42 tests)
-├── backend/                                    # Standalone PDO & Forwarding Backend Module
+├── backend/                                    # Standalone PDO Backend Module
 │   ├── db_connect.php                          # PDO Database Connection, CORS headers, sendResponse()
-│   ├── api_data.php                            # Forwarding compatibility shim to dent2025_api.php
-│   ├── api_manage.php                          # Forwarding compatibility shim to dent2025_api.php
 │   ├── api_ai_exam.php                         # AI exam generation standalone PDO backend
-│   ├── setup_links_db.php                      # One-time DB schema setup for subject_links table
 │   ├── bin/                                    # Helper binaries (pdftotext)
 │   └── gemini_keys_data/                       # Gemini API key health cache
 ├── logos/                                      # Specialty logos & social preview assets (deployed to server)
@@ -262,8 +259,7 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 - Auth: same shared RBAC engine. `schedule_backend.php` requires `global_events` or `semester_events` permission for writes.
 - `history_api.php` also accepts the master passkeys directly for `manage_passkeys` actions.
 
-### C. Standalone PDO & Forwarding Backend (`backend/api_manage.php`, `backend/api_data.php`, `backend/api_ai_exam.php`)
-- **Forwarding Compatibility Shims**: As of SafeDeploy commit `262befe`, `backend/api_data.php` and `backend/api_manage.php` are streamlined forwarding compatibility shims that delegate all subject/link queries and mutations directly to the primary WordPress API (`dent2025_api.php` via `$wpdb`), ensuring unified caching and single-point-of-truth validation.
+### C. Standalone PDO Backend (`backend/api_ai_exam.php`)
 - **Standalone PDO Exam AI Backend (`backend/api_ai_exam.php`)**: Operates independently with `backend/db_connect.php` for high-throughput AI quiz generation, PDF text extraction (`pdftotext`), and Gemini API caching (`quizzes_data/`).
 - Auth: **same shared RBAC engine** (`require_once __DIR__ . '/../dent2025_rbac.php'`).
 - **Unified GAS Webhook**: `dent2025_api.php` hosts the primary Google Apps Script webhook: `https://script.google.com/macros/s/AKfycbyGOFQWRmkBmJJ9ItdpzhzY5CgbEPjjI6joodT0GT_Sq--f287fcomqUBqRw-MxaKie/exec`.

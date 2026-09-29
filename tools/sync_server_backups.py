@@ -48,6 +48,8 @@ def log(msg):
 def ensure_local_dir():
     os.makedirs(LOCAL_BACKUP_DIR, exist_ok=True)
 
+WIN32_FLAGS = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+
 def list_remote_backups():
     """Queries VPS via SSH for list of available backup archives."""
     cmd = [
@@ -56,7 +58,7 @@ def list_remote_backups():
         f'ls -1 {REMOTE_BACKUP_DIR}/*.gz 2>/dev/null'
     ]
     try:
-        res = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True, errors='ignore', timeout=15)
+        res = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True, errors='ignore', timeout=15, creationflags=WIN32_FLAGS)
         if res.returncode != 0:
             return []
         lines = [line.strip() for line in res.stdout.splitlines() if line.strip().endswith('.gz')]
@@ -72,7 +74,7 @@ def download_file(remote_path, local_path):
         f'{SSH_USER}@{SSH_HOST}:{remote_path}',
         local_path
     ]
-    res = subprocess.run(scp_cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True, errors='ignore', timeout=60)
+    res = subprocess.run(scp_cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True, errors='ignore', timeout=60, creationflags=WIN32_FLAGS)
     return res.returncode == 0
 
 def prune_old_local_backups():
