@@ -555,7 +555,7 @@ const ScheduleApp = {
                         ${dayData.formattedHijri ? `<span class="hijri">${dayData.formattedHijri}</span>` : ''}
                     </div>
                     <div class="event-dot"></div>
-                    <div class="event-cards-group" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; width: 100%;">
+                    <div class="event-cards-group">
                         ${cardsHtml}
                     </div>
                 `;
