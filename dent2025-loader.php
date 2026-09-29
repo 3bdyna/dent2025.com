@@ -34,13 +34,7 @@ function dent2025_load_component_shortcode($atts) {
     $file_path = $components_dir . $safe_file;
 
     if (!file_exists($file_path)) {
-        // Fallback check in dev/ directory if needed
-        $fallback_path = ABSPATH . 'dev/frontend_components/' . $safe_file;
-        if (file_exists($fallback_path)) {
-            $file_path = $fallback_path;
-        } else {
-            return "<!-- Dent2025 Loader: Component file not found ({$safe_file}) -->";
-        }
+        return "<!-- Dent2025 Loader: Component file not found ({$safe_file}) -->";
     }
 
     $ext = strtolower(pathinfo($safe_file, PATHINFO_EXTENSION));

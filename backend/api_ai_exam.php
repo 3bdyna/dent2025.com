@@ -151,46 +151,13 @@ header('X-LiteSpeed-Abort-On-Done: 0');
 header('X-LiteSpeed-No-Abort: 1');
 
 function getAiExamSubjectsTable($pdo) {
-    if (function_exists('get_dent2025_table')) {
-        return get_dent2025_table($pdo, 'subjects');
-    }
-    static $tableName = null;
-    if ($tableName !== null) return $tableName;
-    $tableName = 'wp_subjects';
-    if ($pdo) {
-        foreach (['wp_subjects', 'wpr9_subjects', 'subjects'] as $cand) {
-            try {
-                $check = $pdo->query("SELECT 1 FROM `{$cand}` LIMIT 1");
-                if ($check !== false) {
-                    $tableName = $cand;
-                    break;
-                }
-            } catch (Throwable $e) {}
-        }
-    }
-    return $tableName;
+    return get_dent2025_table($pdo, 'subjects');
 }
 
 function getAiExamSubjectLinksTable($pdo) {
-    if (function_exists('get_dent2025_table')) {
-        return get_dent2025_table($pdo, 'subject_links');
-    }
-    static $tableName = null;
-    if ($tableName !== null) return $tableName;
-    $tableName = 'wp_subject_links';
-    if ($pdo) {
-        foreach (['wp_subject_links', 'wpr9_subject_links', 'subject_links'] as $cand) {
-            try {
-                $check = $pdo->query("SELECT 1 FROM `{$cand}` LIMIT 1");
-                if ($check !== false) {
-                    $tableName = $cand;
-                    break;
-                }
-            } catch (Throwable $e) {}
-        }
-    }
-    return $tableName;
+    return get_dent2025_table($pdo, 'subject_links');
 }
+
 
 // Primary and fallback Gemini models
 $GEMINI_MODELS = [
@@ -1625,37 +1592,6 @@ function extractValidImagesFromPdfBytes($rawBytes) {
     return $validImages;
 }
 
-function extractImagesFromPdfViaZip($pdfPath) {
-    $validImages = [];
-    
-    if (!class_exists('ZipArchive')) {
-        return $validImages;
-    }
-    
-    $zip = new ZipArchive();
-    if ($zip->open($pdfPath) !== true) {
-        return $validImages;
-    }
-    
-    for ($i = 0; $i < $zip->numFiles; $i++) {
-        $name = $zip->getNameIndex($i);
-        if (preg_match('/\.(jpg|jpeg|png|gif)$/i', $name)) {
-            $data = $zip->getFromIndex($i);
-            if ($data !== false && strlen($data) >= 8000) {
-                $sanitized = sanitizeGeminiImagePayload($data);
-                if ($sanitized !== null) {
-                    $validImages[] = $sanitized;
-                    if (count($validImages) >= 8) {
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    
-    $zip->close();
-    return $validImages;
-}
 
 function extractImagesFromPdfViaImageMagick($pdfPath) {
     $validImages = [];
