@@ -204,11 +204,6 @@ const ScheduleApp = {
             if (!this.adminPassword) {
                 this.adminPassword = sessionStorage.getItem('dent2025_schedule_admin_pass') || sessionStorage.getItem('dent2025_admin_pass') || null;
             }
-            try {
-                if (window.dentAnalytics && typeof window.dentAnalytics.track === 'function') {
-                    window.dentAnalytics.track('schedule_view', { subject: this.scheduleId });
-                }
-            } catch(e) {}
             const cacheKey = 'dent2025_schedule_' + this.scheduleId;
             const cachedData = localStorage.getItem(cacheKey); // Persist across closed tabs
             const cacheBuster = '&nocache=1&_t=' + Date.now();

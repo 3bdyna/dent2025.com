@@ -189,14 +189,6 @@ function loadSubjectIframes(detailsEl) {
     dentPreloadSubjectIframe(detailsEl, true);
 }
 
-// Analytics helper: safe no-op if tracker not loaded yet
-function dentTrack(type, data) {
-    try {
-        if (window.dentAnalytics && typeof window.dentAnalytics.track === 'function') {
-            return window.dentAnalytics.track(type, data || {});
-        }
-    } catch (e) {}
-}
 
 // =========================================================================
 // 🔘 MULTI-SPECIALTY MASTER SWITCH (ON / OFF)
@@ -339,7 +331,6 @@ function loadDashboardData(forceRefresh = false) {
     const selection = dentGetSelection();
     if (!selection) return;
 
-    dentTrack('context_select', { ctx: { specialty: selection.specialty, year: selection.year, semester: selection.semester } });
 
     // Update top nav if present
     const navText = document.getElementById('current-selection-text');
@@ -525,10 +516,6 @@ window.switchDentTab = function(subId, tabType, event) {
     const card = document.getElementById(`dent-subject-card-${subId}`);
     if (!card) return;
 
-    if (tabType === 'materials') {
-        const sub = currentSubjectsData.find(s => s.id == subId);
-        dentTrack('materials_open', { subject: sub ? sub.name : 'مادة' });
-    }
 
     // Toggle button active classes
     const btns = card.querySelectorAll('.dent-tab-btn');
@@ -681,9 +668,6 @@ function renderChapters(subjects) {
 
         det.addEventListener('toggle', () => {
             if (det.open) {
-                const subId = parseInt((det.id || '').replace('dent-subject-card-', ''), 10);
-                const sub = currentSubjectsData.find(s => s.id == subId);
-                dentTrack('subject_open', { subject: sub ? sub.name : 'مادة' });
 
                 dentPreloadSubjectIframe(det, true);
 

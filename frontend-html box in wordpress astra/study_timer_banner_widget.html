@@ -995,13 +995,6 @@ document.addEventListener('click', function(e) {
 
   function $(id) { return document.getElementById(id); }
 
-  function dentTrack(type, data) {
-    try {
-      if (window.dentAnalytics && typeof window.dentAnalytics.track === 'function') {
-        return window.dentAnalytics.track(type, data || {});
-      }
-    } catch (e) {}
-  }
 
   function cleanupDuplicates() {
     try {
@@ -1172,7 +1165,6 @@ document.addEventListener('click', function(e) {
       try { localStorage.removeItem(KEY_ACTIVE_SESSION); } catch(e) {}
     } else {
       saveActiveSessionState();
-      dentTrack('timer_pause', { subject: (elements.subjectInput && elements.subjectInput.value) || undefined, value: state.seconds });
     }
     updateClock();
   }
@@ -1183,7 +1175,6 @@ document.addEventListener('click', function(e) {
     if (!isAutoResume) {
       state.segmentStartTime = Date.now();
       state.secondsAtSegmentStart = state.seconds;
-      dentTrack('timer_start', { subject: (elements.subjectInput && elements.subjectInput.value) || undefined });
     }
     if (state.interval) { clearInterval(state.interval); }
     state.interval = setInterval(function() { 
@@ -1260,7 +1251,6 @@ document.addEventListener('click', function(e) {
     }
     if (state.seconds > 0) {
       addLog(sub, state.seconds, 'stopwatch');
-      dentTrack('timer_finish', { subject: sub, value: state.seconds });
     }
     state.seconds = 0; 
     state.segmentStartTime = 0;
@@ -1274,7 +1264,6 @@ document.addEventListener('click', function(e) {
 
   function resetTimer() {
     init();
-    if (state.seconds > 0) dentTrack('timer_reset');
     state.seconds = 0; 
     state.segmentStartTime = 0;
     state.secondsAtSegmentStart = 0;
