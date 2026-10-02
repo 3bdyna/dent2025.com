@@ -86,7 +86,6 @@ my website dent2025/
 │   └── dashboard.js                            # Core Student Dashboard JS engine (~111 KB)
 ├── announcements_data/                         # AUTO-CREATED at runtime by announcements_api.php (gitignored)
 ├── dent2025_study_data/                        # AUTO-CREATED at runtime by dent2025_api.php (gitignored)
-├── dent2025_analytics_data/                    # AUTO-CREATED at runtime for visitor & event metrics (gitignored)
 ├── quizzes_data/                               # AUTO-CREATED at runtime by api_ai_exam.php (gitignored)
 ├── history_data/                               # Runtime audit/deployment history (local + server, gitignored)
 └── server_backups_dent2025_daily/              # ⭐ Local mirror of VPS nightly database & dynamic file backups (14d rolling, gitignored)
