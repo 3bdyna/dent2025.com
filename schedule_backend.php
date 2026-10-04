@@ -317,68 +317,70 @@ if ($method === 'POST') {
         $parsedEvent = null;
         $lastError = '';
 
+        $targetModels = ['gemini-3.5-flash', 'gemini-3.7-flash', 'gemini-3.8-flash', 'gemini-3.5-flash-lite'];
+
         foreach ($apiKeys as $apiKey) {
-            $payload = [
-                "contents" => [
-                    [
-                        "role" => "user",
-                        "parts" => [
-                            ["text" => $sysPrompt . "\n\nUser input: " . $prompt]
+            foreach ($targetModels as $targetModel) {
+                $payload = [
+                    "contents" => [
+                        [
+                            "role" => "user",
+                            "parts" => [
+                                ["text" => $sysPrompt . "\n\nUser input: " . $prompt]
+                            ]
                         ]
-                    ]
-                ],
-                "generationConfig" => [
-                    "temperature" => 0.1,
-                    "responseMimeType" => "application/json"
-                ]
-            ];
-
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=" . urlencode($apiKey);
-            $payloadJson = json_encode($payload);
-            $rawResponse = '';
-            $httpCode = 0;
-
-            if (function_exists('curl_init')) {
-                $ch = curl_init($url);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, $payloadJson);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                $rawResponse = curl_exec($ch);
-                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                curl_close($ch);
-            } else {
-                $ctx = stream_context_create([
-                    'http' => [
-                        'method' => 'POST',
-                        'header' => "Content-Type: application/json\r\n",
-                        'content' => $payloadJson,
-                        'timeout' => 10,
-                        'ignore_errors' => true
                     ],
-                    'ssl' => [
-                        'verify_peer' => false,
-                        'verify_peer_name' => false
+                    "generationConfig" => [
+                        "temperature" => 0.1,
+                        "responseMimeType" => "application/json"
                     ]
-                ]);
-                $rawResponse = @file_get_contents($url, false, $ctx);
-                if (!empty($http_response_header) && preg_match('#HTTP/\S+\s+(\d+)#', $http_response_header[0], $m)) {
-                    $httpCode = intval($m[1]);
-                }
-            }
+                ];
 
-            if ($httpCode === 200 && !empty($rawResponse)) {
-                $decoded = json_decode($rawResponse, true);
-                $candText = $decoded['candidates'][0]['content']['parts'][0]['text'] ?? '';
-                $item = json_decode($candText, true);
-                if (is_array($item) && !empty($item['title']) && !empty($item['date'])) {
-                    $parsedEvent = $item;
-                    break;
+                $url = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($targetModel) . ":generateContent?key=" . urlencode($apiKey);
+                $payloadJson = json_encode($payload);
+                $rawResponse = '';
+                $httpCode = 0;
+
+                if (function_exists('curl_init')) {
+                    $ch = curl_init($url);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_POST, true);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, $payloadJson);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                    $rawResponse = curl_exec($ch);
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+                } else {
+                    $ctx = stream_context_create([
+                        'http' => [
+                            'method' => 'POST',
+                            'header' => "Content-Type: application/json\r\n",
+                            'content' => $payloadJson,
+                            'timeout' => 10,
+                            'ignore_errors' => true
+                        ],
+                        'ssl' => [
+                            'verify_peer' => false,
+                            'verify_peer_name' => false
+                        ]
+                    ]);
+                    $rawResponse = @file_get_contents($url, false, $ctx);
+                    if (!empty($http_response_header) && preg_match('#HTTP/\S+\s+(\d+)#', $http_response_header[0], $m)) {
+                        $httpCode = intval($m[1]);
+                    }
                 }
-            } else {
-                $lastError = "Gemini HTTP $httpCode: " . substr($rawResponse, 0, 150);
+
+                if ($httpCode === 200 && !empty($rawResponse)) {
+                    $decoded = json_decode($rawResponse, true);
+                    $candText = $decoded['candidates'][0]['content']['parts'][0]['text'] ?? '';
+                    $item = json_decode($candText, true);
+                    if (is_array($item) && !empty($item['title']) && !empty($item['date'])) {
+                        $parsedEvent = $item;
+                        break 2;
+                    }
+                }
             }
         }
 
