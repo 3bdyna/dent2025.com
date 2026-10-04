@@ -303,21 +303,12 @@ const ScheduleApp = {
 
             if (daysSinceEnd > 3) {
                 isEndedPast3Days = true;
-                if (!this.adminPassword) {
-                    isVisible = false;
-                }
-            }
-
-            const isGlobal = !!ev.is_global || ev.schedule_id === 'global';
-            if (!isGlobal && daysSinceEnd > 7) {
-                isCohortEndedPast7Days = true;
                 isVisible = false;
             }
 
             if (isVisible) totalVisibleEvents++;
             
-            if (!this.adminPassword && isEndedPast3Days) return;
-            if (isCohortEndedPast7Days) return;
+            if (isEndedPast3Days) return;
 
             const dateObj = this.parseLocalDate(ev.date) || new Date();
             
@@ -500,11 +491,6 @@ const ScheduleApp = {
                         allPassed = false;
                     }
 
-                    let adminNoticeBadge = '';
-                    if (ev._isEndedPast3Days && this.adminPassword) {
-                        adminNoticeBadge = `<span class="badge" style="background:rgba(239,68,64,0.15); color:var(--color-exam);">مخفي للطلاب</span>`;
-                    }
-
                     let adminButtons = '';
                     if (this.adminPassword) {
                         const isGlobal = !!ev.is_global;
@@ -539,7 +525,6 @@ const ScheduleApp = {
                             <div class="event-badges">
                                 ${typeBadgeHtml}
                                 <span class="badge ${extraBadgeClass}">${badgeHtml}</span>
-                                ${adminNoticeBadge}
                                 ${adminButtons}
                             </div>
                         </div>
