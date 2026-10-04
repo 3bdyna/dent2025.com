@@ -793,9 +793,6 @@ const ScheduleApp = {
         const endDateVal = isEdit ? (existingEvent.end_date || '') : '';
         const isGlobal = isEdit ? !!existingEvent.is_global : (this.scheduleId === 'global');
         const schedIdVal = isEdit ? (existingEvent.schedule_id || (isGlobal ? 'global' : this.scheduleId)) : this.scheduleId;
-        const scopeText = isGlobal ? 'عام' : schedIdVal;
-
-        const initialHijri = isEdit && existingEvent.hijri ? existingEvent.hijri : (dateVal ? this.hijriFromGregorian(dateVal) : '—');
 
         let modal = document.getElementById('dent-admin-modal');
         if (modal) modal.remove();
@@ -838,8 +835,7 @@ const ScheduleApp = {
             <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 24px; width: 100%; max-width: 440px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: #fff; box-sizing: border-box;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; gap: 8px;">
                     <div style="flex:1;">
-                        <h3 style="margin: 0 0 4px; font-size: 1.1rem; font-weight: 700; color: #f8fafc;">${modalTitle}</h3>
-                        <span style="font-size: 0.75rem; color: #a78bfa; background: rgba(167,139,250,0.12); border: 1px solid rgba(167,139,250,0.25); border-radius: 6px; padding: 2px 8px; display: inline-block;">نطاق: ${dentEscapeHtml(scopeText)}</span>
+                        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #f8fafc;">${modalTitle}</h3>
                     </div>
                     <button type="button" onclick="document.getElementById('dent-admin-modal').remove()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; flex-shrink:0; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">×</button>
                 </div>
@@ -873,20 +869,15 @@ const ScheduleApp = {
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 10px; margin-bottom: 14px; width: 100%;">
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; width: 100%;">
                     <div style="flex:1; min-width: 0;">
                         <label style="font-size:0.78rem; color:#a1a1aa; font-weight:600; display:block; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">تاريخ البداية (ميلادي)</label>
-                        <input type="date" id="ev-date" value="${dateVal}" style="width: 100%;" onchange="ScheduleApp.updateHijriPreview()" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)';">
+                        <input type="date" id="ev-date" value="${dateVal}" style="width: 100%;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)';">
                     </div>
                     <div style="flex:1; min-width: 0;">
                         <label style="font-size:0.78rem; color:#a1a1aa; font-weight:600; display:block; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">تاريخ النهاية (اختياري)</label>
                         <input type="date" id="ev-end" value="${endDateVal}" style="width: 100%;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)';">
                     </div>
-                </div>
-                
-                <div style="margin-bottom: 20px;">
-                    <label style="font-size:0.78rem; color:#a1a1aa; font-weight:600; display:block; margin-bottom:5px;">التاريخ الهجري (يُحسب تلقائياً)</label>
-                    <div id="ev-hijri-preview" style="width: 100%; height: 44px; display: flex; align-items: center; padding: 0 14px; background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.25); border-radius: 10px; color: #c4b5fd; font-size: 0.9rem; font-family: inherit; box-sizing: border-box;">${initialHijri}</div>
                 </div>
                 
                 <div style="display: flex; gap: 10px;">
@@ -941,9 +932,13 @@ const ScheduleApp = {
 
         const date = (document.getElementById('ev-date')?.value || '').trim();
         const end_date = (document.getElementById('ev-end')?.value || '').trim();
-        const previewEl = document.getElementById('ev-hijri-preview');
-        const previewText = previewEl ? previewEl.textContent.trim() : '';
-        const hijri = (previewText && previewText !== '—') ? previewText : this.hijriFromGregorian(date);
+        let hijri = date ? this.hijriFromGregorian(date) : '';
+        if (end_date) {
+            const endHijri = this.hijriFromGregorian(end_date);
+            if (endHijri) {
+                hijri = hijri ? `${hijri} - ${endHijri}` : endHijri;
+            }
+        }
 
         if (!title || !date) {
             alert('العنوان وتاريخ البداية مطلوبان!');
