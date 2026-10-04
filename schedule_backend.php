@@ -85,6 +85,15 @@ if (!function_exists('dent2025_prune_expired_cohort_events')) {
     }
 }
 
+if (!function_exists('dent2025_safe_save_json_file')) {
+    function dent2025_safe_save_json_file($file, $data) {
+        $encoded = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        if ($encoded === false) return false;
+        $bytes = @file_put_contents($file, $encoded, LOCK_EX);
+        return ($bytes !== false);
+    }
+}
+
 $globalFile = __DIR__ . '/schedule_events.json';
 
 // Get schedule_id (from GET or POST)
@@ -254,7 +263,11 @@ if ($method === 'POST') {
                     return ($ev['id'] ?? '') !== $deleteId;
                 }));
                 if (count($data) < $origCount) {
-                    file_put_contents($dataFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+                    if (!dent2025_safe_save_json_file($dataFile, $data)) {
+                        http_response_code(500);
+                        echo json_encode(['success' => false, 'message' => 'فشل حفظ التعديلات على السيرفر (تحقق من صلاحيات الملف).']);
+                        exit;
+                    }
                     $deleted = true;
                 }
             }
@@ -267,7 +280,11 @@ if ($method === 'POST') {
                         return ($ev['id'] ?? '') !== $deleteId;
                     }));
                     if (count($gData) < $origCount) {
-                        file_put_contents($globalFile, json_encode($gData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+                        if (!dent2025_safe_save_json_file($globalFile, $gData)) {
+                            http_response_code(500);
+                            echo json_encode(['success' => false, 'message' => 'فشل حفظ التعديلات على السيرفر (تحقق من صلاحيات الملف).']);
+                            exit;
+                        }
                         $deleted = true;
                     }
                 }
@@ -343,7 +360,11 @@ if ($method === 'POST') {
                 }
             }
             if ($found) {
-                file_put_contents($dataFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+                if (!dent2025_safe_save_json_file($dataFile, $data)) {
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'message' => 'فشل حفظ التعديلات على السيرفر (تحقق من صلاحيات الملف).']);
+                    exit;
+                }
             }
         }
 
@@ -374,7 +395,11 @@ if ($method === 'POST') {
                     }
                 }
                 if ($found) {
-                    file_put_contents($globalFile, json_encode($gData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+                    if (!dent2025_safe_save_json_file($globalFile, $gData)) {
+                        http_response_code(500);
+                        echo json_encode(['success' => false, 'message' => 'فشل حفظ التعديلات على السيرفر (تحقق من صلاحيات الملف).']);
+                        exit;
+                    }
                 }
             }
         }
@@ -387,7 +412,7 @@ if ($method === 'POST') {
 
         $pass_info = function_exists('dent2025_get_passkey_info') ? dent2025_get_passkey_info($password) : null;
         if (function_exists('dent2025_record_audit_event')) {
-            dent2025_record_audit_event('events', 'edit', 'تعديل حدث بالتقويم: ' . $title, $pass_info['label'] ?? '');
+            dent2025_record_audit_event('events', 'edit', 'تعديل حدث بالتقويم: ' . $title, $pass_info['label'] ?? '', null, $updatedEvent ?? null);
         }
         echo json_encode(['success' => true, 'message' => 'تم تعديل الحدث بنجاح!']);
         exit;
@@ -416,10 +441,14 @@ if ($method === 'POST') {
 
     $data[] = $newEvent;
 
-    file_put_contents($dataFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    if (!dent2025_safe_save_json_file($dataFile, $data)) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'فشل حفظ الحدث على السيرفر (تحقق من صلاحيات الملف).']);
+        exit;
+    }
     $pass_info = function_exists('dent2025_get_passkey_info') ? dent2025_get_passkey_info($password) : null;
     if (function_exists('dent2025_record_audit_event')) {
-        dent2025_record_audit_event('events', 'add', 'إضافة حدث جديد بالتقويم: ' . $title, $pass_info['label'] ?? '');
+        dent2025_record_audit_event('events', 'add', 'إضافة حدث جديد بالتقويم: ' . $title, $pass_info['label'] ?? '', null, $newEvent);
     }
     echo json_encode(['success' => true, 'message' => 'تمت إضافة الحدث بنجاح!']);
     exit;

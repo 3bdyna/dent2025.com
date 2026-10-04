@@ -229,6 +229,9 @@ const ScheduleApp = {
                                 localStorage.setItem(cacheKey, freshJson);
                                 this.eventsData = res.data;
                                 this.render(this.eventsData); // Re-render if data changed
+                                if (this.adminPassword) {
+                                    this.renderAdminControls();
+                                }
                             }
                         }
                     })
@@ -245,6 +248,9 @@ const ScheduleApp = {
                 this.eventsData = result.data; // Store events
                 localStorage.setItem(cacheKey, JSON.stringify(this.eventsData));
                 this.render(this.eventsData);
+                if (this.adminPassword) {
+                    this.renderAdminControls();
+                }
             } else {
                 this.showError('لا توجد بيانات متاحة. (' + (result.message || 'Unknown error') + ')');
             }
