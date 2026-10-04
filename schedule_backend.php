@@ -107,7 +107,7 @@ if ($method === 'GET') {
 } else {
     // For POST/DELETE, it will be in the JSON body
     $inputRaw = file_get_contents('php://input');
-    $input = json_decode($inputRaw, true) ?: [];
+    $input = json_decode($inputRaw, true) ?: (!empty($_POST) ? $_POST : ($GLOBALS['TEST_INPUT'] ?? []));
     $scheduleId = $input['schedule_id'] ?? '';
 }
 
@@ -250,7 +250,154 @@ if ($method === 'POST') {
     }
 
     $id = $input['id'] ?? uniqid('evt_');
-    $action = $input['action'] ?? 'add'; // 'add', 'edit', or 'delete'
+    $action = $input['action'] ?? 'add'; // 'add', 'edit', 'delete', or 'ai_parse_event'
+
+    if ($action === 'ai_parse_event') {
+        $prompt = trim($input['prompt'] ?? '');
+        if (empty($prompt)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'يرجى كتابة نص الحدث أولاً للتحليل الذكي']);
+            exit;
+        }
+
+        // 1. Fetch available Gemini API keys from gemini_keys_data
+        $keysFile = __DIR__ . '/backend/gemini_keys_data/gemini_keys.json';
+        $apiKeys = [];
+        if (file_exists($keysFile)) {
+            $kEntries = json_decode(file_get_contents($keysFile), true);
+            if (is_array($kEntries)) {
+                foreach ($kEntries as $ke) {
+                    if (!empty($ke['key']) && is_string($ke['key'])) {
+                        $apiKeys[] = trim($ke['key']);
+                    }
+                }
+            }
+        }
+        if (empty($apiKeys)) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'مفاتيح Gemini غير معرّفة على الخادم']);
+            exit;
+        }
+
+        $todayDate = date('Y-m-d');
+        $arabicDays = [
+            'Sunday' => 'الأحد',
+            'Monday' => 'الإثنين',
+            'Tuesday' => 'الثلاثاء',
+            'Wednesday' => 'الأربعاء',
+            'Thursday' => 'الخميس',
+            'Friday' => 'الجمعة',
+            'Saturday' => 'السبت'
+        ];
+        $dayEn = date('l');
+        $dayAr = $arabicDays[$dayEn] ?? $dayEn;
+
+        $sysPrompt = "You are an expert academic calendar event parser for a university dental & medical student portal (Dent2025).\n" .
+            "Today's date: {$todayDate} ({$dayAr} / {$dayEn}).\n" .
+            "The user will describe an event (exam, quiz, homework, deadline, holiday, etc.) in Arabic, English, or Saudi slang.\n" .
+            "Your task: Extract the exact event details and format them into clean, strict JSON without any markdown formatting.\n" .
+            "JSON schema:\n" .
+            "{\n" .
+            "  \"title\": \"Formatted Arabic title following the cohort style: [Event Type] [Subject] ([Lectures] - [Details/Format/Time])\",\n" .
+            "  \"date\": \"YYYY-MM-DD\",\n" .
+            "  \"end_date\": null,\n" .
+            "  \"type\": \"quiz|midterm|final|exam|assessment|homework|research|deadline|holiday|payment|start|other\",\n" .
+            "  \"type_label\": \"كويز|اختبار نصفي|اختبار نهائي|اختبار|اسسمنت / تقييم|واجب / تكليف|بحث / مشروع|موعد نهائي|إجازة|مكافأة|بداية دراسة|أخرى\"\n" .
+            "}\n\n" .
+            "Style rules:\n" .
+            "1. Titles should be concise, professional, and clear.\n" .
+            "   - 'كويز تشخيص (المحاضرات 1 إلى 3 مقالي قصير)'\n" .
+            "   - 'كويز فارما (المحاضرات 4 و 5 - خيارات على البلاك بورد 9:00 مساءً)'\n" .
+            "   - 'اختبار نصفي باثولوجي (المحاضرات 1 إلى 6)'\n" .
+            "   - 'إجازة منتصف الفصل الدراسي'\n" .
+            "2. Date calculations must be strictly accurate relative to today's date ({$todayDate}, {$dayAr}).\n" .
+            "   If the user says 'الأحد القادم', compute the upcoming Sunday. If they say '20 أكتوبر', use the current academic year ({$todayDate}).\n" .
+            "3. If multi-day holiday, provide 'end_date' in YYYY-MM-DD, otherwise 'end_date' must be null.";
+
+        $parsedEvent = null;
+        $lastError = '';
+
+        foreach ($apiKeys as $apiKey) {
+            $payload = [
+                "contents" => [
+                    [
+                        "role" => "user",
+                        "parts" => [
+                            ["text" => $sysPrompt . "\n\nUser input: " . $prompt]
+                        ]
+                    ]
+                ],
+                "generationConfig" => [
+                    "temperature" => 0.1,
+                    "responseMimeType" => "application/json"
+                ]
+            ];
+
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=" . urlencode($apiKey);
+            $payloadJson = json_encode($payload);
+            $rawResponse = '';
+            $httpCode = 0;
+
+            if (function_exists('curl_init')) {
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $payloadJson);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                $rawResponse = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+            } else {
+                $ctx = stream_context_create([
+                    'http' => [
+                        'method' => 'POST',
+                        'header' => "Content-Type: application/json\r\n",
+                        'content' => $payloadJson,
+                        'timeout' => 10,
+                        'ignore_errors' => true
+                    ],
+                    'ssl' => [
+                        'verify_peer' => false,
+                        'verify_peer_name' => false
+                    ]
+                ]);
+                $rawResponse = @file_get_contents($url, false, $ctx);
+                if (!empty($http_response_header) && preg_match('#HTTP/\S+\s+(\d+)#', $http_response_header[0], $m)) {
+                    $httpCode = intval($m[1]);
+                }
+            }
+
+            if ($httpCode === 200 && !empty($rawResponse)) {
+                $decoded = json_decode($rawResponse, true);
+                $candText = $decoded['candidates'][0]['content']['parts'][0]['text'] ?? '';
+                $item = json_decode($candText, true);
+                if (is_array($item) && !empty($item['title']) && !empty($item['date'])) {
+                    $parsedEvent = $item;
+                    break;
+                }
+            } else {
+                $lastError = "Gemini HTTP $httpCode: " . substr($rawResponse, 0, 150);
+            }
+        }
+
+        if (!$parsedEvent) {
+            http_response_code(422);
+            echo json_encode([
+                'success' => false,
+                'message' => 'تعذر التعرف على الحدث بدقة أو معالجة الطلب بالذكاء الاصطناعي.',
+                'debug' => $lastError
+            ]);
+            exit;
+        }
+
+        echo json_encode([
+            'success' => true,
+            'event' => $parsedEvent
+        ]);
+        exit;
+    }
 
     if ($action === 'delete') {
         $deleteId = $input['id'] ?? '';
