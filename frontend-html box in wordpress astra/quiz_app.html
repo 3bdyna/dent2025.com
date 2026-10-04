@@ -1626,7 +1626,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             let numQs = parseInt(document.getElementById('dq-pastexam-num-qs').value, 10) || 200;
             if (numQs > 200) numQs = 200;
 
-            combinedChapterName = checkedTargets.length === 1 ? checkedTargets[0] : `تصفية (${checkedTargets.length} شابترات مستهدفة)`;
+            if (checkedTargets.length > 0) {
+                combinedChapterName = checkedTargets.join(' + ');
+            } else {
+                combinedChapterName = 'تجميعات عامة';
+            }
 
             payload.quizName = quizName;
             payload.chapterName = combinedChapterName;
@@ -1650,14 +1654,18 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             if (numQs > 100) numQs = 100;
             if (numQs <= 0) numQs = 10;
 
-            if (selectedChapters.length === 1) {
-                combinedChapterName = selectedChapters[0].name;
-            } else if (selectedChapters.length <= 3) {
-                combinedChapterName = selectedChapters.map(c => c.name).join(' + ');
-            } else if (selectedChapters.length > 3) {
-                combinedChapterName = `متعدد (${selectedChapters.length} ملفات: ${selectedChapters[0].name}...)`;
+            const allChapterNames = [];
+            if (selectedChapters.length > 0) {
+                selectedChapters.forEach(c => { if (c.name) allChapterNames.push(c.name); });
+            }
+            if (aiUploadedFiles.length > 0) {
+                aiUploadedFiles.forEach(f => { if (f.name) allChapterNames.push(f.name); });
+            }
+
+            if (allChapterNames.length > 0) {
+                combinedChapterName = allChapterNames.join(' + ');
             } else {
-                combinedChapterName = `ملفات مرفوعة (${aiUploadedFiles.length})`;
+                combinedChapterName = 'المحاضرة العامة';
             }
 
             let qTypes = [];
@@ -1863,7 +1871,28 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             let chapList = rawChap.split(/[,•+\n|]/).map(s => s.trim()).filter(Boolean);
             if (chapList.length === 0) chapList = ['ملف المحاضرة'];
 
-            let labelText = chapList.length === 1 ? 'المحاضرة المشمولة (شابتر واحد)' : `المحاضرات المشمولة (${chapList.length} شابترات)`;
+            let countForLabel = chapList.length;
+            if (chapList.length === 1 && /متعدد\s*\(\s*(\d+)\s*ملف/i.test(rawChap)) {
+                const match = rawChap.match(/متعدد\s*\(\s*(\d+)\s*ملف/i);
+                if (match) {
+                    countForLabel = parseInt(match[1], 10);
+                    let inner = rawChap.replace(/^متعدد\s*\(\s*\d+\s*ملفات?:\s*/i, '').replace(/\.\.\.\)?$/, '').trim();
+                    if (inner) {
+                        chapList = [inner, `والمحاضرات المحددة الأخرى (${countForLabel} ملفات)`];
+                    }
+                }
+            }
+
+            let labelText = '';
+            if (countForLabel === 1) {
+                labelText = 'المحاضرة المشمولة (شابتر واحد)';
+            } else if (countForLabel === 2) {
+                labelText = 'المحاضرات المشمولة (شابترين)';
+            } else if (countForLabel >= 3 && countForLabel <= 10) {
+                labelText = `المحاضرات المشمولة (${countForLabel} شابترات)`;
+            } else {
+                labelText = `المحاضرات المشمولة (${countForLabel} شابتر)`;
+            }
             let chaptersDropdownHTML = `
                 <details class="dent-chapters-details" onclick="event.stopPropagation()">
                     <summary>
