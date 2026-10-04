@@ -270,9 +270,9 @@ const ScheduleApp = {
         const groupedEvents = {};
         let totalVisibleEvents = 0;
         
-        // Anchor semester start to Sunday 2026-08-30 (Week 1), ensuring consistent week numbering
-        // across all views regardless of past events expiration (Week 4 begins Sunday 2026-09-20).
-        let startSunday = new Date(2026, 7, 30);
+        // Anchor semester start to Sunday 2026-08-23 (Week 1), ensuring consistent week numbering
+        // across all views regardless of past events expiration (Week 7 begins Sunday 2026-10-04, Week 8 begins Sunday 2026-10-11).
+        let startSunday = new Date(2026, 7, 23);
         startSunday.setHours(0, 0, 0, 0);
 
         events.forEach(ev => {
@@ -1427,7 +1427,7 @@ const ScheduleApp = {
         today.setHours(0, 0, 0, 0);
         const currentSunday = new Date(today);
         currentSunday.setDate(today.getDate() - today.getDay());
-        const startSunday = new Date(2026, 7, 30);
+        const startSunday = new Date(2026, 7, 23);
         const startWeekNum = Math.floor((currentSunday - startSunday) / (1000 * 60 * 60 * 24 * 7)) + 1;
         const endWeekNum = startWeekNum + 2;
 
@@ -1635,8 +1635,8 @@ const ScheduleApp = {
         threeWeeksEnd.setDate(currentSunday.getDate() + 20); // 21st day of the span (Saturday night)
         threeWeeksEnd.setHours(23, 59, 59, 999);
 
-        // 3. Anchor semester start to Sunday 2026-08-30 (Week 1), ensuring consistent week numbering
-        const startSunday = new Date(2026, 7, 30);
+        // 3. Anchor semester start to Sunday 2026-08-23 (Week 1), ensuring consistent week numbering
+        const startSunday = new Date(2026, 7, 23);
         startSunday.setHours(0, 0, 0, 0);
 
         // Calculate dynamic week numbers for badge
