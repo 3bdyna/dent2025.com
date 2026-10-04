@@ -278,36 +278,40 @@ const ScheduleApp = {
         events.forEach(ev => {
             let isVisible = true;
             let isEndedPast3Days = false;
+            let isCohortEndedPast7Days = false;
             
+            let daysSinceEnd = 0;
             if (ev.end_date) {
                 const ed = this.parseLocalDate(ev.end_date);
                 if (ed) {
                     ed.setHours(23, 59, 59, 999);
-                    const daysSinceEnd = (today - ed) / (1000 * 60 * 60 * 24);
-                    if (daysSinceEnd > 3) {
-                        isEndedPast3Days = true;
-                        if (!this.adminPassword) {
-                            isVisible = false;
-                        }
-                    }
+                    daysSinceEnd = (today - ed) / (1000 * 60 * 60 * 24);
                 }
             } else {
                 const d = this.parseLocalDate(ev.date);
                 if (d) {
                     d.setHours(23, 59, 59, 999);
-                    const daysSince = (today - d) / (1000 * 60 * 60 * 24);
-                    if (daysSince > 3) {
-                        isEndedPast3Days = true;
-                        if (!this.adminPassword) {
-                            isVisible = false;
-                        }
-                    }
+                    daysSinceEnd = (today - d) / (1000 * 60 * 60 * 24);
                 }
+            }
+
+            if (daysSinceEnd > 3) {
+                isEndedPast3Days = true;
+                if (!this.adminPassword) {
+                    isVisible = false;
+                }
+            }
+
+            const isGlobal = !!ev.is_global || ev.schedule_id === 'global';
+            if (!isGlobal && daysSinceEnd > 7) {
+                isCohortEndedPast7Days = true;
+                isVisible = false;
             }
 
             if (isVisible) totalVisibleEvents++;
             
             if (!this.adminPassword && isEndedPast3Days) return;
+            if (isCohortEndedPast7Days) return;
 
             const dateObj = this.parseLocalDate(ev.date) || new Date();
             

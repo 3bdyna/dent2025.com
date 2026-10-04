@@ -57,6 +57,34 @@ if (!function_exists('dent2025_parse_schedule_id')) {
     }
 }
 
+// Prune cohort (non-general) events that ended more than 1 week (7 days) ago
+if (!function_exists('dent2025_prune_expired_cohort_events')) {
+    function dent2025_prune_expired_cohort_events(&$events, $dataFile = null) {
+        if (!is_array($events)) return false;
+        $todayMid = strtotime('today 23:59:59');
+        $changed = false;
+        $filtered = [];
+        foreach ($events as $ev) {
+            $checkDate = !empty($ev['end_date']) ? $ev['end_date'] : ($ev['date'] ?? '');
+            if ($checkDate) {
+                $evTime = strtotime($checkDate . ' 23:59:59');
+                if ($evTime && ($todayMid - $evTime) > (7 * 86400)) {
+                    $changed = true;
+                    continue; // drop non-general event that passed > 7 days
+                }
+            }
+            $filtered[] = $ev;
+        }
+        if ($changed) {
+            $events = array_values($filtered);
+            if ($dataFile && file_exists($dataFile)) {
+                @file_put_contents($dataFile, json_encode($events, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+            }
+        }
+        return $changed;
+    }
+}
+
 $globalFile = __DIR__ . '/schedule_events.json';
 
 // Get schedule_id (from GET or POST)
@@ -111,6 +139,7 @@ if ($method === 'GET') {
             
             $localData = json_decode(file_get_contents($file), true);
             if (is_array($localData)) {
+                dent2025_prune_expired_cohort_events($localData, $file);
                 $parsed = dent2025_parse_schedule_id($subScheduleId);
                 $specialty = $parsed['specialty'] ?? null;
                 $year = $parsed['year'] ?? null;
@@ -132,6 +161,7 @@ if ($method === 'GET') {
         if ($dataFile !== $globalFile && file_exists($dataFile)) {
             $localData = json_decode(file_get_contents($dataFile), true);
             if (is_array($localData)) {
+                dent2025_prune_expired_cohort_events($localData, $dataFile);
                 $parsed = dent2025_parse_schedule_id($scheduleId);
                 $specialty = $parsed['specialty'] ?? null;
                 $year = $parsed['year'] ?? null;
@@ -206,6 +236,9 @@ if ($method === 'POST' || $method === 'DELETE') {
 if ($method === 'POST') {
     $data = file_exists($dataFile) ? json_decode(file_get_contents($dataFile), true) : [];
     if (!is_array($data)) $data = [];
+    if ($dataFile !== $globalFile) {
+        dent2025_prune_expired_cohort_events($data, $dataFile);
+    }
 
     $id = $input['id'] ?? uniqid('evt_');
     $action = $input['action'] ?? 'add'; // 'add', 'edit', or 'delete'
