@@ -279,7 +279,10 @@ if ($method === 'POST') {
             exit;
         }
 
-        $todayDate = date('Y-m-d');
+        // Enforce Riyadh timezone for accurate Saudi calendar calculations
+        date_default_timezone_set('Asia/Riyadh');
+        $now = new DateTime('now', new DateTimeZone('Asia/Riyadh'));
+        $todayDate = $now->format('Y-m-d');
         $arabicDays = [
             'Sunday' => 'الأحد',
             'Monday' => 'الإثنين',
@@ -289,13 +292,28 @@ if ($method === 'POST') {
             'Friday' => 'الجمعة',
             'Saturday' => 'السبت'
         ];
-        $dayEn = date('l');
+        $dayEn = $now->format('l');
         $dayAr = $arabicDays[$dayEn] ?? $dayEn;
 
+        // Build an explicit calendar reference for the upcoming 14 days so the model has 100% day awareness
+        $calendarRef = [];
+        for ($i = 0; $i <= 14; $i++) {
+            $d = (clone $now)->modify("+{$i} days");
+            $dEn = $d->format('l');
+            $dAr = $arabicDays[$dEn] ?? $dEn;
+            $dDate = $d->format('Y-m-d');
+            $relLabel = ($i === 0) ? 'اليوم (Today)' : (($i === 1) ? 'غداً (Tomorrow)' : (($i === 2) ? 'بعد غد' : "+{$i} days"));
+            $calendarRef[] = "- {$relLabel}: {$dAr} ({$dEn}) {$dDate}";
+        }
+        $calendarRefText = implode("\n", $calendarRef);
+
         $sysPrompt = "You are an expert academic calendar event parser for a university dental & medical student portal (Dent2025).\n" .
-            "Today's date: {$todayDate} ({$dayAr} / {$dayEn}).\n" .
-            "The user will describe an event (exam, quiz, homework, deadline, holiday, etc.) in Arabic, English, or Saudi slang.\n" .
-            "Your task: Extract the exact event details and format them into clean, strict JSON without any markdown formatting.\n" .
+            "Today's exact reference:\n" .
+            "- Current Timezone: Asia/Riyadh (AST)\n" .
+            "- Today: {$dayAr} ({$dayEn}), {$todayDate}\n\n" .
+            "Upcoming calendar lookup table:\n{$calendarRefText}\n\n" .
+            "The user will describe an event in Arabic (including Saudi dialect) or English.\n" .
+            "Extract the exact event details and format them into clean, strict JSON without any markdown formatting.\n" .
             "JSON schema:\n" .
             "{\n" .
             "  \"title\": \"Formatted Arabic title following the cohort style: [Event Type] [Subject] ([Lectures] - [Details/Format/Time])\",\n" .
@@ -304,15 +322,12 @@ if ($method === 'POST') {
             "  \"type\": \"quiz|midterm|final|exam|assessment|homework|research|deadline|holiday|payment|start|other\",\n" .
             "  \"type_label\": \"كويز|اختبار نصفي|اختبار نهائي|اختبار|اسسمنت / تقييم|واجب / تكليف|بحث / مشروع|موعد نهائي|إجازة|مكافأة|بداية دراسة|أخرى\"\n" .
             "}\n\n" .
-            "Style rules:\n" .
-            "1. Titles should be concise, professional, and clear.\n" .
-            "   - 'كويز تشخيص (المحاضرات 1 إلى 3 مقالي قصير)'\n" .
-            "   - 'كويز فارما (المحاضرات 4 و 5 - خيارات على البلاك بورد 9:00 مساءً)'\n" .
-            "   - 'اختبار نصفي باثولوجي (المحاضرات 1 إلى 6)'\n" .
-            "   - 'إجازة منتصف الفصل الدراسي'\n" .
-            "2. Date calculations must be strictly accurate relative to today's date ({$todayDate}, {$dayAr}).\n" .
-            "   If the user says 'الأحد القادم', compute the upcoming Sunday. If they say '20 أكتوبر', use the current academic year ({$todayDate}).\n" .
-            "3. If multi-day holiday, provide 'end_date' in YYYY-MM-DD, otherwise 'end_date' must be null.";
+            "Day Awareness Rules:\n" .
+            "- If the user says 'اليوم' -> Use {$todayDate}\n" .
+            "- If the user says 'بكرة' or 'غداً' or 'tomorrow' -> Match tomorrow's date from the lookup table\n" .
+            "- If the user specifies a day like 'الأحد القادم' or 'next Tuesday' or 'الخميس' -> Match the upcoming occurrence from the lookup table\n" .
+            "- If a specific calendar date is mentioned (e.g. '20 أكتوبر') -> Use the current academic year ({$now->format('Y')})\n" .
+            "- If multi-day (e.g. holiday starting on date X until date Y) -> set 'end_date' to YYYY-MM-DD, otherwise 'end_date' must be null.";
 
         $parsedEvent = null;
         $lastError = '';
