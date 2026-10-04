@@ -76,7 +76,12 @@ def purge_remote_cache(config=None):
     
     # Fast path: invoke purge_cache.php directly via SSH CLI on localhost
     try:
-        cmd = ['ssh', '-o', 'BatchMode=yes', f"{ssh_user}@{ssh_host}", "php -f /var/www/dent2025/purge_cache.php"]
+        cmd = [
+            'ssh', '-o', 'BatchMode=yes', f"{ssh_user}@{ssh_host}",
+            "sudo chown -R www-data:www-data /var/www/dent2025/*.json /var/www/dent2025/announcements_data /var/www/dent2025/history_data 2>/dev/null || true; "
+            "sudo chmod 664 /var/www/dent2025/*.json 2>/dev/null || true; "
+            "php -f /var/www/dent2025/purge_cache.php"
+        ]
         res = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=10)
         if res.returncode == 0 and res.stdout:
             for line in res.stdout.splitlines():
@@ -121,6 +126,8 @@ def stream_deploy_via_ssh(file_paths, config=None, custom_src_dir=None):
     t0 = time.time()
     remote_cmd = (
         f"tar -xzf - -C '{remote_base}' && "
+        f"sudo chown -R www-data:www-data '{remote_base}'/*.json '{remote_base}/announcements_data' '{remote_base}/history_data' 2>/dev/null || true; "
+        f"sudo chmod 664 '{remote_base}'/*.json 2>/dev/null || true; "
         f"php -f '{remote_base}/purge_cache.php'"
     )
     cmd = ['ssh', '-o', 'BatchMode=yes', f"{ssh_user}@{ssh_host}", remote_cmd]
