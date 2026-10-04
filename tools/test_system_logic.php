@@ -376,6 +376,43 @@ foreach ($mock_semester_events as $ev) {
 assert_test("Nonexistent event ID correctly detected as not found", $nonexistent_found === false);
 
 // -----------------------------------------------------------------------------
+// SUITE 8: Atomic JSON File Save & Resilience
+// -----------------------------------------------------------------------------
+echo "\n8. Testing Atomic JSON File Save & Resilience...\n";
+require_once __DIR__ . '/../history_helpers.php';
+
+assert_test("dent2025_safe_atomic_save_json function exists", function_exists('dent2025_safe_atomic_save_json'));
+
+$test_json_file = sys_get_temp_dir() . '/dent2025_atomic_test_' . uniqid() . '.json';
+$sample_data = [
+    'app' => 'dent2025',
+    'timestamp' => time(),
+    'items' => ['event_1', 'event_2'],
+    'arabic' => 'تجربة حفظ آمنة بدون تلف البيانات'
+];
+
+$save_ok = dent2025_safe_atomic_save_json($test_json_file, $sample_data);
+assert_test("Atomic save to file succeeds", $save_ok === true && file_exists($test_json_file));
+
+$read_back = json_decode(file_get_contents($test_json_file), true);
+assert_test("Read-back data matches original payload exactly", $read_back === $sample_data);
+
+// Test overwrite with updated content
+$sample_data['items'][] = 'event_3';
+$overwrite_ok = dent2025_safe_atomic_save_json($test_json_file, $sample_data);
+assert_test("Atomic overwrite succeeds", $overwrite_ok === true);
+
+$read_updated = json_decode(file_get_contents($test_json_file), true);
+assert_test("Updated data contains new item", count($read_updated['items']) === 3);
+
+// Verify no leftover .tmp files in temp directory
+$leftover_tmp = glob(dirname($test_json_file) . '/.' . basename($test_json_file) . '.*.tmp');
+assert_test("No leftover .tmp files remaining", empty($leftover_tmp));
+
+// Cleanup
+@unlink($test_json_file);
+
+// -----------------------------------------------------------------------------
 // SUMMARY REPORT
 // -----------------------------------------------------------------------------
 echo "\n=======================================================\n";

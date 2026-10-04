@@ -121,7 +121,11 @@ if ($method === 'POST') {
         foreach ($files as $file) {
             $backup[basename($file)] = file_get_contents($file);
         }
-        file_put_contents($backupFile, json_encode($backup), LOCK_EX);
+        if (function_exists('dent2025_safe_atomic_save_json')) {
+            dent2025_safe_atomic_save_json($backupFile, $backup);
+        } else {
+            file_put_contents($backupFile, json_encode($backup), LOCK_EX);
+        }
     };
 
     if ($action === 'undo') {
@@ -140,7 +144,12 @@ if ($method === 'POST') {
         foreach ($files as $file) { unlink($file); }
         // Restore from backup
         foreach ($backup as $basename => $content) {
-            file_put_contents("{$dataDir}/{$basename}", $content, LOCK_EX);
+            $parsed = json_decode($content, true);
+            if ($parsed !== null && function_exists('dent2025_safe_atomic_save_json')) {
+                dent2025_safe_atomic_save_json("{$dataDir}/{$basename}", $parsed);
+            } else {
+                file_put_contents("{$dataDir}/{$basename}", $content, LOCK_EX);
+            }
         }
         $pass_info = function_exists('dent2025_get_passkey_info') ? dent2025_get_passkey_info($password) : null;
         if (function_exists('dent2025_record_audit_event')) {
@@ -160,7 +169,11 @@ if ($method === 'POST') {
         $files = glob("{$dataDir}/announcements_*.json");
         foreach ($files as $file) {
             $data = ['content' => '', 'last_updated' => time()];
-            file_put_contents($file, json_encode($data), LOCK_EX);
+            if (function_exists('dent2025_safe_atomic_save_json')) {
+                dent2025_safe_atomic_save_json($file, $data);
+            } else {
+                file_put_contents($file, json_encode($data), LOCK_EX);
+            }
         }
         $pass_info = function_exists('dent2025_get_passkey_info') ? dent2025_get_passkey_info($password) : null;
         if (function_exists('dent2025_record_audit_event')) {
@@ -202,7 +215,11 @@ if ($method === 'POST') {
             $filename = "{$dataDir}/announcements_{$s}_{$y}_{$sem}.json";
             
             $data = ['content' => $content, 'last_updated' => time()];
-            file_put_contents($filename, json_encode($data), LOCK_EX);
+            if (function_exists('dent2025_safe_atomic_save_json')) {
+                dent2025_safe_atomic_save_json($filename, $data);
+            } else {
+                file_put_contents($filename, json_encode($data), LOCK_EX);
+            }
         }
         $pass_info = function_exists('dent2025_get_passkey_info') ? dent2025_get_passkey_info($password) : null;
         if (function_exists('dent2025_record_audit_event')) {
@@ -240,7 +257,11 @@ if ($method === 'POST') {
         $filename = "{$dataDir}/announcements_{$specialty}_{$year}_{$semester}.json";
         $content = dent2025_sanitize_announcements_html($input['content'] ?? '');
         $data = ['content' => $content, 'last_updated' => time()];
-        file_put_contents($filename, json_encode($data), LOCK_EX);
+        if (function_exists('dent2025_safe_atomic_save_json')) {
+            dent2025_safe_atomic_save_json($filename, $data);
+        } else {
+            file_put_contents($filename, json_encode($data), LOCK_EX);
+        }
         $pass_info = function_exists('dent2025_get_passkey_info') ? dent2025_get_passkey_info($password) : null;
         if (function_exists('dent2025_record_audit_event')) {
             dent2025_record_audit_event('announcements', 'edit', "تحديث إعلان الفئة: {$specialty} y{$year} s{$semester}", $pass_info['label'] ?? '');

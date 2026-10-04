@@ -16,6 +16,45 @@ if (!function_exists('dent2025_get_history_dir')) {
     }
 }
 
+if (!function_exists('dent2025_safe_atomic_save_json')) {
+    /**
+     * Atomically writes data to a JSON file without risk of truncation or corruption.
+     * Writes to a unique temp file in the same directory, flushes with LOCK_EX, and atomically renames.
+     *
+     * @param string $filePath Absolute path to the destination file
+     * @param mixed $data Data array/object to encode as JSON
+     * @return bool True on success, false on failure
+     */
+    function dent2025_safe_atomic_save_json($filePath, $data) {
+        $encoded = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        if ($encoded === false) return false;
+
+        $dir = dirname($filePath);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0777, true);
+        }
+
+        // Unique temporary file in the same folder to guarantee same filesystem partition
+        $tempFile = $dir . '/.' . basename($filePath) . '.' . bin2hex(random_bytes(6)) . '.tmp';
+
+        if (@file_put_contents($tempFile, $encoded, LOCK_EX) === false) {
+            @unlink($tempFile);
+            return false;
+        }
+
+        // Atomic swap (POSIX rename is atomic; Windows copy fallback)
+        if (!@rename($tempFile, $filePath)) {
+            if (@copy($tempFile, $filePath)) {
+                @unlink($tempFile);
+                return true;
+            }
+            @unlink($tempFile);
+            return false;
+        }
+        return true;
+    }
+}
+
 if (!function_exists('dent2025_db')) {
     function dent2025_db() {
         global $wpdb;
@@ -200,7 +239,7 @@ if (!function_exists('dent2025_record_audit_event')) {
             'metadata' => $metadata ?: null,
             'state' => $state
         ];
-        @file_put_contents($snapshot_file, json_encode($snapshot_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        dent2025_safe_atomic_save_json($snapshot_file, $snapshot_data);
 
         // Append to audit log
         $audit_log_file = "{$history_dir}/audit_log.json";
@@ -235,7 +274,7 @@ if (!function_exists('dent2025_record_audit_event')) {
             $audit_log = array_slice($audit_log, 0, 500);
         }
 
-        @file_put_contents($audit_log_file, json_encode($audit_log, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        dent2025_safe_atomic_save_json($audit_log_file, $audit_log);
 
         return $audit_entry;
     }

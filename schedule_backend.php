@@ -78,7 +78,11 @@ if (!function_exists('dent2025_prune_expired_cohort_events')) {
         if ($changed) {
             $events = array_values($filtered);
             if ($dataFile && file_exists($dataFile)) {
-                @file_put_contents($dataFile, json_encode($events, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+                if (function_exists('dent2025_safe_atomic_save_json')) {
+                    dent2025_safe_atomic_save_json($dataFile, $events);
+                } else {
+                    @file_put_contents($dataFile, json_encode($events, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+                }
             }
         }
         return $changed;
@@ -87,6 +91,9 @@ if (!function_exists('dent2025_prune_expired_cohort_events')) {
 
 if (!function_exists('dent2025_safe_save_json_file')) {
     function dent2025_safe_save_json_file($file, $data) {
+        if (function_exists('dent2025_safe_atomic_save_json')) {
+            return dent2025_safe_atomic_save_json($file, $data);
+        }
         $encoded = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         if ($encoded === false) return false;
         $bytes = @file_put_contents($file, $encoded, LOCK_EX);
@@ -466,7 +473,7 @@ if ($method === 'DELETE') {
                 return ($ev['id'] ?? '') !== $id;
             }));
             if (count($data) < $origCount) {
-                file_put_contents($dataFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+                dent2025_safe_save_json_file($dataFile, $data);
                 $deleted = true;
             }
         }
@@ -479,7 +486,7 @@ if ($method === 'DELETE') {
                     return ($ev['id'] ?? '') !== $id;
                 }));
                 if (count($gData) < $origCount) {
-                    file_put_contents($globalFile, json_encode($gData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+                    dent2025_safe_save_json_file($globalFile, $gData);
                     $deleted = true;
                 }
             }
