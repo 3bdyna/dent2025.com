@@ -1868,7 +1868,16 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 rawChap = 'ملف المحاضرة';
             }
 
-            let chapList = rawChap.split(/[,•+\n|]/).map(s => s.trim()).filter(Boolean);
+            let chapList = [];
+            if (rawChap.includes(' + ')) {
+                chapList = rawChap.split(/\s+\+\s+/).map(s => s.trim()).filter(Boolean);
+            } else if (rawChap.includes('\n')) {
+                chapList = rawChap.split(/\n+/).map(s => s.trim()).filter(Boolean);
+            } else if (rawChap.includes(' • ') || rawChap.includes(' | ')) {
+                chapList = rawChap.split(/\s+[•|]\s+/).map(s => s.trim()).filter(Boolean);
+            } else {
+                chapList = [rawChap.trim()];
+            }
             if (chapList.length === 0) chapList = ['ملف المحاضرة'];
 
             let countForLabel = chapList.length;
@@ -1903,7 +1912,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                         ${chapList.map(c => `
                             <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4; word-break: break-word; padding-bottom: 3px; border-bottom: 1px dashed rgba(255, 255, 255, 0.04); display: flex; align-items: flex-start; gap: 6px;">
                                 <span style="color: #64748b; font-size: 0.8rem; flex-shrink: 0;">•</span>
-                                <span>${c}</span>
+                                <span dir="auto" style="unicode-bidi: plaintext; text-align: start;">${escapeHtml(c)}</span>
                             </div>
                         `).join('')}
                     </div>
