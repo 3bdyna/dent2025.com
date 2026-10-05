@@ -3019,7 +3019,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         'quiz_id' => null,
         'quiz_name' => $quizName
     ];
-    file_put_contents($jobFile, json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    ai_exam_save_job_status($jobFile, $jobStatusData);
 
     // Respond immediately to client to prevent gateway timeouts
     ignore_user_abort(true);
@@ -3066,7 +3066,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $jobStatusData['progress_pct'] = intval((($i + 1) / max(1, $totalItems)) * 40);
             $jobStatusData['message'] = "(1/3) قراءة وتحليل (" . ($i + 1) . " من $totalItems): $chapName";
-            file_put_contents($jobFile, json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+            ai_exam_save_job_status($jobFile, $jobStatusData);
 
             try {
                 $extRes = performDriveExtraction($driveLink, [
@@ -3088,7 +3088,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     if ($cachedUri) {
                         $jobStatusData['message'] = "(1/3) استخدام الذاكرة السحابية السريعة (0 ثوانٍ): $chapName";
-                        file_put_contents($jobFile, json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                        ai_exam_save_job_status($jobFile, $jobStatusData);
                         $apiKeys = getGeminiRawApiKeys();
                         $geminiFileUris[] = [
                             'uri' => $cachedUri,
@@ -3101,7 +3101,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     } elseif ($isScanned && !empty($localPdf) && file_exists($localPdf)) {
                         $tempLocalFilesToClean[] = $localPdf;
                         $jobStatusData['message'] = "(1/3) مستند/كتاب شامل: جاري الرفع والمعالجة (" . ($i + 1) . " من $totalItems): $chapName";
-                        file_put_contents($jobFile, json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                        ai_exam_save_job_status($jobFile, $jobStatusData);
 
                         $apiKeys = getGeminiRawApiKeys();
                         $upRes = uploadPdfToGeminiFileApi($localPdf, $apiKeys[0], $chapName, $cacheKey);
