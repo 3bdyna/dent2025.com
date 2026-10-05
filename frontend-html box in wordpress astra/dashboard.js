@@ -1110,7 +1110,7 @@ function loadAnnouncements(selection) {
     
     container.innerHTML = `<div style="text-align:center; color:#94a3b8; margin-top: 24px; margin-bottom: 20px;">جاري تحميل المهام...</div>`;
     
-    fetch(`/announcements_api.php?specialty=${selection.specialty}&year=${selection.year}&semester=${selection.semester}`)
+    fetch(`/announcements_api.php?specialty=${selection.specialty}&year=${selection.year}&semester=${selection.semester}&_t=${Date.now()}`)
         .then(res => res.json())
         .then(data => {
             renderAnnouncements(data.success ? (data.data || {}) : {}, selection);
@@ -1280,6 +1280,9 @@ window.toggleEditAnnouncements = function() {
         const sel = dentGetSelection() || {};
         loadAnnouncements(sel);
     } else {
+        if (display.innerText.trim() === 'لا يوجد إعلانات حالياً.') {
+            display.innerHTML = '';
+        }
         display.setAttribute('contenteditable', 'true');
         toolbar.style.display = 'flex';
         display.focus();
@@ -1294,8 +1297,8 @@ window.saveAnnouncements = function() {
     
     content = dentSanitizeRichText(content);
     content = content.replace(/(?:<p>(?:<br\s*\/?>|&nbsp;|\s)*<\/p>|<br\s*\/?>|\s)+$/gi, '').trim();
-    if (!content || content === '<br>' || content === '<p></p>') {
-        content = 'لا يوجد إعلانات حالياً.';
+    if (!content || content === '<br>' || content === '<p></p>' || content === 'لا يوجد إعلانات حالياً.') {
+        content = '';
     }
     
     const pass = sessionStorage.getItem('dent2025_admin_pass');

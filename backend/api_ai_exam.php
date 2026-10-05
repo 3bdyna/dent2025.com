@@ -17,6 +17,9 @@ require_once 'db_connect.php';
 // db_connect.php already handles: Content-Type, CORS, OPTIONS preflight, and $pdo setup
 
 require_once __DIR__ . '/../dent2025_rbac.php';
+if (file_exists(__DIR__ . '/../history_helpers.php')) {
+    require_once __DIR__ . '/../history_helpers.php';
+}
 
 $action = $_GET['action'] ?? '';
 $RAW_INPUT = file_get_contents('php://input');
@@ -2322,10 +2325,63 @@ if ($action === 'gemini_status') {
     ]);
 }
 
+/**
+ * Fast lightweight Gemini API key health probe via models endpoint.
+ * Bypasses generateContent inference & thinking tokens for sub-100ms response time.
+ */
+function pingGeminiKeyHealth($apiKey, $timeout = 6) {
+    $startTime = microtime(true);
+    $url = "https://generativelanguage.googleapis.com/v1beta/models?key=" . urlencode($apiKey);
+    $httpCode = 0;
+
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => $timeout,
+            CURLOPT_CONNECTTIMEOUT => 3,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2
+        ]);
+        curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+    } else {
+        $opts = [
+            'http' => [
+                'method'        => 'GET',
+                'timeout'       => $timeout,
+                'ignore_errors' => true
+            ],
+            'ssl' => [
+                'verify_peer'      => false,
+                'verify_peer_name' => false
+            ]
+        ];
+        $context = stream_context_create($opts);
+        @file_get_contents($url, false, $context);
+        if (isset($http_response_header) && is_array($http_response_header)) {
+            foreach ($http_response_header as $header) {
+                if (preg_match('#HTTP/[0-9\.]+\s+([0-9]+)#i', $header, $m)) {
+                    $httpCode = intval($m[1]);
+                    break;
+                }
+            }
+        }
+    }
+
+    $latencyMs = round((microtime(true) - $startTime) * 1000);
+    $status = ($httpCode === 200) ? 'active' : (($httpCode === 429) ? 'quota_exhausted' : 'invalid');
+
+    return [
+        'http_code'  => $httpCode,
+        'latency_ms' => $latencyMs,
+        'status'     => $status
+    ];
+}
+
 // --- ACTION 7: TEST GEMINI KEYS HEALTH ---
 if ($action === 'test_keys') {
-    global $GEMINI_MODELS;
-    $targetModel = !empty($GEMINI_MODELS[0]) ? $GEMINI_MODELS[0] : 'gemini-3.5-flash';
     $targetIndex = isset($_GET['key_index']) ? intval($_GET['key_index']) : -1;
     $dataDir = __DIR__ . '/gemini_keys_data';
     if (!is_dir($dataDir)) @mkdir($dataDir, 0777, true);
@@ -2344,19 +2400,10 @@ if ($action === 'test_keys') {
         $apiKey = $entry['key'] ?? '';
         if (empty($apiKey)) continue;
 
-        $testPayload = json_encode([
-            "contents" => [
-                ["parts" => [["text" => "ping"]]]
-            ],
-            "generationConfig" => ["maxOutputTokens" => 1]
-        ]);
-
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($targetModel) . ":generateContent?key=" . $apiKey;
-        $reqResult = postGeminiRequest($url, $testPayload, 15);
-
-        $httpCode = $reqResult['http_code'];
-        $latencyMs = $reqResult['latency_ms'];
-        $status = ($httpCode === 200) ? 'active' : (($httpCode === 429) ? 'quota_exhausted' : 'invalid');
+        $probe = pingGeminiKeyHealth($apiKey, 6);
+        $httpCode = $probe['http_code'];
+        $latencyMs = $probe['latency_ms'];
+        $status = $probe['status'];
 
         $health[$index] = [
             'id' => $entry['id'] ?? ('gem_key_' . ($index + 1)),
@@ -2402,15 +2449,8 @@ if ($action === 'add_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Quick verification ping
-    global $GEMINI_MODELS;
-    $targetModel = !empty($GEMINI_MODELS[0]) ? $GEMINI_MODELS[0] : 'gemini-3.5-flash';
-    $testPayload = json_encode([
-        "contents" => [["parts" => [["text" => "ping"]]]],
-        "generationConfig" => ["maxOutputTokens" => 1]
-    ]);
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($targetModel) . ":generateContent?key=" . $key;
-    $reqResult = postGeminiRequest($url, $testPayload, 15);
-    $httpCode = $reqResult['http_code'];
+    $probe = pingGeminiKeyHealth($key, 6);
+    $httpCode = $probe['http_code'];
 
     $newEntry = [
         'id' => 'gem_key_' . uniqid(),
@@ -2436,8 +2476,8 @@ if ($action === 'add_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         'label' => $label,
         'key_masked' => substr($key, 0, 8) . '...' . substr($key, -4),
         'http_code' => $httpCode,
-        'status' => ($httpCode === 200) ? 'active' : (($httpCode === 429) ? 'quota_exhausted' : 'invalid'),
-        'latency_ms' => $reqResult['latency_ms'],
+        'status' => $probe['status'],
+        'latency_ms' => $probe['latency_ms'],
         'last_tested' => date('Y-m-d H:i:s')
     ];
     @file_put_contents($healthFile, json_encode($health, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
@@ -2493,16 +2533,9 @@ if ($action === 'edit_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Re-test edited key
-    global $GEMINI_MODELS;
-    $targetModel = !empty($GEMINI_MODELS[0]) ? $GEMINI_MODELS[0] : 'gemini-3.5-flash';
     $testedKey = $entries[$targetIndex]['key'];
-    $testPayload = json_encode([
-        "contents" => [["parts" => [["text" => "ping"]]]],
-        "generationConfig" => ["maxOutputTokens" => 1]
-    ]);
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($targetModel) . ":generateContent?key=" . $testedKey;
-    $reqResult = postGeminiRequest($url, $testPayload, 15);
-    $httpCode = $reqResult['http_code'];
+    $probe = pingGeminiKeyHealth($testedKey, 6);
+    $httpCode = $probe['http_code'];
 
     $dataDir = __DIR__ . '/gemini_keys_data';
     $healthFile = $dataDir . '/gemini_health_cache.json';
@@ -2514,8 +2547,8 @@ if ($action === 'edit_gemini_key' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         'label' => $entries[$targetIndex]['label'] ?? ('مفتاح المعالجة الذكية #' . ($targetIndex + 1)),
         'key_masked' => substr($testedKey, 0, 8) . '...' . substr($testedKey, -4),
         'http_code' => $httpCode,
-        'status' => ($httpCode === 200) ? 'active' : (($httpCode === 429) ? 'quota_exhausted' : 'invalid'),
-        'latency_ms' => $reqResult['latency_ms'],
+        'status' => $probe['status'],
+        'latency_ms' => $probe['latency_ms'],
         'last_tested' => date('Y-m-d H:i:s')
     ];
     @file_put_contents($healthFile, json_encode($health, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
@@ -2892,6 +2925,17 @@ if ($action === 'rename_quiz' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             "quiz_name" => $newName
         ]
     ]);
+}
+
+/**
+ * Atomically saves background job status avoiding race conditions with polling clients.
+ */
+function ai_exam_save_job_status($jobFile, $jobStatusData) {
+    if (function_exists('dent2025_safe_atomic_save_json')) {
+        return dent2025_safe_atomic_save_json($jobFile, $jobStatusData);
+    }
+    $encoded = json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    return @file_put_contents($jobFile, $encoded, LOCK_EX) !== false;
 }
 
 // --- ACTION 9: START BACKGROUND QUIZ JOB ---

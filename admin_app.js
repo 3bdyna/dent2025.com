@@ -350,7 +350,7 @@ window.AdminApp = {
 
     prefetchAnnouncements() {
         if (this.announcementsData && this.announcementsData.length) return;
-        fetch(API_BASE + '/announcements_api.php?action=get_all')
+        fetch(API_BASE + '/announcements_api.php?action=get_all&_t=' + Date.now())
         .then(r => r.json())
         .then(res => {
             if (res.success && res.data) {
@@ -2740,7 +2740,7 @@ window.AdminApp = {
             this.showLoading(true);
         }
 
-        fetch(API_BASE + '/announcements_api.php?action=get_all')
+        fetch(API_BASE + '/announcements_api.php?action=get_all&_t=' + Date.now())
         .then(r => r.json())
         .then(res => {
             if (!hasCached) this.showLoading(false);
@@ -2902,7 +2902,7 @@ window.AdminApp = {
                 let years = [];
                 if (year === 'all') {
                     if (s === 'pre-med') {
-                        years = [0];
+                        years = [1];
                     } else {
                         years = [2, 3, 4, 5, 6];
                     }
@@ -2912,11 +2912,11 @@ window.AdminApp = {
                 let sems = sem === 'all' ? [1, 2] : [parseInt(sem)];
                 
                 for (let y of years) {
-                    if (s === 'pre-med' && y !== 0) continue;
-                    if (s !== 'pre-med' && y === 0) continue;
+                    if (s === 'pre-med' && y !== 1 && y !== 0) continue;
+                    if (s !== 'pre-med' && (y === 0 || y === 1)) continue;
 
                     for (let sm of sems) {
-                        contexts.push({ specialty: s, year: y, semester: sm });
+                        contexts.push({ specialty: s, year: (s === 'pre-med' ? 1 : y), semester: sm });
                     }
                 }
             }
@@ -2925,7 +2925,7 @@ window.AdminApp = {
         } else {
             payload.action = 'update';
             payload.specialty = spec;
-            payload.year = parseInt(year);
+            payload.year = (spec === 'pre-med' && (parseInt(year) === 0 || parseInt(year) === 1)) ? 1 : parseInt(year);
             payload.semester = parseInt(sem);
         }
 
