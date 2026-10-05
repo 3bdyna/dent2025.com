@@ -1301,36 +1301,21 @@ const ScheduleApp = {
             sandbox.remove();
 
             const jsPdfClass = await jsPdfPromise;
+            const pdfPageWidth = 210;
+            const imgHeightMm = (height / width) * pdfPageWidth;
+            const pdfPageHeight = Math.round(imgHeightMm * 100) / 100;
+            const pdfOrientation = pdfPageHeight >= pdfPageWidth ? 'p' : 'l';
+
             const pdf = new jsPdfClass({
-                orientation: 'p',
+                orientation: pdfOrientation,
                 unit: 'mm',
-                format: 'a4',
+                format: [pdfPageWidth, pdfPageHeight],
                 compress: true
             });
 
-            const pdfPageWidth = 210;
-            const pdfPageHeight = 297;
-            pdf.setFillColor(43, 46, 56);
+            pdf.setFillColor(18, 18, 18);
             pdf.rect(0, 0, pdfPageWidth, pdfPageHeight, 'F');
-
-            const imgHeightMm = (height / width) * pdfPageWidth;
-
-            if (imgHeightMm <= pdfPageHeight) {
-                pdf.addImage(pngDataUrl, 'PNG', 0, 0, pdfPageWidth, imgHeightMm, undefined, 'FAST');
-            } else {
-                let heightLeft = imgHeightMm;
-                let position = 0;
-                pdf.addImage(pngDataUrl, 'PNG', 0, position, pdfPageWidth, imgHeightMm, undefined, 'FAST');
-                heightLeft -= pdfPageHeight;
-                while (heightLeft > 0) {
-                    position = heightLeft - imgHeightMm;
-                    pdf.addPage();
-                    pdf.setFillColor(43, 46, 56);
-                    pdf.rect(0, 0, pdfPageWidth, pdfPageHeight, 'F');
-                    pdf.addImage(pngDataUrl, 'PNG', 0, position, pdfPageWidth, imgHeightMm, undefined, 'FAST');
-                    heightLeft -= pdfPageHeight;
-                }
-            }
+            pdf.addImage(pngDataUrl, 'PNG', 0, 0, pdfPageWidth, pdfPageHeight, undefined, 'FAST');
 
             const pdfBlob = pdf.output('blob');
             const fileName = this.getDynamicScheduleFileName('pdf');
