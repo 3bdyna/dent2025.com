@@ -3142,7 +3142,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $jobStatusData['progress_pct'] = intval((($totalDriveChaps + $j + 1) / max(1, $totalItems)) * 45);
             $jobStatusData['message'] = "(1/3) معالجة واستخراج نصوص (" . ($j + 1) . " من $totalUploads): $upName";
-            file_put_contents($jobFile, json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+            ai_exam_save_job_status($jobFile, $jobStatusData);
 
             try {
                 $upRes = performDirectUploadedFileExtraction($upFile);
@@ -3155,7 +3155,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($isScanned && !empty($localPdf) && file_exists($localPdf)) {
                         $tempLocalFilesToClean[] = $localPdf;
                         $jobStatusData['message'] = "(1/3) ملف مرفوع: جاري الرفع والمعالجة: $upName";
-                        file_put_contents($jobFile, json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                        ai_exam_save_job_status($jobFile, $jobStatusData);
 
                         $apiKeys = getGeminiRawApiKeys();
                         $upRes = uploadPdfToGeminiFileApi($localPdf, $apiKeys[0], $upName);
@@ -3206,7 +3206,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $jobStatusData['message'] = "(2/3) الذكاء الاصطناعي يصيغ الأسئلة بحسب الصعوبة ($difficulty)...";
         }
-        file_put_contents($jobFile, json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        ai_exam_save_job_status($jobFile, $jobStatusData);
 
         $genPayload = [
             'mode' => $mode,
@@ -3227,7 +3227,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $jobCallback = function($batchNum, $totalBatches, $curQuestionsCount) use ($jobFile, &$jobStatusData) {
             $jobStatusData['progress_pct'] = 60 + intval(($batchNum / max(1, $totalBatches)) * 28);
             $jobStatusData['message'] = "(2/3) الذكاء الاصطناعي يصيغ الأسئلة (دفعة $batchNum من $totalBatches - أُنجز $curQuestionsCount سؤال)...";
-            @file_put_contents($jobFile, json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+            ai_exam_save_job_status($jobFile, $jobStatusData);
         };
 
         $genRes = performGeminiGeneration($genPayload, getGeminiRawApiKeys(), $jobCallback);
@@ -3247,7 +3247,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $jobStatusData['step'] = 'saving';
         $jobStatusData['progress_pct'] = 90;
         $jobStatusData['message'] = "(3/3) جاري حفظ الاختبار في البنك...";
-        file_put_contents($jobFile, json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        ai_exam_save_job_status($jobFile, $jobStatusData);
 
         $quizzesDir = __DIR__ . '/../quizzes_data';
         if (!is_dir($quizzesDir)) @mkdir($quizzesDir, 0777, true);
@@ -3272,7 +3272,11 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             'questions' => $questions
         ];
 
-        file_put_contents($filePath, json_encode($quizData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        if (function_exists('dent2025_safe_atomic_save_json')) {
+            dent2025_safe_atomic_save_json($filePath, $quizData);
+        } else {
+            file_put_contents($filePath, json_encode($quizData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        }
 
         if (isset($pdo) && $pdo !== null) {
             try {
@@ -3289,13 +3293,13 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $jobStatusData['message'] = "تم تجهيز وحفظ الاختبار بنجاح!";
         $jobStatusData['quiz_id'] = $quizId;
         $jobStatusData['quiz_data'] = $quizData;
-        file_put_contents($jobFile, json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        ai_exam_save_job_status($jobFile, $jobStatusData);
 
     } catch (Throwable $ex) {
         $jobStatusData['status'] = 'failed';
         $jobStatusData['step'] = 'error';
         $jobStatusData['message'] = "حدث خطأ: " . $ex->getMessage();
-        file_put_contents($jobFile, json_encode($jobStatusData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        ai_exam_save_job_status($jobFile, $jobStatusData);
     } finally {
         // Clean up temporary Gemini files only if they were NOT cached for 40-hour reuse
         if (!empty($geminiFileUris)) {
@@ -3327,7 +3331,16 @@ if ($action === 'check_job') {
         sendResponse(false, "Job not found.");
     }
 
-    $jobData = json_decode(file_get_contents($jobFile), true);
+    $raw = @file_get_contents($jobFile);
+    $jobData = !empty($raw) ? json_decode($raw, true) : null;
+    if ($jobData === null) {
+        sendResponse(true, [
+            'id' => $cleanJobId,
+            'status' => 'processing',
+            'progress_pct' => 50,
+            'message' => 'جاري المزامنة...'
+        ]);
+    }
     sendResponse(true, $jobData);
 }
 
