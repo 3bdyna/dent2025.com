@@ -1516,40 +1516,104 @@ const ScheduleApp = {
 
         const toast = document.createElement('div');
         toast.id = 'dent-export-toast';
-        toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999999; background: rgba(24, 24, 27, 0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 7px 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55); color: #f8fafc; font-family: "Outfit", "Noto Kufi Arabic", sans-serif; direction: rtl; display: flex; align-items: center; justify-content: space-between; gap: 8px; max-width: min(520px, calc(100vw - 20px)); width: max-content; box-sizing: border-box; opacity: 1; transition: opacity 0.25s ease, transform 0.25s ease;';
-
-        const btnStyle = 'padding: 4px 8px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; text-decoration: none; border-radius: 6px; font-family: inherit; font-size: 0.74rem; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.15s; white-space: nowrap; line-height: 1.3;';
+        toast.style.cssText = 'position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 9999999; background: rgba(13, 15, 20, 0.96); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 999px; padding: 7px 14px 7px 16px; box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.4); color: #f8fafc; font-family: "Outfit", "Noto Kufi Arabic", sans-serif; direction: rtl; display: flex; align-items: center; justify-content: space-between; gap: 10px; max-width: min(540px, calc(100vw - 20px)); width: max-content; box-sizing: border-box; opacity: 1; transition: opacity 0.25s ease, transform 0.25s ease;';
 
         toast.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 7px; min-width: 0; flex-shrink: 0;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span style="font-weight: 600; font-size: 0.82rem; color: #f8fafc; white-space: nowrap;">${mainTitle}</span>
-                ${subText ? `<span style="font-size: 0.72rem; color: #94a3b8; white-space: nowrap;">${subText}</span>` : ''}
+            <style>
+                #dent-export-toast .dent-toast-btn {
+                    padding: 4px 9px;
+                    background: rgba(255, 255, 255, 0.04);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    color: #cbd5e1;
+                    text-decoration: none;
+                    border-radius: 7px;
+                    font-family: inherit;
+                    font-size: 0.74rem;
+                    font-weight: 500;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    cursor: pointer;
+                    transition: all 0.15s ease;
+                    white-space: nowrap;
+                    line-height: 1.3;
+                    box-sizing: border-box;
+                }
+                #dent-export-toast .dent-toast-btn:hover {
+                    background: rgba(255, 255, 255, 0.09);
+                    border-color: rgba(255, 255, 255, 0.16);
+                    color: #ffffff;
+                }
+                #dent-export-toast .dent-toast-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    flex-shrink: 0;
+                    padding-left: 2px;
+                }
+                @media (max-width: 500px) {
+                    #dent-export-toast {
+                        bottom: 16px !important;
+                        padding: 6px 12px 6px 15px !important;
+                        gap: 8px !important;
+                        max-width: calc(100vw - 16px) !important;
+                    }
+                    #dent-export-toast .dent-toast-subtext {
+                        display: none !important;
+                    }
+                    #dent-export-toast .dent-toast-title {
+                        font-size: 0.78rem !important;
+                    }
+                    #dent-export-toast .dent-toast-btn {
+                        padding: 4px 7px !important;
+                        font-size: 0.71rem !important;
+                        gap: 3px !important;
+                        border-radius: 6px !important;
+                    }
+                    #dent-export-toast .dent-toast-actions {
+                        gap: 5px !important;
+                        padding-left: 2px !important;
+                    }
+                }
+                @media (max-width: 360px) {
+                    #dent-export-toast {
+                        padding: 5px 10px 5px 13px !important;
+                        gap: 6px !important;
+                    }
+                    #dent-export-toast .dent-toast-btn {
+                        padding: 3px 6px !important;
+                        font-size: 0.68rem !important;
+                    }
+                }
+            </style>
+            <div onclick="document.getElementById('dent-export-toast')?.remove()" style="display: flex; align-items: center; gap: 7px; min-width: 0; flex-shrink: 0; cursor: pointer;" title="إغلاق التنبيه">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span class="dent-toast-title" style="font-weight: 600; font-size: 0.82rem; color: #f8fafc; white-space: nowrap;">${mainTitle}</span>
+                ${subText ? `<span class="dent-toast-subtext" style="font-size: 0.72rem; color: #64748b; white-space: nowrap;">${subText}</span>` : ''}
             </div>
-            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+            <div class="dent-toast-actions">
                 ${canShareNative ? `
-                    <button id="dent-toast-share-btn" type="button" style="${btnStyle}" onmouseover="this.style.background='rgba(255,255,255,0.14)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.07)'; this.style.color='#cbd5e1';" title="مشاركة">
+                    <button id="dent-toast-share-btn" type="button" class="dent-toast-btn" title="مشاركة">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
                         <span>مشاركة</span>
                     </button>
                 ` : ''}
                 ${(fileType === 'png' && canCopyImage && !copiedToClipboard) ? `
-                    <button id="dent-toast-copy-btn" type="button" style="${btnStyle}" onmouseover="this.style.background='rgba(255,255,255,0.14)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.07)'; this.style.color='#cbd5e1';" title="نسخ للحافظة">
+                    <button id="dent-toast-copy-btn" type="button" class="dent-toast-btn" title="نسخ للحافظة">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         <span>نسخ</span>
                     </button>
                 ` : ''}
                 ${(fileType === 'png' && copiedToClipboard) ? `
-                    <a href="${blobUrl}" download="${dentEscapeHtml(fileName)}" style="${btnStyle}" onmouseover="this.style.background='rgba(255,255,255,0.14)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.07)'; this.style.color='#cbd5e1';" title="تنزيل كملف">
+                    <a href="${blobUrl}" download="${dentEscapeHtml(fileName)}" class="dent-toast-btn" title="تنزيل كملف">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                         <span>حفظ</span>
                     </a>
                 ` : ''}
-                <a href="${blobUrl}" target="_blank" rel="noopener noreferrer" style="${btnStyle}" onmouseover="this.style.background='rgba(255,255,255,0.14)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.07)'; this.style.color='#cbd5e1';" title="عرض الملف">
+                <a href="${blobUrl}" target="_blank" rel="noopener noreferrer" class="dent-toast-btn" title="عرض الملف">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                     <span>عرض</span>
                 </a>
-                <button type="button" onclick="document.getElementById('dent-export-toast')?.remove()" style="background: transparent; border: none; color: #71717a; font-size: 1rem; cursor: pointer; padding: 2px 4px; line-height: 1; transition: color 0.15s;" onmouseover="this.style.color='#e2e8f0';" onmouseout="this.style.color='#71717a';" title="إغلاق">✕</button>
             </div>
         `;
 
@@ -1581,9 +1645,9 @@ const ScheduleApp = {
                             new ClipboardItem({ 'image/png': blob })
                         ]);
                         copyBtn.innerHTML = '✓ تم النسخ!';
-                        copyBtn.style.background = 'rgba(34, 197, 94, 0.15)';
-                        copyBtn.style.borderColor = 'rgba(34, 197, 94, 0.3)';
-                        copyBtn.style.color = '#4ade80';
+                        copyBtn.style.background = 'rgba(16, 185, 129, 0.15)';
+                        copyBtn.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                        copyBtn.style.color = '#34d399';
                         setTimeout(() => {
                             if (toast.parentElement) toast.remove();
                         }, 2000);
