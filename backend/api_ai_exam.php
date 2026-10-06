@@ -1383,8 +1383,8 @@ function fetchDriveFolderRecursive($folderId, $prefix = '', $depth = 0) {
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 4);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
     curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36');
     $html = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -1433,8 +1433,13 @@ function fetchDriveFolderCached($folderId, $forceRefresh = false) {
     
     $cacheDir = getDriveFolderCacheDir();
     $cacheFile = $cacheDir . '/dfolder_' . preg_replace('/[^a-zA-Z0-9_-]/', '', $folderId) . '.json';
-    $cacheTtl = 14400; // 4 hours
+    $cacheTtl = 1800; // 30 minutes (reduced from 4 hours to ensure fresh content)
     
+    // If explicit refresh requested, delete old cache file immediately
+    if ($forceRefresh && file_exists($cacheFile)) {
+        @unlink($cacheFile);
+    }
+
     // Check if fresh cache exists
     if (!$forceRefresh && file_exists($cacheFile)) {
         $age = time() - filemtime($cacheFile);
@@ -1454,7 +1459,7 @@ function fetchDriveFolderCached($folderId, $forceRefresh = false) {
     }
     
     // Fallback: If live scrape timed out or failed, but we have ANY older cache file, use it!
-    if (file_exists($cacheFile)) {
+    if (!$forceRefresh && file_exists($cacheFile)) {
         $data = json_decode(file_get_contents($cacheFile), true);
         if (is_array($data) && count($data) > 0) {
             return $data;
@@ -3702,7 +3707,7 @@ if ($action === 'scan_cache_catalog') {
         if (preg_match('/folders\/([a-zA-Z0-9_-]+)/', $folderId, $m)) $folderId = $m[1];
         elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $folderId, $m)) $folderId = $m[1];
 
-        $driveFiles = fetchDriveFolderCached($folderId);
+        $driveFiles = fetchDriveFolderCached($folderId, $force);
         if (!empty($driveFiles)) {
             $subjectsWithFiles++;
             $totalDriveFiles += count($driveFiles);
@@ -3797,7 +3802,7 @@ if ($action === 'cron_sync') {
     if (!$pdo) sendResponse(false, "Database connection unavailable.");
 
     $table_subs = getAiExamSubjectsTable($pdo);
-    $stmt = $pdo->query("SELECT id, name, specialty, year, semester, chapters_folder_id FROM {$table_subs} WHERE chapters_folder_id IS NOT NULL AND chapters_folder_id != '' ORDER BY specialty, year, semester, id ASC");
+    $stmt = $pdo->query("SELECT id, name, specialty, year, semester, chapters_folder_id, materials_folder_id FROM {$table_subs} WHERE (chapters_folder_id IS NOT NULL AND chapters_folder_id != '') OR (materials_folder_id IS NOT NULL AND materials_folder_id != '') ORDER BY specialty, year, semester, id ASC");
     $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $metaStore = getCacheMetaStore();
@@ -3823,26 +3828,32 @@ if ($action === 'cron_sync') {
     $newFiles = [];
 
     foreach ($subjects as $s) {
-        $folderId = trim($s['chapters_folder_id'] ?? '');
-        if (empty($folderId)) continue;
-        if (preg_match('/folders\/([a-zA-Z0-9_-]+)/', $folderId, $m)) $folderId = $m[1];
-        elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $folderId, $m)) $folderId = $m[1];
+        $folderTargets = [];
+        if (!empty($s['chapters_folder_id'])) $folderTargets[] = $s['chapters_folder_id'];
+        if (!empty($s['materials_folder_id'])) $folderTargets[] = $s['materials_folder_id'];
 
-        $driveFiles = fetchDriveFolderCached($folderId);
-        if (!empty($driveFiles)) {
-            foreach ($driveFiles as $df) {
-                $fid = $df['id'];
-                $activeDriveFileIds[$fid] = true;
-                if (!isset($cachedDiskIds[$fid])) {
-                    $newFiles[] = [
-                        'file_id' => $fid,
-                        'file_name' => $df['name'] ?? 'ملف مقرر',
-                        'subject_name' => $s['name'] ?? 'مادة دراسية',
-                        'subject_id' => $s['id'],
-                        'specialty' => $s['specialty'] ?? '',
-                        'year' => isset($s['year']) ? intval($s['year']) : 1,
-                        'semester' => isset($s['semester']) ? intval($s['semester']) : 1
-                    ];
+        foreach ($folderTargets as $fRaw) {
+            $folderId = trim($fRaw);
+            if (empty($folderId)) continue;
+            if (preg_match('/folders\/([a-zA-Z0-9_-]+)/', $folderId, $m)) $folderId = $m[1];
+            elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $folderId, $m)) $folderId = $m[1];
+
+            $driveFiles = fetchDriveFolderCached($folderId, true);
+            if (!empty($driveFiles)) {
+                foreach ($driveFiles as $df) {
+                    $fid = $df['id'];
+                    $activeDriveFileIds[$fid] = true;
+                    if (!isset($cachedDiskIds[$fid])) {
+                        $newFiles[] = [
+                            'file_id' => $fid,
+                            'file_name' => $df['name'] ?? 'ملف مقرر',
+                            'subject_name' => $s['name'] ?? 'مادة دراسية',
+                            'subject_id' => $s['id'],
+                            'specialty' => $s['specialty'] ?? '',
+                            'year' => isset($s['year']) ? intval($s['year']) : 1,
+                            'semester' => isset($s['semester']) ? intval($s['semester']) : 1
+                        ];
+                    }
                 }
             }
         }
@@ -3995,11 +4006,19 @@ if ($action === 'clear_cache' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     global $JSON_INPUT;
     $data = $JSON_INPUT ?: (json_decode(file_get_contents('php://input'), true) ?: []);
     $fileId = $data['file_id'] ?? $_POST['file_id'] ?? $_GET['file_id'] ?? '';
+    $folderId = $data['folder_id'] ?? $_POST['folder_id'] ?? $_GET['folder_id'] ?? '';
 
     $cacheDir = __DIR__ . '/gemini_keys_data/text_cache';
     $deletedCount = 0;
 
-    if (!empty($fileId)) {
+    if (!empty($folderId)) {
+        $cleanFid = preg_replace('/[^a-zA-Z0-9_-]/', '', $folderId);
+        $dfolderFile = $cacheDir . '/dfolder_' . $cleanFid . '.json';
+        if (file_exists($dfolderFile)) {
+            @unlink($dfolderFile);
+            $deletedCount++;
+        }
+    } elseif (!empty($fileId)) {
         $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '', $fileId);
         $metaStore = getCacheMetaStore();
         
@@ -4049,6 +4068,17 @@ if ($action === 'clear_cache' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     $deletedCount++;
                 } elseif ($f->isDir()) {
                     @rmdir($f->getRealPath());
+                }
+            }
+
+            // Also clear all dfolder_*.json cache files
+            $dfiles = glob($cacheDir . '/dfolder_*.json');
+            if ($dfiles) {
+                foreach ($dfiles as $df) {
+                    if (file_exists($df)) {
+                        @unlink($df);
+                        $deletedCount++;
+                    }
                 }
             }
         }

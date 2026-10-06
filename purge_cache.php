@@ -40,3 +40,16 @@ if (file_exists($wp_load)) {
 } else {
     echo "wp-load.php not found.\n";
 }
+
+$dfolder_cache_dir = __DIR__ . '/backend/gemini_keys_data/text_cache';
+if (is_dir($dfolder_cache_dir)) {
+    $dfiles = glob($dfolder_cache_dir . '/dfolder_*.json');
+    if ($dfiles) {
+        $del = 0;
+        foreach ($dfiles as $df) {
+            if (@unlink($df)) $del++;
+        }
+        echo "Purged $del Google Drive folder manifests from cache!\n";
+    }
+}
+

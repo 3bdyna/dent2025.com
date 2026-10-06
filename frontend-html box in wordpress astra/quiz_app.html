@@ -62,6 +62,7 @@ textarea.dent-quiz-input { height: auto !important; min-height: 60px !important;
 .dent-quiz-loader { display: none; text-align: center; margin-top: 16px; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); }
 .dent-quiz-spinner { border: 3px solid rgba(255,255,255,0.08); border-top: 3px solid #cbd5e1; border-radius: 50%; width: 28px; height: 28px; animation: dent-spin 0.9s linear infinite; margin: 0 auto 8px; }
 @keyframes dent-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.dent-spin-active { animation: dent-spin 0.8s linear infinite !important; }
 
 /* Player Area */
 .dent-player-area { display: none; }
@@ -276,7 +277,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                     <div style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 6px; flex-wrap: wrap;">
                             <span id="dq-selection-summary" style="font-size: 0.8rem; color: #94a3b8;">لم يتم تحديد أي ملفات بعد</span>
-                            <div style="display: flex; gap: 5px;">
+                            <div style="display: flex; gap: 5px; align-items: center;">
+                                <button type="button" id="dq-refresh-drive-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem; display: inline-flex; align-items: center; gap: 4px;" title="مزامنة وجلب أحدث الملفات من Google Drive مباشرة">
+                                    <svg id="dq-refresh-drive-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+                                    <span>تحديث الملفات</span>
+                                </button>
                                 <button type="button" id="dq-select-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem;" disabled>تحديد المعروض</button>
                                 <button type="button" id="dq-clear-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem;" disabled>إلغاء التحديد</button>
                             </div>
@@ -329,9 +334,13 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
                     <!-- Google Drive Selection View for Past Exam -->
                     <div id="dq-pastexam-drive-view" style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 8px 10px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 6px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 6px; flex-wrap: wrap;">
                             <span style="font-size: 0.76rem; color: #94a3b8;">حدد ملف الاختبار السابق:</span>
-                            <div style="display: flex; gap: 4px;">
+                            <div style="display: flex; gap: 4px; align-items: center;">
+                                <button type="button" id="dq-pastexam-refresh-drive-btn" class="dent-sub-tab-btn" style="padding: 2px 7px; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 3px;" title="مزامنة وجلب أحدث الملفات من Google Drive">
+                                    <svg id="dq-pastexam-refresh-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+                                    <span>تحديث</span>
+                                </button>
                                 <button type="button" class="dent-sub-tab-btn active dent-pastexam-folder-btn" data-folder="materials" style="padding: 2px 7px; font-size: 0.72rem;">الملازم</button>
                                 <button type="button" class="dent-sub-tab-btn dent-pastexam-folder-btn" data-folder="chapters" style="padding: 2px 7px; font-size: 0.72rem;">المحاضرات</button>
                             </div>
@@ -685,6 +694,16 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         document.getElementById('dq-target-deselect-all').addEventListener('click', () => {
             document.querySelectorAll('.dq-target-chap-checkbox').forEach(cb => cb.checked = false);
         });
+
+        // Google Drive Live Refresh buttons
+        const refreshDriveBtn = document.getElementById('dq-refresh-drive-btn');
+        if (refreshDriveBtn) {
+            refreshDriveBtn.addEventListener('click', handleDriveRefreshClick);
+        }
+        const pastExamRefreshBtn = document.getElementById('dq-pastexam-refresh-drive-btn');
+        if (pastExamRefreshBtn) {
+            pastExamRefreshBtn.addEventListener('click', handleDriveRefreshClick);
+        }
     }
 
     if (document.readyState === 'loading') {
@@ -1328,17 +1347,59 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         }
     }
 
+    async function handleDriveRefreshClick() {
+        const subId = document.getElementById('dq-subject').value;
+        if (!subId) {
+            alert('يرجى اختيار المادة أولاً لتحديث ملفاتها من Google Drive.');
+            return;
+        }
+        const sub = currentSubjectsData.find(s => s.id == subId);
+        if (sub) {
+            if (sub.chapters_folder_id) {
+                sessionStorage.removeItem('dent2025_drive_ch_' + sub.chapters_folder_id);
+            }
+            if (sub.materials_folder_id) {
+                sessionStorage.removeItem('dent2025_drive_ch_' + sub.materials_folder_id);
+            }
+        }
+
+        const icons = [
+            document.getElementById('dq-refresh-drive-icon'),
+            document.getElementById('dq-pastexam-refresh-icon')
+        ].filter(Boolean);
+
+        icons.forEach(ic => ic.classList.add('dent-spin-active'));
+
+        try {
+            await loadFilesForSubject(true);
+        } finally {
+            icons.forEach(ic => ic.classList.remove('dent-spin-active'));
+        }
+    }
+
     async function fetchDriveFilesByFolderId(folderId, forceRefresh = false) {
         if (!folderId) return [];
         const cacheKey = 'dent2025_drive_ch_' + folderId;
+        const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes TTL in session storage
+        
         if (!forceRefresh) {
             try {
-                const cached = sessionStorage.getItem(cacheKey);
-                if (cached) {
-                    const parsed = JSON.parse(cached);
-                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                const cachedRaw = sessionStorage.getItem(cacheKey);
+                if (cachedRaw) {
+                    const parsed = JSON.parse(cachedRaw);
+                    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.files)) {
+                        const age = Date.now() - (parsed.timestamp || 0);
+                        if (age < CACHE_TTL_MS && parsed.files.length > 0) {
+                            return parsed.files;
+                        }
+                    } else if (Array.isArray(parsed) && parsed.length > 0) {
+                        // Clear legacy non-timestamp array
+                        sessionStorage.removeItem(cacheKey);
+                    }
                 }
             } catch (e) {}
+        } else {
+            try { sessionStorage.removeItem(cacheKey); } catch (e) {}
         }
 
         const refreshParam = forceRefresh ? '&refresh=1' : '';
@@ -1357,7 +1418,12 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                     name: f.name
                 }));
                 if (mapped.length > 0) {
-                    try { sessionStorage.setItem(cacheKey, JSON.stringify(mapped)); } catch (e) {}
+                    try {
+                        sessionStorage.setItem(cacheKey, JSON.stringify({
+                            timestamp: Date.now(),
+                            files: mapped
+                        }));
+                    } catch (e) {}
                     return mapped;
                 }
             } catch (err) {
@@ -1490,15 +1556,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             `;
             const retryBtn = document.getElementById('dq-retry-drive-btn');
             if (retryBtn) {
-                retryBtn.addEventListener('click', () => {
-                    const subId = document.getElementById('dq-subject').value;
-                    const sub = currentSubjectsData.find(s => s.id == subId);
-                    if (sub) {
-                        if (sub.chapters_folder_id) sessionStorage.removeItem('dent2025_drive_ch_' + sub.chapters_folder_id);
-                        if (sub.materials_folder_id) sessionStorage.removeItem('dent2025_drive_ch_' + sub.materials_folder_id);
-                    }
-                    loadFilesForSubject(true);
-                });
+                retryBtn.addEventListener('click', handleDriveRefreshClick);
             }
             selectAllBtn.disabled = true;
             clearAllBtn.disabled = (selectedDriveFilesMap.size === 0);
