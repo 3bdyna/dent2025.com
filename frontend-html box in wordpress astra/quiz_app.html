@@ -126,7 +126,7 @@ textarea.dent-quiz-input { height: auto !important; min-height: 60px !important;
 .dent-tag-diff-easy { background: rgba(34, 197, 94, 0.08); color: #a7f3d0; }
 .dent-tag-diff-med { background: rgba(59, 130, 246, 0.08); color: #bfdbfe; }
 .dent-tag-diff-hard { background: rgba(239, 68, 68, 0.08); color: #fecaca; }
-.dent-q-converted-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.28); color: #fde047; font-size: 0.72rem; font-weight: 600; border-radius: 4px; }
+.dent-q-converted-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #94a3b8; font-size: 0.72rem; font-weight: 500; border-radius: 4px; }
 
 .dent-bank-meta { display: flex; align-items: center; justify-content: space-between; font-size: 0.74rem; color: #64748b; margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.04); }
 .dent-bank-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
@@ -2180,12 +2180,12 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         }
 
         const hasAsteriskQuestions = questions.some(q => typeof q.question === 'string' && q.question.trim().startsWith('*'));
-        const customNotice = metaObj.notice || (hasAsteriskQuestions ? '📌 <strong>تنويه:</strong> الأسئلة التي تبدأ بعلامة <strong>(*)</strong> هي أسئلة هامة ومواضع اختبار من سلايدات المحاضرات، وبقية الأسئلة هي تجميعات سنوات سابقة.' : '');
+        const customNotice = metaObj.notice || (hasAsteriskQuestions ? '<strong>تنبيه:</strong> الأسئلة المسبوقة بعلامة (*) مأخوذة من سلايدات المحاضرات، وبقية الأسئلة من التجميعات السابقة.' : '');
 
         if (noticeBanner) {
             if (customNotice) {
                 noticeBanner.innerHTML = customNotice;
-                noticeBanner.style.cssText = 'background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.22); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 0.82rem; color: #bfdbfe; line-height: 1.5; text-align: right; direction: rtl;';
+                noticeBanner.style.cssText = 'background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 9px 12px; margin-bottom: 14px; font-size: 0.8rem; color: #94a3b8; line-height: 1.5; text-align: right; direction: rtl;';
                 noticeBanner.style.display = 'block';
             } else {
                 noticeBanner.style.display = 'none';
@@ -2234,7 +2234,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             qBlock.setAttribute('dir', questionLanguage);
 
             const isConverted = (typeof q.question === 'string' && q.question.trim().startsWith('*'));
-            const convertedBadge = isConverted ? `<span class="dent-q-converted-badge" title="سؤال هام من سلايدات المحاضرة (وليس من التجميعات السابقة)">* من السلايدات (سؤال هام)</span>` : '';
+            const convertedBadge = isConverted ? `<span class="dent-q-converted-badge" title="سؤال مأخوذ من سلايدات المحاضرة">* من السلايدات</span>` : '';
 
             const tagRow = document.createElement('div');
             tagRow.className = 'dent-q-badge-row';
