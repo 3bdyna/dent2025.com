@@ -2169,6 +2169,29 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         document.getElementById('dp-meta-sub').innerText = metaSub;
         document.getElementById('dp-score').style.display = 'none';
 
+        let noticeBanner = document.getElementById('dp-notice-banner');
+        if (!noticeBanner) {
+            noticeBanner = document.createElement('div');
+            noticeBanner.id = 'dp-notice-banner';
+            const metaSubEl = document.getElementById('dp-meta-sub');
+            if (metaSubEl && metaSubEl.parentNode) {
+                metaSubEl.parentNode.insertBefore(noticeBanner, metaSubEl.nextSibling);
+            }
+        }
+
+        const hasAsteriskQuestions = questions.some(q => typeof q.question === 'string' && q.question.trim().startsWith('*'));
+        const customNotice = metaObj.notice || (hasAsteriskQuestions ? '📌 <strong>تنويه:</strong> الأسئلة التي تبدأ بعلامة <strong>(*)</strong> هي أسئلة هامة ومواضع اختبار من سلايدات المحاضرات، وبقية الأسئلة هي تجميعات سنوات سابقة.' : '');
+
+        if (noticeBanner) {
+            if (customNotice) {
+                noticeBanner.innerHTML = customNotice;
+                noticeBanner.style.cssText = 'background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.22); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 0.82rem; color: #bfdbfe; line-height: 1.5; text-align: right; direction: rtl;';
+                noticeBanner.style.display = 'block';
+            } else {
+                noticeBanner.style.display = 'none';
+            }
+        }
+
         const viewSelect = document.getElementById('dp-view-mode');
         if (viewSelect) viewSelect.value = currentViewMode;
 
@@ -2211,7 +2234,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             qBlock.setAttribute('dir', questionLanguage);
 
             const isConverted = (typeof q.question === 'string' && q.question.trim().startsWith('*'));
-            const convertedBadge = isConverted ? `<span class="dent-q-converted-badge" title="تم تحويل هذا السؤال من سؤال مقالي أو فراغات إلى اختيار من متعدد">* سؤال محوّل لخيارات</span>` : '';
+            const convertedBadge = isConverted ? `<span class="dent-q-converted-badge" title="سؤال هام من سلايدات المحاضرة (وليس من التجميعات السابقة)">* من السلايدات (سؤال هام)</span>` : '';
 
             const tagRow = document.createElement('div');
             tagRow.className = 'dent-q-badge-row';
