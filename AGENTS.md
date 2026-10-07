@@ -107,7 +107,7 @@ Installed on the live WordPress site at `wp-content/plugins/dent2025-loader/dent
 - **Sitewide Study Timer Injection**: Injects `study_timer_banner_widget.html` into `wp_footer` on all non-welcome pages so the floating draggable timer badge follows students seamlessly across the entire website.
 - **Self-Hosted Local Fonts Inlining & Preloading**: Strips external `fonts.googleapis.com` / `fonts.gstatic.com` requests to eliminate render-blocking LCP latency. Preloads `notokufiarabic-arabic.woff2` and `outfit-latin.woff2`, and inlines `/frontend_components/fonts/fonts.css`.
 - **Automated Social Open Graph & Twitter Cards**: Injects standardized, cache-busted social preview metadata pointing to `/logos/og_share_preview.jpg` (1200x630) for pristine previews when links are shared on WhatsApp, Telegram, or Twitter.
-- **Critical Script Deferral**: Defers Astra theme's `frontend.min.js` and delays Google Site Kit's `gtag.js` by 1000ms until after first render.
+- **Critical Script Deferral**: Defers Astra theme's `frontend.min.js`. Google Site Kit's `gtag.js` loads natively via `async` with full `dataLayer` tracking intact.
 - **Daily Cache Cron Sync**: Registers a daily WordPress cron schedule `dent2025_daily_noon` (at 12:00 PM AST / 09:00 UTC) that triggers `action=cron_sync` against `backend/api_ai_exam.php` to keep AI exam question caches warm.
 - **Cache Purging**: Listens for `?purge=1` or `?nocache=1` query parameters with an authorized admin token to execute `do_action('litespeed_purge_all')` and clear WordPress transients.
 

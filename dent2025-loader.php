@@ -318,20 +318,11 @@ if (dent2025_is_frontend_head()) {
         echo $head;
     }, 99);
 
-    // Defer the Astra frontend JS and delay Google Site Kit gtag.js until after first render.
-    // Site Kit's inline snippet defines the gtag() queue shim, so queued events replay
-    // safely once the delayed library eventually loads.
+    // Defer the Astra frontend JS
     add_filter('script_loader_tag', function($tag, $handle, $src) {
         if ($handle === 'astra-theme-js' && $src && strpos($src, 'frontend.min.js') !== false) {
             if (strpos($tag, 'defer') === false) {
                 $tag = str_replace('<script ', '<script defer ', $tag);
-            }
-        }
-        if ($handle === 'google_gtagjs') {
-            if (preg_match("~src=[\"']([^\"']+)~i", $tag, $m)) {
-                $gaSrc = $m[1];
-                $loader = "window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.async=true;s.src='" . esc_js($gaSrc) . "';document.head.appendChild(s);},1000);});";
-                return "<script type='text/javascript' id='google_gtagjs-js'>" . $loader . "</script>";
             }
         }
         return $tag;
