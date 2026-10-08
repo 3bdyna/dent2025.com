@@ -637,6 +637,19 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         setupPastExamSourceTabs();
         setupFileUploaders();
         setupDifficultySelector();
+
+        // Idle-time preloading of export libraries for instant zero-wait PDF & image export
+        if (typeof window.requestIdleCallback === 'function') {
+            window.requestIdleCallback(() => {
+                loadHtmlToImage().catch(() => {});
+                loadJsPdf().catch(() => {});
+            }, { timeout: 3000 });
+        } else {
+            setTimeout(() => {
+                loadHtmlToImage().catch(() => {});
+                loadJsPdf().catch(() => {});
+            }, 1500);
+        }
         
         // Listeners
         document.getElementById('dq-subject').addEventListener('change', () => {
@@ -2211,7 +2224,13 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     }
 
     function stripOptionPrefix(value) {
-        return String(value || '').replace(/^\s*(?:[A-Ha-h]|[أإآابجدههـوزح])\s*[.)\-:\s]+/u, '').trim();
+        let text = String(value || '').trim();
+        let prev = '';
+        while (text !== prev) {
+            prev = text;
+            text = text.replace(/^\s*(?:[\([（]?\s*(?:[A-Ha-h]|[0-9]{1,2}|[أإآابجدههـوزح]|ح[A-Za-z]?)\s*[\)\]）]?\s*[.)\-:\s]+)+/u, '').trim();
+        }
+        return text;
     }
 
     function getCorrectOptionIndex(question, options) {
@@ -2430,12 +2449,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 opts.forEach((opt, optIndex) => {
                     const optItem = document.createElement('label');
                     optItem.className = 'dent-opt-item';
-                    const optionMatch = String(opt).match(/^\s*([A-Ha-h]|[أإآابجدههـوزح])(?:[.)\-:\s]+)([\s\S]*)$/u);
                     const optionLetters = questionLanguage === 'ar'
                         ? ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح']
                         : ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
                     const optionLetter = optionLetters[optIndex] ? optionLetters[optIndex] + '.' : '';
-                    const optionText = optionMatch ? optionMatch[2] : String(opt);
+                    const optionText = stripOptionPrefix(opt);
                     optItem.innerHTML = `
                         <input type="radio" name="q_${index}" value="${escapeHtml(opt)}" data-option-index="${optIndex}">
                         <span class="dent-opt-letter">${optionLetter}</span>
@@ -2952,19 +2970,19 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         .quiz-short-answer-content.is-rtl ol, .quiz-short-answer-content.is-rtl ul { padding-left: 0; padding-right: 10px; }
         .quiz-short-answer-content li { margin-bottom: 1px; }
         .doc-footer {
-            margin-top: 4px;
-            padding-top: 3px;
+            margin-top: 5px;
+            padding-top: 4px;
             border-top: 1px solid #222222;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.60rem;
+            font-size: 0.63rem;
             color: #71717a;
             flex-shrink: 0;
         }
         .doc-footer-right { font-family: 'Outfit', sans-serif; font-weight: 700; color: #a1a1aa; direction: ltr; }
-        .doc-footer-center { font-family: 'Cairo', sans-serif; font-weight: 600; color: #71717a; }
-        .doc-footer-left { font-family: 'Outfit', sans-serif; font-weight: 600; color: #71717a; direction: ltr; }
+        .doc-footer-center { font-family: 'Cairo', 'Outfit', sans-serif; font-weight: 600; color: #71717a; }
+        .doc-footer-spacer { width: 60px; visibility: hidden; }
     `;
 
     function loadJsPdf() {
@@ -3004,33 +3022,21 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         return window._dentHtmlToImagePromise;
     }
 
-    function calculateSmartPages(questions) {
+    function calculateSmartPages(questions, includeExplanations = true) {
         const total = questions.length;
         if (total === 0) return [];
-        // User rule: 1 to 12 questions -> 1 page!
-        if (total <= 12) return [questions];
+        
+        // 1 to 10 questions fit comfortably on a single A4 page
+        if (total <= 10) return [questions];
+        if (!includeExplanations && total <= 12) return [questions];
 
-        if (total === 21) {
-            // Page 1 has larger header, so 10 on Page 1 and 11 on Page 2 is the golden balance!
-            return [questions.slice(0, 10), questions.slice(10)];
-        }
+        // Safe per-page density: ~7 questions per page with explanations, ~10 without
+        const targetPerPage = includeExplanations ? 7 : 10;
+        const maxPerPage = includeExplanations ? 8 : 12;
 
-        // Target ~10 questions per page, max 12, min 4
-        let bestP = 2;
-        let bestDiff = 999.0;
-        const maxP = Math.floor(total / 4) + 1;
-        for (let p = 2; p <= maxP; p++) {
-            const base = Math.floor(total / p);
-            const rem = total % p;
-            if (base < 4) break;
-            const maxInP = base + (rem > 0 ? 1 : 0);
-            if (maxInP > 12) continue;
-            const avg = total / p;
-            const diff = Math.abs(avg - 9.5);
-            if (diff < bestDiff) {
-                bestDiff = diff;
-                bestP = p;
-            }
+        let bestP = Math.max(2, Math.round(total / targetPerPage));
+        while ((total / bestP) > maxPerPage) {
+            bestP++;
         }
 
         const base = Math.floor(total / bestP);
@@ -3052,9 +3058,15 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const isRtl = (detectQuestionLanguage(q) === 'ar');
         const rtlClass = isRtl ? ' is-rtl' : '';
 
-        const typeLbl = qType === 'mcq' ? 'MCQ' : (qType === 'tf' ? 'صح / خطأ' : 'سؤال قصير');
-        const chapHtml = chapter ? `<div class="quiz-q-chapter">${chapter}</div>` : '';
+        // Dynamic bilingual type label
+        let typeLbl = 'MCQ';
+        if (qType === 'tf') {
+            typeLbl = isRtl ? 'صح / خطأ' : 'T / F';
+        } else if (qType === 'card' || qType === 'short' || qType === 'info') {
+            typeLbl = isRtl ? 'سؤال قصير' : 'Short Answer';
+        }
 
+        const chapHtml = chapter ? `<div class="quiz-q-chapter">${chapter}</div>` : '';
         const bodyLines = [`<div class="quiz-q-title${rtlClass}">${qText}</div>`];
 
         if (qType === 'mcq' || qType === 'tf') {
@@ -3065,10 +3077,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 const isC = (oIdx === cIdx);
                 const optLetter = String.fromCharCode(65 + oIdx);
                 const rowCls = isC ? `quiz-opt-row is-correct${rtlClass}` : `quiz-opt-row${rtlClass}`;
+                const cleanOptText = escapeHtml(stripOptionPrefix(opt));
                 bodyLines.push(`
                     <div class="${rowCls}">
                         <span class="quiz-opt-letter">${optLetter}.</span>
-                        <span class="quiz-opt-text">${escapeHtml(String(opt))}</span>
+                        <span class="quiz-opt-text">${cleanOptText}</span>
                     </div>
                 `);
             });
@@ -3077,7 +3090,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             const ans = String(q.answer || '');
             const ansRend = (ans.includes('<li') || ans.includes('<p') || ans.includes('<br'))
                 ? ans
-                : escapeHtml(ans).replace(/\n/g, '<br>');
+                : escapeHtml(ans).replace(/\\n|\r?\n/g, '<br>');
             const lbl = isRtl ? 'الإجابة النموذجية:' : 'Model Answer:';
             bodyLines.push(`
                 <div class="quiz-short-answer-box${rtlClass}">
@@ -3106,7 +3119,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                     </div>
                     ${chapHtml}
                 </div>
-                ${bodyLines.join('\n')}
+                ${bodyLines.join('')}
             </div>
         `;
     }
@@ -3116,8 +3129,9 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const subjectName = escapeHtml(quizData.subject_name || 'مادة دراسية');
         const allQuestions = Array.isArray(quizData.questions) ? quizData.questions : [];
         const qCount = allQuestions.length;
+        const isDocRtl = (detectQuestionLanguage(allQuestions[0] || {}) === 'ar');
 
-        const pages = calculateSmartPages(allQuestions);
+        const pages = calculateSmartPages(allQuestions, includeExplanations);
         const totalPages = pages.length;
 
         let globalQIdx = 1;
@@ -3149,6 +3163,9 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             `;
 
             let headerHtml = '';
+            const qCountLabel = isDocRtl ? `${qCount} أسئلة` : `${qCount} Questions`;
+            const pageOfLabel = isDocRtl ? `صفحة ${pIdx} من ${totalPages}` : `Page ${pIdx} of ${totalPages}`;
+
             if (pIdx === 1) {
                 headerHtml = `
                     <div class="doc-header">
@@ -3157,8 +3174,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                             <div class="doc-sub-heading">${subjectName}</div>
                         </div>
                         <div class="doc-meta-badge">
-                            <span class="period" dir="ltr">${qCount} Questions</span>
-                            <span class="subperiod" dir="rtl"><bdi>Dent2025 Academic Portal</bdi></span>
+                            <span class="period" dir="ltr">${qCountLabel}</span>
                         </div>
                     </div>
                 `;
@@ -3169,7 +3185,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                             <div class="doc-compact-heading">${quizName} — ${subjectName}</div>
                         </div>
                         <div class="doc-meta-badge">
-                            <span class="period" dir="ltr">Page ${pIdx} of ${totalPages}</span>
+                            <span class="period" dir="ltr">${pageOfLabel}</span>
                         </div>
                     </div>
                 `;
@@ -3178,8 +3194,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             const footerHtml = `
                 <div class="doc-footer">
                     <span class="doc-footer-right">dent2025.com</span>
-                    <span class="doc-footer-center">صفحة ${pIdx} من ${totalPages}</span>
-                    <span class="doc-footer-left" dir="ltr">Academic Year 2026</span>
+                    <span class="doc-footer-center">${pageOfLabel}</span>
+                    <span class="doc-footer-spacer"></span>
                 </div>
             `;
 
@@ -3207,10 +3223,10 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     <style>${DENT_QUIZ_EXPORT_CSS}</style>
 </head>
 <body>
-    ${renderedPages.join('\n')}
+    ${renderedPages.join('')}
 </body>
 </html>`,
-            pagesJoinedHtml: renderedPages.join('\n')
+            pagesJoinedHtml: renderedPages.join('')
         };
     }
 
@@ -3244,8 +3260,13 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         currentExportQuizData = quizData;
         const questions = quizData.questions;
         const totalQ = questions.length;
-        const pages = calculateSmartPages(questions);
+        const initialIncExp = true;
+        const pages = calculateSmartPages(questions, initialIncExp);
         const totalPages = pages.length;
+
+        // Preload export libraries in parallel immediately
+        loadHtmlToImage().catch(() => {});
+        loadJsPdf().catch(() => {});
 
         let modal = document.getElementById('dent-quiz-export-modal');
         if (modal) modal.remove();
@@ -3254,20 +3275,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         modal.id = 'dent-quiz-export-modal';
         modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 9999999; display: flex; justify-content: center; align-items: center; direction: rtl; font-family: "Outfit", "Noto Kufi Arabic", sans-serif; padding: 16px; box-sizing: border-box;';
 
-        let pageSummaryText = '';
-        if (totalPages === 1) {
-            pageSummaryText = 'صفحة A4 واحدة (تنسيق عمودين متوازنين)';
-        } else {
-            const breakdown = pages.map((p, i) => `صفحة ${i + 1}: ${p.length} أسئلة`).join('، ');
-            pageSummaryText = `${totalPages} صفحات A4 (${breakdown})`;
-        }
-
-        const singlePageImageBtn = totalPages === 1 ? `
-            <button type="button" id="dent-export-img-btn" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.86rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);" onmouseover="this.style.background='#3f3f46';" onmouseout="this.style.background='#27272a';">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="flex-shrink:0;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                <span style="white-space: nowrap;">نسخ / حفظ كصورة PNG</span>
-            </button>
-        ` : '';
+        const getSummaryText = (pgs) => {
+            if (pgs.length === 1) return 'صفحة A4 واحدة (تنسيق عمودين متوازنين)';
+            const breakdown = pgs.map((p, i) => `صفحة ${i + 1}: ${p.length} أسئلة`).join('، ');
+            return `${pgs.length} صفحات A4 (${breakdown})`;
+        };
 
         modal.innerHTML = `
             <style>@keyframes dentSpin { to { transform: rotate(360deg); } }</style>
@@ -3288,7 +3300,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-size: 0.76rem; color: #a1a1aa; font-weight: 600;">توزيع الصفحات:</span>
-                        <span style="font-size: 0.76rem; color: #cbd5e1; font-weight: 600;">${pageSummaryText}</span>
+                        <span id="dent-export-page-summary" style="font-size: 0.76rem; color: #cbd5e1; font-weight: 600;">${getSummaryText(pages)}</span>
                     </div>
                 </div>
 
@@ -3320,6 +3332,15 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
         document.body.appendChild(modal);
 
+        const expToggle = document.getElementById('dent-export-inc-exp');
+        if (expToggle) {
+            expToggle.addEventListener('change', () => {
+                const freshPages = calculateSmartPages(questions, expToggle.checked);
+                const sumEl = document.getElementById('dent-export-page-summary');
+                if (sumEl) sumEl.innerText = getSummaryText(freshPages);
+            });
+        }
+
         document.getElementById('dent-export-pdf-btn').addEventListener('click', function() {
             const incExp = !!document.getElementById('dent-export-inc-exp')?.checked;
             executeSaveQuizAsPdf(currentExportQuizData, incExp, this);
@@ -3335,6 +3356,13 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const modal = document.getElementById('dent-quiz-export-modal');
         if (modal) modal.remove();
     }
+
+    // Attach to window so inline onclick handlers and parent callers function properly
+    window.openQuizExportModal = openQuizExportModal;
+    window.closeQuizExportModal = closeQuizExportModal;
+    window.generateExamBookletHtml = generateExamBookletHtml;
+    window.calculateSmartPages = calculateSmartPages;
+    window.DENT_QUIZ_EXPORT_CSS = DENT_QUIZ_EXPORT_CSS;
 
     async function executeSaveQuizAsPdf(quizData, includeExplanations, btn) {
         const origHtml = btn ? btn.innerHTML : '';
@@ -3357,11 +3385,14 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             // Mount isolated sandbox in DOM
             const sandbox = document.createElement('div');
             sandbox.id = 'dent-quiz-render-sandbox';
-            sandbox.style.cssText = 'position: fixed; left: -99999px; top: 0; width: 794px; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1;';
+            sandbox.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1;';
             const sandboxCss = DENT_QUIZ_EXPORT_CSS.replace(/(^|[\s,{}])html\s*,\s*body(?=[\s,{:]|$)/gi, '$1#dent-quiz-render-sandbox').replace(/(^|[\s,{}])body(?=[\s,{:]|$)/gi, '$1#dent-quiz-render-sandbox');
             sandbox.innerHTML = `<style>${sandboxCss}</style>` + pagesJoinedHtml;
             document.body.appendChild(sandbox);
 
+            if (document.fonts && document.fonts.ready) {
+                await document.fonts.ready;
+            }
             await new Promise(r => setTimeout(r, 60));
 
             const pageEls = sandbox.querySelectorAll('.a4-page-sheet');
@@ -3442,11 +3473,14 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
             const sandbox = document.createElement('div');
             sandbox.id = 'dent-quiz-render-sandbox';
-            sandbox.style.cssText = 'position: fixed; left: -99999px; top: 0; width: 794px; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1;';
+            sandbox.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1;';
             const sandboxCss = DENT_QUIZ_EXPORT_CSS.replace(/(^|[\s,{}])html\s*,\s*body(?=[\s,{:]|$)/gi, '$1#dent-quiz-render-sandbox').replace(/(^|[\s,{}])body(?=[\s,{:]|$)/gi, '$1#dent-quiz-render-sandbox');
             sandbox.innerHTML = `<style>${sandboxCss}</style><div id="dent-quiz-capture-wrapper" style="display:flex; flex-direction:column; gap:12px; background:#0b0b0e; width:794px;">${pagesJoinedHtml}</div>`;
             document.body.appendChild(sandbox);
 
+            if (document.fonts && document.fonts.ready) {
+                await document.fonts.ready;
+            }
             await new Promise(r => setTimeout(r, 60));
 
             const captureTarget = sandbox.querySelector('#dent-quiz-capture-wrapper') || sandbox.querySelector('.a4-page-sheet');
@@ -3534,6 +3568,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 document.body.appendChild(a);
                 a.click();
                 setTimeout(() => document.body.removeChild(a), 500);
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
             } catch(dlErr) {
                 console.warn('Download failed:', dlErr);
             }
