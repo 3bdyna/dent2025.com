@@ -637,6 +637,10 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         document.getElementById('dq-subject').addEventListener('change', () => {
             selectedDriveFilesMap.clear();
             pastExamDriveFilesMap.clear();
+            aiUploadedFiles = [];
+            pastExamUploadedFiles = [];
+            renderUploadedChips('ai');
+            renderUploadedChips('pastexam');
             loadFilesForSubject();
         });
         document.getElementById('dq-generate-btn').addEventListener('click', startQuizGeneration);
@@ -940,7 +944,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             }
 
             const pageRange = document.getElementById('dq-page-range')?.value.trim() || '';
-            const focusArea = document.getElementById('dq-focus-area')?.value.trim() || '';
+            const focusArea = (document.getElementById('dq-focus')?.value.trim() || document.getElementById('dq-focus-area')?.value.trim() || '');
 
             let baseName = '';
             if (allFiles.length === 1) {
@@ -1047,7 +1051,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const enteredPass = prompt("أدخل رمز PIN للمشرف لتعديل عنوان الاختبار:");
         if (!enteredPass) return;
 
-        fetch(`${API_BASE}/dent2025_api.php?action=check_auth`, {
+        fetch(`/dent2025_api.php?action=check_auth`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: enteredPass, specialty: sel.specialty || 'dentistry', year: sel.year || 3, semester: sel.semester || 1 })
@@ -1180,7 +1184,10 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const aiDropzone = document.getElementById('dq-ai-dropzone');
         const aiFileInput = document.getElementById('dq-ai-file-input');
         aiDropzone.addEventListener('click', () => aiFileInput.click());
-        aiFileInput.addEventListener('change', (e) => handleFilesSelected(e.target.files, 'ai'));
+        aiFileInput.addEventListener('change', (e) => {
+            handleFilesSelected(e.target.files, 'ai');
+            e.target.value = '';
+        });
 
         aiDropzone.addEventListener('dragover', (e) => { e.preventDefault(); aiDropzone.classList.add('dragover'); });
         aiDropzone.addEventListener('dragleave', () => aiDropzone.classList.remove('dragover'));
@@ -1193,7 +1200,10 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const pastDropzone = document.getElementById('dq-pastexam-dropzone');
         const pastFileInput = document.getElementById('dq-pastexam-file-input');
         pastDropzone.addEventListener('click', () => pastFileInput.click());
-        pastFileInput.addEventListener('change', (e) => handleFilesSelected(e.target.files, 'pastexam'));
+        pastFileInput.addEventListener('change', (e) => {
+            handleFilesSelected(e.target.files, 'pastexam');
+            e.target.value = '';
+        });
 
         pastDropzone.addEventListener('dragover', (e) => { e.preventDefault(); pastDropzone.classList.add('dragover'); });
         pastDropzone.addEventListener('dragleave', () => pastDropzone.classList.remove('dragover'));
@@ -1207,6 +1217,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     async function handleFilesSelected(filesList, target) {
         if (!filesList || filesList.length === 0) return;
         const targetArray = (target === 'ai') ? aiUploadedFiles : pastExamUploadedFiles;
+
+        if (targetArray.length + filesList.length > 10) {
+            alert("الحد الأقصى المسموح برفع ملفاته هو 10 ملفات.");
+            return;
+        }
 
         for (let i = 0; i < filesList.length; i++) {
             const file = filesList[i];
@@ -1240,7 +1255,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 reader.onload = (e) => {
                     const img = new Image();
                     img.onload = () => {
-                        const maxDimension = 1600;
+                        const maxDimension = 2400; // High resolution for small exam print and formulas
                         let width = img.width;
                         let height = img.height;
 
@@ -1258,8 +1273,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                         canvas.width = width;
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
+                        // Fill white background to avoid transparent PNG black backgrounds
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, width, height);
                         ctx.drawImage(img, 0, 0, width, height);
-                        const optimizedB64 = canvas.toDataURL('image/jpeg', 0.85);
+                        const optimizedB64 = canvas.toDataURL('image/jpeg', 0.90);
                         resolve(optimizedB64);
                     };
                     img.onerror = () => resolve(e.target.result);
@@ -1283,7 +1301,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             const chip = document.createElement('div');
             chip.className = 'dent-file-chip';
             chip.innerHTML = `
-                <span>${f.name}</span>
+                <span>${escapeHtml(f.name)}</span>
                 <span class="dent-chip-remove" title="حذف الملف">✕</span>
             `;
             chip.querySelector('.dent-chip-remove').addEventListener('click', (e) => {
@@ -1495,21 +1513,23 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             isLoadingDriveFiles = false;
         }
 
-        // Render target chapters for Past Exam filter (using Chapters files)
-        if (subjectChaptersFiles.length > 0) {
+        // Render target chapters for Past Exam filter (using Chapters or Materials files)
+        const targetSource = (subjectChaptersFiles.length > 0) ? subjectChaptersFiles : subjectMaterialsFiles;
+        if (targetSource.length > 0) {
             targetContainer.innerHTML = '';
-            subjectChaptersFiles.forEach((opt) => {
+            targetSource.forEach((opt) => {
+                const cleanedName = opt.name.replace(/\.(pdf|pptx|docx|jpg|png|webp)$/i, '').trim();
                 const item = document.createElement('label');
                 item.className = 'dent-quiz-checkbox-label';
                 item.style.cssText = 'display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; background: #18181b; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer; color: #cbd5e1; font-size: 0.78rem; box-sizing: border-box; margin: 0;';
                 item.innerHTML = `
-                    <input type="checkbox" class="dq-target-chap-checkbox" value="${opt.name.replace(/"/g, '&quot;')}" checked>
-                    <span style="line-height: 1.4; word-break: break-word;">${opt.name}</span>
+                    <input type="checkbox" class="dq-target-chap-checkbox" value="${cleanedName.replace(/"/g, '&quot;')}" checked>
+                    <span style="line-height: 1.4; word-break: break-word;">${escapeHtml(cleanedName)}</span>
                 `;
                 targetContainer.appendChild(item);
             });
         } else {
-            targetContainer.innerHTML = '<div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 8px;">لا توجد محاضرات معرفة لهذه المادة</div>';
+            targetContainer.innerHTML = '<div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 8px;">لا توجد محاضرات أو ملازم معرفة لهذه المادة</div>';
         }
 
         renderDriveFilesList();
@@ -1692,8 +1712,9 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             }
 
             quizName = document.getElementById('dq-quiz-name')?.value?.trim() || document.getElementById('dq-pastexam-quiz-name')?.value?.trim() || generateSmartQuizName();
-            let numQs = parseInt(document.getElementById('dq-pastexam-num-qs').value, 10) || 200;
+            let numQs = parseInt(document.getElementById('dq-pastexam-num-qs')?.value, 10) || 200;
             if (numQs > 200) numQs = 200;
+            if (numQs <= 0) numQs = 200;
 
             if (checkedTargets.length > 0) {
                 combinedChapterName = checkedTargets.join(' + ');
@@ -1705,8 +1726,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             payload.chapterName = combinedChapterName;
             payload.typesSummary = 'تجميعات سنوات سابقة';
             payload.targetChapters = checkedTargets;
-            payload.selectedChapters = pastExamDriveFiles;
-            payload.uploadedFiles = pastExamUploadedFiles;
+            payload.selectedChapters = (currentPastExamSource === 'drive') ? pastExamDriveFiles : [];
+            payload.uploadedFiles = (currentPastExamSource === 'upload') ? pastExamUploadedFiles : [];
             payload.numQuestions = numQs;
 
         } else {
@@ -1891,7 +1912,15 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             if (selection.year !== undefined && selection.year !== null && selection.year !== '') params.append('year', selection.year);
             if (selection.semester !== undefined && selection.semester !== null && selection.semester !== '') params.append('semester', selection.semester);
 
-            const res = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?${params.toString()}`);
+            const adminPass = sessionStorage.getItem('dent2025_admin_pass') || '';
+            if (adminPass) {
+                params.append('include_hidden', '1');
+                params.append('password', adminPass);
+            }
+
+            const res = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?${params.toString()}`, {
+                headers: adminPass ? { 'X-Admin-Pass': adminPass } : {}
+            });
             const json = await res.json();
 
             if (json.success && Array.isArray(json.data)) {
@@ -1998,11 +2027,17 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             else if (q.difficulty === 'hard') diffBadge = `<span class="dent-bank-tag dent-tag-diff-hard">صعب</span>`;
             else if (q.difficulty === 'medium') diffBadge = `<span class="dent-bank-tag dent-tag-diff-med">متوسط</span>`;
 
+            const isHidden = !!(q.is_hidden || q.hidden);
+            const hiddenBadge = isHidden ? `<span style="background:rgba(245,158,11,0.18); color:#fbbf24; border:1px solid rgba(245,158,11,0.35); padding:1px 6px; border-radius:999px; font-size:0.72rem; font-weight:600; margin-right:4px;">مخفي</span>` : '';
+
             const card = document.createElement('div');
-            card.className = 'dent-bank-card';
+            card.className = 'dent-bank-card' + (isHidden ? ' dent-bank-card-hidden' : '');
+            if (isHidden) {
+                card.style.borderColor = 'rgba(245,158,11,0.3)';
+            }
             card.innerHTML = `
                 <div class="dent-bank-card-top">
-                    <div class="dent-bank-title">${escapeHtml(q.quiz_name)}</div>
+                    <div class="dent-bank-title">${escapeHtml(q.quiz_name)} ${hiddenBadge}</div>
                     <div class="dent-bank-sub">
                         <span>${escapeHtml(q.subject_name || 'مادة دراسية')}</span>
                         ${typeBadge}
@@ -2024,12 +2059,21 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
             card.querySelector('.start-btn').addEventListener('click', () => playSavedQuiz(q.id));
             card.querySelector('.share-btn').addEventListener('click', () => {
-                const link = window.location.origin + '/quiz/?id=' + encodeURIComponent(q.id);
-                navigator.clipboard.writeText(link);
-                alert("تم نسخ رابط الاختبار المباشر للحافظة!");
+                const shareUrl = new URL(window.location.href);
+                shareUrl.searchParams.set('quiz_id', q.id);
+                const link = shareUrl.toString();
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(link).then(() => {
+                        alert("تم نسخ رابط الاختبار المباشر للحافظة!");
+                    }).catch(() => {
+                        prompt("انسخ رابط الاختبار المباشر:", link);
+                    });
+                } else {
+                    prompt("انسخ رابط الاختبار المباشر:", link);
+                }
             });
 
-            // Admin Quick Actions (Rename & Delete)
+            // Admin Quick Actions (Rename, Hide & Delete)
             if (sessionStorage.getItem('dent2025_admin_pass')) {
                 const renameBtn = document.createElement('button');
                 renameBtn.className = 'dent-quiz-btn dent-btn-secondary';
@@ -2062,6 +2106,38 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                     }
                 });
                 card.querySelector('.dent-bank-actions').appendChild(renameBtn);
+
+                const hideBtn = document.createElement('button');
+                hideBtn.className = 'dent-quiz-btn dent-btn-secondary';
+                hideBtn.style.cssText = isHidden
+                    ? 'margin-top:0; padding:7px 9px; font-size:0.82rem; color:#34d399; border-color:rgba(52,211,153,0.3);'
+                    : 'margin-top:0; padding:7px 9px; font-size:0.82rem; color:#fbbf24; border-color:rgba(251,191,36,0.3);';
+                hideBtn.innerText = isHidden ? 'إظهار' : 'إخفاء';
+                hideBtn.title = isHidden ? 'إظهار الاختبار للطلاب' : 'إخفاء الاختبار عن الطلاب';
+                hideBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const willHide = !isHidden;
+                    try {
+                        const res = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?action=toggle_hide_quiz`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                id: q.id,
+                                is_hidden: willHide,
+                                password: sessionStorage.getItem('dent2025_admin_pass') || ''
+                            })
+                        });
+                        const data = await res.json();
+                        if (data && data.success) {
+                            loadSavedQuizzesBank();
+                        } else {
+                            alert(data?.message || 'تعذر تعديل ظهور الاختبار.');
+                        }
+                    } catch (err) {
+                        alert('حدث خطأ أثناء الاتصال بالخادم لتعديل ظهور الاختبار.');
+                    }
+                });
+                card.querySelector('.dent-bank-actions').appendChild(hideBtn);
 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'dent-quiz-btn dent-btn-secondary';
@@ -2126,9 +2202,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     function getCorrectOptionIndex(question, options) {
         if (!Array.isArray(options) || options.length === 0) return -1;
 
-        const explicitIndex = Number(question?.correctIndex);
-        if (Number.isInteger(explicitIndex) && explicitIndex >= 0 && explicitIndex < options.length) {
-            return explicitIndex;
+        if (question?.correctIndex !== null && question?.correctIndex !== undefined && question?.correctIndex !== '') {
+            const explicitIndex = Number(question.correctIndex);
+            if (Number.isInteger(explicitIndex) && explicitIndex >= 0 && explicitIndex < options.length) {
+                return explicitIndex;
+            }
         }
 
         const correct = String(question?.correctAnswer || '').trim();
@@ -2189,8 +2267,15 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             }
         }
 
+        const isPastExamQuiz = (metaObj?.creation_mode === 'past_exam_filter');
         const hasAsteriskQuestions = questions.some(q => typeof q.question === 'string' && q.question.trim().startsWith('*'));
-        const customNotice = metaObj.notice || (hasAsteriskQuestions ? '<strong>تنبيه:</strong> الأسئلة المسبوقة بعلامة (*) مأخوذة من سلايدات المحاضرات، وبقية الأسئلة من التجميعات السابقة.' : '');
+        let defaultNotice = '';
+        if (hasAsteriskQuestions) {
+            defaultNotice = isPastExamQuiz
+                ? '<strong>تنبيه:</strong> الأسئلة المسبوقة بعلامة (*) تم تحويلها من أسئلة مقالية أو فراغات إلى خيارات متعددة مع صياغة خياراتها بدقة.'
+                : '<strong>تنبيه:</strong> الأسئلة المسبوقة بعلامة (*) مأخوذة من سلايدات المحاضرات، وبقية الأسئلة من التجميعات السابقة.';
+        }
+        const customNotice = metaObj.notice || defaultNotice;
 
         if (noticeBanner) {
             if (customNotice) {
@@ -2247,13 +2332,17 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
             if (q.type !== 'card' && q.type !== 'info') {
                 const isConverted = (typeof q.question === 'string' && q.question.trim().startsWith('*'));
-                const convertedBadge = isConverted ? `<span class="dent-q-converted-badge" title="سؤال مأخوذ من سلايدات المحاضرة">* من السلايدات</span>` : '';
+                const badgeLabel = isPastExamQuiz ? '* سؤال محول لخيارات' : '* من السلايدات';
+                const convertedBadge = isConverted ? `<span class="dent-q-converted-badge" title="تم تحويله إلى خيارات متعددة">${badgeLabel}</span>` : '';
+                const chapterBadge = (assignedCh && assignedCh !== 'عام' && assignedCh !== 'المحاضرة العامة')
+                    ? `<span class="dent-q-tag" style="background: rgba(255,255,255,0.06); color: #94a3b8; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08);">${escapeHtml(assignedCh)}</span>`
+                    : '';
 
-                if (convertedBadge) {
+                if (convertedBadge || chapterBadge) {
                     const tagRow = document.createElement('div');
                     tagRow.className = 'dent-q-badge-row';
                     tagRow.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;';
-                    tagRow.innerHTML = convertedBadge;
+                    tagRow.innerHTML = convertedBadge + chapterBadge;
                     qBlock.appendChild(tagRow);
                 }
             }
@@ -2264,8 +2353,12 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             const qTitle = document.createElement('div');
             qTitle.className = 'dent-q-text';
             qTitle.style.marginBottom = '0';
-            const hasNum = /^(?:Q\d+|\d+\.)/i.test((q.question || '').trim());
-            qTitle.innerText = hasNum ? q.question : `${index + 1}. ${q.question}`;
+            let cleanQText = (q.question || '').trim();
+            if (cleanQText.startsWith('*')) {
+                cleanQText = cleanQText.substring(1).trim();
+            }
+            const hasNum = /^(?:Q\d+|\d+\.)/i.test(cleanQText);
+            qTitle.innerText = hasNum ? cleanQText : `${index + 1}. ${cleanQText}`;
 
             headerRow.appendChild(qTitle);
             qBlock.appendChild(headerRow);
@@ -2320,7 +2413,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                     const optionLetters = questionLanguage === 'ar'
                         ? ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح']
                         : ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-                    const optionLetter = optionLetters[optIndex] ? '.' + optionLetters[optIndex] : '';
+                    const optionLetter = optionLetters[optIndex] ? optionLetters[optIndex] + '.' : '';
                     const optionText = optionMatch ? optionMatch[2] : String(opt);
                     optItem.innerHTML = `
                         <input type="radio" name="q_${index}" value="${escapeHtml(opt)}" data-option-index="${optIndex}">
@@ -2350,6 +2443,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                             });
                         }
 
+                        // Lock inputs for this question to prevent score tampering after seeing feedback
+                        const inputs = optList.querySelectorAll('input[type="radio"]');
+                        inputs.forEach(inp => { inp.disabled = true; });
+                        optList.style.pointerEvents = 'none';
+
                         if (navBar) {
                             const pill = navBar.querySelector(`.dent-nav-pill[data-idx="${index}"]`);
                             if (pill) {
@@ -2365,7 +2463,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                         const totalQuestions = generatedQuestions.length;
                         const answeredQuestions = document.querySelectorAll('.dent-q-block input[type="radio"]:checked').length;
                         if (answeredQuestions === totalQuestions) {
-                            setTimeout(() => submitQuiz(), 600);
+                            const subBtn = document.getElementById('dp-submit-btn');
+                            if (subBtn) subBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
                     });
 

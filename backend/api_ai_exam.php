@@ -68,6 +68,14 @@ if (in_array($action, $AI_MASTER_ACTIONS, true)) {
         echo json_encode(['success' => false, 'message' => 'Unauthorized: edit_core_subject or admin permission required.']);
         exit;
     }
+} elseif ($action === 'toggle_hide_quiz' || $action === 'hide_quiz') {
+    $ai_pass = ai_exam_read_passkey();
+    if (!dent2025_check_rbac_permission($ai_pass, 'edit_basic_subject') && !dent2025_check_rbac_permission($ai_pass, 'edit_core_subject') && !dent2025_check_rbac_permission($ai_pass, 'manage_passwords')) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Unauthorized: edit_basic_subject or admin permission required.']);
+        exit;
+    }
 } elseif ($action === 'save') {
     $ai_pass = ai_exam_read_passkey();
     $ai_info = !empty($ai_pass) ? dent2025_get_passkey_info($ai_pass) : null;
@@ -164,10 +172,9 @@ function getAiExamSubjectLinksTable($pdo) {
 
 // Primary and fallback Gemini models
 $GEMINI_MODELS = [
-    'gemini-3.5-flash',
-    'gemini-3.5-flash-lite',
-    'gemini-flash-latest',
-    'gemini-3.6-flash'
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-flash-latest'
 ];
 
 /**
@@ -1493,6 +1500,16 @@ function sanitizeGeminiImagePayload($imageInput) {
         return null;
     }
 
+    // Fast return if already sanitized array
+    if (is_array($imageInput) && !empty($imageInput['mimeType']) && !empty($imageInput['data']) && is_string($imageInput['data'])) {
+        if (strlen($imageInput['data']) < 12000000) {
+            return [
+                'mimeType' => $imageInput['mimeType'],
+                'data' => $imageInput['data']
+            ];
+        }
+    }
+
     $rawData = null;
     $mimeType = null;
 
@@ -1548,16 +1565,39 @@ function sanitizeGeminiImagePayload($imageInput) {
         return null;
     }
 
+    // Smart server-side downscaling for oversized mobile phone photos
     if (function_exists('imagecreatefromstring')) {
         $resource = @imagecreatefromstring($rawData);
-        if ($resource === false) {
-            return null;
+        if ($resource !== false) {
+            $origW = imagesx($resource);
+            $origH = imagesy($resource);
+            $maxDim = 2400; // High resolution to preserve fine exam text and numbers
+            if ($origW > $maxDim || $origH > $maxDim || strlen($rawData) > 1500000) {
+                $scale = min($maxDim / max(1, $origW), $maxDim / max(1, $origH));
+                if ($scale < 1.0) {
+                    $newW = (int)round($origW * $scale);
+                    $newH = (int)round($origH * $scale);
+                    $resized = imagecreatetruecolor($newW, $newH);
+                    $white = imagecolorallocate($resized, 255, 255, 255);
+                    imagefill($resized, 0, 0, $white);
+                    imagecopyresampled($resized, $resource, 0, 0, 0, 0, $newW, $newH, $origW, $origH);
+                    ob_start();
+                    imagejpeg($resized, null, 85);
+                    $compressed = ob_get_clean();
+                    imagedestroy($resized);
+                    if ($compressed && strlen($compressed) > 64) {
+                        $rawData = $compressed;
+                        $mimeType = 'image/jpeg';
+                    }
+                }
+            }
+            @imagedestroy($resource);
         }
-        @imagedestroy($resource);
     }
 
     $encoded = base64_encode($rawData);
-    if (strlen($encoded) > 1800000) {
+    // 10MB base64 ceiling allows high-res document scans without hitting Gemini REST limits
+    if (strlen($encoded) > 10000000) {
         return null;
     }
 
@@ -2102,6 +2142,245 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
     return ['success' => true, 'data' => ['questions' => $validated, 'invalid_questions' => $invalidQuestions]];
 }
 
+function cleanAndParseGeminiJson($rawContent) {
+    if (empty($rawContent)) return null;
+    $cleanJson = preg_replace('/^```(?:json)?\s*/im', '', $rawContent);
+    $cleanJson = preg_replace('/\s*```$/m', '', $cleanJson);
+    $cleanJson = trim($cleanJson);
+
+    $parsed = json_decode($cleanJson, true);
+    if ($parsed !== null) {
+        if (is_array($parsed) && !isset($parsed[0])) {
+            if (!empty($parsed['questions']) && is_array($parsed['questions'])) return $parsed['questions'];
+            if (!empty($parsed['quiz']) && is_array($parsed['quiz'])) return $parsed['quiz'];
+            if (!empty($parsed['data']) && is_array($parsed['data'])) return $parsed['data'];
+        }
+        return $parsed;
+    }
+
+    // Repair trailing commas
+    $noTrailingCommas = preg_replace('/,\s*([\]\}])/m', '$1', $cleanJson);
+    $parsed = json_decode($noTrailingCommas, true);
+    if ($parsed !== null) {
+        if (is_array($parsed) && !isset($parsed[0])) {
+            if (!empty($parsed['questions']) && is_array($parsed['questions'])) return $parsed['questions'];
+            if (!empty($parsed['quiz']) && is_array($parsed['quiz'])) return $parsed['quiz'];
+            if (!empty($parsed['data']) && is_array($parsed['data'])) return $parsed['data'];
+        }
+        return $parsed;
+    }
+
+    // Repair truncated array bracket closure
+    $lastBrace = strrpos($cleanJson, '}');
+    if ($lastBrace !== false) {
+        $repaired = substr($cleanJson, 0, $lastBrace + 1) . "\n]";
+        $firstBracket = strpos($repaired, '[');
+        if ($firstBracket !== false) {
+            $repaired = substr($repaired, $firstBracket);
+            $parsed = json_decode($repaired, true);
+            if ($parsed !== null) {
+                if (is_array($parsed) && !isset($parsed[0])) {
+                    if (!empty($parsed['questions']) && is_array($parsed['questions'])) return $parsed['questions'];
+                    if (!empty($parsed['quiz']) && is_array($parsed['quiz'])) return $parsed['quiz'];
+                    if (!empty($parsed['data']) && is_array($parsed['data'])) return $parsed['data'];
+                }
+                return $parsed;
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Two-stage high-precision past exam extraction & curation pipeline:
+ * Stage 1: Strict Verbatim OCR Transcription (Zero Hallucination, temp=0.1)
+ * Stage 2: Target Topic Filter, Scientific Solving, Non-MCQ Conversion & Explanation
+ */
+function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = null) {
+    global $GEMINI_MODELS;
+
+    $stage1Prompt = "Act as an academic examination OCR transcription specialist.\n";
+    $stage1Prompt .= "TASK: Thoroughly examine all provided past examination materials (scanned pages, images, text, or PDF pages) from beginning to end.\n";
+    $stage1Prompt .= "Transcribe every single question and its choices EXACTLY as physically printed or written on the exam sheets.\n\n";
+    $stage1Prompt .= "STRICT NON-NEGOTIABLE TRANSCRIPTION RULES:\n";
+    $stage1Prompt .= "1. ABSOLUTE ZERO HALLUCINATION: Transcribe ONLY questions that physically exist on the provided exam pages. NEVER invent, fabricate, synthesize, or imagine any questions. If there are only 5 questions, output ONLY those 5. Do NOT generate filler questions.\n";
+    $stage1Prompt .= "2. VERBATIM FIDELITY: Transcribe the exact question text, question numbers, and all printed options (A, B, C, D...). If an option is missing or cut off, transcribe what is visible.\n";
+    $stage1Prompt .= "3. NON-MCQ QUESTIONS: If a question is short-answer, fill-in-the-blank, or matching, transcribe the full question prompt and mark its type as 'short_answer'.\n";
+    $stage1Prompt .= "4. LANGUAGE FIDELITY: Maintain the 100% exact language of the source exam (English stays English, Arabic stays Arabic).\n";
+    $stage1Prompt .= "5. OCR ARTIFACT CLEANING: Correct obvious scanning optical artifacts without altering scientific terminology. Ignore student doodles or handwritten margin notes.\n\n";
+    $stage1Prompt .= "OUTPUT SCHEMA (Return ONLY a raw JSON array):\n";
+    $stage1Prompt .= '[{"rawNumber": 1, "type": "mcq|short_answer|truefalse", "question": "Exact question stem as printed", "options": ["Choice A", "Choice B", "Choice C", "Choice D"], "indicatedAnswer": "Student or printed marked answer if visible, else empty"}]';
+
+    if (!empty($data['text'])) {
+        $stage1Prompt .= "\n\nPast Exam Document Text:\n" . $data['text'];
+    }
+
+    $parts = [];
+    $allFileUris = !empty($data['gemini_file_uris']) && is_array($data['gemini_file_uris'])
+        ? $data['gemini_file_uris']
+        : (!empty($data['gemini_file_uri']) ? [$data['gemini_file_uri']] : []);
+    foreach ($allFileUris as $fUri) {
+        if (!empty($fUri)) {
+            $parts[] = [
+                "fileData" => [
+                    "mimeType" => "application/pdf",
+                    "fileUri" => $fUri
+                ]
+            ];
+        }
+    }
+
+    $validImages = [];
+    if (!empty($data['images']) && is_array($data['images'])) {
+        foreach ($data['images'] as $b64Img) {
+            $sanitized = sanitizeGeminiImagePayload($b64Img);
+            if ($sanitized !== null) $validImages[] = $sanitized;
+            if (count($validImages) >= 16) break;
+        }
+    }
+
+    foreach ($validImages as $imageData) {
+        $parts[] = [
+            "inlineData" => [
+                "mimeType" => $imageData['mimeType'],
+                "data" => $imageData['data']
+            ]
+        ];
+    }
+    $parts[] = ["text" => $stage1Prompt];
+
+    $stage1Payload = json_encode([
+        "contents" => [
+            ["parts" => $parts]
+        ],
+        "generationConfig" => [
+            "temperature" => 0.1,
+            "maxOutputTokens" => 8192,
+            "responseMimeType" => "application/json"
+        ]
+    ]);
+
+    if ($jobFileCallback && is_callable($jobFileCallback)) {
+        $jobFileCallback(1, 2, 0);
+    }
+
+    $modelsToTry = !empty($GEMINI_MODELS) ? $GEMINI_MODELS : ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
+    $stage1Res = null;
+    $lastErrorMsg = '';
+
+    foreach ($modelsToTry as $modelName) {
+        foreach ($API_KEYS as $index => $apiKey) {
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($modelName) . ":generateContent?key=" . $apiKey;
+            $req = postGeminiRequest($url, $stage1Payload, 120);
+            if ($req['http_code'] === 200 && !empty($req['response'])) {
+                $j = json_decode($req['response'], true);
+                if (!isset($j['error'])) {
+                    $stage1Res = $j;
+                    break 2;
+                } else {
+                    $lastErrorMsg = $j['error']['message'] ?? 'API error';
+                }
+            } else {
+                $lastErrorMsg = "HTTP {$req['http_code']}: " . substr(strval($req['response']), 0, 150);
+            }
+        }
+    }
+
+    if (!$stage1Res) {
+        return ['success' => false, 'message' => "فشل استخراج الأسئلة من أوراق الاختبار: " . $lastErrorMsg];
+    }
+
+    $rawContent = $stage1Res['candidates'][0]['content']['parts'][0]['text'] ?? '';
+    $rawQuestions = cleanAndParseGeminiJson($rawContent);
+
+    if (empty($rawQuestions) || !is_array($rawQuestions)) {
+        return ['success' => false, 'message' => "لم يتم العثور على أسئلة واضحة ومقروءة في صور أو أوراق الاختبار المرفوعة. يرجى التأكد من وضوح تصوير الصفحات."];
+    }
+
+    // --- STAGE 2: TOPIC FILTERING, SOLVING & ACADEMIC STRUCTURING ---
+    $targetChapters = $data['targetChapters'] ?? [];
+    $subjectTitle = trim($data['subjectName'] ?? '');
+    $spec = strtolower(trim($data['specialty'] ?? ''));
+
+    // Batch raw questions in groups of 25 to guarantee zero token overflow in Stage 2
+    $rawBatches = array_chunk($rawQuestions, 25);
+    $totalBatches = count($rawBatches);
+    $finalQuestions = [];
+
+    for ($bIdx = 0; $bIdx < $totalBatches; $bIdx++) {
+        $chunk = $rawBatches[$bIdx];
+        if ($jobFileCallback && is_callable($jobFileCallback)) {
+            $jobFileCallback($bIdx + 1, $totalBatches, count($finalQuestions));
+        }
+
+        $targetChaptersStr = !empty($targetChapters) ? implode("\n- ", $targetChapters) : 'جميع مواضيع المقرر';
+        $stage2Prompt = "Act as an expert university professor and lead examiner in {$subjectTitle} ({$spec}).\n";
+        $stage2Prompt .= "You are provided with real, verified past examination questions transcribed verbatim from actual exams:\n";
+        $stage2Prompt .= json_encode($chunk, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n\n";
+        $stage2Prompt .= "STUDENT'S TARGET REVISION CHAPTERS / TOPICS:\n- " . $targetChaptersStr . "\n\n";
+        $stage2Prompt .= "YOUR TASKS:\n";
+        $stage2Prompt .= "1. TOPIC FILTERING: Keep all questions that belong or relate to any of the TARGET REVISION CHAPTERS above. If the student specified topics and a question clearly belongs to an entirely different, unrelated topic, discard it. If in doubt or related, keep it.\n";
+        $stage2Prompt .= "2. SOLVE ACCURATELY: Scientifically verify and solve the 100% correct answer.\n";
+        $stage2Prompt .= "3. NON-MCQ CONVERSION: If a question is of type 'short_answer' or lacks 4 choices, construct standard plausible academic distractors to form a 4-choice MCQ and prefix the question stem with an asterisk '*' (e.g. '*What is...'). If already an MCQ, keep the real stem without asterisk.\n";
+        $stage2Prompt .= "4. DETAILED EXPLANATION: Write a high-yield scientific rationale explaining why the correct choice is accurate and refuting the distractors. The explanation MUST strictly match the language of the question (English questions get 100% English explanations, Arabic questions get 100% Arabic explanations).\n";
+        $stage2Prompt .= "5. ASSIGNED CHAPTER: Map each question to the most relevant target chapter name from the student's list.\n\n";
+        $stage2Prompt .= "OUTPUT FORMAT: Return ONLY a raw JSON array matching this schema:\n";
+        $stage2Prompt .= '[{"type":"mcq|tf","language":"en|ar","question":"Question text","options":["Choice A","Choice B","Choice C","Choice D"],"correctIndex":0,"correctAnswer":"Choice A","explanation":"Detailed educational breakdown in same language","assignedChapter":"Target Chapter Name"}]';
+
+        $stage2Payload = json_encode([
+            "contents" => [
+                ["parts" => [["text" => $stage2Prompt]]]
+            ],
+            "generationConfig" => [
+                "temperature" => 0.25,
+                "maxOutputTokens" => 8192,
+                "responseMimeType" => "application/json"
+            ]
+        ]);
+
+        $stage2Res = null;
+        foreach ($modelsToTry as $modelName) {
+            foreach ($API_KEYS as $index => $apiKey) {
+                $url = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($modelName) . ":generateContent?key=" . $apiKey;
+                $req = postGeminiRequest($url, $stage2Payload, 90);
+                if ($req['http_code'] === 200 && !empty($req['response'])) {
+                    $j = json_decode($req['response'], true);
+                    if (!isset($j['error'])) {
+                        $stage2Res = $j;
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        if ($stage2Res) {
+            $curText = $stage2Res['candidates'][0]['content']['parts'][0]['text'] ?? '';
+            $parsedCur = cleanAndParseGeminiJson($curText);
+            if (!empty($parsedCur) && is_array($parsedCur)) {
+                foreach ($parsedCur as $q) {
+                    if (!empty($q['question']) && !empty($q['options']) && is_array($q['options'])) {
+                        // Normalize correctIndex and correctAnswer
+                        $cIdx = isset($q['correctIndex']) ? (int)$q['correctIndex'] : 0;
+                        if ($cIdx < 0 || $cIdx >= count($q['options'])) $cIdx = 0;
+                        $q['correctIndex'] = $cIdx;
+                        if (empty($q['correctAnswer']) && isset($q['options'][$cIdx])) {
+                            $q['correctAnswer'] = $q['options'][$cIdx];
+                        }
+                        $finalQuestions[] = $q;
+                    }
+                }
+            }
+        }
+    }
+
+    if (empty($finalQuestions)) {
+        return ['success' => false, 'message' => "تم استخراج أسئلة من ورقة الاختبار لكنها لا تنتمي لأي من الشابترات المحددة. جرب تحديد المزيد من الشابترات المستهدفة."];
+    }
+
+    return ['success' => true, 'data' => ['questions' => $finalQuestions]];
+}
+
 function performGeminiGeneration($data, $API_KEYS, $jobFileCallback = null) {
     $mode = $data['mode'] ?? 'ai_generation';
     $isPastExamFilter = ($mode === 'past_exam_filter');
@@ -2109,8 +2388,12 @@ function performGeminiGeneration($data, $API_KEYS, $jobFileCallback = null) {
     if ($targetNum <= 0) $targetNum = 10;
     if ($targetNum > 200) $targetNum = 200;
 
-    // For past exam filtering, run in single comprehensive pass
-    if ($isPastExamFilter || $targetNum <= 20) {
+    // For past exam filtering, route to dedicated two-stage precision extraction pipeline
+    if ($isPastExamFilter) {
+        return performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback);
+    }
+
+    if ($targetNum <= 20) {
         $singlePayload = $data;
         $singlePayload['numQuestions'] = $targetNum;
         return performGeminiSingleBatch($singlePayload, $API_KEYS, 1, 1);
@@ -2732,6 +3015,21 @@ if ($action === 'get') {
     if (!file_exists($filePath) || basename($filePath) !== ($quizId . '.json')) sendResponse(false, "Quiz not found.");
     
     $quizData = json_decode(file_get_contents($filePath), true);
+    if (!is_array($quizData)) {
+        sendResponse(false, "Invalid quiz data.");
+    }
+
+    $isHidden = !empty($quizData['is_hidden']) || !empty($quizData['hidden']);
+    if ($isHidden) {
+        $pass = ai_exam_read_passkey();
+        $isAuthorized = dent2025_check_rbac_permission($pass, 'edit_basic_subject') ||
+                        dent2025_check_rbac_permission($pass, 'edit_core_subject') ||
+                        dent2025_check_rbac_permission($pass, 'manage_passwords');
+        if (!$isAuthorized) {
+            sendResponse(false, "هذا الاختبار غير متاح حالياً للطلاب (تم إخفاؤه من قبل المشرف).");
+        }
+    }
+
     sendResponse(true, $quizData);
 }
 
@@ -2742,6 +3040,16 @@ if ($action === 'list_quizzes') {
         $specialty = $_GET['specialty'] ?? '';
         $year = (isset($_GET['year']) && $_GET['year'] !== '') ? intval($_GET['year']) : null;
         $semester = (isset($_GET['semester']) && $_GET['semester'] !== '') ? intval($_GET['semester']) : null;
+
+        $pass = ai_exam_read_passkey();
+        global $JSON_INPUT;
+        $includeHidden = (!empty($_GET['include_hidden']) || !empty($_POST['include_hidden']) || !empty($JSON_INPUT['include_hidden']));
+        $canSeeHidden = false;
+        if ($includeHidden && !empty($pass)) {
+            $canSeeHidden = dent2025_check_rbac_permission($pass, 'edit_basic_subject') ||
+                            dent2025_check_rbac_permission($pass, 'edit_core_subject') ||
+                            dent2025_check_rbac_permission($pass, 'manage_passwords');
+        }
 
         $quizzesDir = __DIR__ . '/../quizzes_data';
         if (!is_dir($quizzesDir)) {
@@ -2772,6 +3080,11 @@ if ($action === 'list_quizzes') {
             $data = json_decode($fileContent, true);
             if (!is_array($data) || empty($data['id']) || empty($data['questions']) || !is_array($data['questions'])) continue;
             
+            $isHidden = !empty($data['is_hidden']) || !empty($data['hidden']);
+            if ($isHidden && !$canSeeHidden) {
+                continue;
+            }
+
             $dataSubjectId = (string)($data['subject_id'] ?? '');
             if ($subjectId && $dataSubjectId !== (string)$subjectId) {
                 continue;
@@ -2825,7 +3138,8 @@ if ($action === 'list_quizzes') {
                 'types_summary' => $data['types_summary'] ?? 'أسئلة متعددة',
                 'creation_mode' => $data['creation_mode'] ?? 'ai_generation',
                 'difficulty' => $data['difficulty'] ?? 'medium',
-                'created_at' => $data['created_at'] ?? ''
+                'created_at' => $data['created_at'] ?? '',
+                'is_hidden' => $isHidden
             ];
         }
         
@@ -2932,6 +3246,65 @@ if ($action === 'rename_quiz' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     ]);
 }
 
+// --- ACTION 8.6: TOGGLE HIDE / SHOW A SAVED QUIZ ---
+if (($action === 'toggle_hide_quiz' || $action === 'hide_quiz') && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $pass = ai_exam_read_passkey();
+    if (!dent2025_check_rbac_permission($pass, 'edit_basic_subject') && !dent2025_check_rbac_permission($pass, 'edit_core_subject') && !dent2025_check_rbac_permission($pass, 'manage_passwords')) {
+        sendResponse(false, "غير مصرح: صلاحيات المشرف مطلوبة لتعديل ظهور الاختبار.");
+    }
+    global $JSON_INPUT;
+    $data = $JSON_INPUT ?: (json_decode(file_get_contents("php://input"), true) ?: []);
+    $quizId = $data['id'] ?? $data['quiz_id'] ?? $_POST['id'] ?? $_GET['id'] ?? '';
+
+    if (empty($quizId)) sendResponse(false, "Missing quiz ID.");
+
+    $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '', $quizId);
+    if (strpos($cleanId, 'quiz_') !== 0) {
+        sendResponse(false, "Invalid quiz ID.");
+    }
+    $filePath = __DIR__ . '/../quizzes_data/' . $cleanId . '.json';
+
+    if (!file_exists($filePath)) {
+        sendResponse(false, "Quiz file not found.");
+    }
+
+    $fileContent = @file_get_contents($filePath);
+    $quizData = json_decode($fileContent, true);
+    if (!is_array($quizData)) {
+        sendResponse(false, "Invalid quiz data structure.");
+    }
+
+    $currentHidden = !empty($quizData['is_hidden']) || !empty($quizData['hidden']);
+    if (isset($data['is_hidden'])) {
+        $newHidden = filter_var($data['is_hidden'], FILTER_VALIDATE_BOOLEAN);
+    } elseif (isset($data['hidden'])) {
+        $newHidden = filter_var($data['hidden'], FILTER_VALIDATE_BOOLEAN);
+    } else {
+        $newHidden = !$currentHidden;
+    }
+
+    $quizData['is_hidden'] = $newHidden;
+    $quizData['updated_at'] = date('Y-m-d H:i:s');
+
+    if (function_exists('dent2025_safe_atomic_save_json')) {
+        $saved = dent2025_safe_atomic_save_json($filePath, $quizData);
+    } else {
+        $saved = @file_put_contents($filePath, json_encode($quizData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    }
+
+    if ($saved === false) {
+        sendResponse(false, "Failed to write updated quiz file.");
+    }
+
+    sendResponse(true, [
+        "message" => $newHidden ? "تم إخفاء الاختبار بنجاح." : "تم إظهار الاختبار للطلاب بنجاح.",
+        "quiz" => [
+            "id" => $cleanId,
+            "is_hidden" => $newHidden
+        ]
+    ]);
+}
+
 /**
  * Atomically saves background job status avoiding race conditions with polling clients.
  */
@@ -3010,6 +3383,10 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $jobsDir = __DIR__ . '/../quiz_jobs';
     if (!is_dir($jobsDir)) @mkdir($jobsDir, 0777, true);
+    $htaccessFile = $jobsDir . '/.htaccess';
+    if (!file_exists($htaccessFile)) {
+        @file_put_contents($htaccessFile, "<IfModule mod_authz_core.c>\n    Require all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\n    Deny from all\n</IfModule>\n");
+    }
 
     $jobId = 'job_' . date('Ymd_His') . '_' . bin2hex(random_bytes(3));
     $jobFile = $jobsDir . '/' . $jobId . '.json';
@@ -3025,6 +3402,18 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         'quiz_name' => $quizName
     ];
     ai_exam_save_job_status($jobFile, $jobStatusData);
+
+    // Register fatal shutdown watchdog to prevent zombie jobs
+    register_shutdown_function(function() use ($jobFile, &$jobStatusData) {
+        $error = error_get_last();
+        if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+            $msg = 'انتهت العملية بسبب خطأ في موارد الخادم: ' . ($error['message'] ?? 'Fatal error');
+            $jobStatusData['status'] = 'failed';
+            $jobStatusData['step'] = 'failed';
+            $jobStatusData['message'] = $msg;
+            ai_exam_save_job_status($jobFile, $jobStatusData);
+        }
+    });
 
     // Respond immediately to client to prevent gateway timeouts
     ignore_user_abort(true);
@@ -3207,7 +3596,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($geminiFileUris)) {
             $jobStatusData['message'] = "(2/3) الذكاء الاصطناعي يحلل صفحات الكتاب/المستند بالكامل ويصيغ الأسئلة...";
         } elseif ($isPastExamFilter) {
-            $jobStatusData['message'] = "(2/3) الذكاء الاصطناعي يصنف الأسئلة ويستخرج الخاصة بالشابترات المحددة فقط...";
+            $jobStatusData['message'] = "(2/3) الذكاء الاصطناعي يستخرج ويحل أسئلة الاختبارات السابقة بدقة عالية...";
         } else {
             $jobStatusData['message'] = "(2/3) الذكاء الاصطناعي يصيغ الأسئلة بحسب الصعوبة ($difficulty)...";
         }
@@ -3221,6 +3610,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             'difficulty' => $difficulty,
             'text' => $combinedText,
             'gemini_file_uri' => !empty($geminiFileUris) ? $geminiFileUris[0]['uri'] : null,
+            'gemini_file_uris' => !empty($geminiFileUris) ? array_column($geminiFileUris, 'uri') : [],
             'images' => array_slice($combinedImages, 0, 16),
             'numQuestions' => $data['numQuestions'] ?? ($isPastExamFilter ? 200 : 10),
             'pageRange' => $data['pageRange'] ?? '',
@@ -3346,6 +3736,18 @@ if ($action === 'check_job') {
             'message' => 'جاري المزامنة...'
         ]);
     }
+
+    // Auto-fail stale jobs if worker was terminated by server limit
+    if (isset($jobData['status']) && $jobData['status'] === 'processing') {
+        $mtime = @filemtime($jobFile);
+        if ($mtime && (time() - $mtime > 420)) {
+            $jobData['status'] = 'failed';
+            $jobData['step'] = 'timeout';
+            $jobData['message'] = 'توقفت العملية في الخادم لتجاوز المهلة الزمنية. يرجى إعادة المحاولة.';
+            ai_exam_save_job_status($jobFile, $jobData);
+        }
+    }
+
     sendResponse(true, $jobData);
 }
 
