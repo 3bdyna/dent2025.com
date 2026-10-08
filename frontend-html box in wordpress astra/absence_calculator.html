@@ -843,9 +843,9 @@
         if (clean.includes('341') || clean.includes('pro341') || clean.includes('عاض') || clean.includes('استعاض') || clean.includes('prostho')) {
             return { weeklySessions: 3, totalSessions: 54.0, isYearly: true };
         }
-        // 2. OPT321 / 321صحح - Pre-clinical Restorative / Operative Dentistry (Total: 44.12 contact hrs -> 3 absences = 6.80%)
+        // 2. OPT321 / 321صحح - Pre-clinical Restorative / Operative Dentistry (Total: 44 contact hrs -> 3 absences = 6.82% ≈ 6.8% on portal)
         if (clean.includes('321') || clean.includes('opt321') || clean.includes('صحح') || clean.includes('اصحاح') || clean.includes('تحفظي') || clean.includes('restor') || clean.includes('operat')) {
-            return { weeklySessions: 3, totalSessions: 44.12, isYearly: true };
+            return { weeklySessions: 3, totalSessions: 44, isYearly: true };
         }
 
         // --- SEMESTER 1 ONLY COURSES (End This Semester) ---
@@ -1371,8 +1371,8 @@
 
             // Auto-heal legacy stale saved state for official catalog courses (e.g. 311, 313, 322, 351, 321, 341, 352)
             if (defaults && defaults.totalSessions) {
-                const isLegacyState = !savedState || savedState.version !== 6;
-                const isStaleTotal = customTotalSessions === 112 || customTotalSessions === 54 || customTotalSessions === 51 || customTotalSessions === 34 || customTotalSessions === 34.36 || customTotalSessions === null;
+                const isLegacyState = !savedState || savedState.version !== 7;
+                const isStaleTotal = customTotalSessions === 112 || customTotalSessions === 54 || customTotalSessions === 51 || customTotalSessions === 51.55 || customTotalSessions === 44.12 || customTotalSessions === 34 || customTotalSessions === 34.36 || customTotalSessions === null;
                 const isMismatchedYearly = (defaults.isYearly !== undefined && isYearly !== defaults.isYearly);
                 
                 if (isLegacyState || isStaleTotal || isMismatchedYearly) {
@@ -1620,7 +1620,7 @@
         const yearlySyncKey = getYearlySyncStorageKey();
 
         const state = {
-            version: 6,
+            version: 7,
             weeks: dentAbsenceWeeks,
             subjects: {},
             customSubjects: []
