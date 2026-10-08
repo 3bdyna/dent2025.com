@@ -2219,7 +2219,7 @@ const ScheduleApp = {
                             <tr>
                                 <th class="m1-th-day">اليوم</th>
                                 <th class="m1-th-date">التاريخ</th>
-                                <th class="m1-th-events">الأحداث والمقررات</th>
+                                <th class="m1-th-events">الأحداث والاختبارات المجدولة</th>
                             </tr>
                         </thead>
                         <tbody>
