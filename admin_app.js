@@ -5300,13 +5300,6 @@ window.AdminApp = {
             pageSummaryText = `${totalPages} صفحات A4 (${breakdown})`;
         }
 
-        const singlePageImageBtn = totalPages === 1 ? `
-            <button type="button" id="admin-export-img-btn" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.86rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);" onmouseover="this.style.background='#3f3f46';" onmouseout="this.style.background='#27272a';">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="flex-shrink:0;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                <span style="white-space: nowrap;">نسخ / حفظ كصورة PNG</span>
-            </button>
-        ` : '';
-
         modal.innerHTML = `
             <style>@keyframes adminSpin { to { transform: rotate(360deg); } }</style>
             <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 22px; width: 100%; max-width: 460px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: #fff; box-sizing: border-box;">
@@ -5336,16 +5329,21 @@ window.AdminApp = {
                     <span>تضمين الشروحات وتوضيح الإجابات (Explanation)</span>
                 </label>
 
-                <!-- Action Buttons Grid -->
-                <div style="display: grid; grid-template-columns: ${totalPages === 1 ? '1fr 1fr' : '1fr'}; gap: 10px; margin-bottom: 10px;">
-                    <button type="button" id="admin-export-pdf-btn" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.86rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);" onmouseover="this.style.background='#3f3f46';" onmouseout="this.style.background='#27272a';">
+                <!-- Action Buttons Grid (PDF & Copy Image) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px;">
+                    <button type="button" id="admin-export-pdf-btn" style="width: 100%; height: 48px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);" onmouseover="this.style.background='#3f3f46';" onmouseout="this.style.background='#27272a';">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                        <span style="white-space: nowrap;">تنزيل ملف PDF</span>
+                        <span style="white-space: nowrap;">ملف PDF</span>
                     </button>
-                    ${singlePageImageBtn}
-                </div>
 
-                <div style="display: flex; justify-content: flex-end; margin-top: 14px;">
+                    <button type="button" id="admin-export-img-btn" style="width: 100%; height: 48px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);" onmouseover="this.style.background='#3f3f46';" onmouseout="this.style.background='#27272a';">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="flex-shrink:0;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span style="white-space: nowrap;">نسخ كصورة</span>
+                    </button>
+                </div>
+                <div style="font-size: 0.74rem; color: #94a3b8; text-align: center; margin: 4px 0 14px 0;">اختر ملف PDF للإرسال أو نسخ كصورة للصق الفوري في واتساب وتيليجرام</div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
                     <button type="button" onclick="AdminApp.closeQuizExportModal()" style="padding: 7px 16px; background: #27272a; border: 1px solid rgba(255,255,255,0.1); color: #a1a1aa; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.82rem; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#a1a1aa';">إلغاء</button>
                 </div>
             </div>
@@ -5358,13 +5356,10 @@ window.AdminApp = {
             this.executeSaveQuizAsPdf(quizData, incExp, document.getElementById('admin-export-pdf-btn'));
         });
 
-        const imgBtn = document.getElementById('admin-export-img-btn');
-        if (imgBtn) {
-            imgBtn.addEventListener('click', () => {
-                const incExp = !!document.getElementById('admin-export-inc-exp')?.checked;
-                this.executeSaveQuizAsImage(quizData, incExp, imgBtn);
-            });
-        }
+        document.getElementById('admin-export-img-btn').addEventListener('click', () => {
+            const incExp = !!document.getElementById('admin-export-inc-exp')?.checked;
+            this.executeSaveQuizAsImage(quizData, incExp, document.getElementById('admin-export-img-btn'));
+        });
     },
 
     closeQuizExportModal() {
@@ -5374,6 +5369,7 @@ window.AdminApp = {
 
     async executeSaveQuizAsPdf(quizData, includeExplanations, btn) {
         const origHtml = btn ? btn.innerHTML : '';
+        const imgBtn = document.getElementById('admin-export-img-btn');
         if (btn) {
             btn.disabled = true;
             btn.innerHTML = `
@@ -5381,6 +5377,7 @@ window.AdminApp = {
                 <span style="white-space: nowrap;">جاري إنشاء PDF...</span>
             `;
         }
+        if (imgBtn) imgBtn.disabled = true;
 
         try {
             const jsPdfPromise = this.loadJsPdf();
@@ -5395,7 +5392,7 @@ window.AdminApp = {
             sandbox.innerHTML = `<style>${sandboxCss}</style>` + pagesJoinedHtml;
             document.body.appendChild(sandbox);
 
-            await new Promise(r => setTimeout(r, 180));
+            await new Promise(r => setTimeout(r, 60));
 
             const pageEls = sandbox.querySelectorAll('.a4-page-sheet');
             const imgDataList = [];
@@ -5444,7 +5441,7 @@ window.AdminApp = {
             const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
             this.closeQuizExportModal();
-            this.deliverQuizFile(file, pdfBlob, fileName, 'pdf');
+            await this.deliverQuizFile(file, pdfBlob, fileName, 'pdf', false);
 
         } catch (err) {
             console.error('Admin quiz PDF export error:', err);
@@ -5453,18 +5450,21 @@ window.AdminApp = {
                 btn.disabled = false;
                 btn.innerHTML = origHtml;
             }
+            if (imgBtn) imgBtn.disabled = false;
         }
     },
 
     async executeSaveQuizAsImage(quizData, includeExplanations, btn) {
         const origHtml = btn ? btn.innerHTML : '';
+        const pdfBtn = document.getElementById('admin-export-pdf-btn');
         if (btn) {
             btn.disabled = true;
             btn.innerHTML = `
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: adminSpin 0.8s linear infinite; flex-shrink: 0;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
-                <span style="white-space: nowrap;">جاري المعالجة...</span>
+                <span style="white-space: nowrap;">جاري النسخ...</span>
             `;
         }
+        if (pdfBtn) pdfBtn.disabled = true;
 
         try {
             const htmlToImage = await this.loadHtmlToImage();
@@ -5474,18 +5474,21 @@ window.AdminApp = {
             sandbox.id = 'dent-admin-quiz-sandbox';
             sandbox.style.cssText = 'position: fixed; left: -99999px; top: 0; width: 794px; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1;';
             const sandboxCss = this.getQuizExportCss().replace(/(^|[\s,{}])html\s*,\s*body(?=[\s,{:]|$)/gi, '$1#dent-admin-quiz-sandbox').replace(/(^|[\s,{}])body(?=[\s,{:]|$)/gi, '$1#dent-admin-quiz-sandbox');
-            sandbox.innerHTML = `<style>${sandboxCss}</style>` + pagesJoinedHtml;
+            sandbox.innerHTML = `<style>${sandboxCss}</style><div id="dent-admin-capture-wrapper" style="display:flex; flex-direction:column; gap:12px; background:#0b0b0e; width:794px;">${pagesJoinedHtml}</div>`;
             document.body.appendChild(sandbox);
 
-            await new Promise(r => setTimeout(r, 180));
+            await new Promise(r => setTimeout(r, 60));
 
-            const targetEl = sandbox.querySelector('.a4-page-sheet');
-            const blob = await htmlToImage.toBlob(targetEl, {
+            const captureTarget = sandbox.querySelector('#dent-admin-capture-wrapper') || sandbox.querySelector('.a4-page-sheet');
+            const width = 794;
+            const height = captureTarget.offsetHeight || captureTarget.scrollHeight || 1120;
+
+            const blob = await htmlToImage.toBlob(captureTarget, {
                 pixelRatio: 2.0,
-                width: 794,
-                height: 1120,
-                canvasWidth: Math.round(794 * 2.0),
-                canvasHeight: Math.round(1120 * 2.0),
+                width: width,
+                height: height,
+                canvasWidth: Math.round(width * 2.0),
+                canvasHeight: Math.round(height * 2.0),
                 skipFonts: true,
                 backgroundColor: '#121212',
                 style: {
@@ -5496,26 +5499,28 @@ window.AdminApp = {
 
             sandbox.remove();
 
+            if (!blob) throw new Error('فشل إنشاء ملف الصورة.');
+
             const safeTitle = (quizData.quiz_name || quizData.title || 'Quiz').replace(/[\\/:*?"<>|]+/g, '_').trim();
             const fileName = `${safeTitle}_Dent2025.png`;
             const file = new File([blob], fileName, { type: 'image/png' });
 
-            let copied = false;
+            this.closeQuizExportModal();
+
+            // 1. Direct copy to system clipboard
+            let copiedToClipboard = false;
             if (navigator.clipboard && window.ClipboardItem) {
                 try {
                     await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                    copied = true;
+                    copiedToClipboard = true;
                 } catch (cErr) {
                     console.warn('Clipboard write failed:', cErr);
                 }
             }
 
-            this.closeQuizExportModal();
-            this.deliverQuizFile(file, blob, fileName, 'png');
+            // 2. Deliver file (ONLY downloads if clipboard copy failed!)
+            await this.deliverQuizFile(file, blob, fileName, 'png', copiedToClipboard);
 
-            if (copied) {
-                this.showToast('تم نسخ صورة الاختبار للحافظة وتنزيلها بجهازك!');
-            }
         } catch (err) {
             console.error('Admin quiz image export error:', err);
             this.showToast('حدث خطأ أثناء حفظ الصورة: ' + (err.message || err), true);
@@ -5523,6 +5528,7 @@ window.AdminApp = {
                 btn.disabled = false;
                 btn.innerHTML = origHtml;
             }
+            if (pdfBtn) pdfBtn.disabled = false;
         }
     },
 
@@ -5550,23 +5556,150 @@ window.AdminApp = {
         }, 600);
     },
 
-    deliverQuizFile(file, blob, fileName, type) {
+    async deliverQuizFile(file, blob, fileName, fileType, copiedToClipboard = false) {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                         (window.matchMedia && window.matchMedia('(max-width: 768px)').matches && 'ontouchstart' in window);
+
         const blobUrl = URL.createObjectURL(blob);
-        try {
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-                document.body.removeChild(a);
-                URL.revokeObjectURL(blobUrl);
-            }, 2000);
-        } catch(err) {
-            console.warn('Direct download error:', err);
+
+        // 1. On mobile devices, for PDF try native Web Share API
+        if (fileType === 'pdf' && isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({
+                    files: [file],
+                    title: fileName.replace(/\.[^.]+$/, ''),
+                    text: 'كتيب اختبار • منصة Dent2025'
+                });
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+                return;
+            } catch(shareErr) {
+                if (shareErr.name !== 'AbortError') console.warn('Native share failed:', shareErr);
+            }
         }
 
-        this.showToast(`تم تجهيز وتنزيل ملف الاختبار (${type.toUpperCase()}) بنجاح!`);
+        // 2. Direct automatic browser download ONLY if it's a PDF or if image copy failed
+        if (fileType === 'pdf' || !copiedToClipboard) {
+            try {
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => document.body.removeChild(a), 500);
+            } catch(dlErr) {
+                console.warn('Download failed:', dlErr);
+            }
+        }
+
+        // 3. Show sleek toast prompting to send, copy, or view (matching schedule export)
+        this.showQuizExportToast(file, blob, fileName, fileType, blobUrl, copiedToClipboard);
+    },
+
+    showQuizExportToast(file, blob, fileName, fileType, blobUrl, copiedToClipboard = false) {
+        let old = document.getElementById('dent-admin-quiz-toast');
+        if (old) old.remove();
+
+        const canShareNative = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+
+        let mainTitle = '';
+        let subText = '';
+
+        if (fileType === 'png') {
+            if (copiedToClipboard) {
+                mainTitle = 'تم نسخ صورة الاختبار';
+                subText = '(جاهزة للصق)';
+            } else {
+                mainTitle = 'تم تنزيل صورة الاختبار';
+                subText = '';
+            }
+        } else {
+            mainTitle = 'تم تجهيز ملف PDF';
+            subText = '';
+        }
+
+        const toast = document.createElement('div');
+        toast.id = 'dent-admin-quiz-toast';
+        toast.style.cssText = 'position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 9999999; background: rgba(13, 15, 20, 0.96); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 999px; padding: 7px 14px 7px 16px; box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.4); color: #f8fafc; font-family: "Outfit", "Noto Kufi Arabic", sans-serif; direction: rtl; display: flex; align-items: center; justify-content: space-between; gap: 10px; max-width: min(540px, calc(100vw - 20px)); width: max-content; box-sizing: border-box; opacity: 1; transition: opacity 0.25s ease, transform 0.25s ease;';
+
+        toast.innerHTML = `
+            <style>
+                #dent-admin-quiz-toast .dent-toast-btn {
+                    padding: 4px 9px;
+                    background: rgba(255, 255, 255, 0.04);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    color: #cbd5e1;
+                    text-decoration: none;
+                    border-radius: 7px;
+                    font-family: inherit;
+                    font-size: 0.74rem;
+                    font-weight: 500;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    cursor: pointer;
+                    transition: all 0.15s ease;
+                    white-space: nowrap;
+                    line-height: 1.3;
+                    box-sizing: border-box;
+                }
+                #dent-admin-quiz-toast .dent-toast-btn:hover {
+                    background: rgba(255, 255, 255, 0.09);
+                    border-color: rgba(255, 255, 255, 0.16);
+                    color: #ffffff;
+                }
+                #dent-admin-quiz-toast .dent-toast-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    flex-shrink: 0;
+                    padding-left: 2px;
+                }
+            </style>
+            <div onclick="document.getElementById('dent-admin-quiz-toast')?.remove()" style="display: flex; align-items: center; gap: 7px; min-width: 0; flex-shrink: 0; cursor: pointer;" title="إغلاق التنبيه">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span style="font-weight: 600; font-size: 0.82rem; color: #f8fafc; white-space: nowrap;">${mainTitle}</span>
+                ${subText ? `<span style="font-size: 0.72rem; color: #64748b; white-space: nowrap;">${subText}</span>` : ''}
+            </div>
+            <div class="dent-toast-actions">
+                ${canShareNative ? `
+                    <button id="dent-admin-toast-share-btn" type="button" class="dent-toast-btn" title="مشاركة">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                        <span>مشاركة</span>
+                    </button>
+                ` : ''}
+                ${(fileType === 'png' && copiedToClipboard) ? `
+                    <a href="${blobUrl}" download="${fileName}" class="dent-toast-btn" title="تنزيل كملف">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>حفظ</span>
+                    </a>
+                ` : ''}
+                <a href="${blobUrl}" target="_blank" rel="noopener noreferrer" class="dent-toast-btn" title="عرض الملف">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    <span>عرض</span>
+                </a>
+            </div>
+        `;
+
+        document.body.appendChild(toast);
+
+        if (canShareNative) {
+            const shareBtn = document.getElementById('dent-admin-toast-share-btn');
+            if (shareBtn) {
+                shareBtn.onclick = async () => {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: fileName.replace(/\.[^.]+$/, ''),
+                            text: 'كتيب اختبار • منصة Dent2025'
+                        });
+                    } catch(e) {}
+                };
+            }
+        }
+
+        setTimeout(() => {
+            if (toast && toast.parentNode) toast.remove();
+        }, 4500);
     },
 
     // --- CACHE & PRE-WARM MANAGEMENT METHODS ---
