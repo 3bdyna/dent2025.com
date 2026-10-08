@@ -1167,7 +1167,7 @@ const ScheduleApp = {
 
     // PRINT FEATURE — configurable week range
     _prefetchedAnnouncements: null,
-    _printStartSunday: null,   // null = default (current week's Sunday)
+    _printStartSunday: null,   // null = default (smart start: next Sunday if Thu-Sat, else this Sunday)
     _printWeekCount: 3,        // 3 or 4
 
     prefetchPrintAnnouncements: async function() {
@@ -1292,15 +1292,28 @@ const ScheduleApp = {
         }
     },
 
+    // Returns the default print start Sunday (Date object, midnight)
+    _getDefaultPrintStartSunday: function() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const day = today.getDay(); // 0: Sun, 1: Mon, 2: Tue, 3: Wed, 4: Thu, 5: Fri, 6: Sat
+        const sun = new Date(today);
+        sun.setDate(today.getDate() - day);
+        sun.setHours(0, 0, 0, 0);
+
+        // Smart dynamic default:
+        // On Thursday (day 4), Friday (day 5), or Saturday (day 6), the academic week
+        // has finished or is in weekend, so export defaults to the upcoming Sunday.
+        if (day >= 4) {
+            sun.setDate(sun.getDate() + 7);
+        }
+        return sun;
+    },
+
     // Returns the effective print start Sunday (Date object, midnight)
     _getPrintStartSunday: function() {
         if (this._printStartSunday) return new Date(this._printStartSunday);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const sun = new Date(today);
-        sun.setDate(today.getDate() - today.getDay());
-        sun.setHours(0, 0, 0, 0);
-        return sun;
+        return this._getDefaultPrintStartSunday();
     },
 
     _updatePrintWeekLabel: function() {
@@ -1319,7 +1332,8 @@ const ScheduleApp = {
         const months = this.gregorianMonthsEN || ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         const fmt = (d) => `${d.getDate()} ${months[d.getMonth()].substring(0, 3)}`;
 
-        const isDefault = !this._printStartSunday;
+        const defaultSun = this._getDefaultPrintStartSunday();
+        const isDefault = !this._printStartSunday || (new Date(this._printStartSunday).getTime() === defaultSun.getTime());
         const defaultTag = isDefault ? ' <span style="font-size:0.68rem;color:#6366f1;font-weight:500;">(افتراضي)</span>' : '';
         label.innerHTML = `الأسابيع ${startWeekNum}–${endWeekNum} &nbsp;•&nbsp; ${fmt(sun)} – ${fmt(endDate)}${defaultTag}`;
 
@@ -1882,13 +1896,8 @@ const ScheduleApp = {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // 1. Use caller-specified start Sunday (from week picker), or default to current week's Sunday
-        const currentSunday = startSundayOverride ? new Date(startSundayOverride) : (() => {
-            const s = new Date(today);
-            s.setDate(today.getDate() - today.getDay());
-            s.setHours(0, 0, 0, 0);
-            return s;
-        })();
+        // 1. Use caller-specified start Sunday (from week picker), or default to smart start Sunday
+        const currentSunday = startSundayOverride ? new Date(startSundayOverride) : this._getPrintStartSunday();
         currentSunday.setHours(0, 0, 0, 0);
 
         // 2. Span = weekCount full weeks (default 3)
