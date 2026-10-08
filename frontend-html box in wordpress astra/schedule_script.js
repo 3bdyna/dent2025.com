@@ -306,6 +306,7 @@ const ScheduleApp = {
         today.setHours(0, 0, 0, 0);
 
         const isAdmin = !!(this.adminPassword || sessionStorage.getItem('dent2025_schedule_admin_pass') || sessionStorage.getItem('dent2025_admin_pass'));
+        const hiddenIds = this._getHiddenIds();
 
         const groupedEvents = {};
         let totalVisibleEvents = 0;
@@ -316,6 +317,8 @@ const ScheduleApp = {
         startSunday.setHours(0, 0, 0, 0);
 
         events.forEach(ev => {
+            // Hidden events: skip entirely for students; admin sees them below with an unhide button
+            if (hiddenIds.has(String(ev.id)) && !isAdmin) return;
             let isVisible = true;
             let isEndedPast3Days = false;
             let isCohortEndedPast7Days = false;
@@ -530,10 +533,21 @@ const ScheduleApp = {
                         const isGlobal = !!ev.is_global;
                         const eventSchedId = ev.schedule_id || (isGlobal ? 'global' : this.scheduleId);
                         const escapedId = dentEscapeHtml(ev.id);
+                        const isHidden = hiddenIds.has(String(ev.id));
+                        const hideTitle = isHidden ? 'إظهار الحدث' : 'إخفاء الحدث';
+                        const hideIcon = isHidden
+                            ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
+                            : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+                        const hideAction = isHidden
+                            ? `ScheduleApp.unhideEvent('${escapedId}')`
+                            : `ScheduleApp.hideEvent('${escapedId}')`;
                         adminButtons = `
                             <div class="event-admin-actions">
                                 <button class="event-edit-btn" title="تعديل الحدث" onclick="ScheduleApp.showEditModal('${escapedId}')">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                </button>
+                                <button class="event-edit-btn" title="${hideTitle}" onclick="${hideAction}" style="opacity:${isHidden ? '1' : '0.6'}; color:${isHidden ? '#a3e635' : '#94a3b8'};">
+                                    ${hideIcon}
                                 </button>
                                 <button class="event-delete-btn" title="حذف الحدث" onclick="ScheduleApp.deleteEvent('${escapedId}', ${isGlobal ? 'true' : 'false'}, '${eventSchedId}')">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
@@ -544,6 +558,9 @@ const ScheduleApp = {
                     let extraBadgeClass = badgeClass ? `badge-${badgeClass}` : '';
                     const isNationalDay = ev.id === 'evt_hol_national' || (ev.title && ev.title.includes('اليوم الوطني'));
                     const nationalDayCardClass = isNationalDay ? ' event-card-national-day' : '';
+                    const isHiddenCard = hiddenIds.has(String(ev.id));
+                    const hiddenCardStyle = isHiddenCard ? ' style="opacity:0.35; filter:grayscale(0.6); border-style:dashed;"' : '';
+                    const hiddenBadge = isHiddenCard ? `<span class="badge" style="background:rgba(163,230,53,0.12);color:#a3e635;border:1px solid rgba(163,230,53,0.3);font-size:0.65rem;">مخفي</span>` : '';
                     
                     const typeMeta = this.getEventTypeMeta(ev);
                     let typeBadgeHtml = '';
@@ -552,11 +569,12 @@ const ScheduleApp = {
                     }
 
                     cardsHtml += `
-                        <div class="event-card${nationalDayCardClass}" id="event-${ev.id}">
+                        <div class="event-card${nationalDayCardClass}" id="event-${ev.id}"${hiddenCardStyle}>
                             <div class="event-info" style="flex: 1; min-width: 0;">
                                 <h3 class="event-title" dir="auto">${dentEscapeHtml(ev.title)}</h3>
                             </div>
                             <div class="event-badges">
+                                ${hiddenBadge}
                                 ${typeBadgeHtml}
                                 <span class="badge ${extraBadgeClass}">${badgeHtml}</span>
                                 ${adminButtons}
@@ -763,6 +781,34 @@ const ScheduleApp = {
             container.innerHTML = '<div class="schedule-error">' + message + '</div>';
         }
     },
+    // HIDDEN EVENTS (localStorage, per-browser, admin-only toggle)
+    _hiddenStorageKey: 'dent2025_hidden_events',
+    _getHiddenIds: function() {
+        try { return new Set(JSON.parse(localStorage.getItem(this._hiddenStorageKey) || '[]')); } catch(e) { return new Set(); }
+    },
+    _setHiddenIds: function(set) {
+        try { localStorage.setItem(this._hiddenStorageKey, JSON.stringify([...set])); } catch(e) {}
+    },
+    hideEvent: function(id) {
+        const s = this._getHiddenIds();
+        s.add(String(id));
+        this._setHiddenIds(s);
+        this.render(this.eventsData);
+        this.renderAdminControls();
+    },
+    unhideEvent: function(id) {
+        const s = this._getHiddenIds();
+        s.delete(String(id));
+        this._setHiddenIds(s);
+        this.render(this.eventsData);
+        this.renderAdminControls();
+    },
+    unhideAllEvents: function() {
+        this._setHiddenIds(new Set());
+        this.render(this.eventsData);
+        this.renderAdminControls();
+    },
+
     // ADMIN FUNCTIONS
     adminPassword: null,
     enableAdminMode: function(password) {
@@ -810,6 +856,52 @@ const ScheduleApp = {
         let stats = document.getElementById('schedule-stats');
         stats.parentNode.insertBefore(logoutBtn, stats.nextSibling);
         stats.parentNode.insertBefore(addBtn, stats.nextSibling);
+
+        // Hidden events button (only if any are hidden)
+        let existingHiddenBtn = document.getElementById('dent-hidden-events-btn');
+        if (existingHiddenBtn) existingHiddenBtn.remove();
+        const hiddenIds = this._getHiddenIds();
+        if (hiddenIds.size > 0) {
+            const hiddenBtn = document.createElement('button');
+            hiddenBtn.id = 'dent-hidden-events-btn';
+            hiddenBtn.innerHTML = `👁 الأحداث المخفية (${hiddenIds.size})`;
+            hiddenBtn.style.cssText = 'width: 100%; padding: 10px; background: rgba(163,230,53,0.08); color: #a3e635; border: 1px solid rgba(163,230,53,0.25); border-radius: 10px; font-size: 0.85rem; cursor: pointer; margin-bottom: 10px; font-family: inherit; font-weight: 500; transition: all 0.2s;';
+            hiddenBtn.onmouseover = () => hiddenBtn.style.background = 'rgba(163,230,53,0.16)';
+            hiddenBtn.onmouseout = () => hiddenBtn.style.background = 'rgba(163,230,53,0.08)';
+            hiddenBtn.onclick = () => this._showHiddenEventsPanel();
+            stats.parentNode.insertBefore(hiddenBtn, addBtn.nextSibling);
+        }
+    },
+
+    _showHiddenEventsPanel: function() {
+        let panel = document.getElementById('dent-hidden-panel');
+        if (panel) { panel.remove(); return; }
+        const hiddenIds = this._getHiddenIds();
+        if (hiddenIds.size === 0) return;
+
+        const hiddenEvents = (this.eventsData || []).filter(ev => hiddenIds.has(String(ev.id)));
+
+        panel = document.createElement('div');
+        panel.id = 'dent-hidden-panel';
+        panel.style.cssText = 'background:#18181b; border:1px solid rgba(163,230,53,0.25); border-radius:12px; padding:14px; margin-bottom:12px; direction:rtl;';
+
+        let rows = hiddenEvents.map(ev => `
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+                <span style="font-size:0.80rem; color:#e4e4e7; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${dentEscapeHtml(ev.title)}</span>
+                <button onclick="ScheduleApp.unhideEvent('${dentEscapeHtml(ev.id)}')" style="flex-shrink:0; font-size:0.72rem; color:#a3e635; background:rgba(163,230,53,0.1); border:1px solid rgba(163,230,53,0.25); border-radius:6px; padding:3px 9px; cursor:pointer; font-family:inherit; white-space:nowrap;">إظهار</button>
+            </div>
+        `).join('');
+
+        panel.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-size:0.80rem; font-weight:700; color:#a3e635;">الأحداث المخفية</span>
+                <button onclick="ScheduleApp.unhideAllEvents()" style="font-size:0.70rem; color:#94a3b8; background:transparent; border:none; cursor:pointer; font-family:inherit; text-decoration:underline;">إظهار الكل</button>
+            </div>
+            ${rows}
+        `;
+
+        const addBtn = document.getElementById('dent-add-event-btn');
+        if (addBtn) addBtn.parentNode.insertBefore(panel, addBtn.nextSibling);
     },
     showEventModal: function(existingEvent = null) {
         const isEdit = !!(existingEvent && existingEvent.id);
