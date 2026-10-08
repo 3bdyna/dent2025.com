@@ -1825,7 +1825,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                                 btn.style.display = 'block';
                                 loadSavedQuizzesBank();
                                 if (job.quiz_data && job.quiz_data.questions) {
-                                    openPlayer(quizName, subjectName + ' — ' + combinedChapterName, job.quiz_data.questions, job.quiz_data);
+                                    openPlayer(quizName, subjectName, job.quiz_data.questions, job.quiz_data);
                                 }
                             }, 700);
                         } else if (job.status === 'failed') {
@@ -2089,11 +2089,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             const json = await res.json();
             
             if (json.success && json.data) {
-                const isMultiChapter = qData.chapter_name && qData.chapter_name.includes(' + ');
-                const metaSubText = isMultiChapter 
-                    ? (qData.subject_name || '') 
-                    : ((qData.subject_name || '') + (qData.chapter_name ? ' — ' + qData.chapter_name : ''));
-                openPlayer(qData.quiz_name, metaSubText, qData.questions, qData);
+                const qData = json.data;
+                openPlayer(qData.quiz_name, qData.subject_name || '', qData.questions, qData);
             } else {
                 alert("تعذر تحميل الاختبار.");
             }
@@ -2177,7 +2174,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         
         const playerView = document.getElementById('dent-player-view');
         document.getElementById('dp-title').innerText = title;
-        document.getElementById('dp-meta-sub').innerText = metaSub;
+        document.getElementById('dp-meta-sub').innerText = (metaSub || '').split(' — ')[0].trim();
         document.getElementById('dp-score').style.display = 'none';
 
         let noticeBanner = document.getElementById('dp-notice-banner');
@@ -2250,14 +2247,13 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 const isConverted = (typeof q.question === 'string' && q.question.trim().startsWith('*'));
                 const convertedBadge = isConverted ? `<span class="dent-q-converted-badge" title="سؤال مأخوذ من سلايدات المحاضرة">* من السلايدات</span>` : '';
 
-                const tagRow = document.createElement('div');
-                tagRow.className = 'dent-q-badge-row';
-                tagRow.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;';
-                tagRow.innerHTML = `
-                    <span class="dent-q-tag">${escapeHtml(assignedCh)}</span>
-                    ${convertedBadge}
-                `;
-                qBlock.appendChild(tagRow);
+                if (convertedBadge) {
+                    const tagRow = document.createElement('div');
+                    tagRow.className = 'dent-q-badge-row';
+                    tagRow.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;';
+                    tagRow.innerHTML = convertedBadge;
+                    qBlock.appendChild(tagRow);
+                }
             }
 
             const headerRow = document.createElement('div');
