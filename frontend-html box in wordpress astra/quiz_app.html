@@ -2089,8 +2089,10 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             const json = await res.json();
             
             if (json.success && json.data) {
-                const qData = json.data;
-                const metaSubText = (qData.subject_name || '') + (qData.chapter_name ? ' — ' + qData.chapter_name : '');
+                const isMultiChapter = qData.chapter_name && qData.chapter_name.includes(' + ');
+                const metaSubText = isMultiChapter 
+                    ? (qData.subject_name || '') 
+                    : ((qData.subject_name || '') + (qData.chapter_name ? ' — ' + qData.chapter_name : ''));
                 openPlayer(qData.quiz_name, metaSubText, qData.questions, qData);
             } else {
                 alert("تعذر تحميل الاختبار.");
