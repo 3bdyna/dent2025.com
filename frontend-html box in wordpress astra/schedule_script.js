@@ -1268,7 +1268,7 @@ const ScheduleApp = {
                 </div>
 
                 <label style="display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; padding: 10px 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; font-size: 0.80rem; color: #cbd5e1; cursor: pointer; user-select: none;">
-                    <input type="checkbox" id="dent-print-inc-announcements" checked style="accent-color: #52525b; width: 16px; height: 16px; margin-top: 2px; cursor: pointer;">
+                    <input type="checkbox" id="dent-print-inc-announcements" style="accent-color: #52525b; width: 16px; height: 16px; margin-top: 2px; cursor: pointer;">
                     <span>تضمين إعلانات الدفعة (الإعلان بالصفحة الرئيسية) في أسفل الورقة</span>
                 </label>
 
