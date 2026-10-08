@@ -4374,17 +4374,48 @@ window.AdminApp = {
         let html = '';
         let cardsHtml = '';
         displayList.forEach(q => {
-            let rawChap = (q.chapter_name || '').replace(/^[\s\-\-]+/, '').trim();
-            if (!rawChap || rawChap === 'المحاضرة العامة' || rawChap === 'عام') rawChap = 'ملف المحاضرة';
+            let rawChap = (q.chapter_name || '').replace(/^[📌📁\s\-\-]+/, '').trim();
+            if (!rawChap || rawChap === 'عام' || rawChap === 'المحاضرة العامة' || rawChap === 'شابتر متكامل') {
+                rawChap = 'ملف المحاضرة';
+            }
 
-            let chapList = rawChap.split(/[,•+&\n|]/).map(s => s.trim()).filter(Boolean);
+            let chapList = [];
+            if (rawChap.includes(' + ')) {
+                chapList = rawChap.split(/\s+\+\s+/).map(s => s.trim()).filter(Boolean);
+            } else if (rawChap.includes('\n')) {
+                chapList = rawChap.split(/\n+/).map(s => s.trim()).filter(Boolean);
+            } else if (rawChap.includes(' • ') || rawChap.includes(' | ')) {
+                chapList = rawChap.split(/\s+[•|]\s+/).map(s => s.trim()).filter(Boolean);
+            } else {
+                chapList = [rawChap.trim()];
+            }
             if (chapList.length === 0) chapList = ['ملف المحاضرة'];
 
-            let chaptersDropdownHTML = `
-                <select class="input-field text-xs py-1 px-2.5 bg-black/40 border-white/10 text-emerald-400 font-mono max-w-[220px]" onclick="event.stopPropagation()">
-                    ${chapList.map(c => `<option class="bg-card text-gray-200">${this.escapeHtml(c)}</option>`).join('')}
-                </select>
-            `;
+            let chaptersDropdownHTML = '';
+            if (chapList.length === 1) {
+                chaptersDropdownHTML = `
+                    <div class="max-w-[220px] truncate text-gray-300 font-medium" title="${this.escapeHtml(chapList[0])}">
+                        ${this.escapeHtml(chapList[0])}
+                    </div>
+                `;
+            } else {
+                chaptersDropdownHTML = `
+                    <details class="group max-w-[250px] text-xs select-none" onclick="event.stopPropagation()">
+                        <summary class="list-none flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/40 border border-white/10 text-emerald-400 font-medium cursor-pointer hover:border-emerald-500/40 hover:bg-emerald-500/5 transition">
+                            <span class="truncate">الشابترات (${chapList.length})</span>
+                            <span class="text-[10px] text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                        </summary>
+                        <div class="mt-1.5 p-2 bg-black/60 border border-white/10 rounded-lg max-h-40 overflow-y-auto space-y-1">
+                            ${chapList.map(c => `
+                                <div class="text-[11px] text-gray-200 py-1 border-b border-white/5 last:border-0 flex items-start gap-1.5">
+                                    <span class="text-emerald-400 font-bold shrink-0">•</span>
+                                    <span class="break-words min-w-0 flex-1 leading-snug">${this.escapeHtml(c)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </details>
+                `;
+            }
 
             const scopeParts = [];
             if (q.specialty) scopeParts.push(q.specialty === 'dentistry' ? 'طب الأسنان' : (q.specialty === 'medicine' ? 'الطب البشري' : q.specialty));
@@ -4441,6 +4472,20 @@ window.AdminApp = {
                         <span class="text-gray-300">${this.escapeHtml(q.subject_name || 'مادة دراسية')}</span>
                         <span>•</span>
                         <span class="text-gray-400">${this.escapeHtml(scopeLabel)}</span>
+                    </div>
+                    <div class="pt-1 text-xs">
+                        ${chapList.length === 1
+                            ? `<div class="truncate text-gray-300"><span class="text-gray-500">الشابتر: </span>${this.escapeHtml(chapList[0])}</div>`
+                            : `<details class="group select-none" onclick="event.stopPropagation()">
+                                <summary class="cursor-pointer text-emerald-400 flex items-center justify-between gap-1 py-1 px-2 rounded bg-white/5 border border-white/5">
+                                    <span>الشابترات المشمولة (${chapList.length})</span>
+                                    <span class="text-[10px] text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                                </summary>
+                                <div class="mt-1 space-y-1 p-2 bg-black/40 rounded-lg border border-white/10 max-h-40 overflow-y-auto">
+                                    ${chapList.map(c => `<div class="text-[11px] text-gray-200 flex items-start gap-1.5 py-0.5 border-b border-white/5 last:border-0"><span class="text-emerald-400 font-bold">•</span><span class="break-words min-w-0 flex-1">${this.escapeHtml(c)}</span></div>`).join('')}
+                                </div>
+                               </details>`
+                        }
                     </div>
                     <div class="pt-1.5 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
                         <span class="text-gray-500 font-mono text-[11px]">${q.created_at || ''}</span>
