@@ -4447,6 +4447,10 @@ window.AdminApp = {
                     <td class="p-4 text-center text-xs text-gray-400 font-mono">${q.created_at || 'N/A'}</td>
                     <td class="p-4 text-center">
                         <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="AdminApp.exportQuizBooklet('${q.id}')" class="btn btn-secondary text-xs px-2.5 py-1.5 font-medium flex items-center gap-1 text-sky-400 border-sky-500/30 hover:bg-sky-500/10" title="تصدير الاختبار (PDF / طباعة)">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                <span>تصدير</span>
+                            </button>
                             <button onclick="AdminApp.openRenameQuizModal('${q.id}')" class="btn btn-secondary text-xs px-2.5 py-1.5 font-medium">
                                 تعديل الاسم
                             </button>
@@ -4490,6 +4494,7 @@ window.AdminApp = {
                     <div class="pt-1.5 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
                         <span class="text-gray-500 font-mono text-[11px]">${q.created_at || ''}</span>
                         <div class="flex items-center gap-1.5">
+                            <button onclick="AdminApp.exportQuizBooklet('${q.id}')" class="btn btn-secondary text-xs px-2 py-1 text-sky-400 border-sky-500/30">تصدير</button>
                             <button onclick="AdminApp.openRenameQuizModal('${q.id}')" class="btn btn-secondary text-xs px-2.5 py-1">تعديل الاسم</button>
                             ${mobileHideShowBtn}
                             <button onclick="AdminApp.deleteQuiz('${q.id}')" class="btn btn-danger text-xs px-2.5 py-1">حذف</button>
@@ -4678,6 +4683,900 @@ window.AdminApp = {
             console.error('Error deleting quiz:', e);
             this.showToast('خطأ في حذف الاختبار: ' + e.message, true);
         });
+    },
+
+    // ==========================================
+    // OPTION 1: ACADEMIC 2-COLUMN EXAM BOOKLET EXPORT (ADMIN)
+    // ==========================================
+
+    getQuizExportCss() {
+        return `
+            * { box-sizing: border-box; letter-spacing: normal !important; word-spacing: normal !important; }
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+            html, body {
+                margin: 0;
+                padding: 0;
+                background-color: #0b0b0e;
+                color: #f4f4f5;
+                font-family: 'Cairo', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            body {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+                padding: 15px 0;
+            }
+            @media print {
+                body { padding: 0 !important; gap: 0 !important; background: #121212 !important; }
+                .a4-page-sheet {
+                    box-shadow: none !important;
+                    border: none !important;
+                    margin: 0 !important;
+                    width: 210mm !important;
+                    max-width: 210mm !important;
+                    height: 296mm !important;
+                    max-height: 296mm !important;
+                    padding: 7mm 9mm 6mm 9mm !important;
+                    page-break-after: always !important;
+                    break-after: page !important;
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                    overflow: hidden !important;
+                }
+                .a4-page-sheet:last-child { page-break-after: avoid !important; break-after: avoid !important; }
+            }
+            .a4-page-sheet {
+                font-family: 'Cairo', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background-color: #121212 !important;
+                background-image: radial-gradient(rgba(255, 255, 255, 0.075) 1.2px, transparent 1.2px) !important;
+                background-size: 20px 20px !important;
+                color: #f4f4f5;
+                direction: rtl;
+                font-size: 10.5px;
+                box-sizing: border-box !important;
+                width: 794px !important;
+                min-width: 794px !important;
+                max-width: 794px !important;
+                height: 1120px;
+                max-height: 1120px;
+                padding: 6mm 8mm 5mm 8mm !important;
+                border: 1px solid #262626;
+                border-radius: 4px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                overflow: hidden;
+            }
+            .page-inner-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+            .doc-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding-bottom: 5px;
+                border-bottom: 1.5px solid #2a2a2a;
+                margin-bottom: 4px;
+                gap: 8px;
+                flex-shrink: 0;
+            }
+            .doc-header-compact {
+                padding-bottom: 3px;
+                margin-bottom: 4px;
+                border-bottom: 1px solid #242424;
+            }
+            .doc-compact-heading {
+                font-size: 0.80rem !important;
+                font-weight: 800 !important;
+                color: #e4e4e7 !important;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .doc-titles { text-align: right; flex: 1; min-width: 0; }
+            .doc-main-heading {
+                font-size: 1.05rem !important;
+                font-weight: 900 !important;
+                color: #ffffff !important;
+                line-height: 1.2 !important;
+                margin: 0 0 2px 0 !important;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .doc-sub-heading {
+                font-size: 0.68rem !important;
+                color: #a1a1aa !important;
+                font-weight: 700 !important;
+                margin: 0 !important;
+                line-height: 1.2;
+            }
+            .doc-meta-badge {
+                text-align: left;
+                direction: ltr;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 2px;
+                flex-shrink: 0;
+            }
+            .doc-meta-badge .period {
+                display: inline-block;
+                background: #1c1c1c;
+                border: 1px solid #2e2e2e;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-size: 0.65rem;
+                font-weight: 700;
+                color: #ffffff;
+                font-family: 'Outfit', sans-serif;
+                white-space: nowrap !important;
+            }
+            .doc-meta-badge .subperiod {
+                display: block;
+                font-size: 0.58rem;
+                color: #71717a;
+                font-weight: 600;
+                text-align: left;
+                direction: rtl;
+                white-space: nowrap !important;
+            }
+            .page-two-columns {
+                display: flex;
+                gap: 7px;
+                flex: 1;
+                min-height: 0;
+            }
+            .col-half {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 3.5px;
+                min-width: 0;
+            }
+            .quiz-q-block {
+                background: #181818;
+                border: 1px solid #242424;
+                border-radius: 4px;
+                padding: 3.5px 5.5px;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+            .quiz-q-top-row {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                gap: 4px;
+                margin-bottom: 2px;
+            }
+            .quiz-q-num-badge {
+                font-family: 'Outfit', sans-serif;
+                font-weight: 800;
+                font-size: 0.70rem;
+                color: #ffffff;
+                display: inline-flex;
+                align-items: center;
+                gap: 3px;
+            }
+            .quiz-type-badge {
+                display: inline-block;
+                font-size: 0.50rem;
+                font-weight: 600;
+                padding: 1px 3px;
+                border-radius: 2px;
+                white-space: nowrap;
+                background: #222222;
+                color: #d4d4d8;
+                border: 1px solid #333333;
+            }
+            .quiz-q-chapter {
+                font-size: 0.58rem;
+                color: #71717a;
+                font-weight: 600;
+                font-family: 'Outfit', 'Cairo', sans-serif;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .quiz-q-title {
+                font-size: 0.72rem;
+                font-weight: 700;
+                color: #ffffff;
+                line-height: 1.25;
+                margin-bottom: 2.5px;
+                text-align: left;
+                direction: ltr;
+                font-family: 'Outfit', sans-serif;
+            }
+            .quiz-q-title.is-rtl { text-align: right; direction: rtl; font-family: 'Cairo', sans-serif; }
+            .quiz-options-list {
+                display: flex;
+                flex-direction: column;
+                gap: 1.5px;
+                direction: ltr;
+                text-align: left;
+            }
+            .quiz-options-list.is-rtl { direction: rtl; text-align: right; }
+            .quiz-opt-row {
+                display: flex;
+                align-items: baseline;
+                gap: 3.5px;
+                padding: 1.5px 4px;
+                background: #141414;
+                border: 1px solid #1f1f1f;
+                border-radius: 3px;
+                font-size: 0.67rem;
+                color: #a1a1aa;
+                line-height: 1.20;
+                font-family: 'Outfit', sans-serif;
+            }
+            .quiz-opt-row.is-rtl { font-family: 'Cairo', sans-serif; }
+            .quiz-opt-letter { font-weight: 700; font-size: 0.62rem; color: #71717a; flex-shrink: 0; }
+            .quiz-opt-row.is-correct {
+                font-weight: 700 !important;
+                color: #ffffff !important;
+                background: #222225 !important;
+                border-color: #383838 !important;
+            }
+            .quiz-opt-row.is-correct .quiz-opt-letter { color: #ffffff !important; }
+            .quiz-opt-text { flex: 1; }
+            .quiz-explanation-box {
+                margin-top: 1.5px;
+                background: #151515;
+                border: 1px solid #222222;
+                border-radius: 3px;
+                padding: 2px 4px;
+                font-size: 0.59rem;
+                color: #a1a1aa;
+                line-height: 1.20;
+                direction: ltr;
+                text-align: left;
+                font-family: 'Outfit', sans-serif;
+            }
+            .quiz-explanation-box.is-rtl { direction: rtl; text-align: right; font-family: 'Cairo', sans-serif; }
+            .quiz-explanation-box strong { color: #d4d4d8; }
+            .quiz-short-answer-box {
+                background: #141414;
+                border: 1px solid #222222;
+                border-radius: 3px;
+                padding: 2.5px 4.5px;
+                direction: ltr;
+                text-align: left;
+                font-family: 'Outfit', sans-serif;
+            }
+            .quiz-short-answer-box.is-rtl { direction: rtl; text-align: right; font-family: 'Cairo', sans-serif; }
+            .quiz-short-answer-label { font-size: 0.54rem; font-weight: 700; color: #a1a1aa; margin-bottom: 2px; }
+            .quiz-short-answer-content { font-size: 0.67rem; color: #f4f4f5; line-height: 1.26; }
+            .quiz-short-answer-content ol, .quiz-short-answer-content ul { margin: 0; padding-left: 10px; }
+            .quiz-short-answer-content.is-rtl ol, .quiz-short-answer-content.is-rtl ul { padding-left: 0; padding-right: 10px; }
+            .quiz-short-answer-content li { margin-bottom: 1px; }
+            .doc-footer {
+                margin-top: 4px;
+                padding-top: 3px;
+                border-top: 1px solid #222222;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 0.60rem;
+                color: #71717a;
+                flex-shrink: 0;
+            }
+            .doc-footer-right { font-family: 'Outfit', sans-serif; font-weight: 700; color: #a1a1aa; direction: ltr; }
+            .doc-footer-center { font-family: 'Cairo', sans-serif; font-weight: 600; color: #71717a; }
+            .doc-footer-left { font-family: 'Outfit', sans-serif; font-weight: 600; color: #71717a; direction: ltr; }
+        `;
+    },
+
+    loadJsPdf() {
+        if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+        if (window._dentJsPdfPromise) return window._dentJsPdfPromise;
+        window._dentJsPdfPromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+            script.crossOrigin = 'anonymous';
+            script.onload = () => {
+                if (window.jspdf && window.jspdf.jsPDF) resolve(window.jspdf.jsPDF);
+                else reject(new Error('فشل تهيئة مكتبة jsPDF.'));
+            };
+            script.onerror = () => {
+                window._dentJsPdfPromise = null;
+                reject(new Error('تعذر تحميل مكتبة إنشاء الـ PDF.'));
+            };
+            document.head.appendChild(script);
+        });
+        return window._dentJsPdfPromise;
+    },
+
+    loadHtmlToImage() {
+        if (window.htmlToImage) return Promise.resolve(window.htmlToImage);
+        if (window._dentHtmlToImagePromise) return window._dentHtmlToImagePromise;
+        window._dentHtmlToImagePromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js';
+            script.crossOrigin = 'anonymous';
+            script.onload = () => resolve(window.htmlToImage);
+            script.onerror = () => {
+                window._dentHtmlToImagePromise = null;
+                reject(new Error('تعذر تحميل مكتبة معالجة الصور.'));
+            };
+            document.head.appendChild(script);
+        });
+        return window._dentHtmlToImagePromise;
+    },
+
+    calculateSmartPages(questions) {
+        const total = questions.length;
+        if (total === 0) return [];
+        if (total <= 12) return [questions];
+
+        if (total === 21) {
+            return [questions.slice(0, 10), questions.slice(10)];
+        }
+
+        let bestP = 2;
+        let bestDiff = 999.0;
+        const maxP = Math.floor(total / 4) + 1;
+        for (let p = 2; p <= maxP; p++) {
+            const base = Math.floor(total / p);
+            const rem = total % p;
+            if (base < 4) break;
+            const maxInP = base + (rem > 0 ? 1 : 0);
+            if (maxInP > 12) continue;
+            const avg = total / p;
+            const diff = Math.abs(avg - 9.5);
+            if (diff < bestDiff) {
+                bestDiff = diff;
+                bestP = p;
+            }
+        }
+
+        const base = Math.floor(total / bestP);
+        const rem = total % bestP;
+        const pages = [];
+        let idx = 0;
+        for (let i = 0; i < bestP; i++) {
+            const cnt = base + (i < rem ? 1 : 0);
+            pages.push(questions.slice(idx, idx + cnt));
+            idx += cnt;
+        }
+        return pages;
+    },
+
+    detectQuestionLanguage(q) {
+        const sample = `${q?.question || ''} ${q?.explanation || ''}`;
+        const arCount = (sample.match(/[\u0600-\u06FF]/g) || []).length;
+        const latCount = (sample.match(/[A-Za-z]/g) || []).length;
+        return arCount > latCount ? 'ar' : 'en';
+    },
+
+    getCorrectOptionIndex(question, options) {
+        if (!Array.isArray(options) || options.length === 0) return -1;
+        if (question?.correctIndex !== null && question?.correctIndex !== undefined && question?.correctIndex !== '') {
+            const explicitIndex = Number(question.correctIndex);
+            if (Number.isInteger(explicitIndex) && explicitIndex >= 0 && explicitIndex < options.length) {
+                return explicitIndex;
+            }
+        }
+        const correct = String(question?.correctAnswer || '').trim();
+        if (!correct) return -1;
+
+        const exactIndex = options.findIndex(opt => String(opt).trim().toLowerCase() === correct.toLowerCase());
+        if (exactIndex !== -1) return exactIndex;
+
+        const stripOpt = (val) => String(val || '').replace(/^\s*(?:[A-Ha-h]|[أإآابجدههـوزح])\s*[.)\-:\s]+/u, '').trim().toLowerCase();
+        const cleanCorrect = stripOpt(correct);
+        const textIndex = options.findIndex(opt => stripOpt(opt) === cleanCorrect);
+        if (textIndex !== -1) return textIndex;
+
+        const latinMatch = correct.match(/^([A-H])(?:\s*[.)\-:]*)?$/i);
+        if (latinMatch) {
+            const idx = latinMatch[1].toUpperCase().charCodeAt(0) - 65;
+            if (idx < options.length) return idx;
+        }
+        const normalizedArabic = correct.replace(/[إأآ]/g, 'ا').replace(/[.)\-:\s]+$/u, '').trim();
+        const arabicLetters = ['ا', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح'];
+        const arIdx = arabicLetters.indexOf(normalizedArabic);
+        if (arIdx >= 0 && arIdx < options.length) return arIdx;
+
+        return -1;
+    },
+
+    renderQuizCardHtml(q, globalQIdx, includeExplanation) {
+        const qType = q.type || 'mcq';
+        const qText = this.escapeHtml(String(q.question || '').trim());
+        const chapter = this.escapeHtml(String(q.assignedChapter || '').trim());
+        const isRtl = (this.detectQuestionLanguage(q) === 'ar');
+        const rtlClass = isRtl ? ' is-rtl' : '';
+
+        const typeLbl = qType === 'mcq' ? 'MCQ' : (qType === 'tf' ? 'صح / خطأ' : 'سؤال قصير');
+        const chapHtml = chapter ? `<div class="quiz-q-chapter">${chapter}</div>` : '';
+
+        const bodyLines = [`<div class="quiz-q-title${rtlClass}">${qText}</div>`];
+
+        if (qType === 'mcq' || qType === 'tf') {
+            const opts = Array.isArray(q.options) ? q.options : [];
+            const cIdx = this.getCorrectOptionIndex(q, opts);
+            bodyLines.push(`<div class="quiz-options-list${rtlClass}">`);
+            opts.forEach((opt, oIdx) => {
+                const isC = (oIdx === cIdx);
+                const optLetter = String.fromCharCode(65 + oIdx);
+                const rowCls = isC ? `quiz-opt-row is-correct${rtlClass}` : `quiz-opt-row${rtlClass}`;
+                bodyLines.push(`
+                    <div class="${rowCls}">
+                        <span class="quiz-opt-letter">${optLetter}.</span>
+                        <span class="quiz-opt-text">${this.escapeHtml(String(opt))}</span>
+                    </div>
+                `);
+            });
+            bodyLines.push('</div>');
+        } else if (qType === 'card' || qType === 'short' || qType === 'info') {
+            const ans = String(q.answer || '');
+            const ansRend = (ans.includes('<li') || ans.includes('<p') || ans.includes('<br'))
+                ? ans
+                : this.escapeHtml(ans).replace(/\n/g, '<br>');
+            const lbl = isRtl ? 'الإجابة النموذجية:' : 'Model Answer:';
+            bodyLines.push(`
+                <div class="quiz-short-answer-box${rtlClass}">
+                    <div class="quiz-short-answer-label">${lbl}</div>
+                    <div class="quiz-short-answer-content${rtlClass}">${ansRend}</div>
+                </div>
+            `);
+        }
+
+        const exp = String(q.explanation || '').trim();
+        if (includeExplanation && exp) {
+            const expLbl = isRtl ? 'الشرح:' : 'Explanation:';
+            bodyLines.push(`
+                <div class="quiz-explanation-box${rtlClass}">
+                    <strong>${expLbl}</strong> ${this.escapeHtml(exp)}
+                </div>
+            `);
+        }
+
+        return `
+            <div class="quiz-q-block">
+                <div class="quiz-q-top-row">
+                    <div class="quiz-q-num-badge">
+                        <span>Q${globalQIdx}</span>
+                        <span class="quiz-type-badge">${typeLbl}</span>
+                    </div>
+                    ${chapHtml}
+                </div>
+                ${bodyLines.join('\n')}
+            </div>
+        `;
+    },
+
+    generateExamBookletHtml(quizData, includeExplanations = true) {
+        const quizName = this.escapeHtml(quizData.quiz_name || quizData.title || 'اختبار تجريبي');
+        const subjectName = this.escapeHtml(quizData.subject_name || 'مادة دراسية');
+        const allQuestions = Array.isArray(quizData.questions) ? quizData.questions : [];
+        const qCount = allQuestions.length;
+
+        const pages = this.calculateSmartPages(allQuestions);
+        const totalPages = pages.length;
+
+        let globalQIdx = 1;
+        const renderedPages = [];
+
+        pages.forEach((pageQs, pIdx0) => {
+            const pIdx = pIdx0 + 1;
+            const col1Count = Math.ceil(pageQs.length / 2);
+            const col1Qs = pageQs.slice(0, col1Count);
+            const col2Qs = pageQs.slice(col1Count);
+
+            const col1Cards = col1Qs.map(q => {
+                const cardHtml = this.renderQuizCardHtml(q, globalQIdx, includeExplanations);
+                globalQIdx++;
+                return cardHtml;
+            }).join('');
+
+            const col2Cards = col2Qs.map(q => {
+                const cardHtml = this.renderQuizCardHtml(q, globalQIdx, includeExplanations);
+                globalQIdx++;
+                return cardHtml;
+            }).join('');
+
+            const columnsHtml = `
+                <div class="page-two-columns">
+                    <div class="col-half">${col1Cards}</div>
+                    <div class="col-half">${col2Cards}</div>
+                </div>
+            `;
+
+            let headerHtml = '';
+            if (pIdx === 1) {
+                headerHtml = `
+                    <div class="doc-header">
+                        <div class="doc-titles">
+                            <div class="doc-main-heading">${quizName}</div>
+                            <div class="doc-sub-heading">${subjectName}</div>
+                        </div>
+                        <div class="doc-meta-badge">
+                            <span class="period" dir="ltr">${qCount} Questions</span>
+                            <span class="subperiod" dir="rtl"><bdi>Dent2025 Academic Portal</bdi></span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                headerHtml = `
+                    <div class="doc-header doc-header-compact">
+                        <div class="doc-titles">
+                            <div class="doc-compact-heading">${quizName} — ${subjectName}</div>
+                        </div>
+                        <div class="doc-meta-badge">
+                            <span class="period" dir="ltr">Page ${pIdx} of ${totalPages}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const footerHtml = `
+                <div class="doc-footer">
+                    <span class="doc-footer-right">dent2025.com</span>
+                    <span class="doc-footer-center">صفحة ${pIdx} من ${totalPages}</span>
+                    <span class="doc-footer-left" dir="ltr">Academic Year 2026</span>
+                </div>
+            `;
+
+            renderedPages.push(`
+                <div class="a4-page-sheet" id="quiz-page-${pIdx}" data-page="${pIdx}">
+                    <div class="page-inner-content">
+                        ${headerHtml}
+                        ${columnsHtml}
+                    </div>
+                    ${footerHtml}
+                </div>
+            `);
+        });
+
+        return {
+            pagesCount: totalPages,
+            fullHtml: `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>${quizName}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>${this.getQuizExportCss()}</style>
+</head>
+<body>
+    ${renderedPages.join('\n')}
+</body>
+</html>`,
+            pagesJoinedHtml: renderedPages.join('\n')
+        };
+    },
+
+    async exportQuizBooklet(quizId) {
+        this.showLoading(true);
+        try {
+            const res = await fetch(API_BASE + '/backend/api_ai_exam.php?action=get&id=' + encodeURIComponent(quizId), {
+                headers: { 'X-Admin-Pass': this.pass || '' }
+            });
+            const json = await res.json();
+            this.showLoading(false);
+            if (json && json.success && json.data) {
+                this.openQuizExportModal(json.data);
+            } else {
+                this.showToast(json?.message || 'تعذر تحميل بيانات الاختبار للتصدير', true);
+            }
+        } catch (err) {
+            this.showLoading(false);
+            console.error('Error fetching quiz for export:', err);
+            this.showToast('خطأ أثناء تحميل بيانات الاختبار للتصدير', true);
+        }
+    },
+
+    openQuizExportModal(quizData) {
+        if (!quizData || !Array.isArray(quizData.questions) || quizData.questions.length === 0) {
+            this.showToast('لا توجد أسئلة متاحة في هذا الاختبار للتصدير', true);
+            return;
+        }
+
+        const questions = quizData.questions;
+        const totalQ = questions.length;
+        const pages = this.calculateSmartPages(questions);
+        const totalPages = pages.length;
+
+        let modal = document.getElementById('admin-quiz-export-modal');
+        if (modal) modal.remove();
+
+        modal = document.createElement('div');
+        modal.id = 'admin-quiz-export-modal';
+        modal.style.cssText = 'position: fixed; inset: 0; background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 999999; display: flex; justify-content: center; align-items: center; direction: rtl; font-family: "Outfit", "Noto Kufi Arabic", sans-serif; padding: 16px; box-sizing: border-box;';
+
+        let pageSummaryText = '';
+        if (totalPages === 1) {
+            pageSummaryText = 'صفحة A4 واحدة (تنسيق عمودين متوازنين)';
+        } else {
+            const breakdown = pages.map((p, i) => `صفحة ${i + 1}: ${p.length} أسئلة`).join('، ');
+            pageSummaryText = `${totalPages} صفحات A4 (${breakdown})`;
+        }
+
+        const singlePageImageBtn = totalPages === 1 ? `
+            <button type="button" id="admin-export-img-btn" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.86rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);" onmouseover="this.style.background='#3f3f46';" onmouseout="this.style.background='#27272a';">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="flex-shrink:0;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span style="white-space: nowrap;">نسخ / حفظ كصورة PNG</span>
+            </button>
+        ` : '';
+
+        modal.innerHTML = `
+            <style>@keyframes adminSpin { to { transform: rotate(360deg); } }</style>
+            <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 22px; width: 100%; max-width: 460px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: #fff; box-sizing: border-box;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #f8fafc; line-height: 1.3;">تصدير الاختبار (كتيب A4)</h3>
+                        <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 4px;">${this.escapeHtml(quizData.quiz_name || quizData.title)}</div>
+                    </div>
+                    <button type="button" onclick="AdminApp.closeQuizExportModal()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">×</button>
+                </div>
+
+                <!-- Quiz Layout Info Card -->
+                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 11px 13px; margin-bottom: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 0.76rem; color: #a1a1aa; font-weight: 600;">عدد الأسئلة:</span>
+                        <span style="font-size: 0.82rem; color: #f4f4f5; font-weight: 700;">${totalQ} سؤالاً</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.76rem; color: #a1a1aa; font-weight: 600;">توزيع الصفحات:</span>
+                        <span style="font-size: 0.76rem; color: #cbd5e1; font-weight: 600;">${pageSummaryText}</span>
+                    </div>
+                </div>
+
+                <!-- Options -->
+                <label style="display: flex; align-items: center; gap: 9px; padding: 9px 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 10px; font-size: 0.80rem; color: #cbd5e1; cursor: pointer; user-select: none; margin-bottom: 16px;">
+                    <input type="checkbox" id="admin-export-inc-exp" checked style="accent-color: #6366f1; width: 16px; height: 16px; cursor: pointer;">
+                    <span>تضمين الشروحات وتوضيح الإجابات (Explanation)</span>
+                </label>
+
+                <!-- Action Buttons Grid -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                    <button type="button" id="admin-export-pdf-btn" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.86rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);" onmouseover="this.style.background='#3f3f46';" onmouseout="this.style.background='#27272a';">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                        <span style="white-space: nowrap;">ملف PDF موحّد</span>
+                    </button>
+
+                    <button type="button" id="admin-export-print-btn" style="width: 100%; height: 46px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.86rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);" onmouseover="this.style.background='#3f3f46';" onmouseout="this.style.background='#27272a';">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" style="flex-shrink:0;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        <span style="white-space: nowrap;">طباعة A4</span>
+                    </button>
+                </div>
+
+                ${singlePageImageBtn ? `<div style="margin-bottom: 12px;">${singlePageImageBtn}</div>` : ''}
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 14px;">
+                    <button type="button" onclick="AdminApp.closeQuizExportModal()" style="padding: 7px 16px; background: #27272a; border: 1px solid rgba(255,255,255,0.1); color: #a1a1aa; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.82rem; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#a1a1aa';">إلغاء</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        document.getElementById('admin-export-pdf-btn').addEventListener('click', () => {
+            const incExp = !!document.getElementById('admin-export-inc-exp')?.checked;
+            this.executeSaveQuizAsPdf(quizData, incExp, document.getElementById('admin-export-pdf-btn'));
+        });
+
+        document.getElementById('admin-export-print-btn').addEventListener('click', () => {
+            const incExp = !!document.getElementById('admin-export-inc-exp')?.checked;
+            this.executePrintQuiz(quizData, incExp);
+        });
+
+        const imgBtn = document.getElementById('admin-export-img-btn');
+        if (imgBtn) {
+            imgBtn.addEventListener('click', () => {
+                const incExp = !!document.getElementById('admin-export-inc-exp')?.checked;
+                this.executeSaveQuizAsImage(quizData, incExp, imgBtn);
+            });
+        }
+    },
+
+    closeQuizExportModal() {
+        const modal = document.getElementById('admin-quiz-export-modal');
+        if (modal) modal.remove();
+    },
+
+    async executeSaveQuizAsPdf(quizData, includeExplanations, btn) {
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: adminSpin 0.8s linear infinite; flex-shrink: 0;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
+                <span style="white-space: nowrap;">جاري إنشاء PDF...</span>
+            `;
+        }
+
+        try {
+            const jsPdfPromise = this.loadJsPdf();
+            const htmlToImage = await this.loadHtmlToImage();
+
+            const { pagesJoinedHtml } = this.generateExamBookletHtml(quizData, includeExplanations);
+
+            const sandbox = document.createElement('div');
+            sandbox.id = 'dent-admin-quiz-sandbox';
+            sandbox.style.cssText = 'position: fixed; left: -99999px; top: 0; width: 794px; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1;';
+            const sandboxCss = this.getQuizExportCss().replace(/(^|[\s,{}])html\s*,\s*body(?=[\s,{:]|$)/gi, '$1#dent-admin-quiz-sandbox').replace(/(^|[\s,{}])body(?=[\s,{:]|$)/gi, '$1#dent-admin-quiz-sandbox');
+            sandbox.innerHTML = `<style>${sandboxCss}</style>` + pagesJoinedHtml;
+            document.body.appendChild(sandbox);
+
+            await new Promise(r => setTimeout(r, 180));
+
+            const pageEls = sandbox.querySelectorAll('.a4-page-sheet');
+            const imgDataList = [];
+
+            for (let i = 0; i < pageEls.length; i++) {
+                const pageEl = pageEls[i];
+                if (btn && btn.querySelector('span')) {
+                    btn.querySelector('span').innerText = `معالجة صفحة ${i + 1} من ${pageEls.length}...`;
+                }
+                const dataUrl = await htmlToImage.toPng(pageEl, {
+                    pixelRatio: 2.0,
+                    width: 794,
+                    height: 1120,
+                    canvasWidth: Math.round(794 * 2.0),
+                    canvasHeight: Math.round(1120 * 2.0),
+                    skipFonts: true,
+                    backgroundColor: '#121212',
+                    style: {
+                        boxShadow: 'none',
+                        filter: 'none'
+                    }
+                });
+                imgDataList.push(dataUrl);
+            }
+
+            sandbox.remove();
+
+            const jsPdfClass = await jsPdfPromise;
+            const pdf = new jsPdfClass({
+                orientation: 'p',
+                unit: 'mm',
+                format: 'a4',
+                compress: true
+            });
+
+            for (let i = 0; i < imgDataList.length; i++) {
+                if (i > 0) pdf.addPage('a4', 'p');
+                pdf.setFillColor(18, 18, 18);
+                pdf.rect(0, 0, 210, 297, 'F');
+                pdf.addImage(imgDataList[i], 'PNG', 0, 0, 210, 297, undefined, 'FAST');
+            }
+
+            const safeTitle = (quizData.quiz_name || quizData.title || 'Quiz').replace(/[\\/:*?"<>|]+/g, '_').trim();
+            const fileName = `${safeTitle}_Dent2025.pdf`;
+            const pdfBlob = pdf.output('blob');
+            const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+            this.closeQuizExportModal();
+            this.deliverQuizFile(file, pdfBlob, fileName, 'pdf');
+
+        } catch (err) {
+            console.error('Admin quiz PDF export error:', err);
+            this.showToast('حدث خطأ أثناء إنشاء ملف الـ PDF: ' + (err.message || err), true);
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        }
+    },
+
+    async executeSaveQuizAsImage(quizData, includeExplanations, btn) {
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: adminSpin 0.8s linear infinite; flex-shrink: 0;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
+                <span style="white-space: nowrap;">جاري المعالجة...</span>
+            `;
+        }
+
+        try {
+            const htmlToImage = await this.loadHtmlToImage();
+            const { pagesJoinedHtml } = this.generateExamBookletHtml(quizData, includeExplanations);
+
+            const sandbox = document.createElement('div');
+            sandbox.id = 'dent-admin-quiz-sandbox';
+            sandbox.style.cssText = 'position: fixed; left: -99999px; top: 0; width: 794px; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1;';
+            const sandboxCss = this.getQuizExportCss().replace(/(^|[\s,{}])html\s*,\s*body(?=[\s,{:]|$)/gi, '$1#dent-admin-quiz-sandbox').replace(/(^|[\s,{}])body(?=[\s,{:]|$)/gi, '$1#dent-admin-quiz-sandbox');
+            sandbox.innerHTML = `<style>${sandboxCss}</style>` + pagesJoinedHtml;
+            document.body.appendChild(sandbox);
+
+            await new Promise(r => setTimeout(r, 180));
+
+            const targetEl = sandbox.querySelector('.a4-page-sheet');
+            const blob = await htmlToImage.toBlob(targetEl, {
+                pixelRatio: 2.0,
+                width: 794,
+                height: 1120,
+                canvasWidth: Math.round(794 * 2.0),
+                canvasHeight: Math.round(1120 * 2.0),
+                skipFonts: true,
+                backgroundColor: '#121212',
+                style: {
+                    boxShadow: 'none',
+                    filter: 'none'
+                }
+            });
+
+            sandbox.remove();
+
+            const safeTitle = (quizData.quiz_name || quizData.title || 'Quiz').replace(/[\\/:*?"<>|]+/g, '_').trim();
+            const fileName = `${safeTitle}_Dent2025.png`;
+            const file = new File([blob], fileName, { type: 'image/png' });
+
+            let copied = false;
+            if (navigator.clipboard && window.ClipboardItem) {
+                try {
+                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                    copied = true;
+                } catch (cErr) {
+                    console.warn('Clipboard write failed:', cErr);
+                }
+            }
+
+            this.closeQuizExportModal();
+            this.deliverQuizFile(file, blob, fileName, 'png');
+
+            if (copied) {
+                this.showToast('تم نسخ صورة الاختبار للحافظة وتنزيلها بجهازك!');
+            }
+        } catch (err) {
+            console.error('Admin quiz image export error:', err);
+            this.showToast('حدث خطأ أثناء حفظ الصورة: ' + (err.message || err), true);
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        }
+    },
+
+    executePrintQuiz(quizData, includeExplanations) {
+        const { fullHtml } = this.generateExamBookletHtml(quizData, includeExplanations);
+        this.closeQuizExportModal();
+
+        let iframe = document.getElementById('admin-quiz-print-iframe');
+        if (iframe) iframe.remove();
+
+        iframe = document.createElement('iframe');
+        iframe.id = 'admin-quiz-print-iframe';
+        iframe.style.cssText = 'position:fixed; top:-9999px; left:-9999px; width:0; height:0; border:none;';
+        document.body.appendChild(iframe);
+
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(fullHtml);
+        doc.close();
+
+        iframe.contentWindow.focus();
+        setTimeout(() => {
+            iframe.contentWindow.print();
+            setTimeout(() => iframe.remove(), 2500);
+        }, 600);
+    },
+
+    deliverQuizFile(file, blob, fileName, type) {
+        const blobUrl = URL.createObjectURL(blob);
+        try {
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
+            }, 2000);
+        } catch(err) {
+            console.warn('Direct download error:', err);
+        }
+
+        this.showToast(`تم تجهيز وتنزيل ملف الاختبار (${type.toUpperCase()}) بنجاح!`);
     },
 
     // --- CACHE & PRE-WARM MANAGEMENT METHODS ---
