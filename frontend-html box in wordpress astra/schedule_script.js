@@ -1073,8 +1073,10 @@ const ScheduleApp = {
         });
     },
 
-    // 2-WEEK PRINT FEATURE
+    // PRINT FEATURE — configurable week range
     _prefetchedAnnouncements: null,
+    _printStartSunday: null,   // null = default (current week's Sunday)
+    _printWeekCount: 3,        // 3 or 4
 
     prefetchPrintAnnouncements: async function() {
         try {
@@ -1132,7 +1134,7 @@ const ScheduleApp = {
             <style>@keyframes dentSpin { to { transform: rotate(360deg); } }</style>
             <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 24px; width: 100%; max-width: 460px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: #fff; box-sizing: border-box;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
-                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #f8fafc;">تصدير وإرسال تقويم الأسابيع الـ 3 القادمة</h3>
+                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #f8fafc;">تصدير التقويم</h3>
                     <button type="button" onclick="document.getElementById('dent-print-schedule-modal').remove()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">×</button>
                 </div>
 
@@ -1150,7 +1152,30 @@ const ScheduleApp = {
 
                 <div style="font-size: 0.74rem; color: #94a3b8; text-align: center; margin: 8px 0 14px 0;">اختر ملف PDF للإرسال أو نسخ كصورة للصق الفوري في واتساب</div>
 
-                <label style="display: flex; align-items: flex-start; gap: 10px; margin-top: 16px; padding: 10px 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; font-size: 0.80rem; color: #cbd5e1; cursor: pointer; user-select: none;">
+                <!-- Week range picker -->
+                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); border-radius: 12px; padding: 12px 14px; margin-bottom: 2px;">
+                    <div style="font-size: 0.76rem; color: #a1a1aa; font-weight: 600; margin-bottom: 10px;">نطاق الأسابيع المطبوعة</div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px;">
+                        <button type="button" id="dent-print-week-prev" onclick="ScheduleApp._shiftPrintWeek(-1)" title="أسبوع للخلف"
+                            style="width:34px; height:34px; background:#27272a; border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#d4d4d8; font-size:1.1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.15s;"
+                            onmouseover="this.style.background='#3f3f46';" onmouseout="this.style.background='#27272a';">‹</button>
+                        <div style="flex:1; text-align:center; font-size:0.82rem; color:#f4f4f5; font-weight:600; line-height:1.4;" id="dent-print-week-label">…</div>
+                        <button type="button" id="dent-print-week-next" onclick="ScheduleApp._shiftPrintWeek(+1)" title="أسبوع للأمام"
+                            style="width:34px; height:34px; background:#27272a; border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#d4d4d8; font-size:1.1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.15s;"
+                            onmouseover="this.style.background='#3f3f46';" onmouseout="this.style.background='#27272a';">›</button>
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                        <button type="button" onclick="ScheduleApp._resetPrintWeek()" id="dent-print-week-reset"
+                            style="font-size:0.72rem; color:#71717a; background:transparent; border:none; cursor:pointer; padding:0; text-decoration:underline; font-family:inherit; transition:color 0.15s;"
+                            onmouseover="this.style.color='#a1a1aa';" onmouseout="this.style.color='#71717a';">العودة للافتراضي</button>
+                        <label style="display:flex; align-items:center; gap:7px; cursor:pointer; font-size:0.78rem; color:#cbd5e1; user-select:none;">
+                            <input type="checkbox" id="dent-print-4weeks" onchange="ScheduleApp._togglePrintWeekCount(this.checked)" style="accent-color:#6366f1; width:15px; height:15px; cursor:pointer;">
+                            طباعة 4 أسابيع
+                        </label>
+                    </div>
+                </div>
+
+                <label style="display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; padding: 10px 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; font-size: 0.80rem; color: #cbd5e1; cursor: pointer; user-select: none;">
                     <input type="checkbox" id="dent-print-inc-announcements" checked style="accent-color: #52525b; width: 16px; height: 16px; margin-top: 2px; cursor: pointer;">
                     <span>تضمين إعلانات الدفعة (الإعلان بالصفحة الرئيسية) في أسفل الورقة</span>
                 </label>
@@ -1166,6 +1191,65 @@ const ScheduleApp = {
             </div>
         `;
         document.body.appendChild(modal);
+
+        // Init state and render label (preserve _printWeekCount across opens, reset start to default)
+        this._printStartSunday = null;
+        this._updatePrintWeekLabel();
+        if (document.getElementById('dent-print-4weeks')) {
+            document.getElementById('dent-print-4weeks').checked = (this._printWeekCount === 4);
+        }
+    },
+
+    // Returns the effective print start Sunday (Date object, midnight)
+    _getPrintStartSunday: function() {
+        if (this._printStartSunday) return new Date(this._printStartSunday);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const sun = new Date(today);
+        sun.setDate(today.getDate() - today.getDay());
+        sun.setHours(0, 0, 0, 0);
+        return sun;
+    },
+
+    _updatePrintWeekLabel: function() {
+        const label = document.getElementById('dent-print-week-label');
+        if (!label) return;
+        const sun = this._getPrintStartSunday();
+        const weekCount = this._printWeekCount || 3;
+        const endDate = new Date(sun);
+        endDate.setDate(sun.getDate() + (weekCount * 7) - 1);
+
+        const semStart = new Date(2026, 7, 23);
+        semStart.setHours(0, 0, 0, 0);
+        const startWeekNum = Math.max(1, Math.floor((sun - semStart) / (1000 * 60 * 60 * 24 * 7)) + 1);
+        const endWeekNum = startWeekNum + weekCount - 1;
+
+        const months = this.gregorianMonthsEN || ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const fmt = (d) => `${d.getDate()} ${months[d.getMonth()].substring(0, 3)}`;
+
+        const isDefault = !this._printStartSunday;
+        const defaultTag = isDefault ? ' <span style="font-size:0.68rem;color:#6366f1;font-weight:500;">(افتراضي)</span>' : '';
+        label.innerHTML = `الأسابيع ${startWeekNum}–${endWeekNum} &nbsp;•&nbsp; ${fmt(sun)} – ${fmt(endDate)}${defaultTag}`;
+
+        const resetBtn = document.getElementById('dent-print-week-reset');
+        if (resetBtn) resetBtn.style.opacity = isDefault ? '0.4' : '1';
+    },
+
+    _shiftPrintWeek: function(direction) {
+        const sun = this._getPrintStartSunday();
+        sun.setDate(sun.getDate() + (direction * 7));
+        this._printStartSunday = sun;
+        this._updatePrintWeekLabel();
+    },
+
+    _resetPrintWeek: function() {
+        this._printStartSunday = null;
+        this._updatePrintWeekLabel();
+    },
+
+    _togglePrintWeekCount: function(checked) {
+        this._printWeekCount = checked ? 4 : 3;
+        this._updatePrintWeekLabel();
     },
 
     loadJsPdf: function() {
@@ -1206,7 +1290,9 @@ const ScheduleApp = {
     },
 
     renderSheetSandbox: async function(customNotes, announcementData) {
-        const fullHtml = this.generateThreeWeeksPrintHtml(customNotes, announcementData, false);
+        const printStart = this._getPrintStartSunday();
+        const weekCount = this._printWeekCount || 3;
+        const fullHtml = this.generateThreeWeeksPrintHtml(customNotes, announcementData, false, printStart, weekCount);
 
         // Extract style block and sheet div
         const styleMatch = fullHtml.match(/<style>([\s\S]*?)<\/style>/i);
@@ -1440,13 +1526,11 @@ const ScheduleApp = {
         const yrPart = (sel.specialty === 'pre-med' || !sel.year) ? '' : `_Y${sel.year}`;
         const semPart = sel.semester ? `_S${sel.semester}` : '';
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const currentSunday = new Date(today);
-        currentSunday.setDate(today.getDate() - today.getDay());
-        const startSunday = new Date(2026, 7, 23);
-        const startWeekNum = Math.floor((currentSunday - startSunday) / (1000 * 60 * 60 * 24 * 7)) + 1;
-        const endWeekNum = startWeekNum + 2;
+        const printSunday = this._getPrintStartSunday();
+        const semesterStart = new Date(2026, 7, 23);
+        const startWeekNum = Math.max(1, Math.floor((printSunday - semesterStart) / (1000 * 60 * 60 * 24 * 7)) + 1);
+        const wCount = this._printWeekCount || 3;
+        const endWeekNum = startWeekNum + wCount - 1;
 
         let weekPart = '';
         if (startWeekNum > 0) {
@@ -1702,18 +1786,23 @@ const ScheduleApp = {
         return this.generateThreeWeeksPrintHtml(customNotes, announcementData, isMobile);
     },
 
-    generateThreeWeeksPrintHtml: function(customNotes, announcementData, isMobile = false) {
+    generateThreeWeeksPrintHtml: function(customNotes, announcementData, isMobile = false, startSundayOverride = null, weekCount = 3) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // 1. Calculate the Sunday that started the CURRENT week
-        const currentSunday = new Date(today);
-        currentSunday.setDate(today.getDate() - today.getDay());
+        // 1. Use caller-specified start Sunday (from week picker), or default to current week's Sunday
+        const currentSunday = startSundayOverride ? new Date(startSundayOverride) : (() => {
+            const s = new Date(today);
+            s.setDate(today.getDate() - today.getDay());
+            s.setHours(0, 0, 0, 0);
+            return s;
+        })();
         currentSunday.setHours(0, 0, 0, 0);
 
-        // 2. Exactly 3 full academic weeks (21 days): from current Sunday through the Saturday of the 3rd week
+        // 2. Span = weekCount full weeks (default 3)
+        const totalDays = (weekCount * 7) - 1;
         const threeWeeksEnd = new Date(currentSunday);
-        threeWeeksEnd.setDate(currentSunday.getDate() + 20); // 21st day of the span (Saturday night)
+        threeWeeksEnd.setDate(currentSunday.getDate() + totalDays);
         threeWeeksEnd.setHours(23, 59, 59, 999);
 
         // 3. Anchor semester start to Sunday 2026-08-23 (Week 1), ensuring consistent week numbering
@@ -1722,17 +1811,17 @@ const ScheduleApp = {
 
         // Calculate dynamic week numbers for badge
         const startWeekNum = Math.floor((currentSunday - startSunday) / (1000 * 60 * 60 * 24 * 7)) + 1;
-        const midWeekNum = startWeekNum + 1;
-        const endWeekNum = startWeekNum + 2;
+        const endWeekNum = startWeekNum + weekCount - 1;
 
         let weeksBadgeText = '';
         if (startWeekNum > 0) {
-            weeksBadgeText = `الأسابيع (${startWeekNum}، ${midWeekNum}، ${endWeekNum}) • تقويم أم القرى`;
+            const weekNums = Array.from({ length: weekCount }, (_, i) => startWeekNum + i).join('، ');
+            weeksBadgeText = `الأسابيع (${weekNums}) • تقويم أم القرى`;
         } else {
             weeksBadgeText = 'تقويم أم القرى';
         }
 
-        // Filter events strictly across the 3 full academic weeks
+        // Filter events strictly across the chosen week span
         const rawEvents = Array.isArray(this.eventsData) ? this.eventsData : [];
         const events = rawEvents.filter(ev => {
             const s = this.parseLocalDate(ev.date);
@@ -1761,7 +1850,7 @@ const ScheduleApp = {
         const semText = sel.semester ? ` (الفصل الدراسي ${sel.semester === 1 || sel.semester === '1' ? 'الأول' : 'الثاني'})` : '';
         const subTitle = `${specTitle}${yearText}${semText}`;
 
-        // Date range string (BiDi safe) - spans Sunday of Week 1 through Saturday of Week 3
+        // Date range string (BiDi safe)
         const startDay = currentSunday.getDate();
         const startMonth = this.gregorianMonthsEN[currentSunday.getMonth()].substring(0, 3);
         const startYear = currentSunday.getFullYear();
@@ -1772,8 +1861,8 @@ const ScheduleApp = {
 
         const groupedWeeks = {};
 
-        // Pre-initialize the 3 exact consecutive weeks in order so they all appear
-        for (let i = 0; i < 3; i++) {
+        // Pre-initialize all N consecutive weeks in order so they all appear even if empty
+        for (let i = 0; i < weekCount; i++) {
             const wSunday = new Date(currentSunday);
             wSunday.setDate(currentSunday.getDate() + (i * 7));
             const wNum = startWeekNum + i;
