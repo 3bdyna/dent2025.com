@@ -612,7 +612,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     function checkUrlDirectQuiz() {
         try {
             const urlParams = new URLSearchParams(window.location.search);
-            const directQuizId = urlParams.get('quiz_id') || urlParams.get('quiz') || urlParams.get('test_id');
+            const directQuizId = urlParams.get('quiz_id') || urlParams.get('quiz') || urlParams.get('test_id') || urlParams.get('id') || urlParams.get('q');
             if (directQuizId) {
                 playSavedQuiz(directQuizId);
             }
@@ -2022,7 +2022,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
             card.querySelector('.start-btn').addEventListener('click', () => playSavedQuiz(q.id));
             card.querySelector('.share-btn').addEventListener('click', () => {
-                const link = window.location.origin + window.location.pathname + '?quiz_id=' + q.id;
+                const link = window.location.origin + '/quiz/?id=' + encodeURIComponent(q.id);
                 navigator.clipboard.writeText(link);
                 alert("تم نسخ رابط الاختبار المباشر للحافظة!");
             });

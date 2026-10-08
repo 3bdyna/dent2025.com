@@ -401,7 +401,39 @@ add_action('init', function () {
     }
 });
 
+// Clean short URLs for quizzes: /quiz/?id=... or /quiz/<id> or /q/<id> or ?quiz=...
+add_action('template_redirect', function () {
+    if (is_admin()) return;
+
+    $uri = $_SERVER['REQUEST_URI'] ?? '';
+    
+    // Check root query param: /?quiz=<id> or /?q=<id>
+    if (!empty($_GET['quiz']) || !empty($_GET['q'])) {
+        $raw = $_GET['quiz'] ?? $_GET['q'] ?? '';
+        $qid = preg_replace('/[^a-zA-Z0-9_-]/', '', $raw);
+        if (!empty($qid)) {
+            wp_safe_redirect(home_url('/المقررات-والاختبارات/?quiz_id=' . urlencode($qid)), 302);
+            exit;
+        }
+    }
+
+    // Check /quiz/ or /q/ path
+    $path = trim(parse_url($uri, PHP_URL_PATH) ?: '', '/');
+    if (preg_match('#^(?:quiz|q)(?:/([a-zA-Z0-9_-]+))?$#i', $path, $m)) {
+        $raw = !empty($m[1]) ? $m[1] : ($_GET['id'] ?? $_GET['quiz_id'] ?? '');
+        $qid = preg_replace('/[^a-zA-Z0-9_-]/', '', $raw);
+        if (!empty($qid)) {
+            wp_safe_redirect(home_url('/المقررات-والاختبارات/?quiz_id=' . urlencode($qid)), 302);
+            exit;
+        } else {
+            wp_safe_redirect(home_url('/المقررات-والاختبارات/'), 302);
+            exit;
+        }
+    }
+});
+
 // Clean up on plugin deactivation
 register_deactivation_hook(__FILE__, function () {
     wp_clear_scheduled_hook('dent2025_cache_cron_sync');
 });
+
