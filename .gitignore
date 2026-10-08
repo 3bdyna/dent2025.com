@@ -23,10 +23,13 @@ quizzes_data/
 quiz_jobs/
 dent2025_classes.json
 announcements_backup.json
+google_drive_original_names_backup.json
+*_backup.json
 cache_catalog.json
 premed-scan.json
 
 # 3. Legacy Local Snapshots & Zip Backups
+backups/
 .deploy_backups/
 server_backups_dent2025_daily/
 *.zip
@@ -39,6 +42,9 @@ wp-content/uploads/
 *.msi
 *.exe
 *.dll
+*.lnk
+*.tmp
+*.bak
 Thumbs.db
 Desktop.ini
 .DS_Store
@@ -53,6 +59,7 @@ __pycache__/
 .agents/
 .vscode/
 .idea/
+mockups/
 *.swp
 *.swo
 

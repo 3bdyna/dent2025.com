@@ -23,10 +23,11 @@ Welcome to **Dent2025 (Medical & Dental Academic Portal)**! This file provides e
 ```
 my website dent2025/
 ├── AGENTS.md                                   # Master Agent Guidelines & Architecture Reference (this file)
-├── DEPLOYMENT_GUIDE.md                         # Complete Git SafeDeploy documentation
 ├── README.md                                   # Project Overview & Architecture Guide
-├── MAIN_PAGE_DESIGN_SPEC.md                    # Homepage UI/UX specifications & layout guide
 ├── LICENSE                                     # MIT License
+├── docs/                                       # Project documentation and specifications
+│   ├── DEPLOYMENT_GUIDE.md                     # Complete Git SafeDeploy documentation
+│   └── MAIN_PAGE_DESIGN_SPEC.md                # Homepage UI/UX specifications & layout guide
 ├── .gitignore                                  # Git exclusion rules for secrets, caches & local dumps
 ├── deploy_config.example.json                  # Template SFTP/SSH configuration
 ├── dent2025_passwords.example.json             # Template RBAC passkeys
