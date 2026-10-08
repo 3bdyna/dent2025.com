@@ -97,6 +97,15 @@ textarea.dent-quiz-input { height: auto !important; min-height: 60px !important;
 .dent-opt-item.correct { border-color: rgba(34, 197, 94, 0.35) !important; background: rgba(34, 197, 94, 0.04) !important; color: #a7f3d0 !important; font-weight: 500; }
 .dent-opt-item.wrong { border-color: rgba(239, 68, 68, 0.3) !important; background: rgba(239, 68, 68, 0.03) !important; color: #fca5a5 !important; }
 .dent-explanation-box { display: none; margin-top: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 10px; font-size: 0.82rem; color: #cbd5e1; line-height: 1.5; }
+.dent-explanation-box ol, .dent-explanation-box ul { margin-left: 20px; margin-top: 4px; }
+.dent-explanation-box li { margin-bottom: 4px; }
+.dent-subheading { font-size: 0.84rem; font-weight: 600; color: #f8fafc; margin-top: 8px; margin-bottom: 4px; }
+.dent-ans-toggle { background: transparent; border: 1px solid rgba(255, 255, 255, 0.12); color: #94a3b8; font-size: 0.78rem; font-weight: 500; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; margin-top: 10px; }
+.dent-ans-toggle:hover { color: #f8fafc; border-color: rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.04); }
+.dent-ans-toggle.active { color: #e2e8f0; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); }
+.dent-info-body { font-size: 0.86rem; color: #cbd5e1; line-height: 1.6; margin-top: 8px; direction: ltr; text-align: left; }
+.dent-info-body ul, .dent-info-body ol { margin-left: 20px; margin-top: 4px; }
+.dent-info-body li { margin-bottom: 4px; }
 
 .dent-score-board { text-align: center; font-size: 1.05rem; font-weight: 600; color: #f8fafc; margin-bottom: 18px; display: none; padding: 14px; background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06); }
 
@@ -2222,6 +2231,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const container = document.getElementById('dp-questions-container');
         container.innerHTML = '';
 
+        const isCardsQuiz = questions.every(q => q.type === 'card' || q.type === 'info');
+
         questions.forEach((q, index) => {
             const assignedCh = q.assignedChapter || chapList[index % chapList.length] || 'عام';
             q.assignedChapter = assignedCh;
@@ -2233,17 +2244,19 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             qBlock.dataset.language = questionLanguage;
             qBlock.setAttribute('dir', questionLanguage);
 
-            const isConverted = (typeof q.question === 'string' && q.question.trim().startsWith('*'));
-            const convertedBadge = isConverted ? `<span class="dent-q-converted-badge" title="سؤال مأخوذ من سلايدات المحاضرة">* من السلايدات</span>` : '';
+            if (q.type !== 'card' && q.type !== 'info') {
+                const isConverted = (typeof q.question === 'string' && q.question.trim().startsWith('*'));
+                const convertedBadge = isConverted ? `<span class="dent-q-converted-badge" title="سؤال مأخوذ من سلايدات المحاضرة">* من السلايدات</span>` : '';
 
-            const tagRow = document.createElement('div');
-            tagRow.className = 'dent-q-badge-row';
-            tagRow.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;';
-            tagRow.innerHTML = `
-                <span class="dent-q-tag">${escapeHtml(assignedCh)}</span>
-                ${convertedBadge}
-            `;
-            qBlock.appendChild(tagRow);
+                const tagRow = document.createElement('div');
+                tagRow.className = 'dent-q-badge-row';
+                tagRow.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;';
+                tagRow.innerHTML = `
+                    <span class="dent-q-tag">${escapeHtml(assignedCh)}</span>
+                    ${convertedBadge}
+                `;
+                qBlock.appendChild(tagRow);
+            }
 
             const headerRow = document.createElement('div');
             headerRow.className = 'dent-q-header-row';
@@ -2251,89 +2264,126 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             const qTitle = document.createElement('div');
             qTitle.className = 'dent-q-text';
             qTitle.style.marginBottom = '0';
-            qTitle.innerText = `${index + 1}. ${q.question}`;
+            const hasNum = /^(?:Q\d+|\d+\.)/i.test((q.question || '').trim());
+            qTitle.innerText = hasNum ? q.question : `${index + 1}. ${q.question}`;
 
             headerRow.appendChild(qTitle);
             qBlock.appendChild(headerRow);
 
-            const optList = document.createElement('div');
-            optList.className = 'dent-opt-list';
-            
-            let opts = ["صحيح", "خاطئ"];
-            if (q.options && q.options.length > 0) {
-                opts = q.options;
-            }
-            
-            opts.forEach((opt, optIndex) => {
-                const optItem = document.createElement('label');
-                optItem.className = 'dent-opt-item';
-                const optionMatch = String(opt).match(/^\s*([A-Ha-h]|[أإآابجدههـوزح])(?:[.)\-:\s]+)([\s\S]*)$/u);
-                const optionLetters = questionLanguage === 'ar'
-                    ? ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح']
-                    : ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-                const optionLetter = optionLetters[optIndex] ? '.' + optionLetters[optIndex] : '';
-                const optionText = optionMatch ? optionMatch[2] : String(opt);
-                optItem.innerHTML = `
-                    <input type="radio" name="q_${index}" value="${escapeHtml(opt)}" data-option-index="${optIndex}">
-                    <span class="dent-opt-letter">${optionLetter}</span>
-                    <span class="dent-opt-text">${escapeHtml(optionText)}</span>
-                `;
-                
-                // Instant Feedback on click
-                optItem.querySelector('input').addEventListener('change', () => {
-                    const siblings = optList.querySelectorAll('.dent-opt-item');
-                    siblings.forEach(s => s.classList.remove('selected'));
-                    optItem.classList.add('selected');
+            if (q.type === 'card') {
+                const toggleBtn = document.createElement('button');
+                toggleBtn.type = 'button';
+                toggleBtn.className = 'dent-ans-toggle';
+                toggleBtn.innerText = 'إظهار الإجابة';
 
-                    const userVal = opt.trim();
-                    const isMatch = isQuestionAnswerCorrect(q, optIndex, userVal, opts);
+                const expBox = document.createElement('div');
+                expBox.className = 'dent-explanation-box';
+                expBox.style.direction = questionLanguage === 'ar' ? 'rtl' : 'ltr';
+                expBox.style.textAlign = questionLanguage === 'ar' ? 'right' : 'left';
+                expBox.innerHTML = q.answer || q.explanation || '';
 
-                    if (isMatch) {
-                        optItem.classList.add('correct');
+                toggleBtn.addEventListener('click', () => {
+                    const isHidden = window.getComputedStyle(expBox).display === 'none';
+                    if (isHidden) {
+                        expBox.style.display = 'block';
+                        toggleBtn.innerText = 'إخفاء الإجابة';
+                        toggleBtn.classList.add('active');
                     } else {
-                        optItem.classList.add('wrong');
-                        siblings.forEach(s => {
-                            const radio = s.querySelector('input[type="radio"]');
-                            const candidateIndex = radio ? Number(radio.dataset.optionIndex) : -1;
-                            if (isQuestionAnswerCorrect(q, candidateIndex, radio?.value || '', opts)) {
-                                s.classList.add('correct');
-                            }
-                        });
-                    }
-
-                    if (navBar) {
-                        const pill = navBar.querySelector(`.dent-nav-pill[data-idx="${index}"]`);
-                        if (pill) {
-                            pill.classList.remove('answered');
-                            if (isMatch) pill.classList.add('correct');
-                            else pill.classList.add('wrong');
-                        }
-                    }
-                    
-                    const expBox = qBlock.querySelector('.dent-explanation-box');
-                    if (expBox) expBox.style.display = 'block';
-
-                    const totalQuestions = generatedQuestions.length;
-                    const answeredQuestions = document.querySelectorAll('.dent-q-block input[type="radio"]:checked').length;
-                    if (answeredQuestions === totalQuestions) {
-                        setTimeout(() => submitQuiz(), 600);
+                        expBox.style.display = 'none';
+                        toggleBtn.innerText = 'إظهار الإجابة';
+                        toggleBtn.classList.remove('active');
                     }
                 });
 
-                optList.appendChild(optItem);
-            });
-            
-            qBlock.appendChild(optList);
+                qBlock.appendChild(toggleBtn);
+                qBlock.appendChild(expBox);
+            } else if (q.type === 'info') {
+                const infoBody = document.createElement('div');
+                infoBody.className = 'dent-info-body';
+                infoBody.style.direction = questionLanguage === 'ar' ? 'rtl' : 'ltr';
+                infoBody.style.textAlign = questionLanguage === 'ar' ? 'right' : 'left';
+                infoBody.innerHTML = q.answer || q.content || '';
+                qBlock.appendChild(infoBody);
+            } else {
+                const optList = document.createElement('div');
+                optList.className = 'dent-opt-list';
+                
+                let opts = ["صحيح", "خاطئ"];
+                if (q.options && q.options.length > 0) {
+                    opts = q.options;
+                }
+                
+                opts.forEach((opt, optIndex) => {
+                    const optItem = document.createElement('label');
+                    optItem.className = 'dent-opt-item';
+                    const optionMatch = String(opt).match(/^\s*([A-Ha-h]|[أإآابجدههـوزح])(?:[.)\-:\s]+)([\s\S]*)$/u);
+                    const optionLetters = questionLanguage === 'ar'
+                        ? ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح']
+                        : ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+                    const optionLetter = optionLetters[optIndex] ? '.' + optionLetters[optIndex] : '';
+                    const optionText = optionMatch ? optionMatch[2] : String(opt);
+                    optItem.innerHTML = `
+                        <input type="radio" name="q_${index}" value="${escapeHtml(opt)}" data-option-index="${optIndex}">
+                        <span class="dent-opt-letter">${optionLetter}</span>
+                        <span class="dent-opt-text">${escapeHtml(optionText)}</span>
+                    `;
+                    
+                    // Instant Feedback on click
+                    optItem.querySelector('input').addEventListener('change', () => {
+                        const siblings = optList.querySelectorAll('.dent-opt-item');
+                        siblings.forEach(s => s.classList.remove('selected'));
+                        optItem.classList.add('selected');
 
-            const expBox = document.createElement('div');
-            expBox.className = 'dent-explanation-box';
-            const isEnglishQuiz = questionLanguage === 'en';
-            const expPrefix = isEnglishQuiz ? '<strong>Explanation:</strong> ' : '<strong>توضيح الإجابة:</strong> ';
-            const expFallback = isEnglishQuiz ? ('Correct answer: ' + (q.correctAnswer || '')) : ('الإجابة الصحيحة هي: ' + (q.correctAnswer || ''));
-            expBox.style.direction = isEnglishQuiz ? 'ltr' : 'rtl';
-            expBox.style.textAlign = isEnglishQuiz ? 'left' : 'right';
-            expBox.innerHTML = expPrefix + escapeHtml(q.explanation || expFallback);
-            qBlock.appendChild(expBox);
+                        const userVal = opt.trim();
+                        const isMatch = isQuestionAnswerCorrect(q, optIndex, userVal, opts);
+
+                        if (isMatch) {
+                            optItem.classList.add('correct');
+                        } else {
+                            optItem.classList.add('wrong');
+                            siblings.forEach(s => {
+                                const radio = s.querySelector('input[type="radio"]');
+                                const candidateIndex = radio ? Number(radio.dataset.optionIndex) : -1;
+                                if (isQuestionAnswerCorrect(q, candidateIndex, radio?.value || '', opts)) {
+                                    s.classList.add('correct');
+                                }
+                            });
+                        }
+
+                        if (navBar) {
+                            const pill = navBar.querySelector(`.dent-nav-pill[data-idx="${index}"]`);
+                            if (pill) {
+                                pill.classList.remove('answered');
+                                if (isMatch) pill.classList.add('correct');
+                                else pill.classList.add('wrong');
+                            }
+                        }
+                        
+                        const expBox = qBlock.querySelector('.dent-explanation-box');
+                        if (expBox) expBox.style.display = 'block';
+
+                        const totalQuestions = generatedQuestions.length;
+                        const answeredQuestions = document.querySelectorAll('.dent-q-block input[type="radio"]:checked').length;
+                        if (answeredQuestions === totalQuestions) {
+                            setTimeout(() => submitQuiz(), 600);
+                        }
+                    });
+
+                    optList.appendChild(optItem);
+                });
+                
+                qBlock.appendChild(optList);
+
+                const expBox = document.createElement('div');
+                expBox.className = 'dent-explanation-box';
+                const isEnglishQuiz = questionLanguage === 'en';
+                const expPrefix = isEnglishQuiz ? '<strong>Explanation:</strong> ' : '<strong>توضيح الإجابة:</strong> ';
+                const expFallback = isEnglishQuiz ? ('Correct answer: ' + (q.correctAnswer || '')) : ('الإجابة الصحيحة هي: ' + (q.correctAnswer || ''));
+                expBox.style.direction = isEnglishQuiz ? 'ltr' : 'rtl';
+                expBox.style.textAlign = isEnglishQuiz ? 'left' : 'right';
+                expBox.innerHTML = expPrefix + escapeHtml(q.explanation || expFallback);
+                qBlock.appendChild(expBox);
+            }
 
             container.appendChild(qBlock);
         });
@@ -2342,7 +2392,13 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         updateViewDisplay();
 
         const submitBtn = document.getElementById('dp-submit-btn');
-        if (submitBtn) submitBtn.style.display = 'block';
+        if (submitBtn) submitBtn.style.display = isCardsQuiz ? 'none' : 'block';
+        if (isCardsQuiz) {
+            const navBarEl = document.getElementById('dp-navigator');
+            if (navBarEl) navBarEl.style.display = 'none';
+            const modesRowEl = document.querySelector('.dent-player-modes-row');
+            if (modesRowEl) modesRowEl.style.display = 'none';
+        }
 
         playerView.style.display = 'block';
         scrollToQuizContainer();
@@ -2350,8 +2406,16 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
     function toggleRevealAllAnswers() {
         const expBoxes = document.querySelectorAll('.dent-explanation-box');
+        const toggles = document.querySelectorAll('.dent-ans-toggle');
+        const anyHidden = Array.from(expBoxes).some(b => window.getComputedStyle(b).display === 'none');
+        
         expBoxes.forEach(box => {
-            box.style.display = (box.style.display === 'block') ? 'none' : 'block';
+            box.style.display = anyHidden ? 'block' : 'none';
+        });
+        toggles.forEach(btn => {
+            btn.innerText = anyHidden ? 'إخفاء الإجابة' : 'إظهار الإجابة';
+            if (anyHidden) btn.classList.add('active');
+            else btn.classList.remove('active');
         });
     }
 
