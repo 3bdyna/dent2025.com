@@ -2741,53 +2741,63 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         return _quizHtmlToImagePromise;
     }
 
-    const DENT_QUIZ_EXPORT_CSS = `
-        .a4-print-sheet,.a4-print-sheet *{box-sizing:border-box;letter-spacing:normal !important;word-spacing:normal !important;box-shadow:none !important;-webkit-box-shadow:none !important;filter:none !important;}
-        .a4-print-sheet{font-family:'Cairo','Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background-color:#121212 !important;background-image:radial-gradient(rgba(255,255,255,0.075) 1.2px,transparent 1.2px) !important;background-size:20px 20px !important;color:#f4f4f5;direction:rtl;font-size:13px;box-sizing:border-box !important;width:860px !important;min-width:860px !important;max-width:860px !important;padding:16mm 20mm !important;margin:0 auto !important;border:1px solid #262626;border-radius:4px;-webkit-text-size-adjust:100% !important;text-size-adjust:100% !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
-        @media print{
-            @page{size:A4 portrait;margin:10mm;}
-            body{background:#121212 !important;padding:0 !important;}
-            .no-print{display:none !important;}
-            .a4-print-sheet{box-sizing:border-box !important;width:100% !important;min-width:100% !important;max-width:100% !important;padding:14mm 16mm !important;margin:0 auto !important;box-shadow:none !important;border:none !important;border-radius:0 !important;background-color:#121212 !important;background-image:radial-gradient(rgba(255,255,255,0.075) 1.2px,transparent 1.2px) !important;background-size:20px 20px !important;}
-            .quiz-q-block{page-break-inside:avoid !important;break-inside:avoid !important;}
-        }
-        .doc-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:2px solid #2a2a2a;margin-bottom:16px;}
-        .doc-titles{text-align:right;}
-        .doc-main-heading{font-size:1.30rem !important;font-weight:900 !important;color:#ffffff !important;line-height:1.25 !important;margin:0 0 4px 0 !important;white-space:nowrap !important;display:block !important;}
-        .doc-sub-heading{font-size:0.78rem !important;color:#a1a1aa !important;font-weight:700 !important;margin:0 !important;text-align:right !important;white-space:nowrap !important;display:block !important;}
-        .doc-meta-badge{text-align:left;direction:ltr;display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
-        .doc-meta-badge .period{display:inline-block;background:#1c1c1c;border:1px solid #2e2e2e;padding:4px 10px;border-radius:6px;font-size:0.74rem;font-weight:700;color:#ffffff;font-family:'Outfit',sans-serif;white-space:nowrap !important;}
-        .doc-meta-badge .subperiod{display:block;font-size:0.70rem;color:#71717a;font-weight:600;text-align:left;direction:rtl;white-space:nowrap !important;}
-        .quiz-q-block{margin-bottom:14px;background:#181818;border:1px solid #2a2a2a;border-radius:8px;overflow:hidden;page-break-inside:avoid !important;break-inside:avoid !important;}
-        .quiz-q-header{background:#202020;color:#ffffff;padding:7px 14px;font-size:0.78rem;font-weight:700;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2a2a2a;}
-        .quiz-q-num{font-family:'Outfit',sans-serif;font-weight:800;font-size:0.82rem;color:#ffffff;display:inline-flex;align-items:center;gap:6px;}
-        .quiz-type-badge{display:inline-block;font-size:0.62rem;font-weight:600;padding:2px 7px;border-radius:4px;white-space:nowrap;background:#27272a;color:#e4e4e7;border:1px solid #383838;}
-        .quiz-q-chapter{font-size:0.70rem;color:#71717a;font-weight:600;font-family:'Outfit','Cairo',sans-serif;}
-        .quiz-q-body{padding:12px 14px;}
-        .quiz-q-title{font-size:0.86rem;font-weight:800;color:#ffffff;line-height:1.5;margin-bottom:10px;text-align:left;direction:ltr;font-family:'Outfit',sans-serif;}
-        .quiz-q-title.is-rtl{text-align:right;direction:rtl;font-family:'Cairo',sans-serif;}
-        .quiz-options-list{display:flex;flex-direction:column;gap:5px;direction:ltr;text-align:left;}
-        .quiz-options-list.is-rtl{direction:rtl;text-align:right;}
-        .quiz-opt-row{display:flex;align-items:flex-start;gap:8px;padding:6px 10px;background:#141414;border:1px solid #222222;border-radius:5px;font-size:0.79rem;color:#a1a1aa;line-height:1.4;font-family:'Outfit',sans-serif;}
-        .quiz-opt-row.is-rtl{font-family:'Cairo',sans-serif;}
-        .quiz-opt-row.is-correct{font-weight:700 !important;color:#ffffff !important;background:#222225 !important;border-color:#3f3f46 !important;}
-        .quiz-opt-text{flex:1;}
-        .quiz-explanation-box{margin-top:10px;background:#151515;border:1px solid #262626;border-radius:6px;padding:7px 11px;font-size:0.72rem;color:#a1a1aa;line-height:1.45;direction:ltr;text-align:left;font-family:'Outfit',sans-serif;}
-        .quiz-explanation-box.is-rtl{direction:rtl;text-align:right;font-family:'Cairo',sans-serif;}
-        .quiz-explanation-box strong{color:#d4d4d8;}
-        .quiz-short-answer-box{background:#151515;border:1px solid #262626;border-radius:6px;padding:8px 12px;direction:ltr;text-align:left;font-family:'Outfit',sans-serif;}
-        .quiz-short-answer-box.is-rtl{direction:rtl;text-align:right;font-family:'Cairo',sans-serif;}
-        .quiz-short-answer-label{font-size:0.68rem;font-weight:700;color:#a1a1aa;margin-bottom:5px;}
-        .quiz-short-answer-content{font-size:0.80rem;color:#f4f4f5;line-height:1.5;}
-        .quiz-short-answer-content ol,.quiz-short-answer-content ul{margin:0;padding-left:18px;}
-        .quiz-short-answer-content.is-rtl ol,.quiz-short-answer-content.is-rtl ul{padding-left:0;padding-right:18px;}
-        .quiz-short-answer-content li{margin-bottom:2px;}
-        .doc-footer{margin-top:16px;padding-top:10px;border-top:1px solid #2a2a2a;display:flex;justify-content:space-between;align-items:center;font-size:0.70rem;color:#71717a;page-break-inside:avoid;break-inside:avoid;}
-        .doc-footer-right{font-family:'Outfit',sans-serif;font-weight:700;color:#a1a1aa;direction:ltr;}
-        .doc-footer-left{font-family:'Outfit',sans-serif;font-weight:600;color:#71717a;direction:ltr;white-space:nowrap !important;}
-    `;
+    function getQuizExportCss(isMobile = false) {
+        const sheetWidth = isMobile ? '430px' : '840px';
+        const sheetPadding = isMobile ? '10px 10px' : '8mm 12mm';
+        const titleSize = isMobile ? '1.02rem' : '1.18rem';
+        const subSize = isMobile ? '0.70rem' : '0.74rem';
+        const qTitleSize = isMobile ? '0.78rem' : '0.82rem';
+        const optSize = isMobile ? '0.72rem' : '0.75rem';
 
-    function generateQuizSheetHtml(quizData, includeExplanations = true) {
+        return `
+            .a4-print-sheet,.a4-print-sheet *{box-sizing:border-box;letter-spacing:normal !important;word-spacing:normal !important;box-shadow:none !important;-webkit-box-shadow:none !important;filter:none !important;}
+            .a4-print-sheet{font-family:'Cairo','Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background-color:#121212 !important;background-image:radial-gradient(rgba(255,255,255,0.075) 1.2px,transparent 1.2px) !important;background-size:20px 20px !important;color:#f4f4f5;direction:rtl;font-size:12px;box-sizing:border-box !important;width:${sheetWidth} !important;min-width:${sheetWidth} !important;max-width:${sheetWidth} !important;padding:${sheetPadding} !important;margin:0 auto !important;border:1px solid #262626;border-radius:4px;-webkit-text-size-adjust:100% !important;text-size-adjust:100% !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+            @media print{
+                @page{size:A4 portrait;margin:8mm;}
+                body{background:#121212 !important;padding:0 !important;}
+                .no-print{display:none !important;}
+                .a4-print-sheet{box-sizing:border-box !important;width:100% !important;min-width:100% !important;max-width:100% !important;padding:8mm 10mm !important;margin:0 auto !important;box-shadow:none !important;border:none !important;border-radius:0 !important;background-color:#121212 !important;background-image:radial-gradient(rgba(255,255,255,0.075) 1.2px,transparent 1.2px) !important;background-size:20px 20px !important;}
+                .quiz-q-block{page-break-inside:avoid !important;break-inside:avoid !important;}
+            }
+            .doc-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1.5px solid #2a2a2a;margin-bottom:8px;gap:8px;}
+            .doc-titles{text-align:right;flex:1;min-width:0;}
+            .doc-main-heading{font-size:${titleSize} !important;font-weight:900 !important;color:#ffffff !important;line-height:1.2 !important;margin:0 0 2px 0 !important;overflow:hidden;text-overflow:ellipsis;}
+            .doc-sub-heading{font-size:${subSize} !important;color:#a1a1aa !important;font-weight:700 !important;margin:0 !important;line-height:1.3;overflow:hidden;text-overflow:ellipsis;}
+            .doc-meta-badge{text-align:left;direction:ltr;display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;}
+            .doc-meta-badge .period{display:inline-block;background:#1c1c1c;border:1px solid #2e2e2e;padding:2px 7px;border-radius:4px;font-size:0.68rem;font-weight:700;color:#ffffff;font-family:'Outfit',sans-serif;white-space:nowrap !important;}
+            .doc-meta-badge .subperiod{display:block;font-size:0.64rem;color:#71717a;font-weight:600;text-align:left;direction:rtl;white-space:nowrap !important;}
+            .quiz-q-block{margin-bottom:6px;background:#181818;border:1px solid #242424;border-radius:6px;padding:7px 10px;page-break-inside:avoid !important;break-inside:avoid !important;}
+            .quiz-q-top-row{display:flex;align-items:baseline;justify-content:space-between;gap:6px;margin-bottom:4px;}
+            .quiz-q-num-badge{font-family:'Outfit',sans-serif;font-weight:800;font-size:0.78rem;color:#ffffff;display:inline-flex;align-items:center;gap:5px;}
+            .quiz-type-badge{display:inline-block;font-size:0.58rem;font-weight:600;padding:1px 5px;border-radius:3px;white-space:nowrap;background:#222222;color:#d4d4d8;border:1px solid #333333;}
+            .quiz-q-chapter{font-size:0.66rem;color:#71717a;font-weight:600;font-family:'Outfit','Cairo',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+            .quiz-q-title{font-size:${qTitleSize};font-weight:700;color:#ffffff;line-height:1.35;margin-bottom:5px;text-align:left;direction:ltr;font-family:'Outfit',sans-serif;}
+            .quiz-q-title.is-rtl{text-align:right;direction:rtl;font-family:'Cairo',sans-serif;}
+            .quiz-options-list{display:flex;flex-direction:column;gap:3px;direction:ltr;text-align:left;}
+            .quiz-options-list.is-rtl{direction:rtl;text-align:right;}
+            .quiz-opt-row{display:flex;align-items:flex-start;gap:6px;padding:3px 7px;background:#141414;border:1px solid #1f1f1f;border-radius:4px;font-size:${optSize};color:#a1a1aa;line-height:1.3;font-family:'Outfit',sans-serif;}
+            .quiz-opt-row.is-rtl{font-family:'Cairo',sans-serif;}
+            .quiz-opt-row.is-correct{font-weight:700 !important;color:#ffffff !important;background:#222225 !important;border-color:#383838 !important;}
+            .quiz-opt-text{flex:1;}
+            .quiz-explanation-box{margin-top:4px;background:#151515;border:1px solid #222222;border-radius:4px;padding:4px 7px;font-size:0.66rem;color:#a1a1aa;line-height:1.35;direction:ltr;text-align:left;font-family:'Outfit',sans-serif;}
+            .quiz-explanation-box.is-rtl{direction:rtl;text-align:right;font-family:'Cairo',sans-serif;}
+            .quiz-explanation-box strong{color:#d4d4d8;}
+            .quiz-short-answer-box{background:#141414;border:1px solid #222222;border-radius:4px;padding:5px 8px;direction:ltr;text-align:left;font-family:'Outfit',sans-serif;}
+            .quiz-short-answer-box.is-rtl{direction:rtl;text-align:right;font-family:'Cairo',sans-serif;}
+            .quiz-short-answer-label{font-size:0.62rem;font-weight:700;color:#a1a1aa;margin-bottom:2px;}
+            .quiz-short-answer-content{font-size:0.74rem;color:#f4f4f5;line-height:1.4;}
+            .quiz-short-answer-content ol,.quiz-short-answer-content ul{margin:0;padding-left:14px;}
+            .quiz-short-answer-content.is-rtl ol,.quiz-short-answer-content.is-rtl ul{padding-left:0;padding-right:14px;}
+            .quiz-short-answer-content li{margin-bottom:1px;}
+            .doc-footer{margin-top:8px;padding-top:6px;border-top:1px solid #242424;display:flex;justify-content:space-between;align-items:center;font-size:0.64rem;color:#71717a;page-break-inside:avoid;break-inside:avoid;}
+            .doc-footer-right{font-family:'Outfit',sans-serif;font-weight:700;color:#a1a1aa;direction:ltr;}
+            .doc-footer-left{font-family:'Outfit',sans-serif;font-weight:600;color:#71717a;direction:ltr;white-space:nowrap !important;}
+        `;
+    }
+
+    function generateQuizSheetHtml(quizData, includeExplanations = true, format = 'pc') {
+        const isMobile = (format === 'phone');
+        const sheetWidth = isMobile ? 430 : 840;
         const quizName = escapeHtml(quizData?.quiz_name || 'اختبار تجريبي');
         const subjectName = escapeHtml(quizData?.subject_name || 'مادة دراسية');
         const questions = Array.isArray(quizData?.questions) ? quizData.questions : [];
@@ -2853,16 +2863,14 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
             return `
                 <div class="quiz-q-block">
-                    <div class="quiz-q-header">
-                        <div class="quiz-q-num">
+                    <div class="quiz-q-top-row">
+                        <div class="quiz-q-num-badge">
                             <span>Q${qNum}</span>
                             <span class="quiz-type-badge">${typeBadgeLabel}</span>
                         </div>
-                        {chapterBadge}
+                        ${chapterBadge}
                     </div>
-                    <div class="quiz-q-body">
-                        ${bodyContent.join('')}
-                    </div>
+                    ${bodyContent.join('')}
                 </div>
             `;
         }).join('');
@@ -2870,17 +2878,18 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const today = new Date();
         const todayMonth = today.toLocaleDateString('en-US', { month: 'short' });
         const todayFormatted = `${today.getDate()} ${todayMonth} ${today.getFullYear()}`;
+        const viewLabel = isMobile ? 'Phone View' : 'PC View';
 
         return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=860, initial-scale=0.75">
+    <meta name="viewport" content="width=${sheetWidth}, initial-scale=0.75">
     <title>${quizName} — Dent2025</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>${DENT_QUIZ_EXPORT_CSS}</style>
+    <style>${getQuizExportCss(isMobile)}</style>
 </head>
 <body>
     <div class="a4-print-sheet">
@@ -2899,15 +2908,17 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
         <div class="doc-footer">
             <span class="doc-footer-right">dent2025.com</span>
-            <span class="doc-footer-left" dir="ltr">${todayFormatted}</span>
+            <span class="doc-footer-left" dir="ltr">${viewLabel} • ${todayFormatted}</span>
         </div>
     </div>
 </body>
 </html>`;
     }
 
-    async function renderQuizSheetSandbox(quizData, includeExplanations) {
-        const fullHtml = generateQuizSheetHtml(quizData, includeExplanations);
+    async function renderQuizSheetSandbox(quizData, includeExplanations, format = 'pc') {
+        const isMobile = (format === 'phone');
+        const targetWidth = isMobile ? 430 : 840;
+        const fullHtml = generateQuizSheetHtml(quizData, includeExplanations, format);
         const styleMatch = fullHtml.match(/<style>([\s\S]*?)<\/style>/i);
         const sheetMatch = fullHtml.match(/(<div class="a4-print-sheet"[\s\S]*?<\/div>\s*)<\/body>/i);
 
@@ -2919,7 +2930,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
         const sandbox = document.createElement('div');
         sandbox.id = 'dent-quiz-sandbox';
-        sandbox.style.cssText = 'position:fixed; top:0; left:-9999px; width:860px; min-width:860px; max-width:860px; opacity:0; pointer-events:none; z-index:-1; overflow:visible; background:#121212;';
+        sandbox.style.cssText = `position:fixed; top:0; left:-9999px; width:${targetWidth}px; min-width:${targetWidth}px; max-width:${targetWidth}px; opacity:0; pointer-events:none; z-index:-1; overflow:visible; background:#121212;`;
         sandbox.innerHTML = `<style>${styleContent}</style>${sheetContent}`;
         document.body.appendChild(sandbox);
 
@@ -2931,19 +2942,19 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             throw new Error('تعذر العثور على محتوى الاختبار للتصدير.');
         }
 
-        targetEl.style.width = '860px';
-        targetEl.style.minWidth = '860px';
-        targetEl.style.maxWidth = '860px';
+        targetEl.style.width = `${targetWidth}px`;
+        targetEl.style.minWidth = `${targetWidth}px`;
+        targetEl.style.maxWidth = `${targetWidth}px`;
         targetEl.style.boxSizing = 'border-box';
 
-        const targetWidth = 860;
         const targetHeight = targetEl.offsetHeight || targetEl.scrollHeight || 1200;
 
         return {
             sandbox,
             targetEl,
             width: targetWidth,
-            height: targetHeight
+            height: targetHeight,
+            format
         };
     }
 
@@ -2982,6 +2993,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             return;
         }
 
+        let selectedFormat = (window.innerWidth <= 640) ? 'phone' : 'pc';
+
         modal = document.createElement('div');
         modal.id = 'dent-quiz-export-modal';
         modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10, 10, 15, 0.85); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:9999999; display:flex; justify-content:center; align-items:center; direction:rtl; font-family:\'Outfit\',\'Noto Kufi Arabic\',sans-serif; padding:16px; box-sizing:border-box;';
@@ -2998,6 +3011,18 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                         <div style="font-size:0.75rem; color:#94a3b8; margin-top:2px;">${qTitle} • ${qCount} سؤال</div>
                     </div>
                     <button type="button" onclick="document.getElementById('dent-quiz-export-modal').remove()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;">×</button>
+                </div>
+
+                <div style="margin-bottom:12px;">
+                    <div style="font-size:0.72rem; color:#a1a1aa; font-weight:600; margin-bottom:6px;">تنسيق وحجم العرض:</div>
+                    <div style="display:flex; background:#121214; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:3px; gap:4px;">
+                        <button type="button" id="dq-fmt-pc" style="flex:1; height:34px; border-radius:7px; border:none; ${selectedFormat === 'pc' ? 'background:#27272a; color:#fff; font-weight:700;' : 'background:transparent; color:#a1a1aa; font-weight:600;'} font-size:0.78rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; font-family:inherit; transition:all 0.15s ease;">
+                            <span>🖥️ كمبيوتر (عريض)</span>
+                        </button>
+                        <button type="button" id="dq-fmt-phone" style="flex:1; height:34px; border-radius:7px; border:none; ${selectedFormat === 'phone' ? 'background:#27272a; color:#fff; font-weight:700;' : 'background:transparent; color:#a1a1aa; font-weight:600;'} font-size:0.78rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; font-family:inherit; transition:all 0.15s ease;">
+                            <span>📱 جوال (طولي Retina)</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
@@ -3023,30 +3048,61 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 </label>
 
                 <div style="font-size:0.72rem; color:#71717a; text-align:center; line-height:1.4;">
-                    يتم تصدير الاختبار كاملاً بتنسيق أكاديمي داكن موحد ومطابق لمظهر الموقع.
+                    يتم تصدير الاختبار كاملاً بتنسيق أكاديمي مدمج ومطابق لمظهر الموقع.
                 </div>
             </div>
         `;
 
         document.body.appendChild(modal);
 
+        const btnFmtPc = modal.querySelector('#dq-fmt-pc');
+        const btnFmtPhone = modal.querySelector('#dq-fmt-phone');
+
+        function updateFmtButtons() {
+            if (selectedFormat === 'pc') {
+                btnFmtPc.style.background = '#27272a';
+                btnFmtPc.style.color = '#fff';
+                btnFmtPc.style.fontWeight = '700';
+                btnFmtPhone.style.background = 'transparent';
+                btnFmtPhone.style.color = '#a1a1aa';
+                btnFmtPhone.style.fontWeight = '600';
+            } else {
+                btnFmtPhone.style.background = '#27272a';
+                btnFmtPhone.style.color = '#fff';
+                btnFmtPhone.style.fontWeight = '700';
+                btnFmtPc.style.background = 'transparent';
+                btnFmtPc.style.color = '#a1a1aa';
+                btnFmtPc.style.fontWeight = '600';
+            }
+        }
+
+        btnFmtPc.addEventListener('click', () => {
+            selectedFormat = 'pc';
+            updateFmtButtons();
+        });
+
+        btnFmtPhone.addEventListener('click', () => {
+            selectedFormat = 'phone';
+            updateFmtButtons();
+        });
+
         modal.querySelector('#dq-btn-export-pdf').addEventListener('click', () => {
             const incExp = !!document.getElementById('dq-exp-inc-explanations')?.checked;
-            executeSaveQuizAsPdf(quizData, incExp);
+            executeSaveQuizAsPdf(quizData, incExp, selectedFormat);
         });
 
         modal.querySelector('#dq-btn-export-image').addEventListener('click', () => {
             const incExp = !!document.getElementById('dq-exp-inc-explanations')?.checked;
-            executeSaveQuizAsImage(quizData, incExp);
+            executeSaveQuizAsImage(quizData, incExp, selectedFormat);
         });
 
         modal.querySelector('#dq-btn-export-print').addEventListener('click', () => {
             const incExp = !!document.getElementById('dq-exp-inc-explanations')?.checked;
-            executePrintQuiz(quizData, incExp);
+            executePrintQuiz(quizData, incExp, selectedFormat);
         });
     }
 
-    async function executeSaveQuizAsPdf(quizData, includeExplanations) {
+    async function executeSaveQuizAsPdf(quizData, includeExplanations, format = 'pc') {
         const btn = document.getElementById('dq-btn-export-pdf');
         const origHtml = btn ? btn.innerHTML : '';
         if (btn) {
@@ -3054,16 +3110,18 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             btn.innerHTML = `<span style="white-space:nowrap;">جاري إنشاء PDF...</span>`;
         }
         try {
+            const isMobile = (format === 'phone');
             const jsPdfPromise = loadQuizJsPdf();
-            const { sandbox, targetEl, width, height } = await renderQuizSheetSandbox(quizData, includeExplanations);
+            const { sandbox, targetEl, width, height } = await renderQuizSheetSandbox(quizData, includeExplanations, format);
 
             const htmlToImage = await loadQuizHtmlToImage();
+            const pixelRatio = isMobile ? 2.5 : 2.0;
             const pngDataUrl = await htmlToImage.toPng(targetEl, {
-                pixelRatio: 2.0,
+                pixelRatio: pixelRatio,
                 width: width,
                 height: height,
-                canvasWidth: Math.round(width * 2.0),
-                canvasHeight: Math.round(height * 2.0),
+                canvasWidth: Math.round(width * pixelRatio),
+                canvasHeight: Math.round(height * pixelRatio),
                 skipFonts: true,
                 backgroundColor: '#121212',
                 style: { boxShadow: 'none', filter: 'none' }
@@ -3072,7 +3130,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             sandbox.remove();
 
             const jsPdfClass = await jsPdfPromise;
-            const pdfPageWidth = 210;
+            const pdfPageWidth = isMobile ? 120 : 210;
             const imgHeightMm = (height / width) * pdfPageWidth;
             const pdfPageHeight = Math.round(imgHeightMm * 100) / 100;
             const pdfOrientation = pdfPageHeight >= pdfPageWidth ? 'p' : 'l';
@@ -3090,7 +3148,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
             const pdfBlob = pdf.output('blob');
             const cleanTitle = (quizData.quiz_name || 'Quiz').replace(/[\/\\?%*:|"<>]/g, '_').trim();
-            const fileName = `Dent2025_${cleanTitle}.pdf`;
+            const suffix = isMobile ? '_Mobile' : '';
+            const fileName = `Dent2025_${cleanTitle}${suffix}.pdf`;
             const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
             document.getElementById('dent-quiz-export-modal')?.remove();
@@ -3105,7 +3164,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         }
     }
 
-    async function executeSaveQuizAsImage(quizData, includeExplanations) {
+    async function executeSaveQuizAsImage(quizData, includeExplanations, format = 'pc') {
         const btn = document.getElementById('dq-btn-export-image');
         const origHtml = btn ? btn.innerHTML : '';
         if (btn) {
@@ -3113,15 +3172,17 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             btn.innerHTML = `<span style="white-space:nowrap;">جاري تجهيز الصورة...</span>`;
         }
         try {
-            const { sandbox, targetEl, width, height } = await renderQuizSheetSandbox(quizData, includeExplanations);
+            const isMobile = (format === 'phone');
+            const { sandbox, targetEl, width, height } = await renderQuizSheetSandbox(quizData, includeExplanations, format);
 
             const htmlToImage = await loadQuizHtmlToImage();
+            const pixelRatio = isMobile ? 2.5 : 2.0;
             const blob = await htmlToImage.toBlob(targetEl, {
-                pixelRatio: 2.0,
+                pixelRatio: pixelRatio,
                 width: width,
                 height: height,
-                canvasWidth: Math.round(width * 2.0),
-                canvasHeight: Math.round(height * 2.0),
+                canvasWidth: Math.round(width * pixelRatio),
+                canvasHeight: Math.round(height * pixelRatio),
                 skipFonts: true,
                 backgroundColor: '#121212',
                 style: { boxShadow: 'none', filter: 'none' }
@@ -3132,7 +3193,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             if (!blob) throw new Error('فشل إنشاء ملف الصورة.');
 
             const cleanTitle = (quizData.quiz_name || 'Quiz').replace(/[\/\\?%*:|"<>]/g, '_').trim();
-            const fileName = `Dent2025_${cleanTitle}.png`;
+            const suffix = isMobile ? '_Mobile' : '';
+            const fileName = `Dent2025_${cleanTitle}${suffix}.png`;
             const file = new File([blob], fileName, { type: 'image/png' });
 
             document.getElementById('dent-quiz-export-modal')?.remove();
@@ -3158,11 +3220,13 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         }
     }
 
-    function executePrintQuiz(quizData, includeExplanations) {
+    function executePrintQuiz(quizData, includeExplanations, format = 'pc') {
         document.getElementById('dent-quiz-export-modal')?.remove();
-        const html = generateQuizSheetHtml(quizData, includeExplanations);
+        const isMobile = (format === 'phone');
+        const html = generateQuizSheetHtml(quizData, includeExplanations, format);
         const printFrame = document.createElement('iframe');
-        printFrame.style.cssText = 'position:fixed; top:-9999px; left:-9999px; width:860px; height:1000px; border:none; visibility:hidden;';
+        const frameWidth = isMobile ? '430px' : '840px';
+        printFrame.style.cssText = `position:fixed; top:-9999px; left:-9999px; width:${frameWidth}; height:1000px; border:none; visibility:hidden;`;
         document.body.appendChild(printFrame);
         
         const doc = printFrame.contentWindow.document;
