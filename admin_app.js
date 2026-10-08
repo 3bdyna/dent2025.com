@@ -361,7 +361,10 @@ window.AdminApp = {
 
     prefetchQuizzes() {
         if (this.quizzesData && this.quizzesData.length) return;
-        fetch(API_BASE + '/backend/api_ai_exam.php?action=list_quizzes')
+        const pass = this.pass || sessionStorage.getItem('dent2025_admin_pass') || '';
+        let url = API_BASE + '/backend/api_ai_exam.php?action=list_quizzes&include_hidden=1';
+        if (pass) url += '&password=' + encodeURIComponent(pass);
+        fetch(url, { headers: { 'X-Admin-Pass': pass } })
         .then(r => r.json())
         .then(res => {
             if (res.success && Array.isArray(res.data)) {
@@ -4299,9 +4302,12 @@ window.AdminApp = {
             this.showLoading(true);
         }
 
-        let params = new URLSearchParams({ action: 'list_quizzes' });
+        let params = new URLSearchParams({ action: 'list_quizzes', include_hidden: '1' });
+        if (this.pass) params.append('password', this.pass);
 
-        fetch(API_BASE + '/backend/api_ai_exam.php?' + params.toString())
+        fetch(API_BASE + '/backend/api_ai_exam.php?' + params.toString(), {
+            headers: { 'X-Admin-Pass': this.pass || '' }
+        })
         .then(r => {
             if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
             return r.text();
@@ -4360,7 +4366,7 @@ window.AdminApp = {
         if (countSpan) countSpan.innerText = displayList.length;
 
         if (displayList.length === 0) {
-            if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-gray-400">لا توجد اختبارات محفوظة حالياً في هذا النطاق.</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-gray-400">لا توجد اختبارات محفوظة حالياً في هذا النطاق.</td></tr>';
             if (mobileCards) mobileCards.innerHTML = '<div class="p-8 text-center text-xs text-gray-400">لا توجد اختبارات محفوظة حالياً في هذا النطاق.</div>';
             return;
         }
@@ -4386,19 +4392,34 @@ window.AdminApp = {
             if (q.semester !== null && q.semester !== undefined && q.semester !== '') scopeParts.push(`فصل ${q.semester}`);
             const scopeLabel = scopeParts.length > 0 ? scopeParts.join(' | ') : 'غير محدد';
 
+            const isHidden = !!(q.is_hidden || q.hidden);
+            const statusBadge = isHidden
+                ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>مخفي</span>`
+                : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>مرئي</span>`;
+
+            const hideShowBtn = isHidden
+                ? `<button onclick="AdminApp.toggleQuizVisibility('${q.id}', false)" class="btn btn-secondary text-xs px-2.5 py-1.5 font-medium text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10" title="إظهار الاختبار للطلاب">إظهار</button>`
+                : `<button onclick="AdminApp.toggleQuizVisibility('${q.id}', true)" class="btn btn-secondary text-xs px-2.5 py-1.5 font-medium text-amber-400 border-amber-500/30 hover:bg-amber-500/10" title="إخفاء الاختبار عن الطلاب">إخفاء</button>`;
+
+            const mobileHideShowBtn = isHidden
+                ? `<button onclick="AdminApp.toggleQuizVisibility('${q.id}', false)" class="btn btn-secondary text-xs px-2.5 py-1 text-emerald-400 border-emerald-500/30">إظهار</button>`
+                : `<button onclick="AdminApp.toggleQuizVisibility('${q.id}', true)" class="btn btn-secondary text-xs px-2.5 py-1 text-amber-400 border-amber-500/30">إخفاء</button>`;
+
             html += `
-                <tr class="hover:bg-white/5 transition">
+                <tr class="hover:bg-white/5 transition ${isHidden ? 'bg-amber-500/[0.02]' : ''}">
                     <td class="p-4 font-semibold text-white">${this.escapeHtml(q.quiz_name)}</td>
                     <td class="p-4 text-gray-300">${this.escapeHtml(q.subject_name || 'مادة دراسية')}</td>
                     <td class="p-4">${chaptersDropdownHTML}</td>
                     <td class="p-4 text-center text-xs text-gray-300">${this.escapeHtml(scopeLabel)}</td>
                     <td class="p-4 text-center font-bold text-gray-300">${q.num_questions}</td>
+                    <td class="p-4 text-center">${statusBadge}</td>
                     <td class="p-4 text-center text-xs text-gray-400 font-mono">${q.created_at || 'N/A'}</td>
                     <td class="p-4 text-center">
-                        <div class="flex items-center justify-center gap-2">
+                        <div class="flex items-center justify-center gap-1.5">
                             <button onclick="AdminApp.openRenameQuizModal('${q.id}')" class="btn btn-secondary text-xs px-2.5 py-1.5 font-medium">
                                 تعديل الاسم
                             </button>
+                            ${hideShowBtn}
                             <button onclick="AdminApp.deleteQuiz('${q.id}')" class="btn btn-danger text-xs px-2.5 py-1.5 font-medium">
                                 حذف
                             </button>
@@ -4408,10 +4429,13 @@ window.AdminApp = {
             `;
 
             cardsHtml += `
-                <div class="bg-black/30 border border-white/10 rounded-xl p-3 space-y-2 max-w-full overflow-hidden">
+                <div class="bg-black/30 border ${isHidden ? 'border-amber-500/30' : 'border-white/10'} rounded-xl p-3 space-y-2 max-w-full overflow-hidden">
                     <div class="flex items-start justify-between gap-2">
                         <h5 class="text-white font-semibold text-sm leading-snug break-words min-w-0 flex-1">${this.escapeHtml(q.quiz_name)}</h5>
-                        <span class="text-[11px] font-mono font-bold bg-primary/10 text-accent px-2 py-0.5 rounded-full shrink-0">${q.num_questions} س</span>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            ${statusBadge}
+                            <span class="text-[11px] font-mono font-bold bg-primary/10 text-accent px-2 py-0.5 rounded-full">${q.num_questions} س</span>
+                        </div>
                     </div>
                     <div class="flex flex-wrap items-center gap-1.5 text-xs text-gray-400">
                         <span class="text-gray-300">${this.escapeHtml(q.subject_name || 'مادة دراسية')}</span>
@@ -4420,8 +4444,9 @@ window.AdminApp = {
                     </div>
                     <div class="pt-1.5 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
                         <span class="text-gray-500 font-mono text-[11px]">${q.created_at || ''}</span>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-1.5">
                             <button onclick="AdminApp.openRenameQuizModal('${q.id}')" class="btn btn-secondary text-xs px-2.5 py-1">تعديل الاسم</button>
+                            ${mobileHideShowBtn}
                             <button onclick="AdminApp.deleteQuiz('${q.id}')" class="btn btn-danger text-xs px-2.5 py-1">حذف</button>
                         </div>
                     </div>
@@ -4435,16 +4460,19 @@ window.AdminApp = {
 
     filterQuizzesTable() {
         const input = document.getElementById('quizzes-search-input');
-        if (!input || !this.quizzesData) return;
+        const visibilityFilter = document.getElementById('quizzes-visibility-filter')?.value || 'all';
+        if (!this.quizzesData) return;
 
-        const rawQuery = input.value.trim();
-        if (!rawQuery) {
-            this.renderQuizzesTable(this.quizzesData);
-            return;
-        }
+        const rawQuery = input ? input.value.trim() : '';
+        const query = rawQuery ? this.normalizeArabic(rawQuery) : '';
 
-        const query = this.normalizeArabic(rawQuery);
         const filtered = this.quizzesData.filter(q => {
+            const isHidden = !!(q.is_hidden || q.hidden);
+            if (visibilityFilter === 'visible' && isHidden) return false;
+            if (visibilityFilter === 'hidden' && !isHidden) return false;
+
+            if (!query) return true;
+
             const nameNorm = this.normalizeArabic(q.quiz_name);
             const chapNorm = this.normalizeArabic(q.chapter_name);
             const subjNorm = this.normalizeArabic(q.subject_name);
@@ -4452,6 +4480,46 @@ window.AdminApp = {
         });
 
         this.renderQuizzesTable(filtered);
+    },
+
+    async toggleQuizVisibility(quizId, shouldHide) {
+        const quiz = (this.quizzesData || []).find(q => q.id === quizId);
+        const quizName = quiz ? quiz.quiz_name : 'هذا الاختبار';
+        const actionLabel = shouldHide ? 'إخفاء' : 'إظهار';
+
+        this.showLoading(true);
+        try {
+            const res = await fetch(API_BASE + '/backend/api_ai_exam.php?action=toggle_hide_quiz', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Pass': this.pass || ''
+                },
+                body: JSON.stringify({
+                    id: quizId,
+                    is_hidden: shouldHide,
+                    password: this.pass
+                })
+            });
+
+            const data = await res.json();
+            this.showLoading(false);
+
+            if (data && data.success) {
+                const newHidden = data.quiz?.is_hidden !== undefined ? data.quiz.is_hidden : shouldHide;
+                if (quiz) {
+                    quiz.is_hidden = newHidden;
+                }
+                this.showToast(newHidden ? `تم إخفاء الاختبار "${quizName}" بنجاح` : `تم إظهار الاختبار "${quizName}" للطلاب بنجاح`);
+                this.filterQuizzesTable();
+            } else {
+                this.showToast(data && data.message ? data.message : `فشل ${actionLabel} الاختبار`, true);
+            }
+        } catch (err) {
+            this.showLoading(false);
+            console.error(`Error toggling quiz visibility:`, err);
+            this.showToast(`خطأ في الاتصال أثناء ${actionLabel} الاختبار: ${err.message}`, true);
+        }
     },
 
     openRenameQuizModal(quizId) {

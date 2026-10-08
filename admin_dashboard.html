@@ -1009,8 +1009,13 @@
  </div>
 
  <!-- Filters -->
- <div class="glass p-2.5 sm:p-3 rounded-xl flex gap-2 border border-white/5 shrink-0">
- <input type="text" id="quizzes-search-input" onkeyup="AdminApp.filterQuizzesTable()" class="input-field flex-1 text-xs py-1 px-2 h-9" placeholder="بحث باسم الاختبار...">
+ <div class="glass p-2.5 sm:p-3 rounded-xl flex flex-wrap sm:flex-nowrap gap-2 border border-white/5 shrink-0">
+ <input type="text" id="quizzes-search-input" onkeyup="AdminApp.filterQuizzesTable()" class="input-field flex-1 text-xs py-1 px-2 h-9 min-w-[140px]" placeholder="بحث باسم الاختبار...">
+ <select id="quizzes-visibility-filter" onchange="AdminApp.filterQuizzesTable()" class="input-field text-xs py-1 px-2 h-9 bg-black/40 border-white/10 text-gray-200 shrink-0">
+  <option value="all">كل الحالات</option>
+  <option value="visible">المرئية للطلاب فقط</option>
+  <option value="hidden">المخفية فقط</option>
+ </select>
  <button onclick="AdminApp.loadQuizzes()" class="btn btn-secondary text-xs py-1 px-3 shrink-0">
  تحديث
  </button>
@@ -1019,7 +1024,7 @@
  <!-- Table -->
  <div class="glass rounded-xl overflow-hidden border border-white/5">
   <div class="hidden md:block overflow-x-auto">
- <table class="w-full text-right text-xs min-w-[600px]">
+ <table class="w-full text-right text-xs min-w-[650px]">
  <thead class="bg-white/5 text-gray-400 border-b border-white/5 sticky top-0">
  <tr>
  <th class="p-2.5 font-semibold">اسم الاختبار</th>
@@ -1027,13 +1032,14 @@
  <th class="p-2.5 font-semibold">الشابتر</th>
  <th class="p-2.5 font-semibold text-center">النطاق</th>
  <th class="p-2.5 font-semibold text-center">الأسئلة</th>
+ <th class="p-2.5 font-semibold text-center">الحالة</th>
  <th class="p-2.5 font-semibold text-center">التاريخ</th>
  <th class="p-2.5 font-semibold text-center">الإجراء</th>
  </tr>
  </thead>
  <tbody id="quizzes-table-body" class="divide-y divide-white/5">
  <tr>
- <td colspan="7" class="p-6 text-center text-gray-400">جاري تحميل الاختبارات...</td>
+ <td colspan="8" class="p-6 text-center text-gray-400">جاري تحميل الاختبارات...</td>
  </tr>
  </tbody>
  </table>
