@@ -850,6 +850,14 @@ const ScheduleApp = {
             this.render(this.eventsData);
             document.getElementById('dent-add-event-btn')?.remove();
             logoutBtn.remove();
+            if (typeof window.dentReloadQuizBank === 'function') {
+                try { window.dentReloadQuizBank(); } catch(e) {}
+            }
+            try {
+                window.dispatchEvent(new CustomEvent('dent2025:auth-changed', {
+                    detail: { authenticated: false }
+                }));
+            } catch(e) {}
         };
 
         // Insert right after the stats bar

@@ -2127,14 +2127,19 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 params.append('include_hidden', '1');
                 params.append('password', adminPass);
             }
+            params.append('_t', String(Date.now()));
 
             const res = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?${params.toString()}`, {
+                cache: 'no-store',
                 headers: adminPass ? { 'X-Admin-Pass': adminPass } : {}
             });
             const json = await res.json();
 
             if (json.success && Array.isArray(json.data)) {
                 allSavedQuizzes = json.data;
+                if (!adminPass) {
+                    allSavedQuizzes = allSavedQuizzes.filter(q => !(q.is_hidden || q.hidden));
+                }
                 if (countSpan) countSpan.innerText = formatArabicQuizzesCount(allSavedQuizzes.length);
                 renderBankGrid();
             } else {
@@ -2151,8 +2156,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const subjectFilter = document.getElementById('dent-bank-subject-filter')?.value || '';
         const typeFilter = document.getElementById('dent-bank-type-filter')?.value || '';
         const searchQuery = document.getElementById('dent-bank-search')?.value?.toLowerCase().trim() || '';
+        const isAuthenticated = !!sessionStorage.getItem('dent2025_admin_pass');
 
         let filtered = allSavedQuizzes.filter(q => {
+            const isHidden = !!(q.is_hidden || q.hidden);
+            if (!isAuthenticated && isHidden) return false;
             if (subjectFilter && q.subject_id != subjectFilter) return false;
             if (typeFilter && (q.creation_mode || 'ai_generation') !== typeFilter) return false;
 
@@ -4039,15 +4047,36 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
     // Expose reload hook and listen to auth change events for instant reactivity
     window.dentReloadQuizBank = function() {
+        const isAuth = !!sessionStorage.getItem('dent2025_admin_pass');
+        if (!isAuth && Array.isArray(allSavedQuizzes)) {
+            allSavedQuizzes = allSavedQuizzes.filter(q => !(q.is_hidden || q.hidden));
+            const countSpan = document.getElementById('dent-bank-count');
+            if (countSpan) countSpan.innerText = formatArabicQuizzesCount(allSavedQuizzes.length);
+            renderBankGrid();
+        }
         return loadSavedQuizzesBank();
     };
 
-    window.addEventListener('dent2025:auth-changed', () => {
+    window.addEventListener('dent2025:auth-changed', (e) => {
+        const isAuth = !!sessionStorage.getItem('dent2025_admin_pass');
+        if (!isAuth && Array.isArray(allSavedQuizzes)) {
+            allSavedQuizzes = allSavedQuizzes.filter(q => !(q.is_hidden || q.hidden));
+            const countSpan = document.getElementById('dent-bank-count');
+            if (countSpan) countSpan.innerText = formatArabicQuizzesCount(allSavedQuizzes.length);
+            renderBankGrid();
+        }
         loadSavedQuizzesBank();
     });
 
     window.addEventListener('storage', (e) => {
         if (e.key === 'dent2025_admin_pass' || e.key === 'dent2025_permissions') {
+            const isAuth = !!sessionStorage.getItem('dent2025_admin_pass');
+            if (!isAuth && Array.isArray(allSavedQuizzes)) {
+                allSavedQuizzes = allSavedQuizzes.filter(q => !(q.is_hidden || q.hidden));
+                const countSpan = document.getElementById('dent-bank-count');
+                if (countSpan) countSpan.innerText = formatArabicQuizzesCount(allSavedQuizzes.length);
+                renderBankGrid();
+            }
             loadSavedQuizzesBank();
         }
     });

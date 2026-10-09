@@ -1866,12 +1866,22 @@ function openClassesAdminModal() {
 
 function logoutClassesAdmin() {
     sessionStorage.removeItem('dent2025_admin_pass');
+    sessionStorage.removeItem('dent2025_schedule_admin_pass');
     sessionStorage.removeItem('dent2025_permissions');
+    sessionStorage.removeItem('dent2025_passkey_info');
     const modal = document.getElementById('classes-admin-modal');
     if (modal) modal.style.display = 'none';
     const lock = document.querySelector('.dent-secret-lock');
     if (lock) lock.style.display = 'flex';
     renderClassesWidget();
+    if (typeof window.dentReloadQuizBank === 'function') {
+        try { window.dentReloadQuizBank(); } catch(e) {}
+    }
+    try {
+        window.dispatchEvent(new CustomEvent('dent2025:auth-changed', {
+            detail: { authenticated: false }
+        }));
+    } catch(e) {}
 }
 
 function saveClassEntry() {
@@ -2183,3 +2193,21 @@ window.dentFormatContext = dentFormatContext;
 window.dentIsClassActiveNow = dentIsClassActiveNow;
 window.API_BASE = API_BASE;
 window.API_BASE_URL = API_BASE_URL;
+
+// Listen for auth state changes across all page components
+window.addEventListener('dent2025:auth-changed', () => {
+    try {
+        if (typeof loadDashboardData === 'function') {
+            loadDashboardData(true);
+        }
+        if (typeof renderClassesWidget === 'function') {
+            renderClassesWidget();
+        }
+        const sel = dentGetSelection() || {};
+        if (sel && sel.specialty && typeof loadAnnouncements === 'function') {
+            loadAnnouncements(sel);
+        }
+    } catch(e) {
+        console.error('Error handling auth change in dashboard:', e);
+    }
+});
