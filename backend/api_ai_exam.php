@@ -3899,7 +3899,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $selectedChapters = $data['selectedChapters'] ?? [];
     $uploadedFiles = $data['uploadedFiles'] ?? [];
     $targetChapters = $data['targetChapters'] ?? [];
-    $quizName = $data['quizName'] ?? ($isPastExamFilter ? 'تجميعات السنوات السابقة' : 'اختبار تجريبي');
+    $quizName = !empty($data['quizName']) ? trim($data['quizName']) : ($isPastExamFilter ? 'تجميعات أسئلة السنوات السابقة' : 'اختبار تجريبي');
     $difficulty = $data['difficulty'] ?? 'medium';
 
     if (is_array($uploadedFiles) && count($uploadedFiles) > 10) {

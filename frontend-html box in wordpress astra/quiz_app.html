@@ -1093,40 +1093,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
             return baseName;
         } else {
-            // Mode 2: Past Exam Filter
-            const driveTargets = Array.from(document.querySelectorAll('.dq-target-chap-checkbox:checked')).map(cb => cb.value.trim()).filter(Boolean);
-            const uploadedTargets = targetChapterUploadedFiles.map(f => cleanFileNameForTitle(f.name)).filter(Boolean);
-            const customTargets = targetCustomChapters.map(c => c.trim()).filter(Boolean);
-            const checkedTargets = Array.from(new Set([...driveTargets, ...uploadedTargets, ...customTargets]));
-            let examFileName = '';
-            if (currentPastExamSource === 'drive') {
-                const f = Array.from(pastExamDriveFilesMap.values())[0];
-                if (f) examFileName = cleanFileNameForTitle(f.name);
-            } else if (pastExamUploadedFiles.length > 0) {
-                examFileName = cleanFileNameForTitle(pastExamUploadedFiles[0].name);
-            }
-
-            if (checkedTargets.length === 0) {
-                return isArabicSubject ? 'تجميعات أسئلة السنوات السابقة' : 'Past Exam Questions Bank';
-            }
-
-            let targetsPart = '';
-            if (checkedTargets.length === 1) {
-                targetsPart = cleanFileNameForTitle(checkedTargets[0]);
-            } else if (checkedTargets.length <= 3) {
-                targetsPart = checkedTargets.map(t => cleanFileNameForTitle(t)).join(' + ');
-            } else {
-                targetsPart = `شامل (${checkedTargets.length} شابترات)`;
-            }
-
-            let title = `تجميعات: ${targetsPart}`;
-            if (examFileName && checkedTargets.length === 1) {
-                const shortExam = examFileName.replace(/^(اختبار|تجميعات|exam)\s*[-:]?\s*/i, '').trim();
-                if (shortExam) {
-                    title += ` (${shortExam})`;
-                }
-            }
-            return title;
+            // Mode 2: Past Exam Filter (Standardized title matching all cohort exam banks)
+            return 'تجميعات أسئلة السنوات السابقة';
         }
     }
 
