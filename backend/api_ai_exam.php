@@ -172,9 +172,11 @@ function getAiExamSubjectLinksTable($pdo) {
 
 // Primary and fallback Gemini models
 $GEMINI_MODELS = [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash',
-    'gemini-flash-latest'
+    'gemini-3.5-flash',
+    'gemini-flash-latest',
+    'gemini-3.5-flash-lite',
+    'gemini-flash-lite-latest',
+    'gemini-3.8-flash'
 ];
 
 /**
@@ -1955,6 +1957,10 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
                 }
             } else {
                 $lastErrorMsg = "HTTP $httpCode: " . substr(strval($response), 0, 150);
+                if ($httpCode === 503 || $httpCode === 429) {
+                    usleep(500000);
+                    break;
+                }
             }
         }
     }
@@ -2275,7 +2281,7 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         $jobFileCallback(1, 2, 0);
     }
 
-    $modelsToTry = !empty($GEMINI_MODELS) ? $GEMINI_MODELS : ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
+    $modelsToTry = !empty($GEMINI_MODELS) ? $GEMINI_MODELS : ['gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];
     $stage1Res = null;
     $lastErrorMsg = '';
 
@@ -2293,6 +2299,10 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
                 }
             } else {
                 $lastErrorMsg = "HTTP {$req['http_code']}: " . substr(strval($req['response']), 0, 150);
+                if ($req['http_code'] === 503 || $req['http_code'] === 429) {
+                    usleep(500000);
+                    break;
+                }
             }
         }
     }
@@ -2331,19 +2341,22 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
 
         $targetChaptersStr = !empty($targetChapters) ? implode("\n- ", $targetChapters) : 'جميع مواضيع المقرر';
         $targetChaptersContent = $data['targetChaptersContent'] ?? '';
+        $firstChapterName = !empty($targetChapters) ? $targetChapters[0] : (!empty($subjectTitle) ? $subjectTitle : 'عام');
         $stage2Prompt = "Act as an expert university professor and clinical examiner in {$subjectTitle} ({$spec}).\n";
         $stage2Prompt .= "You are provided with real past examination questions and marked slide points transcribed verbatim:\n";
         $stage2Prompt .= json_encode($chunk, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n\n";
         $stage2Prompt .= "STUDENT'S TARGET REVISION CHAPTERS / TOPICS:\n- " . $targetChaptersStr . "\n\n";
         if (!empty($targetChaptersContent)) {
             $stage2Prompt .= "DETAILED CONTENT OF STUDENT'S UPLOADED TARGET CHAPTERS / SYLLABUS:\n" . $targetChaptersContent . "\n\n";
-            $stage2Prompt .= "TOPIC CROSS-REFERENCE DIRECTIVE: Compare every question and slide point against the concepts, lectures, and terminology in the uploaded target chapter content above. If a question is taught in or directly related to these uploaded chapters, KEEP IT and solve it. If it belongs to an entirely different, unrelated topic outside these chapters, discard it.\n\n";
         }
         $stage2Prompt .= "EXTRACTION FORMAT PREFERENCE: {$formatPref}\n";
         $stage2Prompt .= "(Values: 'hybrid' = keep original formats matching university revision banks; 'mcq_only' = only keep real MCQs; 'convert_all_mcq' = convert everything to 4-choice MCQs)\n\n";
+        $stage2Prompt .= "CRITICAL DIRECTIVE ON TOPIC MATCHING & CHAPTER ASSIGNMENT (MAXIMUM RETENTION):\n";
+        $stage2Prompt .= "1. BE GENEROUS AND HIGHLY INCLUSIVE: University students often submit past exam questions with brief, informal, or recalled phrasing. You MUST KEEP every question and marked slide point that belongs or relates to the course ({$subjectTitle}) or to any of the student's target chapters.\n";
+        $stage2Prompt .= "2. CHAPTER MAPPING: Assign each retained question to the closest matching target chapter in 'assignedChapter'. If a question broadly fits the subject but doesn't explicitly match a specific chapter title, assign it to: '{$firstChapterName}'. DO NOT discard questions simply because the wording differs from the chapter heading!\n";
+        $stage2Prompt .= "3. ONLY DISCARD if the item is 100% indisputably from an entirely distinct, completely unrelated medical specialty or academic course (e.g. general chemistry questions inside a prosthodontics exam). When in doubt, ALWAYS KEEP IT.\n\n";
         $stage2Prompt .= "YOUR TASKS:\n";
-        $stage2Prompt .= "1. CHAPTER IN-SCOPE FILTERING: Keep all questions and marked points that belong or relate to any of the TARGET REVISION CHAPTERS above. If the student specified topics and an item clearly belongs to an entirely different, unrelated topic OUT OF SCOPE, discard it. If in doubt or related, keep it and assign to the matching chapter name in 'assignedChapter'.\n";
-        $stage2Prompt .= "2. ACADEMIC STRUCTURING BY ITEM TYPE:\n";
+        $stage2Prompt .= "1. ACADEMIC STRUCTURING BY ITEM TYPE:\n";
         $stage2Prompt .= "   A) MULTIPLE CHOICE QUESTIONS (type 'mcq' or 'truefalse'):\n";
         $stage2Prompt .= "      - Scientifically verify and solve the 100% correct answer (ignore incorrect student pencil marks).\n";
         $stage2Prompt .= "      - Provide high-yield scientific explanation in 'explanation' strictly matching the language of the question.\n";
@@ -2365,7 +2378,7 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         $stage2Prompt .= "        * 'question': Numbered concept or landmark name (e.g., '1. Labial Frenum (Maxilla)').\n";
         $stage2Prompt .= "        * 'answer': Structured HTML bullet points of ONLY the highlighted facts: <ul><li><strong>Key Feature:</strong> Fact...</li></ul>.\n";
         $stage2Prompt .= "        Return as type: 'info' (with 'question', 'answer', 'assignedChapter').\n";
-        $stage2Prompt .= "3. LANGUAGE MATCHING: English questions must have 100% academic English explanations/answers. Arabic questions must be 100% Arabic.\n\n";
+        $stage2Prompt .= "2. LANGUAGE MATCHING: English questions must have 100% academic English explanations/answers. Arabic questions must be 100% Arabic.\n\n";
         $stage2Prompt .= "OUTPUT FORMAT (Return ONLY a raw JSON array):\n";
         $stage2Prompt .= "[\n";
         $stage2Prompt .= '  {"type":"mcq","language":"en|ar","question":"MCQ text","options":["A","B","C","D"],"correctIndex":0,"correctAnswer":"A","explanation":"Explanation...","assignedChapter":"Chapter Name"},' . "\n";
@@ -2394,6 +2407,11 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
                     if (!isset($j['error'])) {
                         $stage2Res = $j;
                         break 2;
+                    }
+                } else {
+                    if ($req['http_code'] === 503 || $req['http_code'] === 429) {
+                        usleep(500000);
+                        break;
                     }
                 }
             }
@@ -2434,8 +2452,84 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         }
     }
 
+    // Safety Fallback: If Stage 2 returned 0 questions (e.g. over-filtering or model quirks),
+    // salvage transcribed questions from Stage 1 so students never lose their exam materials!
+    if (empty($finalQuestions) && !empty($rawQuestions) && is_array($rawQuestions)) {
+        $defaultChapter = !empty($targetChapters) ? $targetChapters[0] : (!empty($subjectTitle) ? $subjectTitle : 'عام');
+        foreach ($rawQuestions as $raw) {
+            if (!is_array($raw)) continue;
+            $stem = trim($raw['question'] ?? '');
+            if (empty($stem)) continue;
+
+            $rType = strtolower(trim($raw['type'] ?? 'mcq'));
+            $detectedLang = detectQuizQuestionLanguage($stem, $raw['options'] ?? [], $raw['indicatedAnswer'] ?? '');
+
+            if ($rType === 'slide_highlight') {
+                $highlightContent = trim($raw['highlightedContent'] ?? ($raw['indicatedAnswer'] ?? ''));
+                $ansHtml = !empty($highlightContent)
+                    ? "<ul><li><strong>نقطة اختبار / ملحوظة مهمة:</strong> " . htmlspecialchars($highlightContent) . "</li></ul>"
+                    : "<p>نقطة محددة من سلايدات المحاضرة السابقة للمراجعة والتركيز.</p>";
+                $finalQuestions[] = [
+                    'type' => 'info',
+                    'language' => $detectedLang,
+                    'question' => $stem,
+                    'answer' => $ansHtml,
+                    'assignedChapter' => $defaultChapter
+                ];
+            } elseif ($rType === 'written' || empty($raw['options']) || !is_array($raw['options'])) {
+                $ansHtml = !empty($raw['indicatedAnswer'])
+                    ? "<div class=\"dent-subheading\">الإجابة المستخرجة:</div><p>" . htmlspecialchars($raw['indicatedAnswer']) . "</p>"
+                    : "<p>سؤال تحريري مستخرج من اختبارات سابقة لمراجعة المنهج.</p>";
+                $finalQuestions[] = [
+                    'type' => 'card',
+                    'language' => $detectedLang,
+                    'question' => $stem,
+                    'answer' => $ansHtml,
+                    'assignedChapter' => $defaultChapter
+                ];
+            } else {
+                $opts = array_values(array_filter(array_map('trim', $raw['options'])));
+                if (count($opts) < 2) {
+                    $ansHtml = !empty($raw['indicatedAnswer'])
+                        ? "<p><strong>الإجابة:</strong> " . htmlspecialchars($raw['indicatedAnswer']) . "</p>"
+                        : "<p>سؤال مستخرج من اختبار سابق.</p>";
+                    $finalQuestions[] = [
+                        'type' => 'card',
+                        'language' => $detectedLang,
+                        'question' => $stem,
+                        'answer' => $ansHtml,
+                        'assignedChapter' => $defaultChapter
+                    ];
+                } else {
+                    $indAns = trim($raw['indicatedAnswer'] ?? '');
+                    $cIdx = 0;
+                    if (!empty($indAns)) {
+                        foreach ($opts as $oi => $opt) {
+                            if (stripos($opt, $indAns) !== false || stripos($indAns, $opt) !== false) {
+                                $cIdx = $oi;
+                                break;
+                            }
+                        }
+                    }
+                    $finalQuestions[] = [
+                        'type' => 'mcq',
+                        'language' => $detectedLang,
+                        'question' => $stem,
+                        'options' => $opts,
+                        'correctIndex' => $cIdx,
+                        'correctAnswer' => $opts[$cIdx] ?? '',
+                        'explanation' => !empty($indAns)
+                            ? ("سؤال مستخرج من ورقة اختبار سابقة (الإجابة المحددة: " . $indAns . ")")
+                            : "سؤال مستخرج من أوراق الاختبارات السابقة.",
+                        'assignedChapter' => $defaultChapter
+                    ];
+                }
+            }
+        }
+    }
+
     if (empty($finalQuestions)) {
-        return ['success' => false, 'message' => "تم استخراج أسئلة من ورقة الاختبار لكنها لا تنتمي لأي من الشابترات المحددة. جرب تحديد المزيد من الشابترات المستهدفة."];
+        return ['success' => false, 'message' => "لم يتم العثور على أسئلة قابلة للاستخراج من الملفات المرفوعة. يرجى التأكد من وضوح الصفحات أو تحديد الشابترات المستهدفة."];
     }
 
     return ['success' => true, 'data' => ['questions' => $finalQuestions]];
