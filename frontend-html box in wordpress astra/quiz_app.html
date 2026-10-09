@@ -425,11 +425,39 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             <!-- Mode 2 Customization Options -->
             <div id="dq-step2-past" style="display: none;">
                 <div class="dent-quiz-form-group">
+                    <label class="dent-quiz-label">نمط استخراج الأسئلة والصيغة الأكاديمية:</label>
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                        <label style="display: flex; align-items: flex-start; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; padding: 10px; cursor: pointer;">
+                            <input type="radio" name="dq-pastexam-format" value="hybrid" checked style="margin-top: 3px; accent-color: #3b82f6;">
+                            <div>
+                                <div style="font-size: 0.84rem; font-weight: 600; color: #f8fafc;">تجميع ذكي متكامل (أصلي - موصى به)</div>
+                                <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 2px; line-height: 1.4;">أسئلة خيارات تفاعلية بالحل والتفسير + أسئلة مقالية وفراغات كبطاقات كشف إجابة + استخراج تظليلات السلايدات وملاحظات الطلاب كبطاقات تركيز.</div>
+                            </div>
+                        </label>
+                        <label style="display: flex; align-items: flex-start; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; padding: 10px; cursor: pointer;">
+                            <input type="radio" name="dq-pastexam-format" value="mcq_only" style="margin-top: 3px; accent-color: #3b82f6;">
+                            <div>
+                                <div style="font-size: 0.84rem; font-weight: 600; color: #f8fafc;">خيارات متعددة فقط (MCQs Only)</div>
+                                <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 2px; line-height: 1.4;">استخراج أسئلة الخيارات المطبوعة بالاختبار فقط، وتجاهل الأسئلة المقالية وتظليلات السلايدات.</div>
+                            </div>
+                        </label>
+                        <label style="display: flex; align-items: flex-start; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; padding: 10px; cursor: pointer;">
+                            <input type="radio" name="dq-pastexam-format" value="convert_all_mcq" style="margin-top: 3px; accent-color: #3b82f6;">
+                            <div>
+                                <div style="font-size: 0.84rem; font-weight: 600; color: #f8fafc;">تحويل كافة الأسئلة إلى خيارات (*)</div>
+                                <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 2px; line-height: 1.4;">إعادة صياغة كافة الأسئلة المقالية وتظليلات السلايدات إلى أسئلة خيارات متعددة بـ 4 بدائل.</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="dent-quiz-form-group">
                     <label class="dent-quiz-label">الحد الأقصى للأسئلة المستخرجة:</label>
                     <input type="number" id="dq-pastexam-num-qs" class="dent-quiz-input" value="200" min="1" max="200" placeholder="200 (تلقائي)" style="text-align: center;">
                 </div>
+
                 <div style="font-size: 0.76rem; color: #94a3b8; margin-bottom: 6px; line-height: 1.5; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
-                    يستخرج الذكاء الاصطناعي كافة الأسئلة التابعة للشابترات المحددة حتى نهايتها دون توقف. أي أسئلة مقالية أو فراغات يتم تحويلها تلقائياً إلى خيارات مع وضع علامة (*) في بدايتها.
+                    <strong>معايير الاستخراج الدقيق:</strong> يفحص الذكاء الاصطناعي الأوراق أو صور السلايدات المرفوعة، ويستخرج حصراً المحتوى التابع للشابترات المحددة. في صور السلايدات، يتم استخراج المعلومات المؤشر أو المظلل عليها فقط دون اختلاق أي أسئلة خارج التحديد.
                 </div>
             </div>
         </div>
@@ -1746,9 +1774,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 combinedChapterName = 'تجميعات عامة';
             }
 
+            const formatPref = document.querySelector('input[name="dq-pastexam-format"]:checked')?.value || 'hybrid';
+            payload.pastExamFormatPreference = formatPref;
             payload.quizName = quizName;
             payload.chapterName = combinedChapterName;
-            payload.typesSummary = 'تجميعات سنوات سابقة';
+            payload.typesSummary = (formatPref === 'mcq_only') ? 'تجميعات خيارات متعددة' : 'تجميعات سنوات سابقة';
             payload.targetChapters = checkedTargets;
             payload.selectedChapters = (currentPastExamSource === 'drive') ? pastExamDriveFiles : [];
             payload.uploadedFiles = (currentPastExamSource === 'upload') ? pastExamUploadedFiles : [];
@@ -2234,6 +2264,16 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         return text;
     }
 
+    function stripQuestionPrefix(value) {
+        let text = String(value || '').trim();
+        let prev = '';
+        while (text !== prev) {
+            prev = text;
+            text = text.replace(/^(?:(?:Q(?:uestion)?|س(?:ؤال)?)\s*\.?\s*\d+\s*(?:[:.)\-–—]\s*|\s+)|\(\d+\)\s*[:.)\-–—\s]*|\d+\s*[:.)\-–—]\s*)/iu, '').trim();
+        }
+        return text;
+    }
+
     function getCorrectOptionIndex(question, options) {
         if (!Array.isArray(options) || options.length === 0) return -1;
 
@@ -2397,11 +2437,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             qTitle.className = 'dent-q-text';
             qTitle.style.marginBottom = '0';
             let cleanQText = (q.question || '').trim();
+            cleanQText = stripQuestionPrefix(cleanQText);
             if (cleanQText.startsWith('*')) {
                 cleanQText = cleanQText.substring(1).trim();
             }
-            const hasNum = /^(?:Q\d+|\d+\.)/i.test(cleanQText);
-            qTitle.innerText = hasNum ? cleanQText : `${index + 1}. ${cleanQText}`;
+            qTitle.innerText = `${index + 1}. ${cleanQText}`;
 
             headerRow.appendChild(qTitle);
             qBlock.appendChild(headerRow);
@@ -3104,7 +3144,9 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
     function renderQuizCardHtml(q, globalQIdx, includeExplanation) {
         const qType = q.type || 'mcq';
-        const qText = escapeHtml(String(q.question || '').trim());
+        const rawQuestion = String(q.question || '').trim();
+        const cleanQuestion = stripQuestionPrefix(rawQuestion);
+        const qText = escapeHtml(cleanQuestion);
         const chapter = escapeHtml(String(q.assignedChapter || '').trim());
         const isRtl = (detectQuestionLanguage(q) === 'ar');
         const rtlClass = isRtl ? ' is-rtl' : '';
@@ -3185,14 +3227,6 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const pages = calculateSmartPages(allQuestions, includeExplanations);
         const totalPages = pages.length;
 
-        const getQWeight = (q) => {
-            const qLen = String(q.question || '').length;
-            const optsLen = Array.isArray(q.options) ? q.options.reduce((s, o) => s + String(o).length, 0) : 0;
-            const expLen = (includeExplanations && q.explanation) ? String(q.explanation).length : 0;
-            const ansLen = (q.answer) ? String(q.answer).length : 0;
-            return 120 + (qLen * 0.45) + (optsLen * 0.4) + (expLen * 0.35) + (ansLen * 0.4);
-        };
-
         let globalQIdx = 1;
         const renderedPages = [];
 
@@ -3200,44 +3234,26 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             const pIdx = pIdx0 + 1;
             const n = pageQs.length;
 
-            // Content-aware column splitting to balance column heights
-            let splitIdx = Math.ceil(n / 2);
-            if (n >= 4) {
-                const optA = Math.floor(n / 2);
-                const optB = Math.ceil(n / 2);
-                const wA1 = pageQs.slice(0, optA).reduce((s, q) => s + getQWeight(q), 0);
-                const wA2 = pageQs.slice(optA).reduce((s, q) => s + getQWeight(q), 0);
-                const diffA = Math.abs(wA1 - wA2);
-
-                const wB1 = pageQs.slice(0, optB).reduce((s, q) => s + getQWeight(q), 0);
-                const wB2 = pageQs.slice(optB).reduce((s, q) => s + getQWeight(q), 0);
-                const diffB = Math.abs(wB1 - wB2);
-
-                splitIdx = (diffA < diffB) ? optA : optB;
-            }
-
-            const col1Qs = pageQs.slice(0, splitIdx);
-            const col2Qs = pageQs.slice(splitIdx);
-
             const isComfortable = (n <= 7);
             const densityClass = isComfortable ? ' density-comfortable' : ' density-compact';
 
-            const col1Cards = col1Qs.map(q => {
-                const cardHtml = renderQuizCardHtml(q, globalQIdx, includeExplanations);
-                globalQIdx++;
-                return cardHtml;
-            }).join('');
+            const col1Cards = [];
+            const col2Cards = [];
 
-            const col2Cards = col2Qs.map(q => {
+            pageQs.forEach((q, i) => {
                 const cardHtml = renderQuizCardHtml(q, globalQIdx, includeExplanations);
                 globalQIdx++;
-                return cardHtml;
-            }).join('');
+                if (i % 2 === 0) {
+                    col1Cards.push(cardHtml);
+                } else {
+                    col2Cards.push(cardHtml);
+                }
+            });
 
             const columnsHtml = `
                 <div class="page-two-columns${densityClass}">
-                    <div class="col-half">${col1Cards}</div>
-                    <div class="col-half">${col2Cards}</div>
+                    <div class="col-half">${col1Cards.join('')}</div>
+                    <div class="col-half">${col2Cards.join('')}</div>
                 </div>
             `;
 
