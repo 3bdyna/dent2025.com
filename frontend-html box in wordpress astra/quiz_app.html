@@ -3165,7 +3165,20 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             line-height: 1.25 !important;
         }
         .density-comfortable .quiz-q-top-row {
-            margin-bottom: 3.5px !important;
+            margin-bottom: 4px !important;
+            gap: 8px !important;
+            min-height: 18px !important;
+        }
+        .density-comfortable .quiz-q-num-badge {
+            font-size: 0.74rem !important;
+            gap: 6px !important;
+        }
+        .density-comfortable .quiz-type-badge {
+            font-size: 0.52rem !important;
+            padding: 2px 5.5px !important;
+        }
+        .density-comfortable .quiz-q-chapter {
+            font-size: 0.54rem !important;
         }
 
         /* Compact Density Standards (Space Saver) */
@@ -3177,17 +3190,20 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             border-radius: 3px !important;
         }
         .density-compact .quiz-q-top-row {
-            margin-bottom: 2px !important;
+            margin-bottom: 2.5px !important;
+            gap: 5px !important;
+            min-height: 14px !important;
         }
         .density-compact .quiz-q-num-badge {
-            font-size: 0.65rem !important;
+            font-size: 0.66rem !important;
+            gap: 4px !important;
         }
         .density-compact .quiz-type-badge {
-            font-size: 0.48rem !important;
-            padding: 1px 2.5px !important;
+            font-size: 0.47rem !important;
+            padding: 1px 4px !important;
         }
         .density-compact .quiz-q-chapter {
-            font-size: 0.54rem !important;
+            font-size: 0.50rem !important;
         }
         .density-compact .quiz-q-title {
             font-size: 0.67rem !important;
@@ -3299,10 +3315,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         }
         .quiz-q-top-row {
             display: flex;
-            align-items: baseline;
+            align-items: center;
             justify-content: space-between;
-            gap: 4px;
-            margin-bottom: 2px;
+            gap: 6px;
+            margin-bottom: 3px;
+            min-height: 15px;
         }
         .quiz-q-num-badge {
             font-family: 'Outfit', sans-serif;
@@ -3311,27 +3328,35 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             color: #ffffff;
             display: inline-flex;
             align-items: center;
-            gap: 3px;
+            gap: 5px;
+            flex-shrink: 0;
+            line-height: 1;
         }
         .quiz-type-badge {
-            display: inline-block;
-            font-size: 0.50rem;
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.49rem;
             font-weight: 600;
-            padding: 1px 3px;
-            border-radius: 2px;
+            padding: 1.5px 4.5px;
+            border-radius: 3px;
             white-space: nowrap;
-            background: #222222;
+            background: #202023;
             color: #d4d4d8;
-            border: 1px solid #333333;
+            border: 1px solid #333338;
+            line-height: 1.15;
         }
         .quiz-q-chapter {
-            font-size: 0.58rem;
-            color: #71717a;
+            font-size: 0.51rem;
+            color: #8c8c96;
             font-weight: 600;
             font-family: 'Outfit', 'Cairo', sans-serif;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            text-align: right;
+            flex: 1;
+            min-width: 0;
+            line-height: 1.2;
         }
         .quiz-q-title {
             font-size: 0.72rem;
