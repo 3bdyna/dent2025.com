@@ -6542,9 +6542,11 @@ window.AdminApp = {
         modal.style.cssText = 'position: fixed; inset: 0; background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 999999; display: flex; justify-content: center; align-items: center; direction: rtl; font-family: "Outfit", "Noto Kufi Arabic", sans-serif; padding: 16px; box-sizing: border-box;';
 
         const getSummaryText = (pgs) => {
-            if (pgs.length === 1) return 'صفحة A4 واحدة (تنسيق عمودين متوازنين)';
-            const breakdown = pgs.map((p, i) => `صفحة ${i + 1}: ${p.length} أسئلة`).join('، ');
-            return `${pgs.length} صفحات A4 (${breakdown})`;
+            const count = pgs.length;
+            if (count === 1) return 'صفحة A4 واحدة';
+            if (count === 2) return 'صفحتان A4';
+            if (count >= 3 && count <= 10) return `${count} صفحات A4`;
+            return `${count} صفحة A4`;
         };
 
         modal.innerHTML = `
@@ -6564,9 +6566,9 @@ window.AdminApp = {
                         <span style="font-size: 0.76rem; color: #a1a1aa; font-weight: 600;">عدد الأسئلة:</span>
                         <span style="font-size: 0.82rem; color: #f4f4f5; font-weight: 700;">${totalQ} سؤالاً</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 0.76rem; color: #a1a1aa; font-weight: 600;">توزيع الصفحات:</span>
-                        <span id="admin-export-page-summary" style="font-size: 0.76rem; color: #cbd5e1; font-weight: 600;">${getSummaryText(pages)}</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.76rem; color: #a1a1aa; font-weight: 600; white-space: nowrap;">توزيع الصفحات:</span>
+                        <span id="admin-export-page-summary" style="font-size: 0.82rem; color: #f4f4f5; font-weight: 700; white-space: nowrap;">${getSummaryText(pages)}</span>
                     </div>
                 </div>
 
@@ -6655,7 +6657,7 @@ window.AdminApp = {
 
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
                              (window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
-            const pdfPixelRatio = isMobile ? 1.6 : 2.0;
+            const pdfPixelRatio = isMobile ? 1.3 : 1.5;
 
             sandbox = document.createElement('div');
             sandbox.id = 'dent-admin-quiz-sandbox';
@@ -6667,7 +6669,7 @@ window.AdminApp = {
             if (document.fonts && document.fonts.ready) {
                 await document.fonts.ready;
             }
-            await new Promise(r => setTimeout(r, 60));
+            await new Promise(r => setTimeout(r, 40));
 
             const pageEls = sandbox.querySelectorAll('.a4-page-sheet');
             const imgDataList = [];
@@ -6677,7 +6679,8 @@ window.AdminApp = {
                 if (btn && btn.querySelector('span')) {
                     btn.querySelector('span').innerText = `معالجة صفحة ${i + 1} من ${pageEls.length}...`;
                 }
-                const dataUrl = await htmlToImage.toPng(pageEl, {
+                const dataUrl = await htmlToImage.toJpeg(pageEl, {
+                    quality: 0.95,
                     pixelRatio: pdfPixelRatio,
                     width: 794,
                     height: 1120,
@@ -6691,7 +6694,6 @@ window.AdminApp = {
                     }
                 });
                 imgDataList.push(dataUrl);
-                if (isMobile) await new Promise(r => setTimeout(r, 30));
             }
 
             sandbox.remove();
@@ -6709,7 +6711,7 @@ window.AdminApp = {
                 if (i > 0) pdf.addPage('a4', 'p');
                 pdf.setFillColor(18, 18, 18);
                 pdf.rect(0, 0, 210, 297, 'F');
-                pdf.addImage(imgDataList[i], 'PNG', 0, 0, 210, 297, undefined, 'FAST');
+                pdf.addImage(imgDataList[i], 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
             }
 
             const safeTitle = (quizData.quiz_name || quizData.title || 'Quiz').replace(/[\\/:*?"<>|]+/g, '_').trim();
