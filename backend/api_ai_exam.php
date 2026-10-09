@@ -2423,11 +2423,18 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
             $stage2Prompt .= "- Set 'language': 'ar' for all items.\n\n";
         }
 
-        $stage2Prompt .= "CRITICAL DIRECTIVE 3: EXACT ITEM COUNT FIDELITY:\n";
-        $stage2Prompt .= "- When a question asks for a specific count (e.g. '4 precautions', '4 components of HOPI', '3 components of dental history'):\n";
-        $stage2Prompt .= "  Provide the exact requested number of items in the model answer (e.g. exactly 4 numbered points or 3 numbered points), focusing on the highest-yield clinical facts.\n\n";
+        $stage2Prompt .= "CRITICAL DIRECTIVE 3: EXACT ITEM COUNT & SOURCE FIDELITY (NO EXTRA FABRICATED ITEMS):\n";
+        $stage2Prompt .= "- If the source specifies exact items or a count (e.g. '3 methods: Autoclave, Dry heat, Radiation', '4 precautions', '3 components'):\n";
+        $stage2Prompt .= "  Stick STRICTLY to that exact count and those specific items. DO NOT volunteer extra unasked items (e.g., do NOT add a 4th method like Chemiclave when only 3 were listed/asked).\n\n";
 
-        $stage2Prompt .= "CRITICAL DIRECTIVE 4: TOPIC INCLUSION & CHAPTER MAPPING (MAXIMUM RETENTION):\n";
+        $stage2Prompt .= "CRITICAL DIRECTIVE 4: CONCISE, HIGH-YIELD MODEL ANSWERS (STRICTLY DO NOT OVER-ANSWER):\n";
+        $stage2Prompt .= "- DO NOT write long, dense paragraphs, exhaustive textbook dissertations, or verbose background mini-essays.\n";
+        $stage2Prompt .= "- These cards are designed for student rapid active recall and exam memorization: KEEP EVERY POINT PUNCHY, CRISP, AND CONCISE.\n";
+        $stage2Prompt .= "- Each bullet/numbered point must be exactly ONE brief line (max 8–15 words per point), leading with the key term in <strong>Bold:</strong> followed by its core clinical takeaway.\n";
+        $stage2Prompt .= "- Definitions must be ONE single, direct, clear sentence without run-on technical fluff.\n";
+        $stage2Prompt .= "- Answer strictly and directly what the question asks for—nothing more, nothing less.\n\n";
+
+        $stage2Prompt .= "CRITICAL DIRECTIVE 5: TOPIC INCLUSION & CHAPTER MAPPING (MAXIMUM RETENTION):\n";
         $stage2Prompt .= "1. BE GENEROUS AND HIGHLY INCLUSIVE: You MUST KEEP every question and marked slide point that belongs or relates to the course ({$subjectTitle}) or to any of the student's target chapters.\n";
         $stage2Prompt .= "2. CHAPTER MAPPING: Assign each retained question to the closest matching target chapter in 'assignedChapter'. If a question broadly fits the subject but doesn't explicitly match a specific chapter title, assign it to: '{$firstChapterName}'. DO NOT discard questions simply because the wording differs from the chapter heading!\n";
         $stage2Prompt .= "3. ONLY DISCARD if the item is 100% indisputably from an entirely distinct, completely unrelated medical specialty or academic course. When in doubt, ALWAYS KEEP IT.\n\n";
@@ -2441,10 +2448,10 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         $stage2Prompt .= "   - If FORMAT PREFERENCE is 'mcq_only': Discard this item.\n";
         $stage2Prompt .= "   - If FORMAT PREFERENCE is 'convert_all_mcq': Construct 4 plausible choices with distractors, prefix question with '*', and return as type: 'mcq'.\n";
         $stage2Prompt .= "   - If FORMAT PREFERENCE is 'hybrid' (Default - matching our official college revision banks):\n";
-        $stage2Prompt .= "     Elevate the question stem to formal academic phrasing and provide a pristine, structured model answer in 'answer' using clean HTML:\n";
+        $stage2Prompt .= "     Elevate the question stem to formal academic phrasing and provide a concise, high-yield model answer in 'answer' using clean HTML:\n";
         $stage2Prompt .= "     * Use <div class=\"dent-subheading\">Heading/Category:</div>\n";
-        $stage2Prompt .= "     * Use <ol><li>Numbered items</li></ol> or <ul><li>Bullet points</li></ul>\n";
-        $stage2Prompt .= "     * Bold key terms with <strong>...</strong>.\n";
+        $stage2Prompt .= "     * Use concise <ol><li><strong>Keyword:</strong> Brief key fact (1 line)</li></ol> or <ul><li><strong>Term:</strong> Key feature (1 line)</li></ul>\n";
+        $stage2Prompt .= "     * Keep explanations crisp, direct, and easy to memorize in 5–10 seconds (no long prose paragraphs).\n";
         $stage2Prompt .= "     Return as type: 'card' (with 'question', 'answer', 'assignedChapter', NO options array).\n";
         $stage2Prompt .= "3. SLIDE HIGHLIGHTS & TESTED CONCEPTS (type 'slide_highlight'):\n";
         $stage2Prompt .= "   - If FORMAT PREFERENCE is 'mcq_only': Discard this item.\n";
