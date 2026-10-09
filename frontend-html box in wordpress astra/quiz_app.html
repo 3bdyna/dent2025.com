@@ -2789,14 +2789,26 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             flex-shrink: 0;
         }
         .doc-header-compact {
-            padding-bottom: 3px;
-            margin-bottom: 4px;
+            padding-bottom: 3.5px !important;
+            margin-bottom: 6px !important;
             border-bottom: 1px solid #242424;
         }
         .doc-compact-heading {
-            font-size: 0.80rem !important;
+            font-size: 0.86rem !important;
             font-weight: 800 !important;
-            color: #e4e4e7 !important;
+            color: #f4f4f5 !important;
+            line-height: 1.25 !important;
+            margin: 0 0 1px 0 !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .doc-compact-sub {
+            font-size: 0.63rem !important;
+            color: #a1a1aa !important;
+            font-weight: 600 !important;
+            margin: 0 !important;
+            line-height: 1.2;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -2817,6 +2829,36 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             font-weight: 700 !important;
             margin: 0 !important;
             line-height: 1.2;
+        }
+        
+        /* Responsive Density Scaling */
+        .density-comfortable .col-half {
+            gap: 5.5px !important;
+        }
+        .density-comfortable .quiz-q-block {
+            padding: 5px 7px !important;
+        }
+        .density-comfortable .quiz-q-title {
+            font-size: 0.74rem !important;
+            line-height: 1.30 !important;
+            margin-bottom: 3px !important;
+        }
+        .density-comfortable .quiz-options-list {
+            gap: 2.2px !important;
+        }
+        .density-comfortable .quiz-opt-row {
+            padding: 2.5px 5px !important;
+            font-size: 0.68rem !important;
+            line-height: 1.24 !important;
+        }
+        .density-comfortable .quiz-explanation-box {
+            margin-top: 2.5px !important;
+            padding: 3px 5px !important;
+            font-size: 0.61rem !important;
+            line-height: 1.24 !important;
+        }
+        .density-comfortable .quiz-q-top-row {
+            margin-bottom: 3px !important;
         }
         .doc-meta-badge {
             text-align: left;
@@ -3143,14 +3185,42 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const pages = calculateSmartPages(allQuestions, includeExplanations);
         const totalPages = pages.length;
 
+        const getQWeight = (q) => {
+            const qLen = String(q.question || '').length;
+            const optsLen = Array.isArray(q.options) ? q.options.reduce((s, o) => s + String(o).length, 0) : 0;
+            const expLen = (includeExplanations && q.explanation) ? String(q.explanation).length : 0;
+            const ansLen = (q.answer) ? String(q.answer).length : 0;
+            return 120 + (qLen * 0.45) + (optsLen * 0.4) + (expLen * 0.35) + (ansLen * 0.4);
+        };
+
         let globalQIdx = 1;
         const renderedPages = [];
 
         pages.forEach((pageQs, pIdx0) => {
             const pIdx = pIdx0 + 1;
-            const col1Count = Math.ceil(pageQs.length / 2);
-            const col1Qs = pageQs.slice(0, col1Count);
-            const col2Qs = pageQs.slice(col1Count);
+            const n = pageQs.length;
+
+            // Content-aware column splitting to balance column heights
+            let splitIdx = Math.ceil(n / 2);
+            if (n >= 4) {
+                const optA = Math.floor(n / 2);
+                const optB = Math.ceil(n / 2);
+                const wA1 = pageQs.slice(0, optA).reduce((s, q) => s + getQWeight(q), 0);
+                const wA2 = pageQs.slice(optA).reduce((s, q) => s + getQWeight(q), 0);
+                const diffA = Math.abs(wA1 - wA2);
+
+                const wB1 = pageQs.slice(0, optB).reduce((s, q) => s + getQWeight(q), 0);
+                const wB2 = pageQs.slice(optB).reduce((s, q) => s + getQWeight(q), 0);
+                const diffB = Math.abs(wB1 - wB2);
+
+                splitIdx = (diffA < diffB) ? optA : optB;
+            }
+
+            const col1Qs = pageQs.slice(0, splitIdx);
+            const col2Qs = pageQs.slice(splitIdx);
+
+            const isComfortable = (n <= 7);
+            const densityClass = isComfortable ? ' density-comfortable' : ' density-compact';
 
             const col1Cards = col1Qs.map(q => {
                 const cardHtml = renderQuizCardHtml(q, globalQIdx, includeExplanations);
@@ -3165,7 +3235,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             }).join('');
 
             const columnsHtml = `
-                <div class="page-two-columns">
+                <div class="page-two-columns${densityClass}">
                     <div class="col-half">${col1Cards}</div>
                     <div class="col-half">${col2Cards}</div>
                 </div>
@@ -3179,8 +3249,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 headerHtml = `
                     <div class="doc-header">
                         <div class="doc-titles">
-                            <div class="doc-main-heading">${quizName}</div>
-                            <div class="doc-sub-heading">${subjectName}</div>
+                            <div class="doc-main-heading" dir="auto"><bdi>${quizName}</bdi></div>
+                            <div class="doc-sub-heading" dir="auto"><bdi>${subjectName}</bdi></div>
                         </div>
                         <div class="doc-meta-badge">
                             <span class="period" dir="ltr">${qCountLabel}</span>
@@ -3191,7 +3261,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 headerHtml = `
                     <div class="doc-header doc-header-compact">
                         <div class="doc-titles">
-                            <div class="doc-compact-heading">${quizName} — ${subjectName}</div>
+                            <div class="doc-compact-heading" dir="auto"><bdi>${quizName}</bdi></div>
+                            <div class="doc-compact-sub" dir="auto"><bdi>${subjectName}</bdi></div>
                         </div>
                         <div class="doc-meta-badge">
                             <span class="period" dir="ltr">${pageOfLabel}</span>
@@ -3209,7 +3280,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             `;
 
             renderedPages.push(`
-                <div class="a4-page-sheet" id="quiz-page-${pIdx}" data-page="${pIdx}">
+                <div class="a4-page-sheet${densityClass}" id="quiz-page-${pIdx}" data-page="${pIdx}">
                     <div class="page-inner-content">
                         ${headerHtml}
                         ${columnsHtml}
