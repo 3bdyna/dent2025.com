@@ -2481,6 +2481,11 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         ]);
 
         $stage2Res = null;
+        $usedKeyIndex2 = -1;
+        $usedApiKey2 = '';
+        $usedLatencyMs2 = 0;
+        $usedRespText2 = '';
+
         foreach ($modelsToTry as $modelName) {
             foreach ($API_KEYS as $index => $apiKey) {
                 $url = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($modelName) . ":generateContent?key=" . $apiKey;
@@ -2493,7 +2498,10 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
                     $j = json_decode($respText, true);
                     if (!isset($j['error'])) {
                         $stage2Res = $j;
-                        recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, count($chunk));
+                        $usedKeyIndex2 = $index;
+                        $usedApiKey2 = $apiKey;
+                        $usedLatencyMs2 = $latencyMs;
+                        $usedRespText2 = $respText;
                         break 2;
                     } else {
                         recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, 0);
@@ -2508,6 +2516,7 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
             }
         }
 
+        $prevCount = count($finalQuestions);
         if ($stage2Res) {
             $curText = $stage2Res['candidates'][0]['content']['parts'][0]['text'] ?? '';
             $parsedCur = cleanAndParseGeminiJson($curText);
@@ -2542,6 +2551,11 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
                     }
                 }
             }
+        }
+
+        $newQuestionsCount = count($finalQuestions) - $prevCount;
+        if ($usedKeyIndex2 >= 0) {
+            recordGeminiUsage($usedKeyIndex2, $usedApiKey2, 200, $usedRespText2, $usedLatencyMs2, $newQuestionsCount);
         }
     }
 
