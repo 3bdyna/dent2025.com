@@ -6130,7 +6130,7 @@ window.AdminApp = {
 
     estimateQuestionHeight(q, includeExplanations = true, isComfortable = false) {
         // Base container overhead: padding + border + badge
-        let h = isComfortable ? 26 : 20;
+        let h = isComfortable ? 28 : 24;
         const rawQuestion = String(q?.question || '').trim();
         const cleanQuestion = this.stripQuestionPrefix(rawQuestion);
         const qLen = cleanQuestion.length;
@@ -6155,8 +6155,8 @@ window.AdminApp = {
                 const cleanOpt = this.stripOptionPrefix(opt);
                 const optLen = cleanOpt.length;
                 const optLines = Math.max(1, Math.ceil(optLen / (isComfortable ? 42 : 46)));
-                const baseH = isComfortable ? 19 : 15;
-                const lineH = isComfortable ? 14 : 12;
+                const baseH = isComfortable ? 24 : 21;
+                const lineH = isComfortable ? 16 : 14;
                 h += baseH + ((optLines - 1) * lineH);
             });
         }
@@ -6422,8 +6422,8 @@ window.AdminApp = {
 
             const columnsHtml = `
                 <div class="page-two-columns${densityClass}">
-                    <div class="col-half">${col1Cards.join('')}</div>
-                    <div class="col-half">${col2Cards.join('')}</div>
+                    <div class="col-half"${col1Cards.length >= 4 ? ' style="justify-content: space-between;"' : ''}>${col1Cards.join('')}</div>
+                    <div class="col-half"${col2Cards.length >= 4 ? ' style="justify-content: space-between;"' : ''}>${col2Cards.join('')}</div>
                 </div>
             `;
 
