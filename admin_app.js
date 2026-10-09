@@ -4310,6 +4310,8 @@ window.AdminApp = {
             this.showLoading(true);
         }
 
+        this.loadTrashedQuizzesCount();
+
         let params = new URLSearchParams({ action: 'list_quizzes', include_hidden: '1' });
         if (this.pass) params.append('password', this.pass);
 
@@ -4672,14 +4674,14 @@ window.AdminApp = {
     },
 
     deleteQuiz(quizId) {
-        if (!this.permissions?.delete_subject && !this.permissions?.manage_passwords) {
-            this.showToast('غير مصرح لك بحذف الاختبارات (صلاحية Master أو حذف المقررات مطلوبة)', true);
+        if (!this.permissions?.delete_subject && !this.permissions?.manage_passwords && !this.permissions?.edit_basic_subject) {
+            this.showToast('غير مصرح لك بحذف الاختبارات', true);
             return;
         }
 
         const quiz = (this.quizzesData || []).find(q => q.id === quizId);
         const quizName = quiz ? quiz.quiz_name : 'هذا الاختبار';
-        if (!confirm(`هل أنت متأكد من حذف الاختبار "${quizName}"؟\nسيتم حذفه نهائياً من بنك الأسئلة والملفات.`)) {
+        if (!confirm(`هل أنت متأكد من نقل الاختبار "${quizName}" إلى سلة المحذوفات؟\nسيتم حفظه في لوحة التحكم لمدة 30 يوماً قبل الحذف التلقائي، ويمكنك استعادته في أي وقت.`)) {
             return;
         }
 
@@ -4696,16 +4698,345 @@ window.AdminApp = {
         .then(res => {
             this.showLoading(false);
             if (res.success) {
-                this.showToast(`تم حذف الاختبار "${quizName}" بنجاح`);
+                this.showToast(`تم نقل الاختبار "${quizName}" إلى سلة المحذوفات بنجاح`);
                 this.loadQuizzes();
+                this.loadTrashedQuizzesCount();
             } else {
-                this.showToast(res.message || 'فشل حذف الاختبار', true);
+                this.showToast(res.message || 'فشل نقل الاختبار إلى سلة المحذوفات', true);
             }
         })
         .catch(e => {
             this.showLoading(false);
             console.error('Error deleting quiz:', e);
             this.showToast('خطأ في حذف الاختبار: ' + e.message, true);
+        });
+    },
+
+    // ==========================================
+    // QUIZ TRASH (RECYCLE BIN - 30 DAYS RETENTION)
+    // ==========================================
+
+    quizSubTab: 'active',
+    trashedQuizzesData: [],
+
+    switchQuizSubTab(tab) {
+        this.quizSubTab = tab;
+        const btnActive = document.getElementById('btn-quiz-subtab-active');
+        const btnTrash = document.getElementById('btn-quiz-subtab-trash');
+        const activeContainer = document.getElementById('quizzes-active-container');
+        const trashContainer = document.getElementById('quizzes-trash-container');
+
+        if (tab === 'trash') {
+            if (btnActive) {
+                btnActive.className = 'text-xs px-3 py-1.5 rounded-lg transition font-medium text-gray-400 hover:text-white flex items-center gap-1.5';
+            }
+            if (btnTrash) {
+                btnTrash.className = 'text-xs px-3 py-1.5 rounded-lg transition font-medium bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1.5';
+            }
+            if (activeContainer) activeContainer.classList.add('hidden');
+            if (trashContainer) trashContainer.classList.remove('hidden');
+            this.loadTrashedQuizzes();
+        } else {
+            if (btnActive) {
+                btnActive.className = 'text-xs px-3 py-1.5 rounded-lg transition font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5';
+            }
+            if (btnTrash) {
+                btnTrash.className = 'text-xs px-3 py-1.5 rounded-lg transition font-medium text-gray-400 hover:text-white flex items-center gap-1.5';
+            }
+            if (activeContainer) activeContainer.classList.remove('hidden');
+            if (trashContainer) trashContainer.classList.add('hidden');
+            if (Array.isArray(this.quizzesData) && this.quizzesData.length > 0) {
+                this.renderQuizzesTable(this.quizzesData);
+            } else {
+                this.loadQuizzes();
+            }
+        }
+    },
+
+    loadTrashedQuizzesCount() {
+        let params = new URLSearchParams({ action: 'list_trashed_quizzes' });
+        if (this.pass) params.append('password', this.pass);
+
+        fetch(API_BASE + '/backend/api_ai_exam.php?' + params.toString(), {
+            headers: { 'X-Admin-Pass': this.pass || '' }
+        })
+        .then(r => r.ok ? r.json() : null)
+        .then(res => {
+            if (res && res.success && Array.isArray(res.data)) {
+                const countBadge = document.getElementById('quizzes-trash-count');
+                if (countBadge) countBadge.innerText = res.data.length;
+            }
+        })
+        .catch(() => {});
+    },
+
+    loadTrashedQuizzes() {
+        this.showLoading(true);
+        let params = new URLSearchParams({ action: 'list_trashed_quizzes' });
+        if (this.pass) params.append('password', this.pass);
+
+        fetch(API_BASE + '/backend/api_ai_exam.php?' + params.toString(), {
+            headers: { 'X-Admin-Pass': this.pass || '' }
+        })
+        .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+            return r.json();
+        })
+        .then(res => {
+            this.showLoading(false);
+            if (res && res.success && Array.isArray(res.data)) {
+                this.trashedQuizzesData = res.data;
+                const countBadge = document.getElementById('quizzes-trash-count');
+                if (countBadge) countBadge.innerText = res.data.length;
+                this.renderTrashedQuizzesTable(res.data);
+            } else {
+                this.showToast(res?.message || 'فشل تحميل سلة المحذوفات', true);
+            }
+        })
+        .catch(e => {
+            this.showLoading(false);
+            console.error('Error loading trashed quizzes:', e);
+            this.showToast('خطأ في تحميل سلة المحذوفات: ' + e.message, true);
+        });
+    },
+
+    renderTrashedQuizzesTable(list) {
+        let displayList = (list || []).filter(q => q && q.id);
+        if (this.focusMode && this.focusMode.enabled) {
+            displayList = displayList.filter(q => {
+                if (q.specialty && q.specialty !== this.focusMode.specialty) return false;
+                if (q.year !== null && q.year !== undefined && q.year !== '' && String(q.year) !== String(this.focusMode.year)) return false;
+                if (q.semester !== null && q.semester !== undefined && q.semester !== '' && String(q.semester) !== String(this.focusMode.semester)) return false;
+                return true;
+            });
+        }
+
+        const tbody = document.getElementById('quizzes-trash-table-body');
+        const mobileCards = document.getElementById('quizzes-trash-mobile-cards');
+        const countBadge = document.getElementById('quizzes-trash-count');
+        if (countBadge) countBadge.innerText = (list || []).length;
+
+        if (displayList.length === 0) {
+            if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-gray-400">سلة المحذوفات فارغة حالياً. لا توجد أي اختبارات محذوفة.</td></tr>';
+            if (mobileCards) mobileCards.innerHTML = '<div class="p-8 text-center text-xs text-gray-400">سلة المحذوفات فارغة حالياً.</div>';
+            return;
+        }
+
+        let html = '';
+        let cardsHtml = '';
+        displayList.forEach(q => {
+            let rawChap = (q.chapter_name || '').replace(/^[📌📁\s\-\-]+/, '').trim();
+            if (!rawChap || rawChap === 'عام') rawChap = 'ملف المحاضرة';
+
+            const daysLeft = q.days_left !== undefined ? q.days_left : 30;
+            const isNearExpiry = daysLeft <= 5;
+            const daysBadge = isNearExpiry
+                ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>متبقي ${daysLeft} يوم (سينتهي قريباً)</span>`
+                : `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>متبقي ${daysLeft} يوم</span>`;
+
+            const scopeParts = [];
+            if (q.specialty) scopeParts.push(q.specialty === 'dentistry' ? 'طب الأسنان' : (q.specialty === 'medicine' ? 'الطب البشري' : q.specialty));
+            if (q.year !== null && q.year !== undefined && q.year !== '') scopeParts.push(`سنة ${q.year}`);
+            if (q.semester !== null && q.semester !== undefined && q.semester !== '') scopeParts.push(`فصل ${q.semester}`);
+            const scopeLabel = scopeParts.length > 0 ? scopeParts.join(' | ') : 'غير محدد';
+
+            html += `
+                <tr class="hover:bg-white/5 transition bg-rose-500/[0.02]">
+                    <td class="p-4 font-semibold text-white">
+                        <div class="flex items-center gap-2">
+                            <span class="text-rose-400 font-mono text-xs">🗑️</span>
+                            <span>${this.escapeHtml(q.quiz_name)}</span>
+                        </div>
+                    </td>
+                    <td class="p-4 text-gray-300">${this.escapeHtml(q.subject_name || 'مادة دراسية')}</td>
+                    <td class="p-4 text-gray-400 max-w-[200px] truncate" title="${this.escapeHtml(rawChap)}">${this.escapeHtml(rawChap)}</td>
+                    <td class="p-4 text-center font-bold text-gray-300">${q.num_questions}</td>
+                    <td class="p-4 text-center text-xs text-gray-400 font-mono">${q.deleted_at || 'N/A'}</td>
+                    <td class="p-4 text-center">${daysBadge}</td>
+                    <td class="p-4 text-center text-xs text-gray-300">${this.escapeHtml(q.deleted_by || 'مشرف')}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="AdminApp.restoreQuiz('${q.id}')" class="btn btn-primary text-xs px-2.5 py-1.5 font-semibold flex items-center gap-1 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/40" title="استعادة الاختبار إلى بنك الأسئلة">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                                <span>استعادة</span>
+                            </button>
+                            <button onclick="AdminApp.takeQuiz('${q.id}')" class="btn btn-secondary text-xs px-2 py-1.5 font-medium flex items-center gap-1 text-gray-300 border-white/10 hover:bg-white/10" title="معاينة الأسئلة">
+                                <span>معاينة</span>
+                            </button>
+                            <button onclick="AdminApp.purgeQuiz('${q.id}')" class="btn btn-danger text-xs px-2.5 py-1.5 font-medium flex items-center gap-1 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border-rose-500/30" title="حذف نهائي فوري بلا رجعة">
+                                <span>حذف نهائي</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+
+            cardsHtml += `
+                <div class="bg-black/40 border border-rose-500/20 rounded-xl p-3 space-y-2.5 max-w-full overflow-hidden">
+                    <div class="flex items-start justify-between gap-2">
+                        <h5 class="text-white font-semibold text-sm leading-snug break-words min-w-0 flex-1">${this.escapeHtml(q.quiz_name)}</h5>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <span class="text-[11px] font-mono font-bold bg-white/5 text-gray-300 px-2 py-0.5 rounded-full">${q.num_questions} س</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1.5 text-xs text-gray-400">
+                        <span class="text-gray-300">${this.escapeHtml(q.subject_name || 'مادة دراسية')}</span>
+                        <span>•</span>
+                        <span class="text-gray-400">${this.escapeHtml(scopeLabel)}</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 pt-1">
+                        ${daysBadge}
+                        <span class="text-gray-500 text-[11px] font-mono">حُذف: ${q.deleted_at || ''}</span>
+                    </div>
+                    <div class="pt-2 border-t border-white/5 flex items-center justify-end gap-2 text-xs">
+                        <button onclick="AdminApp.restoreQuiz('${q.id}')" class="btn btn-primary text-xs px-3 py-1 font-semibold flex items-center gap-1 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/40">
+                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                            <span>استعادة</span>
+                        </button>
+                        <button onclick="AdminApp.takeQuiz('${q.id}')" class="btn btn-secondary text-xs px-2.5 py-1 text-gray-300">معاينة</button>
+                        <button onclick="AdminApp.purgeQuiz('${q.id}')" class="btn btn-danger text-xs px-2.5 py-1 text-rose-300">حذف نهائي</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        if (tbody) tbody.innerHTML = html;
+        if (mobileCards) mobileCards.innerHTML = cardsHtml;
+    },
+
+    filterTrashedQuizzesTable() {
+        const input = document.getElementById('quizzes-trash-search-input');
+        if (!this.trashedQuizzesData) return;
+
+        const rawQuery = input ? input.value.trim() : '';
+        const query = rawQuery ? this.normalizeArabic(rawQuery) : '';
+
+        const filtered = this.trashedQuizzesData.filter(q => {
+            if (!query) return true;
+            const name = this.normalizeArabic(q.quiz_name || '');
+            const subject = this.normalizeArabic(q.subject_name || '');
+            const chapter = this.normalizeArabic(q.chapter_name || '');
+            return name.includes(query) || subject.includes(query) || chapter.includes(query);
+        });
+
+        this.renderTrashedQuizzesTable(filtered);
+    },
+
+    restoreQuiz(quizId) {
+        const quiz = (this.trashedQuizzesData || []).find(q => q.id === quizId);
+        const quizName = quiz ? quiz.quiz_name : 'هذا الاختبار';
+        if (!confirm(`هل أنت متأكد من استعادة الاختبار "${quizName}" إلى بنك الأسئلة؟`)) {
+            return;
+        }
+
+        this.showLoading(true);
+        fetch(API_BASE + '/backend/api_ai_exam.php?action=restore_quiz', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: quizId, password: this.pass })
+        })
+        .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+            return r.json();
+        })
+        .then(res => {
+            this.showLoading(false);
+            if (res.success) {
+                this.showToast(`تمت استعادة الاختبار "${quizName}" بنجاح إلى بنك الأسئلة`);
+                this.loadTrashedQuizzes();
+                // Invalidate cached quizzes so when user switches back they see fresh list
+                this.quizzesData = null;
+                this.loadTrashedQuizzesCount();
+            } else {
+                this.showToast(res.message || 'فشل استعادة الاختبار', true);
+            }
+        })
+        .catch(e => {
+            this.showLoading(false);
+            console.error('Error restoring quiz:', e);
+            this.showToast('خطأ في استعادة الاختبار: ' + e.message, true);
+        });
+    },
+
+    purgeQuiz(quizId) {
+        if (!this.permissions?.delete_subject && !this.permissions?.manage_passwords) {
+            this.showToast('صلاحية الحذف النهائي مقتصرة على المشرف العام', true);
+            return;
+        }
+
+        const quiz = (this.trashedQuizzesData || []).find(q => q.id === quizId);
+        const quizName = quiz ? quiz.quiz_name : 'هذا الاختبار';
+        if (!confirm(`⚠️ تحذير: هل أنت متأكد من حذف الاختبار "${quizName}" نهائياً من السيرفر؟\nلن يمكن استعادته بعد ذلك مطلقاً.`)) {
+            return;
+        }
+
+        this.showLoading(true);
+        fetch(API_BASE + '/backend/api_ai_exam.php?action=purge_quiz', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: quizId, password: this.pass })
+        })
+        .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+            return r.json();
+        })
+        .then(res => {
+            this.showLoading(false);
+            if (res.success) {
+                this.showToast(`تم حذف الاختبار "${quizName}" نهائياً وبلا رجعة`);
+                this.loadTrashedQuizzes();
+                this.loadTrashedQuizzesCount();
+            } else {
+                this.showToast(res.message || 'فشل الحذف النهائي', true);
+            }
+        })
+        .catch(e => {
+            this.showLoading(false);
+            console.error('Error purging quiz:', e);
+            this.showToast('خطأ في حذف الاختبار: ' + e.message, true);
+        });
+    },
+
+    emptyQuizTrash() {
+        if (!this.permissions?.delete_subject && !this.permissions?.manage_passwords) {
+            this.showToast('صلاحية تفريغ السلة مقتصرة على المشرف العام', true);
+            return;
+        }
+
+        const count = (this.trashedQuizzesData || []).length;
+        if (count === 0) {
+            this.showToast('سلة المحذوفات فارغة بالفعل');
+            return;
+        }
+
+        if (!confirm(`⚠️ تحذير شديد: هل أنت متأكد من تفريغ سلة المحذوفات بالكامل وحذف جميع الاختبارات (${count} اختبار) نهائياً؟\nهذا الإجراء دائم ولا يمكن التراجع عنه مطلقاً.`)) {
+            return;
+        }
+
+        this.showLoading(true);
+        fetch(API_BASE + '/backend/api_ai_exam.php?action=empty_quiz_trash', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: this.pass })
+        })
+        .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+            return r.json();
+        })
+        .then(res => {
+            this.showLoading(false);
+            if (res.success) {
+                this.showToast(`تم تفريغ سلة المحذوفات بنجاح (حُذف ${res.purged_count || count} اختبار)`);
+                this.loadTrashedQuizzes();
+                this.loadTrashedQuizzesCount();
+            } else {
+                this.showToast(res.message || 'فشل تفريغ السلة', true);
+            }
+        })
+        .catch(e => {
+            this.showLoading(false);
+            console.error('Error emptying trash:', e);
+            this.showToast('خطأ في تفريغ السلة: ' + e.message, true);
         });
     },
 

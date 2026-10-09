@@ -2391,7 +2391,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                     deleteBtn.innerText = 'حذف';
                     deleteBtn.addEventListener('click', async (e) => {
                         e.stopPropagation();
-                        if (confirm(`هل أنت متأكد من حذف الاختبار "${q.quiz_name}"؟`)) {
+                        if (confirm(`هل أنت متأكد من نقل الاختبار "${q.quiz_name}" إلى سلة المحذوفات؟\n(سيتم حفظه في لوحة التحكم لمدة 30 يوماً قبل الحذف التلقائي ويمكن استعادته في أي وقت)`)) {
                             try {
                                 const res = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?action=delete_quiz`, {
                                     method: 'POST',
