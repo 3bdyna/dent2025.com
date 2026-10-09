@@ -1970,15 +1970,15 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
             if ($httpCode === 200 && !empty($response)) {
                 $jsonRes = json_decode($response, true);
                 if (!isset($jsonRes['error'])) {
-                    recordGeminiUsage($index, $apiKey, 200, $response, $latencyMs, $numQuestions);
+                    recordGeminiUsage($index, $apiKey, 200, $response, $latencyMs, $numQuestions, $modelName);
                     break 2;
                 } else {
                     $lastErrorMsg = $jsonRes['error']['message'] ?? 'Unknown API Error';
-                    recordGeminiUsage($index, $apiKey, 200, $response, $latencyMs, 0);
+                    recordGeminiUsage($index, $apiKey, 200, $response, $latencyMs, 0, $modelName);
                 }
             } else {
                 $lastErrorMsg = "HTTP $httpCode: " . substr(strval($response), 0, 150);
-                recordGeminiUsage($index, $apiKey, $httpCode, $response, $latencyMs, 0);
+                recordGeminiUsage($index, $apiKey, $httpCode, $response, $latencyMs, 0, $modelName);
                 if ($httpCode === 503 || $httpCode === 429) {
                     usleep(500000);
                     break;
@@ -2343,15 +2343,15 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
                 $j = json_decode($respText, true);
                 if (!isset($j['error'])) {
                     $stage1Res = $j;
-                    recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, 0);
+                    recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, 0, $modelName);
                     break 2;
                 } else {
                     $lastErrorMsg = $j['error']['message'] ?? 'API error';
-                    recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, 0);
+                    recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, 0, $modelName);
                 }
             } else {
                 $lastErrorMsg = "HTTP {$httpCode}: " . substr(strval($respText), 0, 150);
-                recordGeminiUsage($index, $apiKey, $httpCode, $respText, $latencyMs, 0);
+                recordGeminiUsage($index, $apiKey, $httpCode, $respText, $latencyMs, 0, $modelName);
                 if ($httpCode === 503 || $httpCode === 429) {
                     usleep(500000);
                     break;
@@ -2500,6 +2500,7 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         $usedApiKey2 = '';
         $usedLatencyMs2 = 0;
         $usedRespText2 = '';
+        $usedModel2 = 'gemini-3.8-flash';
 
         foreach ($modelsToTry as $modelName) {
             foreach ($API_KEYS as $index => $apiKey) {
@@ -2517,12 +2518,13 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
                         $usedApiKey2 = $apiKey;
                         $usedLatencyMs2 = $latencyMs;
                         $usedRespText2 = $respText;
+                        $usedModel2 = $modelName;
                         break 2;
                     } else {
-                        recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, 0);
+                        recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, 0, $modelName);
                     }
                 } else {
-                    recordGeminiUsage($index, $apiKey, $httpCode, $respText, $latencyMs, 0);
+                    recordGeminiUsage($index, $apiKey, $httpCode, $respText, $latencyMs, 0, $modelName);
                     if ($httpCode === 503 || $httpCode === 429) {
                         usleep(500000);
                         break;
@@ -2570,7 +2572,7 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
 
         $newQuestionsCount = count($finalQuestions) - $prevCount;
         if ($usedKeyIndex2 >= 0) {
-            recordGeminiUsage($usedKeyIndex2, $usedApiKey2, 200, $usedRespText2, $usedLatencyMs2, $newQuestionsCount);
+            recordGeminiUsage($usedKeyIndex2, $usedApiKey2, 200, $usedRespText2, $usedLatencyMs2, $newQuestionsCount, $usedModel2);
         }
     }
 
@@ -2727,7 +2729,7 @@ if ($action === 'generate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // --- RECORD GEMINI USAGE HELPER ---
-function recordGeminiUsage($keyIndex, $apiKey, $httpCode, $response, $latencyMs, $numQuestions = 0) {
+function recordGeminiUsage($keyIndex, $apiKey, $httpCode, $response, $latencyMs, $numQuestions = 0, $modelName = 'gemini-3.8-flash') {
     $dataDir = __DIR__ . '/gemini_keys_data';
     if (!is_dir($dataDir)) {
         @mkdir($dataDir, 0777, true);
@@ -2807,6 +2809,7 @@ function recordGeminiUsage($keyIndex, $apiKey, $httpCode, $response, $latencyMs,
         'id' => 'log_' . uniqid(),
         'timestamp' => date('Y-m-d H:i:s'),
         'date' => $today,
+        'model' => !empty($modelName) ? strval($modelName) : 'gemini-3.8-flash',
         'key_index' => $keyIndex,
         'key_masked' => $maskedKey,
         'http_code' => $httpCode,

@@ -3970,10 +3970,12 @@ window.AdminApp = {
                         statusTag = `<span class="text-red-400">${log.http_code} Error</span>`;
                     }
 
+                    const modelName = log.model || 'gemini-3.8-flash';
                     return `
                         <tr class="hover:bg-white/5 transition">
                             <td class="p-3 font-mono text-xs text-gray-300">${log.timestamp}</td>
                             <td class="p-3 font-mono text-xs text-gray-400">${log.key_masked}</td>
+                            <td class="p-3"><span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">${this.escapeHtml(modelName)}</span></td>
                             <td class="p-3 font-mono text-white">${log.num_questions || '-'}</td>
                             <td class="p-3 font-mono text-blue-300">${(log.total_tokens || 0).toLocaleString()}</td>
                             <td class="p-3 font-mono text-gray-300">${log.latency_ms || 0} ms</td>
@@ -3982,7 +3984,7 @@ window.AdminApp = {
                     `;
                 }).join('');
             } else {
-                logsBody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500 font-sans">لا توجد سجلات طلبات حتى الآن</td></tr>';
+                logsBody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500 font-sans">لا توجد سجلات طلبات حتى الآن</td></tr>';
             }
         }
     },
