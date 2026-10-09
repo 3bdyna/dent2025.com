@@ -5737,32 +5737,33 @@ window.AdminApp = {
             
             /* Responsive Density Scaling */
             .density-comfortable .col-half {
-                gap: 5.5px !important;
+                gap: 8px !important;
             }
             .density-comfortable .quiz-q-block {
-                padding: 5px 7px !important;
+                padding: 6px 8px !important;
+                border-radius: 4px !important;
             }
             .density-comfortable .quiz-q-title {
-                font-size: 0.74rem !important;
-                line-height: 1.30 !important;
-                margin-bottom: 3px !important;
+                font-size: 0.77rem !important;
+                line-height: 1.32 !important;
+                margin-bottom: 3.5px !important;
             }
             .density-comfortable .quiz-options-list {
-                gap: 2.2px !important;
+                gap: 2.8px !important;
             }
             .density-comfortable .quiz-opt-row {
-                padding: 2.5px 5px !important;
-                font-size: 0.68rem !important;
-                line-height: 1.24 !important;
+                padding: 2.8px 6px !important;
+                font-size: 0.70rem !important;
+                line-height: 1.25 !important;
             }
             .density-comfortable .quiz-explanation-box {
-                margin-top: 2.5px !important;
-                padding: 3px 5px !important;
-                font-size: 0.61rem !important;
-                line-height: 1.24 !important;
+                margin-top: 3px !important;
+                padding: 3.5px 6px !important;
+                font-size: 0.63rem !important;
+                line-height: 1.25 !important;
             }
             .density-comfortable .quiz-q-top-row {
-                margin-bottom: 3px !important;
+                margin-bottom: 3.5px !important;
             }
 
             /* Compact Density Standards (Space Saver) */
@@ -6003,19 +6004,42 @@ window.AdminApp = {
             .quiz-short-answer-content.is-rtl ol, .quiz-short-answer-content.is-rtl ul { padding-left: 0; padding-right: 10px; }
             .quiz-short-answer-content li { margin-bottom: 1px; }
             .doc-footer {
-                margin-top: 4px;
-                padding-top: 3px;
+                margin-top: 5px;
+                padding-top: 4px;
                 border-top: 1px solid #222222;
                 display: flex;
+                direction: ltr !important;
                 justify-content: space-between;
                 align-items: center;
-                font-size: 0.60rem;
+                font-size: 0.63rem;
                 color: #71717a;
                 flex-shrink: 0;
+                width: 100%;
+                box-sizing: border-box;
             }
-            .doc-footer-right { font-family: 'Outfit', sans-serif; font-weight: 700; color: #a1a1aa; direction: ltr; }
-            .doc-footer-center { font-family: 'Cairo', 'Outfit', sans-serif; font-weight: 600; color: #71717a; }
-            .doc-footer-spacer { width: 60px; visibility: hidden; }
+            .doc-footer-left {
+                font-family: 'Outfit', sans-serif;
+                font-weight: 700;
+                color: #a1a1aa;
+                direction: ltr !important;
+                text-align: left;
+                white-space: nowrap !important;
+                flex: 1;
+            }
+            .doc-footer-center {
+                font-family: 'Cairo', 'Outfit', sans-serif;
+                font-weight: 600;
+                color: #71717a;
+                text-align: center;
+                white-space: nowrap !important;
+                flex: 1;
+            }
+            .doc-footer-right {
+                flex: 1;
+                text-align: right;
+                visibility: hidden;
+                white-space: nowrap !important;
+            }
         `;
     },
 
@@ -6061,7 +6085,7 @@ window.AdminApp = {
         let prev = '';
         while (text !== prev) {
             prev = text;
-            text = text.replace(/^\s*(?:[\([（]\s*(?:[A-Ha-h]|[0-9]{1,2}|[أإآابجدههـوزح]|ح[A-Za-z]?)\s*[\)\]）]\s*|\s*(?:[A-Ha-h]|[0-9]{1,2}|[أإآابجدههـوزح]|ح[A-Za-z]?)\s*[\)\]）.:\-]\s*)+/u, '').trim();
+            text = text.replace(/^\s*(?:[\([（{]\s*(?:[A-Za-z]|[0-9]{1,2}|[أإآابجدههـوزحطيكلمنسعفصقرشتثخﺬضظغ]|ح[A-Za-z]?)\s*[\)\]）}]:?\s*|\s*(?:[A-Za-z]|[0-9]{1,2}|[أإآابجدههـوزحطيكلمنسعفصقرشتثخﺬضظغ]|ح[A-Za-z]?)\s*[\)\]）.:\-–—]+\s*)+/u, '').trim();
         }
         return text;
     },
@@ -6077,8 +6101,8 @@ window.AdminApp = {
     },
 
     estimateQuestionHeight(q, includeExplanations = true) {
-        // Base container overhead: padding (6px) + border (2px) + top-row badge (14px) + margin (3px)
-        let h = 25;
+        // Base container overhead: padding (5px) + border (2px) + top-row badge (11px)
+        let h = 18;
         const rawQuestion = String(q?.question || '').trim();
         const cleanQuestion = this.stripQuestionPrefix(rawQuestion);
         const qLen = cleanQuestion.length;
@@ -6103,8 +6127,8 @@ window.AdminApp = {
                 const cleanOpt = this.stripOptionPrefix(opt);
                 const optLen = cleanOpt.length;
                 const optLines = Math.max(1, Math.ceil(optLen / 48));
-                // Each option is ~15px base + 12px per extra line
-                h += 15 + ((optLines - 1) * 12);
+                // Each option is ~13.5px base + 11.5px per extra line
+                h += 13.5 + ((optLines - 1) * 11.5);
             });
         }
 
@@ -6113,12 +6137,12 @@ window.AdminApp = {
             if (exp) {
                 const expClean = exp.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
                 const expLines = Math.max(1, Math.ceil(expClean.length / 52));
-                h += 8 + (expLines * 12);
+                h += 7 + (expLines * 12);
             }
         }
 
         // Inter-card gap
-        return h + 3;
+        return h + 2.5;
     },
 
     calculateSmartPages(questions, includeExplanations = true) {
@@ -6135,8 +6159,8 @@ window.AdminApp = {
             if (count === 0) return false;
             if (count === 1) return true;
             if (count > maxPerPage) return false;
-            // Page 1 has main header (~50px), subsequent pages have compact header (~32px)
-            const limit = (pIdx === 0) ? 950 : 990;
+            // Page 1 has main header (~45px), subsequent pages have compact header (~32px)
+            const limit = (pIdx === 0) ? 970 : 1000;
             let c1 = 0, c2 = 0;
             for (let i = sliceStart; i < sliceEnd; i++) {
                 if ((i - sliceStart) % 2 === 0) c1 += heights[i];
@@ -6337,7 +6361,7 @@ window.AdminApp = {
             const pIdx = pIdx0 + 1;
             const n = pageQs.length;
 
-            const isComfortable = (n <= 7);
+            const isComfortable = (n <= 14);
             const densityClass = isComfortable ? ' density-comfortable' : ' density-compact';
 
             const col1Cards = [];
@@ -6393,9 +6417,9 @@ window.AdminApp = {
             const docFooterBrand = 'dent2025.com';
             const footerHtml = `
                 <div class="doc-footer">
-                    <span class="doc-footer-right">${docFooterBrand}</span>
+                    <span class="doc-footer-left">${docFooterBrand}</span>
                     <span class="doc-footer-center">${pageOfLabel}</span>
-                    <span class="doc-footer-spacer"></span>
+                    <span class="doc-footer-right">${docFooterBrand}</span>
                 </div>
             `;
 
