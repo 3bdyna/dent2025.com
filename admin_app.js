@@ -3793,14 +3793,14 @@ window.AdminApp = {
 
 
     fetchGeminiApi(actionQuery) {
-        const authed = actionQuery + '&password=' + encodeURIComponent(this.pass || '');
+        const authed = actionQuery + '&password=' + encodeURIComponent(this.pass || '') + '&_t=' + Date.now();
         const url1 = '/backend/api_ai_exam.php?' + authed;
         const url2 = '/backend/api_ai_exam.php?' + authed;
 
-        return fetch(url1)
+        return fetch(url1, { cache: 'no-store' })
         .then(r => {
             if (r.status === 404) {
-                return fetch(url2);
+                return fetch(url2, { cache: 'no-store' });
             }
             return r;
         })
@@ -3812,12 +3812,17 @@ window.AdminApp = {
         });
     },
 
-    loadGeminiStatus() {
-        const hasCached = !!this.geminiData;
-        if (hasCached) {
-            this.renderGeminiUI(this.geminiData);
-        } else {
+    loadGeminiStatus(force = false) {
+        if (force) {
+            this.geminiData = null;
             this.showLoading(true);
+        } else {
+            const hasCached = !!this.geminiData;
+            if (hasCached) {
+                this.renderGeminiUI(this.geminiData);
+            } else {
+                this.showLoading(true);
+            }
         }
 
         this.fetchGeminiApi('action=gemini_status')
@@ -3826,6 +3831,9 @@ window.AdminApp = {
             if (res.success && res.data) {
                 this.geminiData = res.data;
                 this.renderGeminiUI(res.data);
+                if (force) {
+                    this.showToast('تم تحديث بيانات المعالجة الذكية');
+                }
             } else {
                 this.showToast(res.message || 'فشل في تحميل حالة مفاتيح المعالجة الذكية', true);
             }

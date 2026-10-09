@@ -3335,60 +3335,84 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
     function calculateSmartPages(questions, includeExplanations = true) {
         if (!Array.isArray(questions) || questions.length === 0) return [];
-        const total = questions.length;
-        
-        const targetPerPage = includeExplanations ? 6 : 10;
-        const maxPerPage = includeExplanations ? 7 : 12;
-        let p = Math.max(1, Math.round(total / targetPerPage));
+        const n = questions.length;
+        const maxPerPage = includeExplanations ? 8 : 14;
 
-        while (p < total) {
-            const base = Math.floor(total / p);
-            const rem = total % p;
-            const pages = [];
-            let idx = 0;
-            for (let i = 0; i < p; i++) {
-                const cnt = base + (i < rem ? 1 : 0);
-                pages.push(questions.slice(idx, idx + cnt));
-                idx += cnt;
+        const estH = (q) => estimateQuestionHeight(q, includeExplanations);
+
+        const pageFits = (sliceQs, pIdx) => {
+            if (sliceQs.length === 0) return false;
+            if (sliceQs.length === 1) return true;
+            if (sliceQs.length > maxPerPage) return false;
+            const limit = (pIdx === 0) ? 900 : 940;
+            let c1 = 0, c2 = 0;
+            for (let i = 0; i < sliceQs.length; i++) {
+                const h = estH(sliceQs[i]);
+                if (i % 2 === 0) c1 += h;
+                else c2 += h;
             }
+            return (c1 <= limit && c2 <= limit);
+        };
 
-            let allFit = true;
-            for (let pIdx = 0; pIdx < pages.length; pIdx++) {
-                const pageQs = pages[pIdx];
-                if (pageQs.length > maxPerPage) {
-                    allFit = false;
-                    break;
-                }
-                const limit = (pIdx === 0) ? 900 : 940;
-                let c1 = 0;
-                let c2 = 0;
-                for (let i = 0; i < pageQs.length; i++) {
-                    const h = estimateQuestionHeight(pageQs[i], includeExplanations);
-                    if (i % 2 === 0) c1 += h;
-                    else c2 += h;
-                }
-                if (c1 > limit || c2 > limit) {
-                    allFit = false;
-                    break;
-                }
-            }
+        for (let P = 1; P <= n; P++) {
+            const memo = new Map();
 
-            if (allFit) {
+            const findPartition = (startIdx, pageIdx) => {
+                const key = `${startIdx}:${pageIdx}`;
+                if (memo.has(key)) return memo.get(key);
+
+                const remPages = P - pageIdx;
+                const remQs = n - startIdx;
+
+                if (remPages === 1) {
+                    const sliceQs = questions.slice(startIdx);
+                    if (pageFits(sliceQs, pageIdx)) {
+                        const res = [sliceQs.length];
+                        memo.set(key, res);
+                        return res;
+                    }
+                    memo.set(key, null);
+                    return null;
+                }
+
+                const ideal = remQs / remPages;
+                const candidates = [];
+                const maxCandidate = Math.min(maxPerPage, remQs - remPages + 1);
+                for (let cnt = 1; cnt <= maxCandidate; cnt++) {
+                    const sliceQs = questions.slice(startIdx, startIdx + cnt);
+                    if (pageFits(sliceQs, pageIdx)) {
+                        candidates.push(cnt);
+                    }
+                }
+
+                candidates.sort((a, b) => Math.abs(a - ideal) - Math.abs(b - ideal));
+
+                for (const cnt of candidates) {
+                    const sub = findPartition(startIdx + cnt, pageIdx + 1);
+                    if (sub !== null) {
+                        const res = [cnt, ...sub];
+                        memo.set(key, res);
+                        return res;
+                    }
+                }
+
+                memo.set(key, null);
+                return null;
+            };
+
+            const part = findPartition(0, 0);
+            if (part !== null) {
+                const pages = [];
+                let cur = 0;
+                for (const cnt of part) {
+                    pages.push(questions.slice(cur, cur + cnt));
+                    cur += cnt;
+                }
                 return pages;
             }
-            p++;
         }
 
-        const base = Math.floor(total / p);
-        const rem = total % p;
-        const pages = [];
-        let idx = 0;
-        for (let i = 0; i < p; i++) {
-            const cnt = base + (i < rem ? 1 : 0);
-            pages.push(questions.slice(idx, idx + cnt));
-            idx += cnt;
-        }
-        return pages;
+        return [questions];
     }
 
     function renderQuizCardHtml(q, globalQIdx, includeExplanation) {

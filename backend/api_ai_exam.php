@@ -2335,17 +2335,24 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         foreach ($API_KEYS as $index => $apiKey) {
             $url = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($modelName) . ":generateContent?key=" . $apiKey;
             $req = postGeminiRequest($url, $stage1Payload, 120);
-            if ($req['http_code'] === 200 && !empty($req['response'])) {
-                $j = json_decode($req['response'], true);
+            $httpCode = $req['http_code'];
+            $latencyMs = $req['latency_ms'] ?? 0;
+            $respText = $req['response'] ?? '';
+
+            if ($httpCode === 200 && !empty($respText)) {
+                $j = json_decode($respText, true);
                 if (!isset($j['error'])) {
                     $stage1Res = $j;
+                    recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, 0);
                     break 2;
                 } else {
                     $lastErrorMsg = $j['error']['message'] ?? 'API error';
+                    recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, 0);
                 }
             } else {
-                $lastErrorMsg = "HTTP {$req['http_code']}: " . substr(strval($req['response']), 0, 150);
-                if ($req['http_code'] === 503 || $req['http_code'] === 429) {
+                $lastErrorMsg = "HTTP {$httpCode}: " . substr(strval($respText), 0, 150);
+                recordGeminiUsage($index, $apiKey, $httpCode, $respText, $latencyMs, 0);
+                if ($httpCode === 503 || $httpCode === 429) {
                     usleep(500000);
                     break;
                 }
@@ -2471,14 +2478,22 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
             foreach ($API_KEYS as $index => $apiKey) {
                 $url = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($modelName) . ":generateContent?key=" . $apiKey;
                 $req = postGeminiRequest($url, $stage2Payload, 90);
-                if ($req['http_code'] === 200 && !empty($req['response'])) {
-                    $j = json_decode($req['response'], true);
+                $httpCode = $req['http_code'];
+                $latencyMs = $req['latency_ms'] ?? 0;
+                $respText = $req['response'] ?? '';
+
+                if ($httpCode === 200 && !empty($respText)) {
+                    $j = json_decode($respText, true);
                     if (!isset($j['error'])) {
                         $stage2Res = $j;
+                        recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, count($chunk));
                         break 2;
+                    } else {
+                        recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, 0);
                     }
                 } else {
-                    if ($req['http_code'] === 503 || $req['http_code'] === 429) {
+                    recordGeminiUsage($index, $apiKey, $httpCode, $respText, $latencyMs, 0);
+                    if ($httpCode === 503 || $httpCode === 429) {
                         usleep(500000);
                         break;
                     }
@@ -2708,31 +2723,49 @@ function recordGeminiUsage($keyIndex, $apiKey, $httpCode, $response, $latencyMs,
     $promptTokens = intval($usageMeta['promptTokenCount'] ?? 0);
     $candidatesTokens = intval($usageMeta['candidatesTokenCount'] ?? 0);
     $totalTokens = intval($usageMeta['totalTokenCount'] ?? 0);
+    if ($totalTokens === 0 && ($promptTokens > 0 || $candidatesTokens > 0)) {
+        $totalTokens = $promptTokens + $candidatesTokens;
+    }
     
-    $statusText = ($httpCode === 200) ? 'active' : (($httpCode === 429) ? 'quota_exhausted' : 'invalid');
+    $statusText = 'active';
+    if ($httpCode === 200) {
+        $statusText = 'active';
+    } elseif ($httpCode === 429) {
+        $statusText = 'quota_exhausted';
+    } elseif ($httpCode >= 500) {
+        $statusText = 'server_error';
+    } elseif ($httpCode === 400 || $httpCode === 403 || $httpCode === 404) {
+        $statusText = 'invalid';
+    } else {
+        $statusText = 'error';
+    }
     
     $stats[$today]['total_requests']++;
     $stats[$today]['total_prompt_tokens'] += $promptTokens;
     $stats[$today]['total_candidates_tokens'] += $candidatesTokens;
     $stats[$today]['total_tokens'] += $totalTokens;
     
-    if (!isset($stats[$today]['by_key'][$keyIndex])) {
-        $stats[$today]['by_key'][$keyIndex] = [
-            'requests' => 0,
-            'prompt_tokens' => 0,
-            'candidates_tokens' => 0,
-            'total_tokens' => 0,
-            'last_latency' => 0,
-            'status' => 'unknown'
-        ];
+    if ($keyIndex >= 0) {
+        if (!isset($stats[$today]['by_key'][$keyIndex])) {
+            $stats[$today]['by_key'][$keyIndex] = [
+                'requests' => 0,
+                'prompt_tokens' => 0,
+                'candidates_tokens' => 0,
+                'total_tokens' => 0,
+                'last_latency' => 0,
+                'status' => 'unknown'
+            ];
+        }
+        
+        $stats[$today]['by_key'][$keyIndex]['requests']++;
+        $stats[$today]['by_key'][$keyIndex]['prompt_tokens'] += $promptTokens;
+        $stats[$today]['by_key'][$keyIndex]['candidates_tokens'] += $candidatesTokens;
+        $stats[$today]['by_key'][$keyIndex]['total_tokens'] += $totalTokens;
+        $stats[$today]['by_key'][$keyIndex]['last_latency'] = $latencyMs;
+        if ($statusText === 'active' || $statusText === 'quota_exhausted' || $statusText === 'invalid') {
+            $stats[$today]['by_key'][$keyIndex]['status'] = $statusText;
+        }
     }
-    
-    $stats[$today]['by_key'][$keyIndex]['requests']++;
-    $stats[$today]['by_key'][$keyIndex]['prompt_tokens'] += $promptTokens;
-    $stats[$today]['by_key'][$keyIndex]['candidates_tokens'] += $candidatesTokens;
-    $stats[$today]['by_key'][$keyIndex]['total_tokens'] += $totalTokens;
-    $stats[$today]['by_key'][$keyIndex]['last_latency'] = $latencyMs;
-    $stats[$today]['by_key'][$keyIndex]['status'] = $statusText;
     
     $logEntry = [
         'id' => 'log_' . uniqid(),
@@ -2754,8 +2787,8 @@ function recordGeminiUsage($keyIndex, $apiKey, $httpCode, $response, $latencyMs,
         $logs = array_slice($logs, 0, 100);
     }
     
-    @file_put_contents($usageFile, json_encode($logs, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    @file_put_contents($statsFile, json_encode($stats, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    @file_put_contents($usageFile, json_encode($logs, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    @file_put_contents($statsFile, json_encode($stats, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 
 // --- ACTION 6: GEMINI STATUS FOR ADMIN DASHBOARD ---
@@ -3231,6 +3264,49 @@ if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     sendResponse(true, ["message" => "Quiz saved!", "quizId" => $quizId]);
 }
 
+// --- HELPER: GET QUIZ TRASH DIR & AUTO-CLEANUP ---
+function ai_exam_get_trash_dir() {
+    $trashDir = __DIR__ . '/../quizzes_data/trash';
+    if (!is_dir($trashDir)) {
+        @mkdir($trashDir, 0777, true);
+        @file_put_contents($trashDir . '/.htaccess', "Order Deny,Allow\nDeny from all\n");
+    }
+    return $trashDir;
+}
+
+function ai_exam_cleanup_expired_trash($days = 30) {
+    $trashDir = ai_exam_get_trash_dir();
+    $files = glob($trashDir . '/*.json');
+    if (!is_array($files)) return 0;
+
+    $now = time();
+    $threshold = $days * 86400; // 30 days retention
+    $purged = 0;
+
+    foreach ($files as $f) {
+        $filename = basename($f);
+        if (strpos($filename, 'quiz_') !== 0) continue;
+
+        $content = @file_get_contents($f);
+        if (!$content) continue;
+
+        $data = json_decode($content, true);
+        $deletedTime = 0;
+        if (is_array($data) && !empty($data['deleted_at'])) {
+            $deletedTime = strtotime($data['deleted_at']);
+        }
+        if (!$deletedTime) {
+            $deletedTime = filemtime($f);
+        }
+
+        if (($now - $deletedTime) >= $threshold) {
+            @unlink($f);
+            $purged++;
+        }
+    }
+    return $purged;
+}
+
 // --- ACTION 4: GET QUIZ ---
 if ($action === 'get') {
     $rawQuizId = $_GET['id'] ?? '';
@@ -3238,7 +3314,28 @@ if ($action === 'get') {
     if (empty($quizId) || strpos($quizId, 'quiz_') !== 0) sendResponse(false, "Missing or invalid quiz ID.");
     
     $filePath = __DIR__ . '/../quizzes_data/' . $quizId . '.json';
-    if (!file_exists($filePath) || basename($filePath) !== ($quizId . '.json')) sendResponse(false, "Quiz not found.");
+    $isFromTrash = false;
+    if (!file_exists($filePath) || basename($filePath) !== ($quizId . '.json')) {
+        $trashPath = ai_exam_get_trash_dir() . '/' . $quizId . '.json';
+        if (file_exists($trashPath) && basename($trashPath) === ($quizId . '.json')) {
+            $filePath = $trashPath;
+            $isFromTrash = true;
+        } else {
+            sendResponse(false, "Quiz not found.");
+        }
+    }
+
+    if ($isFromTrash) {
+        $pass = ai_exam_read_passkey();
+        $canSeeTrash = !empty($pass) && (
+            dent2025_check_rbac_permission($pass, 'edit_basic_subject') ||
+            dent2025_check_rbac_permission($pass, 'delete_subject') ||
+            dent2025_check_rbac_permission($pass, 'manage_passwords')
+        );
+        if (!$canSeeTrash) {
+            sendResponse(false, "هذا الاختبار موجود في سلة المحذوفات ولا يمكن الوصول إليه.");
+        }
+    }
     
     $quizData = json_decode(file_get_contents($filePath), true);
     if (!is_array($quizData)) {
@@ -3380,13 +3477,14 @@ if ($action === 'list_quizzes') {
     }
 }
 
-// --- ACTION 8: DELETE A SAVED QUIZ ---
+// --- ACTION 8: DELETE A SAVED QUIZ (MOVE TO TRASH - 30 DAYS RETENTION) ---
 if ($action === 'delete_quiz' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $pass = ai_exam_read_passkey();
-    if (!dent2025_check_rbac_permission($pass, 'delete_subject') && !dent2025_check_rbac_permission($pass, 'manage_passwords')) {
+    if (!dent2025_check_rbac_permission($pass, 'edit_basic_subject') && !dent2025_check_rbac_permission($pass, 'delete_subject') && !dent2025_check_rbac_permission($pass, 'manage_passwords')) {
         sendResponse(false, "غير مصرح: صلاحيات المشرف مطلوبة لحذف الاختبار.");
     }
-    $data = json_decode(file_get_contents("php://input"), true);
+    global $JSON_INPUT;
+    $data = $JSON_INPUT ?: (json_decode(file_get_contents("php://input"), true) ?: []);
     $quizId = $data['id'] ?? $data['quiz_id'] ?? $_GET['id'] ?? '';
 
     if (empty($quizId)) sendResponse(false, "Missing quiz ID.");
@@ -3402,19 +3500,242 @@ if ($action === 'delete_quiz' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $filePath = __DIR__ . '/../quizzes_data/' . $cleanId . '.json';
-    if (file_exists($filePath)) {
+    $trashDir = ai_exam_get_trash_dir();
+    $trashPath = $trashDir . '/' . $cleanId . '.json';
+
+    if (!file_exists($filePath)) {
+        if (file_exists($trashPath)) {
+            sendResponse(true, ["message" => "الاختبار موجود بالفعل في سلة المحذوفات.", "trashed" => true]);
+        }
+        sendResponse(false, "الملف غير موجود.");
+    }
+
+    $content = @file_get_contents($filePath);
+    $quizData = json_decode($content, true) ?: [];
+
+    $passInfo = !empty($pass) ? dent2025_get_passkey_info($pass) : null;
+    $operator = ($passInfo && !empty($passInfo['label'])) ? $passInfo['label'] : 'مشرف';
+
+    // Stamp trash metadata
+    $quizData['deleted_at'] = date('Y-m-d H:i:s');
+    $quizData['deleted_by'] = $operator;
+    $quizData['expires_at'] = date('Y-m-d H:i:s', time() + (30 * 86400)); // 30 days retention
+
+    $saved = @file_put_contents($trashPath, json_encode($quizData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    if ($saved !== false) {
         @unlink($filePath);
+    } else {
+        sendResponse(false, "فشل نقل الاختبار إلى سلة المحذوفات.");
+    }
+
+    // Remove from wp_dent2025_subject_links so it doesn't show in chapters/subjects view
+    if (isset($pdo) && $pdo !== null) {
+        try {
+            $tableLinks = getAiExamSubjectLinksTable($pdo);
+            $stmt = $pdo->prepare("DELETE FROM {$tableLinks} WHERE url = ? AND type = 'quiz'");
+            $stmt->execute([$cleanId]);
+        } catch (Throwable $e) {}
+    }
+
+    // Run background cleanup for any expired items (>30 days)
+    ai_exam_cleanup_expired_trash(30);
+
+    sendResponse(true, [
+        "message" => "تم نقل الاختبار إلى سلة المحذوفات بنجاح. سيتم حفظه لمدة 30 يوماً قبل الحذف التلقائي ويمكن استعادته في أي وقت.",
+        "trashed" => true,
+        "quiz_id" => $cleanId,
+        "quiz_name" => $quizData['quiz_name'] ?? 'اختبار'
+    ]);
+}
+
+// --- ACTION 8.1: LIST TRASHED QUIZZES ---
+if ($action === 'list_trashed_quizzes') {
+    try {
+        $pass = ai_exam_read_passkey();
+        if (!dent2025_check_rbac_permission($pass, 'edit_basic_subject') && !dent2025_check_rbac_permission($pass, 'delete_subject') && !dent2025_check_rbac_permission($pass, 'manage_passwords')) {
+            sendResponse(false, "غير مصرح: صلاحيات المشرف مطلوبة لعرض سلة المحذوفات.");
+        }
+
+        // Clean up expired items first (> 30 days)
+        ai_exam_cleanup_expired_trash(30);
+
+        $trashDir = ai_exam_get_trash_dir();
+        $files = glob($trashDir . '/*.json');
+        if (!is_array($files)) $files = [];
+
+        $list = [];
+        $now = time();
+
+        foreach ($files as $f) {
+            $filename = basename($f);
+            if (strpos($filename, 'quiz_') !== 0) continue;
+
+            $content = @file_get_contents($f);
+            if (!$content) continue;
+
+            $data = json_decode($content, true);
+            if (!is_array($data) || empty($data['id'])) continue;
+
+            $deletedAt = $data['deleted_at'] ?? date('Y-m-d H:i:s', filemtime($f));
+            $deletedTime = strtotime($deletedAt);
+            $expireTime = !empty($data['expires_at']) ? strtotime($data['expires_at']) : ($deletedTime + (30 * 86400));
+
+            $secondsLeft = max(0, $expireTime - $now);
+            $daysLeft = ceil($secondsLeft / 86400);
+
+            $list[] = [
+                'id' => $data['id'],
+                'quiz_name' => $data['quiz_name'] ?? 'اختبار محذوف',
+                'subject_id' => $data['subject_id'] ?? '',
+                'subject_name' => $data['subject_name'] ?? 'مادة دراسية',
+                'chapter_name' => $data['chapter_name'] ?? 'عام',
+                'specialty' => $data['specialty'] ?? '',
+                'year' => isset($data['year']) ? intval($data['year']) : null,
+                'semester' => isset($data['semester']) ? intval($data['semester']) : null,
+                'num_questions' => count($data['questions'] ?? []),
+                'created_at' => $data['created_at'] ?? '',
+                'deleted_at' => $deletedAt,
+                'deleted_by' => $data['deleted_by'] ?? 'مشرف',
+                'expires_at' => date('Y-m-d H:i:s', $expireTime),
+                'days_left' => $daysLeft,
+                'is_trashed' => true
+            ];
+        }
+
+        // Sort descending by deleted_at
+        usort($list, function($a, $b) {
+            return strcmp($b['deleted_at'], $a['deleted_at']);
+        });
+
+        sendResponse(true, $list);
+    } catch (Exception $e) {
+        sendResponse(false, "Error loading trashed quizzes: " . $e->getMessage());
+    }
+}
+
+// --- ACTION 8.2: RESTORE TRASHED QUIZ ---
+if ($action === 'restore_quiz' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $pass = ai_exam_read_passkey();
+    if (!dent2025_check_rbac_permission($pass, 'edit_basic_subject') && !dent2025_check_rbac_permission($pass, 'delete_subject') && !dent2025_check_rbac_permission($pass, 'manage_passwords')) {
+        sendResponse(false, "غير مصرح: صلاحيات المشرف مطلوبة لاستعادة الاختبار.");
+    }
+
+    global $JSON_INPUT;
+    $data = $JSON_INPUT ?: (json_decode(file_get_contents("php://input"), true) ?: []);
+    $quizId = $data['id'] ?? $data['quiz_id'] ?? $_GET['id'] ?? '';
+
+    if (empty($quizId)) sendResponse(false, "Missing quiz ID.");
+    $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '', $quizId);
+    if (strpos($cleanId, 'quiz_') !== 0) sendResponse(false, "Invalid quiz ID.");
+
+    $trashDir = ai_exam_get_trash_dir();
+    $trashFile = $trashDir . '/' . $cleanId . '.json';
+    if (!file_exists($trashFile)) {
+        sendResponse(false, "الاختبار غير موجود في سلة المحذوفات أو تم حذفه نهائياً.");
+    }
+
+    $content = @file_get_contents($trashFile);
+    $quizData = json_decode($content, true);
+    if (!is_array($quizData)) sendResponse(false, "بيانات الاختبار تالفة.");
+
+    // Remove trash metadata
+    unset($quizData['deleted_at'], $quizData['deleted_by'], $quizData['expires_at']);
+    $quizData['restored_at'] = date('Y-m-d H:i:s');
+
+    $quizzesDir = __DIR__ . '/../quizzes_data';
+    if (!is_dir($quizzesDir)) @mkdir($quizzesDir, 0777, true);
+    $activeFile = $quizzesDir . '/' . $cleanId . '.json';
+
+    $saved = @file_put_contents($activeFile, json_encode($quizData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    if ($saved !== false) {
+        @unlink($trashFile);
+    } else {
+        sendResponse(false, "فشل نقل الاختبار إلى البنك النشط.");
+    }
+
+    // Re-insert link into wp_dent2025_subject_links if subject_id is present
+    $subjectId = $quizData['subject_id'] ?? '';
+    $quizName = $quizData['quiz_name'] ?? 'اختبار';
+    if (!empty($subjectId) && isset($pdo) && $pdo !== null) {
+        try {
+            $tableLinks = getAiExamSubjectLinksTable($pdo);
+            $stmt = $pdo->prepare("DELETE FROM {$tableLinks} WHERE url = ? AND type = 'quiz'");
+            $stmt->execute([$cleanId]);
+
+            $stmt = $pdo->prepare("INSERT INTO {$tableLinks} (subject_id, url, title, type) VALUES (?, ?, ?, 'quiz')");
+            $stmt->execute([$subjectId, $cleanId, $quizName]);
+        } catch (Throwable $e) {}
+    }
+
+    sendResponse(true, [
+        "message" => "تمت استعادة الاختبار بنجاح إلى بنك الأسئلة.",
+        "quiz_id" => $cleanId,
+        "quiz_name" => $quizName
+    ]);
+}
+
+// --- ACTION 8.3: PURGE A QUIZ PERMANENTLY ---
+if ($action === 'purge_quiz' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $pass = ai_exam_read_passkey();
+    if (!dent2025_check_rbac_permission($pass, 'delete_subject') && !dent2025_check_rbac_permission($pass, 'manage_passwords')) {
+        sendResponse(false, "غير مصرح: صلاحية الحذف النهائي مقتصرة على المشرف العام.");
+    }
+
+    global $JSON_INPUT;
+    $data = $JSON_INPUT ?: (json_decode(file_get_contents("php://input"), true) ?: []);
+    $quizId = $data['id'] ?? $data['quiz_id'] ?? $_GET['id'] ?? '';
+
+    if (empty($quizId)) sendResponse(false, "Missing quiz ID.");
+    $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '', $quizId);
+
+    $trashDir = ai_exam_get_trash_dir();
+    $trashFile = $trashDir . '/' . $cleanId . '.json';
+    $activeFile = __DIR__ . '/../quizzes_data/' . $cleanId . '.json';
+
+    $deleted = false;
+    if (file_exists($trashFile)) {
+        $deleted = @unlink($trashFile);
+    } elseif (file_exists($activeFile)) {
+        $deleted = @unlink($activeFile);
     }
 
     if (isset($pdo) && $pdo !== null) {
         try {
             $tableLinks = getAiExamSubjectLinksTable($pdo);
             $stmt = $pdo->prepare("DELETE FROM {$tableLinks} WHERE url = ? AND type = 'quiz'");
-            $stmt->execute([$quizId]);
+            $stmt->execute([$cleanId]);
         } catch (Throwable $e) {}
     }
 
-    sendResponse(true, ["message" => "Quiz deleted successfully."]);
+    if ($deleted) {
+        sendResponse(true, ["message" => "تم حذف الاختبار نهائياً وبلا رجعة."]);
+    } else {
+        sendResponse(false, "لم يتم العثور على ملف الاختبار للحذف.");
+    }
+}
+
+// --- ACTION 8.4: EMPTY ENTIRE QUIZ TRASH ---
+if ($action === 'empty_quiz_trash' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $pass = ai_exam_read_passkey();
+    if (!dent2025_check_rbac_permission($pass, 'delete_subject') && !dent2025_check_rbac_permission($pass, 'manage_passwords')) {
+        sendResponse(false, "غير مصرح: صلاحية تفريغ السلة مقتصرة على المشرف العام.");
+    }
+
+    $trashDir = ai_exam_get_trash_dir();
+    $files = glob($trashDir . '/*.json');
+    $count = 0;
+    if (is_array($files)) {
+        foreach ($files as $f) {
+            if (strpos(basename($f), 'quiz_') === 0) {
+                if (@unlink($f)) $count++;
+            }
+        }
+    }
+
+    sendResponse(true, [
+        "message" => "تم تفريغ سلة المحذوفات بالكامل.",
+        "purged_count" => $count
+    ]);
 }
 
 // --- ACTION 8.5: RENAME A SAVED QUIZ ---
@@ -4479,6 +4800,9 @@ if ($action === 'scan_cache_catalog') {
 // Designed to be called by server cron at 12:00 PM daily (AST):
 // curl -s "https://dent2025.com/backend/api_ai_exam.php?action=cron_sync&password=MASTER_PASS"
 if ($action === 'cron_sync') {
+    // Automatically purge trashed quizzes older than 30 days
+    ai_exam_cleanup_expired_trash(30);
+
     if (!$pdo) sendResponse(false, "Database connection unavailable.");
 
     $table_subs = getAiExamSubjectsTable($pdo);
