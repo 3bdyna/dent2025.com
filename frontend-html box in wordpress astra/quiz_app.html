@@ -639,6 +639,52 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
         })[m]);
     }
+
+    function dentGetAdminPermissions() {
+        const pass = sessionStorage.getItem('dent2025_admin_pass');
+        if (!pass) return null;
+        try {
+            const raw = sessionStorage.getItem('dent2025_permissions');
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return null;
+    }
+
+    function canDeleteQuiz() {
+        const pass = sessionStorage.getItem('dent2025_admin_pass');
+        if (!pass) return false;
+        const perms = dentGetAdminPermissions();
+        if (perms && typeof perms === 'object') {
+            return !!(perms.delete_subject || perms.manage_passwords);
+        }
+        if (typeof window.dentIsMaster === 'function') {
+            return window.dentIsMaster();
+        }
+        return false;
+    }
+
+    async function dentEnsurePermissions() {
+        const pass = sessionStorage.getItem('dent2025_admin_pass');
+        if (!pass) return null;
+        let perms = dentGetAdminPermissions();
+        if (perms) return perms;
+        try {
+            let sel = {};
+            try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
+            const res = await fetch('/dent2025_api.php?action=check_auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pass, specialty: sel.specialty || 'dentistry', year: sel.year || 3, semester: sel.semester || 1 })
+            });
+            const data = await res.json();
+            if (data.success && data.data && data.data.permissions) {
+                sessionStorage.setItem('dent2025_permissions', JSON.stringify(data.data.permissions));
+                if (data.data) sessionStorage.setItem('dent2025_passkey_info', JSON.stringify(data.data));
+                return data.data.permissions;
+            }
+        } catch (e) {}
+        return null;
+    }
     
     let generatedQuestions = [];
     let currentSubjectsData = [];
@@ -1147,6 +1193,9 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             if (res.success) {
                 sessionStorage.setItem('dent2025_admin_pass', enteredPass);
                 sessionStorage.setItem('dent2025_schedule_admin_pass', enteredPass);
+                const perms = (res.data && res.data.permissions) ? res.data.permissions : {};
+                sessionStorage.setItem('dent2025_permissions', JSON.stringify(perms));
+                if (res.data) sessionStorage.setItem('dent2025_passkey_info', JSON.stringify(res.data));
                 proceedToEdit();
             } else {
                 alert(res.message || "رمز PIN غير صحيح.");
@@ -2092,6 +2141,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     async function loadSavedQuizzesBank() {
         const countSpan = document.getElementById('dent-bank-count');
         try {
+            await dentEnsurePermissions();
             let selection = {};
             try {
                 selection = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
@@ -2334,22 +2384,33 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 });
                 card.querySelector('.dent-bank-actions').appendChild(hideBtn);
 
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'dent-quiz-btn dent-btn-secondary';
-                deleteBtn.style.cssText = 'margin-top:0; padding:7px 9px; font-size:0.82rem; color:#f87171; border-color:rgba(239,68,68,0.25);';
-                deleteBtn.innerText = 'حذف';
-                deleteBtn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    if (confirm(`هل أنت متأكد من حذف الاختبار "${q.quiz_name}"؟`)) {
-                        await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?action=delete_quiz`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ id: q.id, password: sessionStorage.getItem('dent2025_admin_pass') || '' })
-                        });
-                        loadSavedQuizzesBank();
-                    }
-                });
-                card.querySelector('.dent-bank-actions').appendChild(deleteBtn);
+                if (canDeleteQuiz()) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'dent-quiz-btn dent-btn-secondary';
+                    deleteBtn.style.cssText = 'margin-top:0; padding:7px 9px; font-size:0.82rem; color:#f87171; border-color:rgba(239,68,68,0.25);';
+                    deleteBtn.innerText = 'حذف';
+                    deleteBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        if (confirm(`هل أنت متأكد من حذف الاختبار "${q.quiz_name}"؟`)) {
+                            try {
+                                const res = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?action=delete_quiz`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ id: q.id, password: sessionStorage.getItem('dent2025_admin_pass') || '' })
+                                });
+                                const data = await res.json();
+                                if (data && data.success) {
+                                    loadSavedQuizzesBank();
+                                } else {
+                                    alert(data?.message || 'تعذر حذف الاختبار.');
+                                }
+                            } catch (err) {
+                                alert('حدث خطأ أثناء الاتصال بالخادم لحذف الاختبار.');
+                            }
+                        }
+                    });
+                    card.querySelector('.dent-bank-actions').appendChild(deleteBtn);
+                }
             }
 
             grid.appendChild(card);

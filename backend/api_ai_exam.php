@@ -10,8 +10,9 @@ error_reporting(0);
 @ini_set('max_execution_time', 300);
 @set_time_limit(300);
 @ini_set('memory_limit', '512M');
+date_default_timezone_set('Asia/Riyadh');
 define('LSCACHE_NO_CACHE', true);
-header('Cache-Control: no-cache, must-revalidate, max-age=0');
+header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
 
 require_once 'db_connect.php';
 // db_connect.php already handles: Content-Type, CORS, OPTIONS preflight, and $pdo setup
@@ -54,18 +55,34 @@ if (in_array($action, $AI_MASTER_ACTIONS, true)) {
     }
 } elseif ($action === 'delete_quiz') {
     $ai_pass = ai_exam_read_passkey();
-    if (!dent2025_check_rbac_permission($ai_pass, 'delete_subject') && !dent2025_check_rbac_permission($ai_pass, 'manage_passwords')) {
+    if (!dent2025_check_rbac_permission($ai_pass, 'delete_subject') && !dent2025_check_rbac_permission($ai_pass, 'manage_passwords') && !dent2025_check_rbac_permission($ai_pass, 'edit_basic_subject')) {
         http_response_code(403);
         header('Content-Type: application/json');
         echo json_encode(['success' => false, 'message' => 'Unauthorized: delete_subject or admin permission required.']);
         exit;
     }
-} elseif ($action === 'rename_quiz') {
+} elseif ($action === 'list_trashed_quizzes' || $action === 'restore_quiz') {
     $ai_pass = ai_exam_read_passkey();
-    if (!dent2025_check_rbac_permission($ai_pass, 'edit_core_subject') && !dent2025_check_rbac_permission($ai_pass, 'manage_passwords')) {
+    if (!dent2025_check_rbac_permission($ai_pass, 'edit_basic_subject') && !dent2025_check_rbac_permission($ai_pass, 'delete_subject') && !dent2025_check_rbac_permission($ai_pass, 'manage_passwords')) {
         http_response_code(403);
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Unauthorized: edit_core_subject or admin permission required.']);
+        echo json_encode(['success' => false, 'message' => 'Unauthorized: admin or subject leader permission required.']);
+        exit;
+    }
+} elseif ($action === 'purge_quiz' || $action === 'empty_quiz_trash') {
+    $ai_pass = ai_exam_read_passkey();
+    if (!dent2025_check_rbac_permission($ai_pass, 'delete_subject') && !dent2025_check_rbac_permission($ai_pass, 'manage_passwords')) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Unauthorized: delete_subject or manage_passwords permission required.']);
+        exit;
+    }
+} elseif ($action === 'rename_quiz') {
+    $ai_pass = ai_exam_read_passkey();
+    if (!dent2025_check_rbac_permission($ai_pass, 'edit_basic_subject') && !dent2025_check_rbac_permission($ai_pass, 'edit_core_subject') && !dent2025_check_rbac_permission($ai_pass, 'manage_passwords')) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Unauthorized: edit_basic_subject or admin permission required.']);
         exit;
     }
 } elseif ($action === 'toggle_hide_quiz' || $action === 'hide_quiz') {
@@ -1953,12 +1970,15 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
             if ($httpCode === 200 && !empty($response)) {
                 $jsonRes = json_decode($response, true);
                 if (!isset($jsonRes['error'])) {
+                    recordGeminiUsage($index, $apiKey, 200, $response, $latencyMs, $numQuestions);
                     break 2;
                 } else {
                     $lastErrorMsg = $jsonRes['error']['message'] ?? 'Unknown API Error';
+                    recordGeminiUsage($index, $apiKey, 200, $response, $latencyMs, 0);
                 }
             } else {
                 $lastErrorMsg = "HTTP $httpCode: " . substr(strval($response), 0, 150);
+                recordGeminiUsage($index, $apiKey, $httpCode, $response, $latencyMs, 0);
                 if ($httpCode === 503 || $httpCode === 429) {
                     usleep(500000);
                     break;
@@ -1966,8 +1986,6 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
             }
         }
     }
-
-    recordGeminiUsage($usedKeyIndex, $usedApiKey, $httpCode, $response, $latencyMs, $numQuestions);
 
     if ($httpCode !== 200 || empty($response)) {
         return ['success' => false, 'message' => "حدث خطأ في خدمة المعالجة الذكية: " . $lastErrorMsg];
@@ -3365,7 +3383,7 @@ if ($action === 'list_quizzes') {
 // --- ACTION 8: DELETE A SAVED QUIZ ---
 if ($action === 'delete_quiz' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $pass = ai_exam_read_passkey();
-    if (!dent2025_check_rbac_permission($pass, 'edit_basic_subject')) {
+    if (!dent2025_check_rbac_permission($pass, 'delete_subject') && !dent2025_check_rbac_permission($pass, 'manage_passwords')) {
         sendResponse(false, "غير مصرح: صلاحيات المشرف مطلوبة لحذف الاختبار.");
     }
     $data = json_decode(file_get_contents("php://input"), true);

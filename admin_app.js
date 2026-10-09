@@ -4371,6 +4371,7 @@ window.AdminApp = {
             return;
         }
 
+        const canDeleteQuiz = !!(this.permissions && (this.permissions.delete_subject || this.permissions.manage_passwords));
         let html = '';
         let cardsHtml = '';
         displayList.forEach(q => {
@@ -4459,9 +4460,11 @@ window.AdminApp = {
                                 تعديل الاسم
                             </button>
                             ${hideShowBtn}
+                            ${canDeleteQuiz ? `
                             <button onclick="AdminApp.deleteQuiz('${q.id}')" class="btn btn-danger text-xs px-2.5 py-1.5 font-medium">
                                 حذف
                             </button>
+                            ` : ''}
                         </div>
                     </td>
                 </tr>
@@ -4505,7 +4508,7 @@ window.AdminApp = {
                             <button onclick="AdminApp.exportQuizBooklet('${q.id}')" class="btn btn-secondary text-xs px-2 py-1 text-sky-400 border-sky-500/30">تصدير</button>
                             <button onclick="AdminApp.openRenameQuizModal('${q.id}')" class="btn btn-secondary text-xs px-2.5 py-1">تعديل الاسم</button>
                             ${mobileHideShowBtn}
-                            <button onclick="AdminApp.deleteQuiz('${q.id}')" class="btn btn-danger text-xs px-2.5 py-1">حذف</button>
+                            ${canDeleteQuiz ? `<button onclick="AdminApp.deleteQuiz('${q.id}')" class="btn btn-danger text-xs px-2.5 py-1">حذف</button>` : ''}
                         </div>
                     </div>
                 </div>
@@ -4661,6 +4664,11 @@ window.AdminApp = {
     },
 
     deleteQuiz(quizId) {
+        if (!this.permissions?.delete_subject && !this.permissions?.manage_passwords) {
+            this.showToast('غير مصرح لك بحذف الاختبارات (صلاحية Master أو حذف المقررات مطلوبة)', true);
+            return;
+        }
+
         const quiz = (this.quizzesData || []).find(q => q.id === quizId);
         const quizName = quiz ? quiz.quiz_name : 'هذا الاختبار';
         if (!confirm(`هل أنت متأكد من حذف الاختبار "${quizName}"؟\nسيتم حذفه نهائياً من بنك الأسئلة والملفات.`)) {
@@ -5674,60 +5682,84 @@ window.AdminApp = {
 
     calculateSmartPages(questions, includeExplanations = true) {
         if (!Array.isArray(questions) || questions.length === 0) return [];
-        const total = questions.length;
-        
-        const targetPerPage = includeExplanations ? 6 : 10;
-        const maxPerPage = includeExplanations ? 7 : 12;
-        let p = Math.max(1, Math.round(total / targetPerPage));
+        const n = questions.length;
+        const maxPerPage = includeExplanations ? 8 : 14;
 
-        while (p < total) {
-            const base = Math.floor(total / p);
-            const rem = total % p;
-            const pages = [];
-            let idx = 0;
-            for (let i = 0; i < p; i++) {
-                const cnt = base + (i < rem ? 1 : 0);
-                pages.push(questions.slice(idx, idx + cnt));
-                idx += cnt;
+        const estH = (q) => this.estimateQuestionHeight(q, includeExplanations);
+
+        const pageFits = (sliceQs, pIdx) => {
+            if (sliceQs.length === 0) return false;
+            if (sliceQs.length === 1) return true;
+            if (sliceQs.length > maxPerPage) return false;
+            const limit = (pIdx === 0) ? 900 : 940;
+            let c1 = 0, c2 = 0;
+            for (let i = 0; i < sliceQs.length; i++) {
+                const h = estH(sliceQs[i]);
+                if (i % 2 === 0) c1 += h;
+                else c2 += h;
             }
+            return (c1 <= limit && c2 <= limit);
+        };
 
-            let allFit = true;
-            for (let pIdx = 0; pIdx < pages.length; pIdx++) {
-                const pageQs = pages[pIdx];
-                if (pageQs.length > maxPerPage) {
-                    allFit = false;
-                    break;
-                }
-                const limit = (pIdx === 0) ? 900 : 940;
-                let c1 = 0;
-                let c2 = 0;
-                for (let i = 0; i < pageQs.length; i++) {
-                    const h = this.estimateQuestionHeight(pageQs[i], includeExplanations);
-                    if (i % 2 === 0) c1 += h;
-                    else c2 += h;
-                }
-                if (c1 > limit || c2 > limit) {
-                    allFit = false;
-                    break;
-                }
-            }
+        for (let P = 1; P <= n; P++) {
+            const memo = new Map();
 
-            if (allFit) {
+            const findPartition = (startIdx, pageIdx) => {
+                const key = `${startIdx}:${pageIdx}`;
+                if (memo.has(key)) return memo.get(key);
+
+                const remPages = P - pageIdx;
+                const remQs = n - startIdx;
+
+                if (remPages === 1) {
+                    const sliceQs = questions.slice(startIdx);
+                    if (pageFits(sliceQs, pageIdx)) {
+                        const res = [sliceQs.length];
+                        memo.set(key, res);
+                        return res;
+                    }
+                    memo.set(key, null);
+                    return null;
+                }
+
+                const ideal = remQs / remPages;
+                const candidates = [];
+                const maxCandidate = Math.min(maxPerPage, remQs - remPages + 1);
+                for (let cnt = 1; cnt <= maxCandidate; cnt++) {
+                    const sliceQs = questions.slice(startIdx, startIdx + cnt);
+                    if (pageFits(sliceQs, pageIdx)) {
+                        candidates.push(cnt);
+                    }
+                }
+
+                candidates.sort((a, b) => Math.abs(a - ideal) - Math.abs(b - ideal));
+
+                for (const cnt of candidates) {
+                    const sub = findPartition(startIdx + cnt, pageIdx + 1);
+                    if (sub !== null) {
+                        const res = [cnt, ...sub];
+                        memo.set(key, res);
+                        return res;
+                    }
+                }
+
+                memo.set(key, null);
+                return null;
+            };
+
+            const part = findPartition(0, 0);
+            if (part !== null) {
+                const pages = [];
+                let cur = 0;
+                for (const cnt of part) {
+                    pages.push(questions.slice(cur, cur + cnt));
+                    cur += cnt;
+                }
                 return pages;
             }
-            p++;
         }
 
-        const base = Math.floor(total / p);
-        const rem = total % p;
-        const pages = [];
-        let idx = 0;
-        for (let i = 0; i < p; i++) {
-            const cnt = base + (i < rem ? 1 : 0);
-            pages.push(questions.slice(idx, idx + cnt));
-            idx += cnt;
-        }
-        return pages;
+        return [questions];
     },
 
     detectQuestionLanguage(q) {
