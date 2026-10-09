@@ -6476,12 +6476,12 @@ window.AdminApp = {
                 </div>
 
                 <!-- Direct Short Share Link Card -->
-                <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.22); border-radius: 12px; padding: 10px 13px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 10px 13px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
                     <div style="min-width: 0; flex: 1;">
-                        <div style="font-size: 0.73rem; color: #94a3b8; margin-bottom: 3px; font-weight: 600;">رابط الاختبار المباشر (قصير وأنيق):</div>
-                        <div style="font-size: 0.79rem; color: #38bdf8; font-family: monospace; direction: ltr; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${exportShortUrl}</div>
+                        <div style="font-size: 0.74rem; color: #94a3b8; margin-bottom: 3px; font-weight: 600;">رابط الاختبار المباشر (قصير):</div>
+                        <div style="font-size: 0.78rem; color: #cbd5e1; font-family: monospace; direction: ltr; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 6px; padding: 3px 8px;">${exportShortUrl}</div>
                     </div>
-                    <button type="button" id="admin-export-copy-link-btn" style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; border-radius: 9px; padding: 7px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; flex-shrink: 0; font-family: inherit; transition: all 0.2s;" onmouseover="this.style.background='rgba(56, 189, 248, 0.25)';" onmouseout="this.style.background='rgba(56, 189, 248, 0.15)';">
+                    <button type="button" id="admin-export-copy-link-btn" style="background: rgba(255, 255, 255, 0.06) !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; color: #f8fafc !important; border-radius: 8px; padding: 7px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; flex-shrink: 0; font-family: inherit; transition: all 0.2s;" onmouseover="this.style.background='rgba(255, 255, 255, 0.14) !important'; this.style.borderColor='rgba(255, 255, 255, 0.25) !important';" onmouseout="this.style.background='rgba(255, 255, 255, 0.06) !important'; this.style.borderColor='rgba(255, 255, 255, 0.12) !important';">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         <span>نسخ الرابط</span>
                     </button>
