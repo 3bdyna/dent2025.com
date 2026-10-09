@@ -44,7 +44,7 @@ function dent2025_load_component_shortcode($atts) {
     // Handle standalone JavaScript file
     if ($override_type === 'js' || $ext === 'js') {
         return sprintf(
-            '<script src="/frontend_components/%s?v=%d"></script>',
+            '<script defer src="/frontend_components/%s?v=%d"></script>',
             esc_attr($safe_file),
             $mtime
         );

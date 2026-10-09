@@ -89,16 +89,51 @@ if (!function_exists('dent2025_prune_expired_cohort_events')) {
     }
 }
 
-if (!function_exists('dent2025_safe_save_json_file')) {
-    function dent2025_safe_save_json_file($file, $data) {
-        if (function_exists('dent2025_safe_atomic_save_json')) {
-            return dent2025_safe_atomic_save_json($file, $data);
+function dent2025_delete_schedule_event($deleteId, $dataFile, $globalFile, $password) {
+    $deleted = false;
+    if ($deleteId) {
+        if (file_exists($dataFile)) {
+            $data = json_decode(file_get_contents($dataFile), true) ?: [];
+            $origCount = count($data);
+            $data = array_values(array_filter($data, function($ev) use ($deleteId) {
+                return ($ev['id'] ?? '') !== $deleteId;
+            }));
+            if (count($data) < $origCount) {
+                if (!dent2025_safe_atomic_save_json($dataFile, $data)) {
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'message' => 'فشل حفظ التعديلات على السيرفر (تحقق من صلاحيات الملف).']);
+                    exit;
+                }
+                $deleted = true;
+            }
         }
-        $encoded = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        if ($encoded === false) return false;
-        $bytes = @file_put_contents($file, $encoded, LOCK_EX);
-        return ($bytes !== false);
+
+        if (!$deleted && $dataFile !== $globalFile && file_exists($globalFile)) {
+            if (dent2025_check_rbac_permission($password, 'global_events')) {
+                $gData = json_decode(file_get_contents($globalFile), true) ?: [];
+                $origCount = count($gData);
+                $gData = array_values(array_filter($gData, function($ev) use ($deleteId) {
+                    return ($ev['id'] ?? '') !== $deleteId;
+                }));
+                if (count($gData) < $origCount) {
+                    if (!dent2025_safe_atomic_save_json($globalFile, $gData)) {
+                        http_response_code(500);
+                        echo json_encode(['success' => false, 'message' => 'فشل حفظ التعديلات على السيرفر (تحقق من صلاحيات الملف).']);
+                        exit;
+                    }
+                    $deleted = true;
+                }
+            }
+        }
     }
+    
+    $pass_info = function_exists('dent2025_get_passkey_info') ? dent2025_get_passkey_info($password) : null;
+    if (function_exists('dent2025_record_audit_event')) {
+        dent2025_record_audit_event('events', 'delete', 'حذف حدث من التقويم ID: ' . $deleteId, $pass_info['label'] ?? '');
+    }
+
+    echo json_encode(['success' => true, 'message' => 'Event deleted!']);
+    exit;
 }
 
 $globalFile = __DIR__ . '/schedule_events.json';
@@ -260,51 +295,7 @@ if ($method === 'POST') {
     $action = $input['action'] ?? 'add'; // 'add', 'edit', or 'delete'
 
     if ($action === 'delete') {
-        $deleteId = $input['id'] ?? '';
-        $deleted = false;
-        if ($deleteId) {
-            if (file_exists($dataFile)) {
-                $data = json_decode(file_get_contents($dataFile), true) ?: [];
-                $origCount = count($data);
-                $data = array_values(array_filter($data, function($ev) use ($deleteId) {
-                    return ($ev['id'] ?? '') !== $deleteId;
-                }));
-                if (count($data) < $origCount) {
-                    if (!dent2025_safe_save_json_file($dataFile, $data)) {
-                        http_response_code(500);
-                        echo json_encode(['success' => false, 'message' => 'فشل حفظ التعديلات على السيرفر (تحقق من صلاحيات الملف).']);
-                        exit;
-                    }
-                    $deleted = true;
-                }
-            }
-
-            if (!$deleted && $dataFile !== $globalFile && file_exists($globalFile)) {
-                if (dent2025_check_rbac_permission($password, 'global_events')) {
-                    $gData = json_decode(file_get_contents($globalFile), true) ?: [];
-                    $origCount = count($gData);
-                    $gData = array_values(array_filter($gData, function($ev) use ($deleteId) {
-                        return ($ev['id'] ?? '') !== $deleteId;
-                    }));
-                    if (count($gData) < $origCount) {
-                        if (!dent2025_safe_save_json_file($globalFile, $gData)) {
-                            http_response_code(500);
-                            echo json_encode(['success' => false, 'message' => 'فشل حفظ التعديلات على السيرفر (تحقق من صلاحيات الملف).']);
-                            exit;
-                        }
-                        $deleted = true;
-                    }
-                }
-            }
-        }
-        
-        $pass_info = function_exists('dent2025_get_passkey_info') ? dent2025_get_passkey_info($password) : null;
-        if (function_exists('dent2025_record_audit_event')) {
-            dent2025_record_audit_event('events', 'delete', 'حذف حدث من التقويم ID: ' . $deleteId, $pass_info['label'] ?? '');
-        }
-
-        echo json_encode(['success' => true, 'message' => 'Event deleted!']);
-        exit;
+        dent2025_delete_schedule_event($input['id'] ?? '', $dataFile, $globalFile, $password);
     }
 
     $title = trim($input['title'] ?? '');
@@ -367,7 +358,7 @@ if ($method === 'POST') {
                 }
             }
             if ($found) {
-                if (!dent2025_safe_save_json_file($dataFile, $data)) {
+                if (!dent2025_safe_atomic_save_json($dataFile, $data)) {
                     http_response_code(500);
                     echo json_encode(['success' => false, 'message' => 'فشل حفظ التعديلات على السيرفر (تحقق من صلاحيات الملف).']);
                     exit;
@@ -402,7 +393,7 @@ if ($method === 'POST') {
                     }
                 }
                 if ($found) {
-                    if (!dent2025_safe_save_json_file($globalFile, $gData)) {
+                    if (!dent2025_safe_atomic_save_json($globalFile, $gData)) {
                         http_response_code(500);
                         echo json_encode(['success' => false, 'message' => 'فشل حفظ التعديلات على السيرفر (تحقق من صلاحيات الملف).']);
                         exit;
@@ -448,7 +439,7 @@ if ($method === 'POST') {
 
     $data[] = $newEvent;
 
-    if (!dent2025_safe_save_json_file($dataFile, $data)) {
+    if (!dent2025_safe_atomic_save_json($dataFile, $data)) {
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'فشل حفظ الحدث على السيرفر (تحقق من صلاحيات الملف).']);
         exit;
@@ -463,42 +454,6 @@ if ($method === 'POST') {
 
 // 3. DELETE: Remove an event
 if ($method === 'DELETE') {
-    $id = $input['id'] ?? '';
-    $deleted = false;
-    if ($id) {
-        if (file_exists($dataFile)) {
-            $data = json_decode(file_get_contents($dataFile), true) ?: [];
-            $origCount = count($data);
-            $data = array_values(array_filter($data, function($ev) use ($id) {
-                return ($ev['id'] ?? '') !== $id;
-            }));
-            if (count($data) < $origCount) {
-                dent2025_safe_save_json_file($dataFile, $data);
-                $deleted = true;
-            }
-        }
-
-        if (!$deleted && $dataFile !== $globalFile && file_exists($globalFile)) {
-            if (dent2025_check_rbac_permission($password, 'global_events')) {
-                $gData = json_decode(file_get_contents($globalFile), true) ?: [];
-                $origCount = count($gData);
-                $gData = array_values(array_filter($gData, function($ev) use ($id) {
-                    return ($ev['id'] ?? '') !== $id;
-                }));
-                if (count($gData) < $origCount) {
-                    dent2025_safe_save_json_file($globalFile, $gData);
-                    $deleted = true;
-                }
-            }
-        }
-    }
-    
-    $pass_info = function_exists('dent2025_get_passkey_info') ? dent2025_get_passkey_info($password) : null;
-    if (function_exists('dent2025_record_audit_event')) {
-        dent2025_record_audit_event('events', 'delete', 'حذف حدث من التقويم ID: ' . $id, $pass_info['label'] ?? '');
-    }
-
-    echo json_encode(['success' => true, 'message' => 'Event deleted!']);
-    exit;
+    dent2025_delete_schedule_event($input['id'] ?? '', $dataFile, $globalFile, $password);
 }
 ?>

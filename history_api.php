@@ -92,7 +92,7 @@ function dent2025_restore_db_tables($subjects, $links) {
         if (function_exists('dent2025_clear_cache')) {
             dent2025_clear_cache();
         } else {
-            $prefix = method_exists($db, 'prefix') ? $db->prefix : 'wpr9_';
+            $prefix = !empty($db->prefix) ? $db->prefix : (isset($GLOBALS['table_prefix']) ? $GLOBALS['table_prefix'] : 'wpr9_');
             $db->query("DELETE FROM `{$prefix}options` WHERE option_name LIKE '_transient_dent2025_data_%'");
         }
         return true;
@@ -464,7 +464,7 @@ if ($method === 'POST') {
 
         // 2. Class Timetables
         $classes_file = __DIR__ . '/dent2025_classes.json';
-        file_put_contents($classes_file, json_encode($target_state['classes'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        dent2025_safe_atomic_save_json($classes_file, $target_state['classes'] ?? []);
 
         // 3. Announcements
         $ann_dir = __DIR__ . '/announcements_data';
@@ -479,7 +479,7 @@ if ($method === 'POST') {
         // Restore from snapshot
         if (!empty($target_state['announcements']) && is_array($target_state['announcements'])) {
             foreach ($target_state['announcements'] as $filename => $ann_content) {
-                file_put_contents("{$ann_dir}/{$filename}", json_encode($ann_content, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                dent2025_safe_atomic_save_json("{$ann_dir}/{$filename}", $ann_content);
             }
         }
 
@@ -487,7 +487,7 @@ if ($method === 'POST') {
         if (!empty($target_state['events']) && is_array($target_state['events'])) {
             foreach ($target_state['events'] as $filename => $events_content) {
                 $target_file = __DIR__ . '/' . basename($filename);
-                file_put_contents($target_file, json_encode($events_content, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                dent2025_safe_atomic_save_json($target_file, $events_content);
             }
         }
 
@@ -523,7 +523,7 @@ if ($method === 'POST') {
                 if (function_exists('dent2025_save_passwords')) {
                     dent2025_save_passwords($merged_passwords);
                 } else {
-                    file_put_contents(__DIR__ . '/dent2025_passwords.json', json_encode($merged_passwords, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                    dent2025_safe_atomic_save_json(__DIR__ . '/dent2025_passwords.json', $merged_passwords);
                     if (function_exists('dent2025_load_passwords')) {
                         dent2025_load_passwords(true);
                     }

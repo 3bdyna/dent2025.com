@@ -12,7 +12,7 @@ var API_BASE = window.API_BASE;
 const API_BASE_URL = '/dent2025_api.php';
 
 // Safe HTML entity escaping helper
-function dentEscapeHtml(str) {
+window.dentEscapeHtml = window.dentEscapeHtml || function(str) {
     if (str == null) return '';
     return String(str).replace(/[&<>"']/g, function(m) {
         return {
@@ -23,7 +23,8 @@ function dentEscapeHtml(str) {
             "'": '&#039;'
         }[m];
     });
-}
+};
+var dentEscapeHtml = window.dentEscapeHtml;
 
 // Protocol validator for links
 function dentSafeUrl(url) {
@@ -357,7 +358,6 @@ function loadDashboardData(forceRefresh = false) {
         currentSubjectsData = data.subjects || [];
         window.currentSubjectsData = currentSubjectsData;
         renderChapters(currentSubjectsData);
-        renderMaterials(currentSubjectsData);
     };
 
     if (cachedData) {
@@ -723,16 +723,6 @@ function renderChapters(subjects) {
             setTimeout(processDentIframeQueue, isMobile ? 800 : 1000);
         }
     }, 1200);
-}
-
-// ---------------------------------------------------------
-// Render Materials (Hides second container)
-// ---------------------------------------------------------
-function renderMaterials(subjects) {
-    const container = document.getElementById('dynamic-materials-container');
-    if (!container) return;
-    container.innerHTML = '';
-    container.style.display = 'none';
 }
 
 window.refreshIframe = function(iframeId) {
@@ -1121,7 +1111,7 @@ function loadAnnouncements(selection) {
         });
 }
 
-function formatAnnouncementsTimeAgo(timestamp) {
+window.formatAnnouncementsTimeAgo = window.formatAnnouncementsTimeAgo || function(timestamp) {
     if (!timestamp) return '';
     const nowSec = Math.floor(Date.now() / 1000);
     const diffSec = Math.max(0, nowSec - Number(timestamp));
@@ -1143,7 +1133,8 @@ function formatAnnouncementsTimeAgo(timestamp) {
     if (diffDays === 2) return 'منذ يومين';
     if (diffDays >= 3 && diffDays <= 10) return `منذ ${diffDays} أيام`;
     return `منذ ${diffDays} يوم`;
-}
+};
+var formatAnnouncementsTimeAgo = window.formatAnnouncementsTimeAgo;
 
 function renderAnnouncements(dataObj, selection) {
     const container = document.getElementById('dynamic-announcements-container');
@@ -2149,7 +2140,7 @@ function deleteLink(linkId) {
 // =========================================================================
 window.loadDashboardData = loadDashboardData;
 window.renderChapters = renderChapters;
-window.renderMaterials = renderMaterials;
+window.renderMaterials = function() {};
 window.renderClassesWidget = renderClassesWidget;
 window.loadClassesData = loadClassesData;
 window.renderLogo = renderLogo;

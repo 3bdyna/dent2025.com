@@ -30,38 +30,6 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS
 
 global $wpdb;
 
-if (!function_exists('dent2025_db')) {
-    function dent2025_db() {
-        global $wpdb;
-        static $active = null;
-        if ($active !== null) return $active;
-        
-        $prefix = !empty($wpdb->prefix) ? $wpdb->prefix : (isset($GLOBALS['table_prefix']) ? $GLOBALS['table_prefix'] : 'wpr9_');
-        $prefixed_subs = "`{$prefix}subjects`";
-        $prefixed_links = "`{$prefix}subject_links`";
-        
-        if (isset($wpdb) && is_object($wpdb) && method_exists($wpdb, 'get_var')) {
-            $count = $wpdb->get_var("SELECT COUNT(*) FROM {$prefixed_subs}");
-            if ($count !== null) {
-                $active = ['db' => $wpdb, 'table_subs' => $prefixed_subs, 'table_links' => $prefixed_links];
-                return $active;
-            }
-        }
-        
-        if (class_exists('wpdb') && defined('DB_USER') && defined('DB_PASSWORD') && defined('DB_NAME')) {
-            try {
-                $db_host = defined('DB_HOST') ? DB_HOST : 'localhost';
-                $dev_db = new wpdb(DB_USER, DB_PASSWORD, DB_NAME, $db_host);
-                $dev_db->prefix = $prefix;
-                $active = ['db' => $dev_db, 'table_subs' => $prefixed_subs, 'table_links' => $prefixed_links];
-                return $active;
-            } catch (Exception $e) {}
-        }
-        
-        $active = ['db' => $wpdb, 'table_subs' => $prefixed_subs, 'table_links' => $prefixed_links];
-        return $active;
-    }
-}
 
 function dent2025_table($name) {
     $ctx = dent2025_db();
@@ -970,9 +938,5 @@ if ($action === 'edit_link') {
     exit;
 }
 
-if ($action === 'sync_drive') {
-    echo json_encode(["success" => false, "message" => "Sync disabled for safety."]);
-    exit;
-}
 
 echo json_encode(["success" => false, "message" => "Invalid action."]);
