@@ -4694,21 +4694,13 @@ window.AdminApp = {
     },
 
     // ==========================================
-    // INTERACTIVE ADMIN QUIZ / EXAM PLAYER
+    // EXACT QUIZ BANK PLAYER LOGIC & ENGINE
     // ==========================================
 
-    adminQuizState: {
-        quizData: null,
-        currentIndex: 0,
-        answers: {}, // questionIndex -> selectedOptionIndex
-        mode: 'practice', // 'practice' | 'exam'
-        revealAll: false,
-        submitted: false,
-        startTime: null,
-        timerInterval: null,
-        filterWrongOnly: false,
-        filteredIndices: null
-    },
+    generatedQuestions: [],
+    currentActiveQuiz: null,
+    currentFocusedIndex: 0,
+    currentViewMode: 'list',
 
     async takeQuiz(quizId) {
         if (!quizId) {
@@ -4725,7 +4717,8 @@ window.AdminApp = {
             this.showLoading(false);
 
             if (json && json.success && json.data) {
-                this.initAdminQuiz(json.data);
+                const qData = json.data;
+                this.openPlayer(qData.quiz_name, qData.subject_name || '', qData.questions, qData);
             } else {
                 this.showToast(json?.message || 'تعذر تحميل بيانات الاختبار', true);
             }
@@ -4795,510 +4788,469 @@ window.AdminApp = {
         return arabicIndex >= 0 && arabicIndex < options.length ? arabicIndex : -1;
     },
 
-    isQuestionAnswerCorrect(question, selectedIndex, options) {
+    isQuestionAnswerCorrect(question, selectedIndex, selectedValue, options) {
         const correctIndex = this.getCorrectOptionIndex(question, options);
-        if (correctIndex < 0 || selectedIndex < 0 || selectedIndex === undefined || selectedIndex === null) return false;
+        if (correctIndex < 0 || selectedIndex < 0) return false;
         return selectedIndex === correctIndex;
     },
 
-    initAdminQuiz(quizData) {
-        if (!quizData || !Array.isArray(quizData.questions) || quizData.questions.length === 0) {
-            this.showToast('الاختبار لا يحتوي على أية أسئلة صالحة', true);
-            return;
-        }
-
-        this.adminQuizState = {
-            quizData: quizData,
-            currentIndex: 0,
-            answers: {},
-            mode: 'practice',
-            revealAll: false,
-            submitted: false,
-            startTime: Date.now(),
-            timerInterval: null,
-            filterWrongOnly: false,
-            filteredIndices: null
+    openPlayer(title, metaSub, questions, metaObj = {}) {
+        this.generatedQuestions = questions;
+        this.currentActiveQuiz = {
+            quiz_name: title,
+            subject_name: (metaSub || '').split(' — ')[0].trim(),
+            questions: questions,
+            metaObj: metaObj,
+            id: metaObj?.id || ''
         };
+        
+        let chapList = [];
+        if (metaSub && metaSub.includes(' — ')) {
+            const rawChap = metaSub.split(' — ')[1] || '';
+            const cleanChap = rawChap.replace(/[\u{1F300}-\u{1F6FF}]|[\u{1F900}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
+            chapList = cleanChap.split(/[+•,|\n]/).map(s => s.trim()).filter(Boolean);
+        }
+        if (chapList.length === 0) {
+            chapList = ['المحاضرة العامة'];
+        }
 
-        const titleEl = document.getElementById('admin-qp-title');
-        const metaEl = document.getElementById('admin-qp-meta');
-        if (titleEl) titleEl.innerText = quizData.quiz_name || 'اختبار تقييمي';
-        if (metaEl) metaEl.innerText = quizData.subject_name || 'مادة دراسية';
+        const playerView = document.getElementById('dent-player-view');
+        const titleEl = document.getElementById('dp-title');
+        const metaSubEl = document.getElementById('dp-meta-sub');
+        const scoreEl = document.getElementById('dp-score');
 
-        this.setAdminQuizMode('practice');
-        this.updateAdminQuizRevealBtnUI();
-        this.startAdminQuizTimer();
+        if (titleEl) titleEl.innerText = title;
+        if (metaSubEl) metaSubEl.innerText = (metaSub || '').split(' — ')[0].trim();
+        if (scoreEl) scoreEl.style.display = 'none';
+
+        let noticeBanner = document.getElementById('dp-notice-banner');
+        const isPastExamQuiz = (metaObj?.creation_mode === 'past_exam_filter');
+        const hasAsteriskQuestions = questions.some(q => typeof q.question === 'string' && q.question.trim().startsWith('*'));
+        let defaultNotice = '';
+        if (hasAsteriskQuestions) {
+            defaultNotice = isPastExamQuiz
+                ? '<strong>تنبيه:</strong> الأسئلة المسبوقة بعلامة (*) تم تحويلها من أسئلة مقالية أو فراغات إلى خيارات متعددة مع صياغة خياراتها بدقة.'
+                : '<strong>تنبيه:</strong> الأسئلة المسبوقة بعلامة (*) مأخوذة من سلايدات المحاضرات، وبقية الأسئلة من التجميعات السابقة.';
+        }
+        const customNotice = metaObj?.notice || defaultNotice;
+
+        if (noticeBanner) {
+            if (customNotice) {
+                noticeBanner.innerHTML = customNotice;
+                noticeBanner.style.cssText = 'background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 9px 12px; margin-bottom: 14px; font-size: 0.8rem; color: #94a3b8; line-height: 1.5; text-align: right; direction: rtl;';
+                noticeBanner.style.display = 'block';
+            } else {
+                noticeBanner.style.display = 'none';
+            }
+        }
+
+        const viewSelect = document.getElementById('dp-view-mode');
+        if (viewSelect) viewSelect.value = this.currentViewMode || 'list';
+
+        const navBar = document.getElementById('dp-navigator');
+        if (navBar) {
+            navBar.innerHTML = '';
+            navBar.style.display = 'flex';
+            questions.forEach((q, idx) => {
+                const pill = document.createElement('button');
+                pill.className = 'dent-nav-pill';
+                const isCard = (q.type === 'card' || q.type === 'info');
+                pill.title = isCard ? `بطاقة دراسية ${idx + 1}` : `السؤال ${idx + 1}`;
+                if (isCard) pill.classList.add('is-card-pill');
+                pill.dataset.idx = idx;
+                pill.addEventListener('click', () => {
+                    if (this.currentViewMode === 'focused') {
+                        this.currentFocusedIndex = idx;
+                        this.updatePlayerViewDisplay();
+                    } else {
+                        const targetBlock = document.querySelector(`.dent-q-block[data-index="${idx}"]`);
+                        if (targetBlock) {
+                            targetBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                });
+                navBar.appendChild(pill);
+            });
+        }
+
+        const container = document.getElementById('dp-questions-container');
+        if (container) container.innerHTML = '';
+
+        const isCardsQuiz = questions.every(q => q.type === 'card' || q.type === 'info');
+
+        questions.forEach((q, index) => {
+            const assignedCh = q.assignedChapter || chapList[index % chapList.length] || 'عام';
+            q.assignedChapter = assignedCh;
+
+            const qBlock = document.createElement('div');
+            qBlock.className = 'dent-q-block';
+            qBlock.dataset.index = index;
+            const questionLanguage = this.detectQuestionLanguage(q);
+            qBlock.dataset.language = questionLanguage;
+            qBlock.setAttribute('dir', questionLanguage);
+
+            if (q.type !== 'card' && q.type !== 'info') {
+                const isConverted = (typeof q.question === 'string' && q.question.trim().startsWith('*'));
+                const badgeLabel = isPastExamQuiz ? '* سؤال محول لخيارات' : '* من السلايدات';
+                const convertedBadge = isConverted ? `<span class="dent-q-converted-badge" title="تم تحويله إلى خيارات متعددة">${badgeLabel}</span>` : '';
+                const chapterBadge = (assignedCh && assignedCh !== 'عام' && assignedCh !== 'المحاضرة العامة')
+                    ? `<span class="dent-q-tag" style="background: rgba(255,255,255,0.06); color: #94a3b8; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08);">${this.escapeHtml(assignedCh)}</span>`
+                    : '';
+
+                if (convertedBadge || chapterBadge) {
+                    const tagRow = document.createElement('div');
+                    tagRow.className = 'dent-q-badge-row';
+                    tagRow.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;';
+                    tagRow.innerHTML = convertedBadge + chapterBadge;
+                    qBlock.appendChild(tagRow);
+                }
+            }
+
+            const headerRow = document.createElement('div');
+            headerRow.className = 'dent-q-header-row';
+
+            const qTitle = document.createElement('div');
+            qTitle.className = 'dent-q-text';
+            qTitle.style.marginBottom = '0';
+            let cleanQText = (q.question || '').trim();
+            if (cleanQText.startsWith('*')) {
+                cleanQText = cleanQText.substring(1).trim();
+            }
+            const hasNum = /^(?:Q\d+|\d+\.)/i.test(cleanQText);
+            qTitle.innerText = hasNum ? cleanQText : `${index + 1}. ${cleanQText}`;
+
+            headerRow.appendChild(qTitle);
+            qBlock.appendChild(headerRow);
+
+            if (q.type === 'card') {
+                const toggleBtn = document.createElement('button');
+                toggleBtn.type = 'button';
+                toggleBtn.className = 'dent-ans-toggle';
+                toggleBtn.innerText = 'إظهار الإجابة';
+
+                const expBox = document.createElement('div');
+                expBox.className = 'dent-explanation-box';
+                expBox.style.direction = questionLanguage === 'ar' ? 'rtl' : 'ltr';
+                expBox.style.textAlign = questionLanguage === 'ar' ? 'right' : 'left';
+                expBox.innerHTML = q.answer || q.explanation || '';
+
+                toggleBtn.addEventListener('click', () => {
+                    const isHidden = window.getComputedStyle(expBox).display === 'none';
+                    if (isHidden) {
+                        expBox.style.display = 'block';
+                        toggleBtn.innerText = 'إخفاء الإجابة';
+                        toggleBtn.classList.add('active');
+                    } else {
+                        expBox.style.display = 'none';
+                        toggleBtn.innerText = 'إظهار الإجابة';
+                        toggleBtn.classList.remove('active');
+                    }
+                });
+
+                qBlock.appendChild(toggleBtn);
+                qBlock.appendChild(expBox);
+            } else if (q.type === 'info') {
+                const infoBody = document.createElement('div');
+                infoBody.className = 'dent-info-body';
+                infoBody.style.direction = questionLanguage === 'ar' ? 'rtl' : 'ltr';
+                infoBody.style.textAlign = questionLanguage === 'ar' ? 'right' : 'left';
+                infoBody.innerHTML = q.answer || q.content || '';
+                qBlock.appendChild(infoBody);
+            } else {
+                const optList = document.createElement('div');
+                optList.className = 'dent-opt-list';
+                
+                let opts = ["صحيح", "خاطئ"];
+                if (q.options && q.options.length > 0) {
+                    opts = q.options;
+                }
+                
+                opts.forEach((opt, optIndex) => {
+                    const optItem = document.createElement('label');
+                    optItem.className = 'dent-opt-item';
+                    const optionLetters = questionLanguage === 'ar'
+                        ? ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح']
+                        : ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+                    const optionLetter = optionLetters[optIndex] ? optionLetters[optIndex] + '.' : '';
+                    const optionText = this.stripOptionPrefix(opt);
+                    optItem.innerHTML = `
+                        <input type="radio" name="admin_q_${index}" value="${this.escapeHtml(opt)}" data-option-index="${optIndex}">
+                        <span class="dent-opt-letter">${optionLetter}</span>
+                        <span class="dent-opt-text">${this.escapeHtml(optionText)}</span>
+                    `;
+                    
+                    // Instant Feedback on click
+                    optItem.querySelector('input').addEventListener('change', () => {
+                        const siblings = optList.querySelectorAll('.dent-opt-item');
+                        siblings.forEach(s => s.classList.remove('selected'));
+                        optItem.classList.add('selected');
+
+                        const userVal = opt.trim();
+                        const isMatch = this.isQuestionAnswerCorrect(q, optIndex, userVal, opts);
+
+                        if (isMatch) {
+                            optItem.classList.add('correct');
+                        } else {
+                            optItem.classList.add('wrong');
+                            siblings.forEach(s => {
+                                const radio = s.querySelector('input[type="radio"]');
+                                const candidateIndex = radio ? Number(radio.dataset.optionIndex) : -1;
+                                if (this.isQuestionAnswerCorrect(q, candidateIndex, radio?.value || '', opts)) {
+                                    s.classList.add('correct');
+                                }
+                            });
+                        }
+
+                        // Lock inputs for this question to prevent score tampering after seeing feedback
+                        const inputs = optList.querySelectorAll('input[type="radio"]');
+                        inputs.forEach(inp => { inp.disabled = true; });
+                        optList.style.pointerEvents = 'none';
+
+                        if (navBar) {
+                            const pill = navBar.querySelector(`.dent-nav-pill[data-idx="${index}"]`);
+                            if (pill) {
+                                pill.classList.remove('answered');
+                                if (isMatch) pill.classList.add('correct');
+                                else pill.classList.add('wrong');
+                            }
+                        }
+                        
+                        const expBox = qBlock.querySelector('.dent-explanation-box');
+                        if (expBox) expBox.style.display = 'block';
+
+                        const totalScoredQuestions = this.generatedQuestions.filter(q => q.type !== 'card' && q.type !== 'info').length;
+                        const answeredQuestions = document.querySelectorAll('.dent-q-block input[type="radio"]:checked').length;
+                        if (totalScoredQuestions > 0 && answeredQuestions === totalScoredQuestions) {
+                            const subBtn = document.getElementById('dp-submit-btn');
+                            if (subBtn) subBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+
+                    optList.appendChild(optItem);
+                });
+                
+                qBlock.appendChild(optList);
+
+                const expBox = document.createElement('div');
+                expBox.className = 'dent-explanation-box';
+                const isEnglishQuiz = questionLanguage === 'en';
+                const expPrefix = isEnglishQuiz ? '<strong>Explanation:</strong> ' : '<strong>توضيح الإجابة:</strong> ';
+                const expFallback = isEnglishQuiz ? ('Correct answer: ' + (q.correctAnswer || '')) : ('الإجابة الصحيحة هي: ' + (q.correctAnswer || ''));
+                expBox.style.direction = isEnglishQuiz ? 'ltr' : 'rtl';
+                expBox.style.textAlign = isEnglishQuiz ? 'left' : 'right';
+                expBox.innerHTML = expPrefix + this.escapeHtml(q.explanation || expFallback);
+                qBlock.appendChild(expBox);
+            }
+
+            container.appendChild(qBlock);
+        });
+
+        this.currentFocusedIndex = 0;
+        this.updatePlayerViewDisplay();
+
+        const submitBtn = document.getElementById('dp-submit-btn');
+        if (submitBtn) submitBtn.style.display = isCardsQuiz ? 'none' : 'block';
+        if (isCardsQuiz) {
+            const navBarEl = document.getElementById('dp-navigator');
+            if (navBarEl) navBarEl.style.display = 'none';
+            const modesRowEl = document.querySelector('.dent-player-modes-row');
+            if (modesRowEl) modesRowEl.style.display = 'none';
+        }
+
+        if (playerView) playerView.style.display = 'block';
         this.openModal('admin-quiz-player-modal');
-        this.renderAdminQuizQuestion();
-        this.renderAdminQuizPills();
+        const modalContainer = document.getElementById('admin-quiz-player-modal');
+        if (modalContainer) modalContainer.scrollTop = 0;
     },
 
-    startAdminQuizTimer() {
-        this.stopAdminQuizTimer();
-        const timerEl = document.getElementById('admin-qp-timer');
-        if (timerEl) timerEl.innerText = '00:00';
-
-        this.adminQuizState.timerInterval = setInterval(() => {
-            if (!this.adminQuizState || !this.adminQuizState.startTime) return;
-            const elapsed = Math.floor((Date.now() - this.adminQuizState.startTime) / 1000);
-            if (timerEl) timerEl.innerText = this.formatAdminQuizTime(elapsed);
-        }, 1000);
+    toggleRevealAllAnswers() {
+        const expBoxes = document.querySelectorAll('.dent-explanation-box');
+        const toggles = document.querySelectorAll('.dent-ans-toggle');
+        const anyHidden = Array.from(expBoxes).some(b => window.getComputedStyle(b).display === 'none');
+        
+        expBoxes.forEach(box => {
+            box.style.display = anyHidden ? 'block' : 'none';
+        });
+        toggles.forEach(btn => {
+            btn.innerText = anyHidden ? 'إخفاء الإجابة' : 'إظهار الإجابة';
+            if (anyHidden) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
     },
 
-    stopAdminQuizTimer() {
-        if (this.adminQuizState?.timerInterval) {
-            clearInterval(this.adminQuizState.timerInterval);
-            this.adminQuizState.timerInterval = null;
-        }
-    },
+    submitPlayerQuiz() {
+        let score = 0;
+        const qBlocks = document.querySelectorAll('.dent-q-block');
+        const missedQuestions = [];
+        const breakdown = {};
+        const scoredQuestions = (this.generatedQuestions || []).filter(q => q.type !== 'card' && q.type !== 'info');
+        const totalQs = scoredQuestions.length > 0 ? scoredQuestions.length : (this.generatedQuestions || []).length;
 
-    formatAdminQuizTime(seconds) {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
-    },
+        qBlocks.forEach((block, index) => {
+            const qData = this.generatedQuestions[index];
+            if (!qData) return;
+            const isNonScored = (qData.type === 'card' || qData.type === 'info');
 
-    setAdminQuizMode(mode) {
-        this.adminQuizState.mode = mode;
-        const practiceBtn = document.getElementById('admin-qp-mode-practice');
-        const examBtn = document.getElementById('admin-qp-mode-exam');
+            const expBox = block.querySelector('.dent-explanation-box');
+            if (expBox) expBox.style.display = 'block';
 
-        if (practiceBtn && examBtn) {
-            if (mode === 'practice') {
-                practiceBtn.className = 'px-2.5 py-1 rounded-md transition font-medium text-white bg-white/15';
-                examBtn.className = 'px-2.5 py-1 rounded-md transition text-gray-400 hover:text-white';
-            } else {
-                examBtn.className = 'px-2.5 py-1 rounded-md transition font-medium text-white bg-white/15';
-                practiceBtn.className = 'px-2.5 py-1 rounded-md transition text-gray-400 hover:text-white';
+            if (isNonScored) return;
+
+            const selectedRadio = block.querySelector(`input[name="admin_q_${index}"]:checked`);
+            const assignedCh = qData.assignedChapter || 'عام';
+            const opts = qData.options || ["صحيح", "خاطئ"];
+
+            if (!breakdown[assignedCh]) {
+                breakdown[assignedCh] = { correct: 0, total: 0 };
             }
-        }
+            breakdown[assignedCh].total++;
 
-        this.renderAdminQuizQuestion();
-        this.renderAdminQuizPills();
-    },
-
-    toggleAdminQuizReveal() {
-        this.adminQuizState.revealAll = !this.adminQuizState.revealAll;
-        this.updateAdminQuizRevealBtnUI();
-        this.renderAdminQuizQuestion();
-        this.renderAdminQuizPills();
-    },
-
-    updateAdminQuizRevealBtnUI() {
-        const btn = document.getElementById('admin-qp-reveal-btn');
-        const label = document.getElementById('admin-qp-reveal-label');
-        if (!btn) return;
-
-        if (this.adminQuizState.revealAll) {
-            btn.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold border border-amber-500/40 bg-amber-500/15 text-amber-300 transition flex items-center gap-1 shadow-sm';
-            if (label) label.innerText = 'إخفاء الحل';
-        } else {
-            btn.className = 'px-2.5 py-1 rounded-lg text-xs font-medium border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 transition flex items-center gap-1';
-            if (label) label.innerText = 'كشف الحل';
-        }
-    },
-
-    getEffectiveQuestionIndex() {
-        if (!this.adminQuizState) return 0;
-        if (this.adminQuizState.filterWrongOnly && Array.isArray(this.adminQuizState.filteredIndices)) {
-            return this.adminQuizState.filteredIndices[this.adminQuizState.currentIndex] ?? 0;
-        }
-        return this.adminQuizState.currentIndex;
-    },
-
-    getTotalQuestionsCount() {
-        if (!this.adminQuizState?.quizData?.questions) return 0;
-        if (this.adminQuizState.filterWrongOnly && Array.isArray(this.adminQuizState.filteredIndices)) {
-            return this.adminQuizState.filteredIndices.length;
-        }
-        return this.adminQuizState.quizData.questions.length;
-    },
-
-    renderAdminQuizPills() {
-        const pillsBar = document.getElementById('admin-qp-pills-bar');
-        if (!pillsBar || !this.adminQuizState?.quizData?.questions) return;
-
-        const questions = this.adminQuizState.quizData.questions;
-        const total = this.getTotalQuestionsCount();
-        const currentLocalIdx = this.adminQuizState.currentIndex;
-
-        let html = '';
-        for (let i = 0; i < total; i++) {
-            const actualQIdx = (this.adminQuizState.filterWrongOnly && this.adminQuizState.filteredIndices)
-                ? this.adminQuizState.filteredIndices[i]
-                : i;
-            const q = questions[actualQIdx];
-            const isCurrent = i === currentLocalIdx;
-            const userAns = this.adminQuizState.answers[actualQIdx];
-            const isAnswered = userAns !== undefined && userAns !== null;
-            const showFeedback = this.adminQuizState.submitted || this.adminQuizState.revealAll || (this.adminQuizState.mode === 'practice' && isAnswered);
-
-            let pillClass = 'w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs font-mono font-bold flex items-center justify-center shrink-0 transition-all cursor-pointer select-none ';
-
-            if (isCurrent) {
-                pillClass += 'ring-2 ring-white shadow-md ';
-            }
-
-            if (showFeedback && isAnswered) {
-                const isCorrect = this.isQuestionAnswerCorrect(q, userAns, q.options);
-                if (isCorrect) {
-                    pillClass += 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
-                } else {
-                    pillClass += 'bg-rose-500/20 text-rose-300 border border-rose-500/40';
-                }
-            } else if (isAnswered) {
-                pillClass += 'bg-slate-700/80 text-white border border-white/20';
-            } else {
-                pillClass += 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/5';
-            }
-
-            html += `<button type="button" onclick="AdminApp.jumpToAdminQuizQuestion(${i})" class="${pillClass}" title="السؤال ${actualQIdx + 1}">${actualQIdx + 1}</button>`;
-        }
-
-        pillsBar.innerHTML = html;
-
-        // Auto-scroll the active pill into view smoothly
-        const activeBtn = pillsBar.children[currentLocalIdx];
-        if (activeBtn) {
-            activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        }
-    },
-
-    renderAdminQuizQuestion() {
-        if (!this.adminQuizState || !this.adminQuizState.quizData) return;
-
-        const questions = this.adminQuizState.quizData.questions;
-        const total = this.getTotalQuestionsCount();
-        const localIdx = this.adminQuizState.currentIndex;
-        const actualIdx = this.getEffectiveQuestionIndex();
-        const q = questions[actualIdx];
-
-        if (!q) return;
-
-        // Ensure question view is visible and results view hidden
-        const qView = document.getElementById('admin-qp-question-view');
-        const resView = document.getElementById('admin-qp-results-view');
-        if (qView) qView.classList.remove('hidden');
-        if (resView) resView.classList.add('hidden');
-
-        // Progress text
-        const progressEl = document.getElementById('admin-qp-progress');
-        if (progressEl) {
-            progressEl.innerText = `سؤال ${localIdx + 1} من ${total}`;
-        }
-
-        // Meta badges
-        const qnumBadge = document.getElementById('admin-qp-qnum-badge');
-        const qtypeBadge = document.getElementById('admin-qp-qtype-badge');
-        const chapBadge = document.getElementById('admin-qp-chapter-badge');
-
-        if (qnumBadge) qnumBadge.innerText = `سؤال ${actualIdx + 1}`;
-        if (qtypeBadge) {
-            const t = (q.type || '').toLowerCase();
-            if (t === 'mcq') qtypeBadge.innerText = 'خيارات متعددة';
-            else if (t === 'true_false' || t === 'tf') qtypeBadge.innerText = 'صح أم خطأ';
-            else if (t === 'exception') qtypeBadge.innerText = 'استثناء';
-            else qtypeBadge.innerText = 'سؤال تقييمي';
-        }
-        if (chapBadge) {
-            chapBadge.innerText = q.assignedChapter ? '📁 ' + q.assignedChapter : '';
-            chapBadge.title = q.assignedChapter || '';
-        }
-
-        // Question text
-        const qTextEl = document.getElementById('admin-qp-qtext');
-        const lang = this.detectQuestionLanguage(q);
-        if (qTextEl) {
-            qTextEl.dir = lang === 'en' ? 'ltr' : 'rtl';
-            qTextEl.style.textAlign = lang === 'en' ? 'left' : 'right';
-            qTextEl.innerText = q.question || '';
-        }
-
-        // Options
-        const optionsContainer = document.getElementById('admin-qp-options');
-        const options = Array.isArray(q.options) ? q.options : [];
-        const correctIdx = this.getCorrectOptionIndex(q, options);
-        const userSelectedIdx = this.adminQuizState.answers[actualIdx];
-        const isAnswered = userSelectedIdx !== undefined && userSelectedIdx !== null;
-        const showFeedback = this.adminQuizState.submitted || this.adminQuizState.revealAll || (this.adminQuizState.mode === 'practice' && isAnswered);
-
-        const letters = lang === 'en' ? ['A', 'B', 'C', 'D', 'E', 'F'] : ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
-
-        let optsHtml = '';
-        options.forEach((opt, optIdx) => {
-            const letter = letters[optIdx] || String(optIdx + 1);
-            const cleanText = this.stripOptionPrefix(opt);
-            const isSelected = userSelectedIdx === optIdx;
-            const isCorrect = optIdx === correctIdx;
-
-            let cardStyle = 'w-full p-3 sm:p-3.5 rounded-xl border transition-all text-right flex items-start gap-3 cursor-pointer text-xs sm:text-sm select-text ';
-            let badgeStyle = 'w-6 h-6 rounded-lg text-xs font-mono font-bold flex items-center justify-center shrink-0 mt-0.5 ';
-
-            if (lang === 'en') {
-                cardStyle += 'flex-row-reverse text-left ';
-            }
-
-            if (showFeedback) {
-                if (isCorrect) {
-                    cardStyle += 'bg-emerald-500/10 border-emerald-500/50 text-emerald-200 font-medium shadow-sm ';
-                    badgeStyle += 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 ';
-                } else if (isSelected && !isCorrect) {
-                    cardStyle += 'bg-rose-500/10 border-rose-500/50 text-rose-200 shadow-sm ';
-                    badgeStyle += 'bg-rose-500/30 text-rose-300 border border-rose-500/40 ';
-                } else {
-                    cardStyle += 'bg-black/20 border-white/5 text-gray-400 opacity-60 hover:opacity-80 ';
-                    badgeStyle += 'bg-white/5 text-gray-400 ';
-                }
-            } else {
-                if (isSelected) {
-                    cardStyle += 'bg-white/10 border-white/30 text-white font-medium shadow-md ';
-                    badgeStyle += 'bg-white/20 text-white border border-white/30 ';
-                } else {
-                    cardStyle += 'bg-black/20 hover:bg-white/[0.04] border-white/10 text-gray-200 hover:border-white/20 ';
-                    badgeStyle += 'bg-white/5 text-gray-400 ';
+            let isCorrect = false;
+            if (selectedRadio) {
+                const userVal = selectedRadio.value.trim();
+                const selectedIndex = Number(selectedRadio.dataset.optionIndex);
+                const isMatch = this.isQuestionAnswerCorrect(qData, selectedIndex, userVal, opts);
+                if (isMatch) {
+                    score++;
+                    isCorrect = true;
+                    breakdown[assignedCh].correct++;
                 }
             }
 
-            let indicatorIcon = '';
-            if (showFeedback) {
-                if (isCorrect) {
-                    indicatorIcon = `<span class="text-emerald-400 text-sm font-bold shrink-0 self-center">✓</span>`;
-                } else if (isSelected && !isCorrect) {
-                    indicatorIcon = `<span class="text-rose-400 text-sm font-bold shrink-0 self-center">✕</span>`;
-                }
+            if (!isCorrect) {
+                missedQuestions.push(qData);
             }
+        });
 
-            optsHtml += `
-                <div onclick="AdminApp.selectAdminQuizOption(${optIdx})" class="${cardStyle}">
-                    <span class="${badgeStyle}">${letter}</span>
-                    <span class="flex-1 leading-relaxed ${lang === 'en' ? 'text-left' : 'text-right'}" dir="${lang === 'en' ? 'ltr' : 'rtl'}">${this.escapeHtml(cleanText)}</span>
-                    ${indicatorIcon}
+        const pct = Math.round((score / totalQs) * 100);
+        let badge = 'نتيجة ممتازة!';
+        if (pct < 60) badge = 'تحتاج لمراجعة إضافية للمادة';
+        else if (pct < 85) badge = 'نتيجة جيدة جداً!';
+
+        let retryBtnHTML = '';
+        if (missedQuestions.length > 0) {
+            retryBtnHTML = `<button id="dp-retry-missed-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 12px; width: auto; display: inline-block; padding: 8px 16px; font-size: 0.84rem; border-color: rgba(245, 158, 11, 0.3); color: #fcd34d;">إعادة الأسئلة الخاطئة فقط (${missedQuestions.length} أسئلة)</button>`;
+        }
+
+        let breakdownHTML = '';
+        const chKeys = Object.keys(breakdown);
+        if (chKeys.length > 1) {
+            breakdownHTML = `<div style="font-size:0.82rem; color:#94a3b8; margin-top:10px; border-top:1px dashed rgba(255,255,255,0.06); padding-top:8px; text-align:right;">`;
+            breakdownHTML += `<div style="font-weight:600; margin-bottom:5px; color:#cbd5e1;">مستوى أدائك حسب المحاضرة:</div>`;
+            chKeys.forEach(ch => {
+                const item = breakdown[ch];
+                const pctCh = item.total > 0 ? Math.round((item.correct / item.total) * 100) : 0;
+                let colorCh = '#a7f3d0';
+                if (pctCh < 60) colorCh = '#fca5a5';
+                else if (pctCh < 85) colorCh = '#fcd34d';
+                
+                breakdownHTML += `<div style="margin-bottom:3px;">• <span style="color:#cbd5e1;">${this.escapeHtml(ch)}:</span> <span style="color:${colorCh}; font-weight:600;">${item.correct}/${item.total} (${pctCh}%)</span></div>`;
+            });
+            breakdownHTML += `</div>`;
+        }
+
+        const scoreBoard = document.getElementById('dp-score');
+        if (scoreBoard) {
+            scoreBoard.innerHTML = `
+                <div>درجتك النهائية: ${score} من ${totalQs} (${pct}%)</div>
+                <div style="font-size:0.86rem; color:#cbd5e1; margin-top:6px;">
+                    <span style="color:#a7f3d0;">إجابات صحيحة: ${score}</span> • 
+                    <span style="color:#fca5a5;">إجابات خاطئة: ${missedQuestions.length}</span>
                 </div>
+                <div style="font-size:0.84rem; color:#94a3b8; margin-top:4px;">${badge}</div>
+                ${breakdownHTML}
+                ${retryBtnHTML}
             `;
-        });
+            scoreBoard.style.display = 'block';
+        }
 
-        if (optionsContainer) optionsContainer.innerHTML = optsHtml;
+        if (missedQuestions.length > 0) {
+            const retryBtn = document.getElementById('dp-retry-missed-btn');
+            if (retryBtn) {
+                retryBtn.addEventListener('click', () => {
+                    const currentTitle = document.getElementById('dp-title')?.innerText || '';
+                    const currentMeta = document.getElementById('dp-meta-sub')?.innerText || '';
+                    this.openPlayer(`${currentTitle} (مراجعة الأخطاء)`, currentMeta, missedQuestions, this.currentActiveQuiz?.metaObj);
+                });
+            }
+        }
+        
+        const submitBtn = document.getElementById('dp-submit-btn');
+        if (submitBtn) submitBtn.style.display = 'none';
 
-        // Explanation Box
-        const expBox = document.getElementById('admin-qp-explanation');
-        const expText = document.getElementById('admin-qp-exp-text');
-        const expLetter = document.getElementById('admin-qp-exp-correct-letter');
+        const modalContainer = document.getElementById('admin-quiz-player-modal');
+        if (modalContainer) modalContainer.scrollTop = 0;
+    },
 
-        if (expBox && expText) {
-            if (showFeedback && (q.explanation || correctIdx >= 0)) {
-                expBox.classList.remove('hidden');
-                expBox.dir = lang === 'en' ? 'ltr' : 'rtl';
-                if (expLetter) {
-                    const cLetter = correctIdx >= 0 ? (letters[correctIdx] || String(correctIdx + 1)) : '';
-                    expLetter.innerText = cLetter ? `الإجابة: ${cLetter}` : '';
+    onPlayerViewModeChange(mode) {
+        this.currentViewMode = mode;
+        this.updatePlayerViewDisplay();
+    },
+
+    onPlayerPrevQuestion() {
+        if (this.currentFocusedIndex > 0) {
+            this.currentFocusedIndex--;
+            this.updatePlayerViewDisplay();
+        }
+    },
+
+    onPlayerNextQuestion() {
+        if (this.currentFocusedIndex < (this.generatedQuestions?.length || 0) - 1) {
+            this.currentFocusedIndex++;
+            this.updatePlayerViewDisplay();
+        }
+    },
+
+    updatePlayerViewDisplay() {
+        const qBlocks = document.querySelectorAll('.dent-q-block');
+        const navBar = document.getElementById('dp-navigator');
+        const focusedNav = document.getElementById('dp-focused-nav');
+        
+        if (this.currentViewMode === 'focused') {
+            if (focusedNav) focusedNav.style.display = 'flex';
+            qBlocks.forEach((block, idx) => {
+                block.style.display = (idx === this.currentFocusedIndex) ? 'block' : 'none';
+            });
+            
+            if (navBar) {
+                navBar.querySelectorAll('.dent-nav-pill').forEach(pill => {
+                    pill.classList.remove('active-focused');
+                });
+                const activePill = navBar.querySelector(`.dent-nav-pill[data-idx="${this.currentFocusedIndex}"]`);
+                if (activePill) activePill.classList.add('active-focused');
+            }
+            
+            const prevBtn = document.getElementById('dp-prev-btn');
+            const nextBtn = document.getElementById('dp-next-btn');
+            
+            if (prevBtn) prevBtn.disabled = (this.currentFocusedIndex === 0);
+            if (nextBtn) {
+                if (this.currentFocusedIndex === (this.generatedQuestions?.length || 0) - 1) {
+                    nextBtn.innerText = 'نهاية الأسئلة';
+                    nextBtn.disabled = true;
+                } else {
+                    nextBtn.innerText = 'السؤال التالي';
+                    nextBtn.disabled = false;
                 }
-                expText.innerText = q.explanation || 'لا يتوفر تعليل نصي إضافي لهذا السؤال.';
-                expText.style.textAlign = lang === 'en' ? 'left' : 'right';
-            } else {
-                expBox.classList.add('hidden');
             }
-        }
-
-        // Navigation button states
-        const prevBtn = document.getElementById('admin-qp-prev-btn');
-        const nextBtn = document.getElementById('admin-qp-next-btn');
-
-        if (prevBtn) {
-            prevBtn.disabled = localIdx === 0;
-            prevBtn.classList.toggle('opacity-40', localIdx === 0);
-            prevBtn.classList.toggle('pointer-events-none', localIdx === 0);
-        }
-
-        if (nextBtn) {
-            const isLast = localIdx === total - 1;
-            nextBtn.innerHTML = isLast
-                ? `<span>إنهاء</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
-                : `<span>التالي</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>`;
-        }
-    },
-
-    selectAdminQuizOption(optIdx) {
-        if (!this.adminQuizState || this.adminQuizState.submitted) return;
-
-        const actualIdx = this.getEffectiveQuestionIndex();
-        this.adminQuizState.answers[actualIdx] = optIdx;
-
-        this.renderAdminQuizQuestion();
-        this.renderAdminQuizPills();
-    },
-
-    clearCurrentAnswer() {
-        if (!this.adminQuizState || this.adminQuizState.submitted) return;
-
-        const actualIdx = this.getEffectiveQuestionIndex();
-        delete this.adminQuizState.answers[actualIdx];
-
-        this.renderAdminQuizQuestion();
-        this.renderAdminQuizPills();
-    },
-
-    prevAdminQuizQuestion() {
-        if (!this.adminQuizState || this.adminQuizState.currentIndex <= 0) return;
-        this.adminQuizState.currentIndex--;
-        this.renderAdminQuizQuestion();
-        this.renderAdminQuizPills();
-    },
-
-    nextAdminQuizQuestion() {
-        if (!this.adminQuizState) return;
-        const total = this.getTotalQuestionsCount();
-        if (this.adminQuizState.currentIndex < total - 1) {
-            this.adminQuizState.currentIndex++;
-            this.renderAdminQuizQuestion();
-            this.renderAdminQuizPills();
-        } else if (!this.adminQuizState.submitted) {
-            this.submitAdminQuiz();
-        }
-    },
-
-    jumpToAdminQuizQuestion(targetIdx) {
-        if (!this.adminQuizState) return;
-        const total = this.getTotalQuestionsCount();
-        if (targetIdx >= 0 && targetIdx < total) {
-            this.adminQuizState.currentIndex = targetIdx;
-            this.renderAdminQuizQuestion();
-            this.renderAdminQuizPills();
-        }
-    },
-
-    submitAdminQuiz() {
-        if (!this.adminQuizState || !this.adminQuizState.quizData?.questions) return;
-
-        const questions = this.adminQuizState.quizData.questions;
-        const total = questions.length;
-        let correctCount = 0;
-        let wrongCount = 0;
-        let unansweredCount = 0;
-
-        questions.forEach((q, idx) => {
-            const userAns = this.adminQuizState.answers[idx];
-            if (userAns === undefined || userAns === null) {
-                unansweredCount++;
-            } else if (this.isQuestionAnswerCorrect(q, userAns, q.options)) {
-                correctCount++;
-            } else {
-                wrongCount++;
-            }
-        });
-
-        const pct = Math.round((correctCount / total) * 100);
-        this.adminQuizState.submitted = true;
-        this.stopAdminQuizTimer();
-
-        // Calculate time elapsed
-        const elapsed = Math.floor((Date.now() - this.adminQuizState.startTime) / 1000);
-        const formattedTime = this.formatAdminQuizTime(elapsed);
-
-        // Update Results Elements
-        const pctEl = document.getElementById('admin-qp-score-pct');
-        const fracEl = document.getElementById('admin-qp-score-fraction');
-        const statCorrect = document.getElementById('admin-qp-stat-correct');
-        const statWrong = document.getElementById('admin-qp-stat-wrong');
-        const statTime = document.getElementById('admin-qp-stat-time');
-        const titleEl = document.getElementById('admin-qp-score-title');
-        const msgEl = document.getElementById('admin-qp-score-msg');
-        const iconEl = document.getElementById('admin-qp-score-icon');
-        const wrongBtn = document.getElementById('admin-qp-review-wrong-btn');
-
-        if (pctEl) pctEl.innerText = `${pct}%`;
-        if (fracEl) fracEl.innerText = `(${correctCount} / ${total})`;
-        if (statCorrect) statCorrect.innerText = correctCount;
-        if (statWrong) statWrong.innerText = wrongCount;
-        if (statTime) statTime.innerText = formattedTime;
-
-        if (pct >= 90) {
-            if (iconEl) iconEl.innerText = '🏆';
-            if (titleEl) titleEl.innerText = 'ممتاز ومتقن تماماً!';
-            if (msgEl) msgEl.innerText = 'أداء باهر ومتميز! تم استيعاب وفهم مفاهيم الشباتر بدرجة عالية جداً.';
-            if (pctEl) pctEl.className = 'text-4xl sm:text-5xl font-black text-emerald-400 font-mono';
-        } else if (pct >= 75) {
-            if (iconEl) iconEl.innerText = '🌟';
-            if (titleEl) titleEl.innerText = 'أداء جيد جداً!';
-            if (msgEl) msgEl.innerText = 'أحسنت! إجابات موفقة مع حاجة طفيفة لمراجعة الأسئلة غير الدقيقة.';
-            if (pctEl) pctEl.className = 'text-4xl sm:text-5xl font-black text-blue-400 font-mono';
-        } else if (pct >= 60) {
-            if (iconEl) iconEl.innerText = '💡';
-            if (titleEl) titleEl.innerText = 'نتيجة مقبولة';
-            if (msgEl) msgEl.innerText = 'تم اجتياز الاختبار، ويُنصح بمراجعة التعليلات والحلول لترسيخ المعلومات.';
-            if (pctEl) pctEl.className = 'text-4xl sm:text-5xl font-black text-amber-400 font-mono';
         } else {
-            if (iconEl) iconEl.innerText = '📖';
-            if (titleEl) titleEl.innerText = 'بحاجة لمزيد من المذاكرة';
-            if (msgEl) msgEl.innerText = 'يُفضل مراجعة سلايدات المحاضرة والشباتر ثم إعادة المحاولة لتحقيق نتيجة أفضل.';
-            if (pctEl) pctEl.className = 'text-4xl sm:text-5xl font-black text-rose-400 font-mono';
-        }
-
-        if (wrongBtn) {
-            wrongBtn.style.display = wrongCount > 0 ? 'inline-flex' : 'none';
-        }
-
-        // Switch to Results View
-        const qView = document.getElementById('admin-qp-question-view');
-        const resView = document.getElementById('admin-qp-results-view');
-        if (qView) qView.classList.add('hidden');
-        if (resView) resView.classList.remove('hidden');
-
-        // Refresh pills with full submitted feedback
-        this.renderAdminQuizPills();
-    },
-
-    reviewAdminQuiz() {
-        this.adminQuizState.filterWrongOnly = false;
-        this.adminQuizState.filteredIndices = null;
-        this.adminQuizState.currentIndex = 0;
-
-        this.renderAdminQuizQuestion();
-        this.renderAdminQuizPills();
-    },
-
-    reviewAdminQuizWrongOnly() {
-        if (!this.adminQuizState || !this.adminQuizState.quizData?.questions) return;
-
-        const questions = this.adminQuizState.quizData.questions;
-        const wrongIndices = [];
-
-        questions.forEach((q, idx) => {
-            const userAns = this.adminQuizState.answers[idx];
-            if (!this.isQuestionAnswerCorrect(q, userAns, q.options)) {
-                wrongIndices.push(idx);
+            if (focusedNav) focusedNav.style.display = 'none';
+            qBlocks.forEach(block => block.style.display = 'block');
+            if (navBar) {
+                navBar.querySelectorAll('.dent-nav-pill').forEach(pill => {
+                    pill.classList.remove('active-focused');
+                });
             }
-        });
-
-        if (wrongIndices.length === 0) {
-            this.showToast('لا توجد إجابات خاطئة، جميع إجاباتك صحيحة! 🎉');
-            return;
         }
-
-        this.adminQuizState.filterWrongOnly = true;
-        this.adminQuizState.filteredIndices = wrongIndices;
-        this.adminQuizState.currentIndex = 0;
-
-        this.renderAdminQuizQuestion();
-        this.renderAdminQuizPills();
     },
 
-    restartAdminQuiz() {
-        if (!this.adminQuizState || !this.adminQuizState.quizData) return;
-        this.initAdminQuiz(this.adminQuizState.quizData);
+    exportCurrentPlayerQuiz() {
+        if (this.currentActiveQuiz) {
+            this.openQuizExportModal(this.currentActiveQuiz);
+        }
     },
 
     closeAdminQuizPlayer() {
-        if (this.adminQuizState && !this.adminQuizState.submitted) {
-            const answeredCount = Object.keys(this.adminQuizState.answers || {}).length;
-            if (answeredCount > 0) {
-                if (!confirm('هل أنت متأكد من الخروج من مشغل الاختبار؟ سيتم فقدان تقدمك في الإجابات.')) {
-                    return;
-                }
-            }
-        }
-
-        this.stopAdminQuizTimer();
-        this.adminQuizState = null;
         this.closeModal('admin-quiz-player-modal');
     },
 

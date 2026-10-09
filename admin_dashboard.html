@@ -133,6 +133,65 @@
 
  /* Current-event badges should communicate state without drawing attention. */
  .animate-pulse { animation: none !important; }
+
+ /* Dent2025 AI Exam Portal - Exact Quiz Bank Player Styles */
+ .dent-quiz-container { max-width: 850px; margin: 20px auto; padding: 0 10px; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif; color: #e2e8f0; direction: rtl; }
+ .dent-quiz-card { background: #1e1e1e; padding: 20px 18px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 20px; overflow: hidden; box-sizing: border-box; }
+ .dent-quiz-header { text-align: center; margin-bottom: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 10px; font-weight: 700; font-size: 1.25rem; background: linear-gradient(90deg, #e2e8f0, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+ .dent-player-area { display: block; }
+ .dent-player-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+ .dent-player-controls button { flex: 1; min-width: 140px; padding: 9px 12px; font-size: 0.85rem; }
+ .dent-player-modes-row { display: flex; gap: 10px; margin-bottom: 18px; text-align: right; }
+ .dent-quiz-label { display: block; font-weight: 500; margin-bottom: 5px; color: #9ca3af; font-size: 0.82rem; }
+ .dent-quiz-input { width: 100% !important; height: 38px !important; min-height: 38px !important; max-height: none !important; padding: 0 12px !important; line-height: 36px !important; background: #121212 !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: 8px !important; box-sizing: border-box !important; color: #fff !important; transition: all 0.2s !important; font-family: inherit !important; font-size: 0.88rem !important; vertical-align: middle !important; margin: 0 !important; }
+ select.dent-quiz-input { appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important; background-repeat: no-repeat !important; background-position: left 14px center !important; background-size: 14px 14px !important; padding-top: 0 !important; padding-bottom: 0 !important; padding-left: 36px !important; padding-right: 12px !important; height: 38px !important; line-height: 36px !important; cursor: pointer !important; }
+ select.dent-quiz-input option { background-color: #18181b !important; color: #f8fafc !important; padding: 8px !important; }
+ .dent-quiz-btn { width: 100%; height: 40px; padding: 0 14px; background: #27272a; color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; font-size: 0.9rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s; margin-top: 8px; display: flex; align-items: center; justify-content: center; }
+ .dent-quiz-btn:hover { background: #3f3f46; border-color: rgba(255, 255, 255, 0.25); }
+ .dent-quiz-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+ .dent-btn-secondary { background: rgba(255, 255, 255, 0.05); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.1); height: auto; padding: 6px 10px; }
+ .dent-btn-secondary:hover { background: rgba(255, 255, 255, 0.1); color: #ffffff; }
+ .dent-q-block { background: rgba(0, 0, 0, 0.2); padding: 16px; border-radius: 8px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.06); }
+ .dent-q-text { font-size: 0.96rem; font-weight: 600; margin-bottom: 12px; color: #f8fafc; line-height: 1.55; }
+ .dent-q-badge-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+ .dent-q-tag { font-size: 0.74rem; padding: 2px 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.06); }
+ .dent-q-converted-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #94a3b8; font-size: 0.72rem; font-weight: 500; border-radius: 4px; }
+ .dent-opt-list { display: flex; flex-direction: column; gap: 8px; }
+ .dent-opt-item { display: flex; align-items: center; padding: 9px 12px; background: #121212; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 0.88rem; color: #cbd5e1; }
+ .dent-opt-item:hover { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.15); }
+ .dent-opt-item input[type="radio"] { margin-left: 10px; width: 14px; height: 14px; accent-color: #94a3b8; cursor: pointer; } 
+ .dent-opt-item .dent-opt-letter { display: inline-block; flex: 0 0 auto; margin-left: 6px; color: #f8fafc; font-weight: 600; direction: ltr; unicode-bidi: isolate; white-space: nowrap; }
+ .dent-opt-item .dent-opt-text { flex: 1 1 auto; min-width: 0; text-align: right; }
+ .dent-q-block[data-language="en"] { direction: ltr; }
+ .dent-q-block[data-language="en"] .dent-q-text { direction: ltr; text-align: left; }
+ .dent-q-block[data-language="en"] .dent-opt-item { direction: ltr; }
+ .dent-q-block[data-language="en"] .dent-opt-item input[type="radio"] { margin-left: 0; margin-right: 10px; }
+ .dent-q-block[data-language="en"] .dent-opt-letter { margin-left: 0; margin-right: 6px; }
+ .dent-q-block[data-language="en"] .dent-opt-text { direction: ltr; text-align: left; }
+ .dent-q-block[data-language="en"] .dent-explanation-box { direction: ltr; text-align: left; }
+ .dent-q-block[data-language="ar"] { direction: rtl; }
+ .dent-q-block[data-language="ar"] .dent-q-text,
+ .dent-q-block[data-language="ar"] .dent-opt-text { direction: rtl; text-align: right; }
+ .dent-q-block[data-language="ar"] .dent-explanation-box { direction: rtl; text-align: right; }
+ .dent-opt-item.selected { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.06); color: #fff; }
+ .dent-opt-item.correct { border-color: rgba(34, 197, 94, 0.35) !important; background: rgba(34, 197, 94, 0.04) !important; color: #a7f3d0 !important; font-weight: 500; }
+ .dent-opt-item.wrong { border-color: rgba(239, 68, 68, 0.3) !important; background: rgba(239, 68, 68, 0.03) !important; color: #fca5a5 !important; }
+ .dent-explanation-box { display: none; margin-top: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 10px; font-size: 0.82rem; color: #cbd5e1; line-height: 1.5; }
+ .dent-explanation-box ol, .dent-explanation-box ul { margin-left: 20px; margin-top: 4px; }
+ .dent-ans-toggle { background: transparent; border: 1px solid rgba(255, 255, 255, 0.12); color: #94a3b8; font-size: 0.78rem; font-weight: 500; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; margin-top: 10px; }
+ .dent-ans-toggle:hover { color: #f8fafc; border-color: rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.04); }
+ .dent-ans-toggle.active { color: #e2e8f0; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); }
+ .dent-info-body { font-size: 0.86rem; color: #cbd5e1; line-height: 1.6; margin-top: 8px; direction: ltr; text-align: left; }
+ .dent-score-board { text-align: center; font-size: 1.05rem; font-weight: 600; color: #f8fafc; margin-bottom: 18px; display: none; padding: 14px; background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06); }
+ .dent-nav-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; padding: 8px; background: rgba(0, 0, 0, 0.2); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06); justify-content: center; align-items: center; }
+ .dent-nav-pill { width: 11px; height: 11px; min-width: 11px; padding: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.15); cursor: pointer; transition: all 0.2s; position: relative; }
+ .dent-nav-pill:hover { background: rgba(255, 255, 255, 0.3); border-color: rgba(255, 255, 255, 0.35); }
+ .dent-nav-pill.answered { background: #475569 !important; border-color: #64748b !important; }
+ .dent-nav-pill.correct { background: rgba(34, 197, 94, 0.4) !important; border-color: rgba(34, 197, 94, 0.5) !important; }
+ .dent-nav-pill.wrong { background: rgba(239, 68, 68, 0.4) !important; border-color: rgba(239, 68, 68, 0.5) !important; }
+ .dent-nav-pill.active-focused { background: #f8fafc !important; border-color: #ffffff !important; box-shadow: 0 0 6px rgba(255, 255, 255, 0.5); transform: scale(1.25); }
+ .dent-nav-pill.is-card-pill { border-radius: 2px; }
+ .dent-q-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
  </style>
 </head>
 <body class="min-h-screen md:h-screen flex flex-col md:flex-row md:overflow-hidden bg-dark text-slate-100 font-sans">
@@ -1786,160 +1845,48 @@
  </div>
  </div>
 
-  <!-- 10. Admin Interactive Quiz Player Modal -->
-  <div id="admin-quiz-player-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden overflow-hidden p-0 sm:p-4">
-    <div class="glass w-full h-full sm:h-[94vh] max-w-4xl flex flex-col sm:rounded-2xl border border-white/10 shadow-2xl bg-[#161616] overflow-hidden">
-      
-      <!-- Top Bar / Header -->
-      <div class="px-4 py-3 sm:px-6 sm:py-3.5 border-b border-white/10 flex items-center justify-between gap-3 shrink-0 bg-black/40">
-        <div class="flex items-center gap-3 min-w-0">
-          <button type="button" onclick="AdminApp.closeAdminQuizPlayer()" class="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition" title="إغلاق الاختبار">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-          </button>
-          <div class="min-w-0">
-            <h3 id="admin-qp-title" class="text-sm sm:text-base font-bold text-white truncate leading-tight">عنوان الاختبار</h3>
-            <div class="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
-              <span id="admin-qp-meta" class="truncate">اسم المادة</span>
-              <span>•</span>
-              <span id="admin-qp-progress" class="font-mono text-emerald-400 font-semibold">سؤال 1 من 10</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Header Controls & Timer -->
-        <div class="flex items-center gap-2 shrink-0">
-          <!-- Timer Badge -->
-          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 font-mono text-xs text-gray-200" title="الوقت المنقضي">
-            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"></circle><path stroke-linecap="round" stroke-width="2" d="M12 6v6l4 2"></path></svg>
-            <span id="admin-qp-timer">00:00</span>
+  <!-- 10. Admin Quiz Player Modal (Exact Same Engine as Quiz Bank) -->
+  <div id="admin-quiz-player-modal" class="fixed inset-0 z-50 flex items-start justify-center bg-black/85 backdrop-blur-md hidden overflow-y-auto p-2 sm:p-4 custom-scrollbar">
+    <div class="dent-quiz-container" style="max-width: 850px; width: 100%; margin: 20px auto; padding: 0 10px;">
+      <!-- Player Section (Exact same as in quiz bank) -->
+      <div class="dent-quiz-card dent-player-area" id="dent-player-view" style="display: block;">
+          <div class="dent-player-controls">
+              <button id="dp-back-btn" class="dent-quiz-btn dent-btn-secondary" onclick="AdminApp.closeAdminQuizPlayer()">العودة للقائمة</button>
+              <button id="dp-reveal-all-btn" class="dent-quiz-btn dent-btn-secondary" onclick="AdminApp.toggleRevealAllAnswers()">إظهار توضيح الإجابات</button>
+              <button id="dp-export-btn" class="dent-quiz-btn dent-btn-secondary" onclick="AdminApp.exportCurrentPlayerQuiz()" style="display: inline-flex; align-items: center; gap: 5px;" title="تصدير الاختبار (PDF / طباعة)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  تصدير الاختبار
+              </button>
           </div>
 
-          <!-- Mode Toggle (Practice vs Exam) -->
-          <div class="hidden sm:flex items-center bg-black/40 border border-white/10 rounded-lg p-0.5 text-xs">
-            <button type="button" id="admin-qp-mode-practice" onclick="AdminApp.setAdminQuizMode('practice')" class="px-2.5 py-1 rounded-md transition font-medium text-white bg-white/15" title="عرض الحل والشرح فورياً بعد اختيار الإجابة">تدريب فوري</button>
-            <button type="button" id="admin-qp-mode-exam" onclick="AdminApp.setAdminQuizMode('exam')" class="px-2.5 py-1 rounded-md transition text-gray-400 hover:text-white" title="إخفاء الحلول حتى إنهاء وتسليم الاختبار">نمط اختبار</button>
-          </div>
-
-          <!-- Quick Reveal All (Admin feature) -->
-          <button type="button" id="admin-qp-reveal-btn" onclick="AdminApp.toggleAdminQuizReveal()" class="px-2.5 py-1 rounded-lg text-xs font-medium border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 transition flex items-center gap-1" title="كشف / إخفاء الإجابة النموذجية فوراً">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-            <span class="hidden md:inline" id="admin-qp-reveal-label">كشف الحل</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Navigation Strip (Question Pills) -->
-      <div class="px-3 sm:px-6 py-2 border-b border-white/5 bg-black/20 overflow-x-auto shrink-0 select-none flex items-center gap-1.5 custom-scrollbar" id="admin-qp-pills-bar">
-        <!-- Rendered dynamically: 1, 2, 3 ... N -->
-      </div>
-
-      <!-- Content Area (Scrollable) -->
-      <div class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar relative" id="admin-qp-content-area">
-        
-        <!-- Active Question View -->
-        <div id="admin-qp-question-view" class="max-w-3xl mx-auto space-y-4">
-          <!-- Question Meta Header -->
-          <div class="flex items-center justify-between gap-2 text-xs">
-            <div class="flex items-center gap-2">
-              <span id="admin-qp-qnum-badge" class="px-2.5 py-0.5 rounded-full bg-white/10 font-bold text-gray-200">سؤال 1</span>
-              <span id="admin-qp-qtype-badge" class="px-2 py-0.5 rounded-md bg-white/5 text-gray-400">خيارات متعددة</span>
-            </div>
-            <span id="admin-qp-chapter-badge" class="text-gray-400 text-[11px] truncate max-w-[260px]"></span>
-          </div>
-
-          <!-- Question Text -->
-          <div id="admin-qp-qtext" class="text-base sm:text-lg font-semibold text-white leading-relaxed p-3.5 sm:p-4 rounded-xl bg-white/[0.03] border border-white/5 select-text">
-            نص السؤال
-          </div>
-
-          <!-- Options List -->
-          <div id="admin-qp-options" class="space-y-2.5 pt-1">
-            <!-- Rendered dynamically -->
-          </div>
-
-          <!-- Explanation Box -->
-          <div id="admin-qp-explanation" class="hidden p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-2 text-sm">
-            <div class="flex items-center justify-between text-xs font-bold text-emerald-400 pb-1.5 border-b border-white/5">
-              <span class="flex items-center gap-1.5">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span>الشرح والتعليل النموذجي:</span>
-              </span>
-              <span id="admin-qp-exp-correct-letter" class="font-mono text-white"></span>
-            </div>
-            <div id="admin-qp-exp-text" class="text-gray-300 leading-relaxed text-xs sm:text-sm select-text">
-              شرح تفصيلي للسؤال...
-            </div>
-          </div>
-        </div>
-
-        <!-- Result / Score Screen (Shown upon submission) -->
-        <div id="admin-qp-results-view" class="hidden max-w-xl mx-auto py-6 text-center space-y-6">
-          <div class="p-6 rounded-2xl bg-black/40 border border-white/10 shadow-xl space-y-4">
-            <div id="admin-qp-score-icon" class="text-4xl">🏆</div>
-            <h4 class="text-xl sm:text-2xl font-bold text-white" id="admin-qp-score-title">اكتمل الاختبار!</h4>
-            <div class="flex justify-center items-baseline gap-2">
-              <span id="admin-qp-score-pct" class="text-4xl sm:text-5xl font-black text-emerald-400 font-mono">100%</span>
-              <span id="admin-qp-score-fraction" class="text-sm text-gray-400 font-mono">(15 / 15)</span>
-            </div>
-            <p id="admin-qp-score-msg" class="text-sm text-gray-300">أداء رائع جداً! تم حل جميع الأسئلة بدقة.</p>
-            
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-3 gap-2.5 pt-2 border-t border-white/10 text-xs">
-              <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
-                <span class="block text-[11px] text-gray-400">إجابات صحيحة</span>
-                <span id="admin-qp-stat-correct" class="text-base font-bold font-mono">0</span>
+          <div class="dent-player-modes-row" style="display: flex; gap: 10px; margin-bottom: 18px; text-align: right;">
+              <div style="flex: 1;">
+                  <label class="dent-quiz-label" style="margin-bottom: 5px;">طريقة العرض:</label>
+                  <select id="dp-view-mode" class="dent-quiz-input" onchange="AdminApp.onPlayerViewModeChange(this.value)" style="height: 36px !important; min-height: 36px !important; line-height: 34px !important; font-size: 0.8rem !important; padding: 0 10px !important; vertical-align: middle;">
+                      <option value="list">عرض جميع الأسئلة</option>
+                      <option value="focused">سؤال تلو الآخر (تركيز)</option>
+                  </select>
               </div>
-              <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300">
-                <span class="block text-[11px] text-gray-400">إجابات خاطئة</span>
-                <span id="admin-qp-stat-wrong" class="text-base font-bold font-mono">0</span>
-              </div>
-              <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-200">
-                <span class="block text-[11px] text-gray-400">الوقت المستغرق</span>
-                <span id="admin-qp-stat-time" class="text-base font-bold font-mono">00:00</span>
-              </div>
-            </div>
           </div>
 
-          <!-- Results Actions -->
-          <div class="flex flex-wrap items-center justify-center gap-2.5">
-            <button type="button" onclick="AdminApp.reviewAdminQuiz()" class="btn btn-primary text-xs py-2 px-4 font-semibold flex items-center gap-1.5">
-              <span>مراجعة كافة الحلول</span>
-            </button>
-            <button type="button" id="admin-qp-review-wrong-btn" onclick="AdminApp.reviewAdminQuizWrongOnly()" class="btn btn-secondary text-xs py-2 px-4 flex items-center gap-1.5 text-rose-300 border-rose-500/30">
-              <span>مراجعة الأخطاء فقط</span>
-            </button>
-            <button type="button" onclick="AdminApp.restartAdminQuiz()" class="btn btn-secondary text-xs py-2 px-4 flex items-center gap-1.5">
-              <span>إعادة المحاولة</span>
-            </button>
+          <div class="dent-quiz-header" id="dp-title">عنوان الاختبار</div>
+          <div id="dp-meta-sub" style="text-align: center; font-size: 0.82rem; color: #64748b; margin-bottom: 18px;"></div>
+          <div id="dp-notice-banner" style="display: none;"></div>
+          
+          <!-- Minimal Question Navigator Bar -->
+          <div class="dent-nav-bar" id="dp-navigator" style="display: none;"></div>
+
+          <div class="dent-score-board" id="dp-score"></div>
+          
+          <div id="dp-questions-container"></div>
+
+          <div id="dp-focused-nav" style="display: none; justify-content: space-between; gap: 10px; margin-top: 15px; margin-bottom: 10px;">
+              <button id="dp-prev-btn" class="dent-quiz-btn dent-btn-secondary" onclick="AdminApp.onPlayerPrevQuestion()" style="margin-top: 0; padding: 9px; font-size: 0.86rem; flex: 1;">السؤال السابق</button>
+              <button id="dp-next-btn" class="dent-quiz-btn" onclick="AdminApp.onPlayerNextQuestion()" style="margin-top: 0; padding: 9px; font-size: 0.86rem; flex: 1;">السؤال التالي</button>
           </div>
-        </div>
-
+          
+          <button id="dp-submit-btn" class="dent-quiz-btn" onclick="AdminApp.submitPlayerQuiz()" style="margin-top: 18px;">حساب النتيجة النهائية وتصحيح الاختبار</button>
       </div>
-
-      <!-- Bottom Action Bar -->
-      <div id="admin-qp-bottom-bar" class="px-4 py-3 sm:px-6 sm:py-3.5 border-t border-white/10 bg-black/40 flex items-center justify-between gap-3 shrink-0">
-        <div class="flex items-center gap-2">
-          <button type="button" id="admin-qp-prev-btn" onclick="AdminApp.prevAdminQuizQuestion()" class="btn btn-secondary text-xs py-2 px-3.5 flex items-center gap-1">
-            <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-            <span>السابق</span>
-          </button>
-          <button type="button" id="admin-qp-next-btn" onclick="AdminApp.nextAdminQuizQuestion()" class="btn btn-secondary text-xs py-2 px-3.5 flex items-center gap-1">
-            <span>التالي</span>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-          </button>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button type="button" id="admin-qp-clear-btn" onclick="AdminApp.clearCurrentAnswer()" class="btn btn-secondary text-xs py-2 px-3 text-gray-400 hover:text-white" title="مسح اختيار هذا السؤال">
-            مسح الاختيار
-          </button>
-          <button type="button" id="admin-qp-submit-btn" onclick="AdminApp.submitAdminQuiz()" class="btn btn-primary text-xs py-2 px-4 font-semibold bg-emerald-600/30 hover:bg-emerald-600/40 text-emerald-200 border-emerald-500/40 flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            <span>إنهاء وتسليم الاختبار</span>
-          </button>
-        </div>
-      </div>
-
     </div>
   </div>
 
