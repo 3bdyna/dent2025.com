@@ -6460,31 +6460,15 @@ window.AdminApp = {
             return `${pgs.length} صفحات A4 (${breakdown})`;
         };
 
-        const exportQid = quizData.id || (typeof quizOrId === 'string' || typeof quizOrId === 'number' ? String(quizOrId) : '');
-        const origin = (window.location && window.location.origin) ? window.location.origin : 'https://dent2025.com';
-        const exportShortUrl = exportQid ? `${origin}/quiz/${encodeURIComponent(exportQid)}` : origin;
-
         modal.innerHTML = `
             <style>@keyframes adminSpin { to { transform: rotate(360deg); } }</style>
             <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 22px; width: 100%; max-width: 460px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: #fff; box-sizing: border-box;">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
                     <div>
-                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #f8fafc; line-height: 1.3;">تصدير ومشاركة الاختبار (A4)</h3>
+                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #f8fafc; line-height: 1.3;">تصدير الاختبار (كتيب A4)</h3>
                         <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 4px;">${this.escapeHtml(quizData.quiz_name || quizData.title)}</div>
                     </div>
                     <button type="button" onclick="AdminApp.closeQuizExportModal()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">×</button>
-                </div>
-
-                <!-- Direct Short Share Link Card -->
-                <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 10px 13px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                    <div style="min-width: 0; flex: 1;">
-                        <div style="font-size: 0.74rem; color: #94a3b8; margin-bottom: 3px; font-weight: 600;">رابط الاختبار المباشر (قصير):</div>
-                        <div style="font-size: 0.78rem; color: #cbd5e1; font-family: monospace; direction: ltr; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 6px; padding: 3px 8px;">${exportShortUrl}</div>
-                    </div>
-                    <button type="button" id="admin-export-copy-link-btn" style="background: rgba(255, 255, 255, 0.06) !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; color: #f8fafc !important; border-radius: 8px; padding: 7px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; flex-shrink: 0; font-family: inherit; transition: all 0.2s;" onmouseover="this.style.background='rgba(255, 255, 255, 0.14) !important'; this.style.borderColor='rgba(255, 255, 255, 0.25) !important';" onmouseout="this.style.background='rgba(255, 255, 255, 0.06) !important'; this.style.borderColor='rgba(255, 255, 255, 0.12) !important';">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        <span>نسخ الرابط</span>
-                    </button>
                 </div>
 
                 <!-- Quiz Layout Info Card -->
@@ -6535,18 +6519,6 @@ window.AdminApp = {
                 if (sumEl) sumEl.innerText = getSummaryText(freshPages);
             });
         }
-
-        document.getElementById('admin-export-copy-link-btn')?.addEventListener('click', () => {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(exportShortUrl).then(() => {
-                    this.showToast('تم نسخ رابط الاختبار المباشر بنجاح!');
-                }).catch(() => {
-                    prompt('انسخ رابط الاختبار المباشر:', exportShortUrl);
-                });
-            } else {
-                prompt('انسخ رابط الاختبار المباشر:', exportShortUrl);
-            }
-        });
 
         document.getElementById('admin-export-pdf-btn').addEventListener('click', () => {
             const incExp = !!document.getElementById('admin-export-inc-exp')?.checked;
