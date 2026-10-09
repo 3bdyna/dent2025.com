@@ -31,15 +31,6 @@ const DENT_MONTHS_HIJRI = [
 const DENT_MONTHS_GREG_AR = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 const DENT_MONTHS_GREG_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-function dentFormatCountdown(daysLeft) {
-    if (daysLeft < 0) return { text: 'انتهى', badgeClass: 'normal', isUrgent: false };
-    if (daysLeft === 0) return { text: 'اليوم', badgeClass: 'urgent', isUrgent: true };
-    if (daysLeft === 1) return { text: 'غداً', badgeClass: 'warning', isUrgent: false };
-    if (daysLeft === 2) return { text: 'بعد يومين', badgeClass: 'warning', isUrgent: false };
-    if (daysLeft >= 3 && daysLeft <= 10) return { text: 'بعد ' + daysLeft + ' أيام', badgeClass: 'normal', isUrgent: false };
-    return { text: 'بعد ' + daysLeft + ' يوماً', badgeClass: 'normal', isUrgent: false };
-}
-
 window.formatAnnouncementsTimeAgo = window.formatAnnouncementsTimeAgo || function(timestamp) {
     if (!timestamp) return '';
     const nowSec = Math.floor(Date.now() / 1000);
@@ -1716,46 +1707,58 @@ const ScheduleApp = {
 
         const toast = document.createElement('div');
         toast.id = 'dent-export-toast';
-        toast.style.cssText = 'position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 9999999; background: rgba(13, 15, 20, 0.96); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 999px; padding: 7px 14px 7px 16px; box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.4); color: #f8fafc; font-family: "Outfit", "Noto Kufi Arabic", sans-serif; direction: rtl; display: flex; align-items: center; justify-content: space-between; gap: 10px; max-width: min(540px, calc(100vw - 20px)); width: max-content; box-sizing: border-box; opacity: 1; transition: opacity 0.25s ease, transform 0.25s ease;';
+        toast.style.cssText = 'position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 9999999; background: rgba(24, 27, 33, 0.96); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 8px 14px; box-shadow: 0 16px 42px rgba(0, 0, 0, 0.65), 0 2px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08); color: #f8fafc; font-family: "Outfit", "Noto Kufi Arabic", sans-serif; direction: rtl; display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: min(560px, calc(100vw - 20px)); width: max-content; box-sizing: border-box; opacity: 1; transition: opacity 0.25s ease, transform 0.25s ease;';
 
         toast.innerHTML = `
             <style>
+                #dent-export-toast .dent-toast-badge {
+                    width: 22px;
+                    height: 22px;
+                    border-radius: 6px;
+                    background: rgba(16, 185, 129, 0.15);
+                    border: 1px solid rgba(16, 185, 129, 0.3);
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }
                 #dent-export-toast .dent-toast-btn {
-                    padding: 4px 9px;
-                    background: rgba(255, 255, 255, 0.04);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    padding: 5px 10px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
                     color: #cbd5e1;
                     text-decoration: none;
-                    border-radius: 7px;
+                    border-radius: 6px;
                     font-family: inherit;
-                    font-size: 0.74rem;
+                    font-size: 0.75rem;
                     font-weight: 500;
                     display: inline-flex;
                     align-items: center;
-                    gap: 4px;
+                    gap: 5px;
                     cursor: pointer;
-                    transition: all 0.15s ease;
+                    transition: all 0.18s ease;
                     white-space: nowrap;
                     line-height: 1.3;
                     box-sizing: border-box;
                 }
                 #dent-export-toast .dent-toast-btn:hover {
-                    background: rgba(255, 255, 255, 0.09);
-                    border-color: rgba(255, 255, 255, 0.16);
+                    background: rgba(255, 255, 255, 0.12);
+                    border-color: rgba(255, 255, 255, 0.24);
                     color: #ffffff;
+                    transform: translateY(-1px);
                 }
                 #dent-export-toast .dent-toast-actions {
                     display: flex;
                     align-items: center;
                     gap: 6px;
                     flex-shrink: 0;
-                    padding-left: 2px;
                 }
                 @media (max-width: 500px) {
                     #dent-export-toast {
                         bottom: 16px !important;
-                        padding: 6px 12px 6px 15px !important;
+                        padding: 7px 10px !important;
                         gap: 8px !important;
+                        border-radius: 8px !important;
                         max-width: calc(100vw - 16px) !important;
                     }
                     #dent-export-toast .dent-toast-subtext {
@@ -1766,30 +1769,31 @@ const ScheduleApp = {
                     }
                     #dent-export-toast .dent-toast-btn {
                         padding: 4px 7px !important;
-                        font-size: 0.71rem !important;
+                        font-size: 0.70rem !important;
                         gap: 3px !important;
-                        border-radius: 6px !important;
+                        border-radius: 5px !important;
                     }
                     #dent-export-toast .dent-toast-actions {
                         gap: 5px !important;
-                        padding-left: 2px !important;
                     }
                 }
                 @media (max-width: 360px) {
                     #dent-export-toast {
-                        padding: 5px 10px 5px 13px !important;
+                        padding: 5px 8px !important;
                         gap: 6px !important;
                     }
                     #dent-export-toast .dent-toast-btn {
                         padding: 3px 6px !important;
-                        font-size: 0.68rem !important;
+                        font-size: 0.67rem !important;
                     }
                 }
             </style>
-            <div onclick="document.getElementById('dent-export-toast')?.remove()" style="display: flex; align-items: center; gap: 7px; min-width: 0; flex-shrink: 0; cursor: pointer;" title="إغلاق التنبيه">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span class="dent-toast-title" style="font-weight: 600; font-size: 0.82rem; color: #f8fafc; white-space: nowrap;">${mainTitle}</span>
-                ${subText ? `<span class="dent-toast-subtext" style="font-size: 0.72rem; color: #64748b; white-space: nowrap;">${subText}</span>` : ''}
+            <div onclick="document.getElementById('dent-export-toast')?.remove()" style="display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 0; cursor: pointer;" title="إغلاق التنبيه">
+                <div class="dent-toast-badge">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <span class="dent-toast-title" style="font-weight: 700; font-size: 0.82rem; color: #f8fafc; white-space: nowrap;">${mainTitle}</span>
+                ${subText ? `<span class="dent-toast-subtext" style="font-size: 0.72rem; color: #94a3b8; font-weight: 500; white-space: nowrap;">${subText}</span>` : ''}
             </div>
             <div class="dent-toast-actions">
                 ${canShareNative ? `

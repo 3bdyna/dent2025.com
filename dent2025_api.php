@@ -31,13 +31,6 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS
 global $wpdb;
 
 
-function dent2025_table($name) {
-    $ctx = dent2025_db();
-    if ($name === 'subject_links') return $ctx['table_links'];
-    if ($name === 'subjects') return $ctx['table_subs'];
-    return '`' . $ctx['db']->prefix . $name . '`';
-}
-
 $action = $_GET['action'] ?? '';
 
 // --- PUBLIC PORTAL SETTINGS ---
