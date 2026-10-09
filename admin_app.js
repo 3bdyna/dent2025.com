@@ -4756,6 +4756,16 @@ window.AdminApp = {
         return text;
     },
 
+    stripQuestionPrefix(value) {
+        let text = String(value || '').trim();
+        let prev = '';
+        while (text !== prev) {
+            prev = text;
+            text = text.replace(/^(?:(?:Q(?:uestion)?|س(?:ؤال)?)\s*\.?\s*\d+\s*(?:[:.)\-–—]\s*|\s+)|\(\d+\)\s*[:.)\-–—\s]*|\d+\s*[:.)\-–—]\s*)/iu, '').trim();
+        }
+        return text;
+    },
+
     getCorrectOptionIndex(question, options) {
         if (!Array.isArray(options) || options.length === 0) return -1;
 
@@ -4913,11 +4923,11 @@ window.AdminApp = {
             qTitle.className = 'dent-q-text';
             qTitle.style.marginBottom = '0';
             let cleanQText = (q.question || '').trim();
+            cleanQText = this.stripQuestionPrefix ? this.stripQuestionPrefix(cleanQText) : cleanQText;
             if (cleanQText.startsWith('*')) {
                 cleanQText = cleanQText.substring(1).trim();
             }
-            const hasNum = /^(?:Q\d+|\d+\.)/i.test(cleanQText);
-            qTitle.innerText = hasNum ? cleanQText : `${index + 1}. ${cleanQText}`;
+            qTitle.innerText = `${index + 1}. ${cleanQText}`;
 
             headerRow.appendChild(qTitle);
             qBlock.appendChild(headerRow);
@@ -5629,28 +5639,90 @@ window.AdminApp = {
         return text;
     },
 
+    stripQuestionPrefix(value) {
+        let text = String(value || '').trim();
+        let prev = '';
+        while (text !== prev) {
+            prev = text;
+            text = text.replace(/^(?:(?:Q(?:uestion)?|س(?:ؤال)?)\s*\.?\s*\d+\s*(?:[:.)\-–—]\s*|\s+)|\(\d+\)\s*[:.)\-–—\s]*|\d+\s*[:.)\-–—]\s*)/iu, '').trim();
+        }
+        return text;
+    },
+
+    estimateQuestionHeight(q, includeExplanations = true) {
+        let h = 35;
+        const qLen = String(q?.question || '').length;
+        h += Math.max(1, Math.ceil(qLen / 45)) * 17;
+        const qType = q?.type || 'mcq';
+        if (qType === 'card' || qType === 'short' || qType === 'info') {
+            const ans = String(q?.answer || '');
+            const lines = ans.split(/\n|<br\s*\/?>|<li/i).length;
+            h += 14 + (Math.max(1, lines) * 18);
+        } else {
+            const opts = Array.isArray(q?.options) ? q.options : [];
+            opts.forEach(opt => {
+                const optLen = String(opt || '').length;
+                h += Math.max(1, Math.ceil(optLen / 38)) * 19;
+            });
+        }
+        if (includeExplanations && q?.explanation) {
+            const expLen = String(q.explanation || '').length;
+            h += 12 + (Math.max(1, Math.ceil(expLen / 45)) * 15);
+        }
+        return h + 4;
+    },
+
     calculateSmartPages(questions, includeExplanations = true) {
         if (!Array.isArray(questions) || questions.length === 0) return [];
         const total = questions.length;
         
-        // 1 to 7 questions fit comfortably on a single A4 page with explanations (up to 10 without explanations)
-        const singlePageLimit = includeExplanations ? 7 : 10;
-        if (total <= singlePageLimit) return [questions];
+        const targetPerPage = includeExplanations ? 6 : 8;
+        const maxPerPage = includeExplanations ? 7 : 10;
+        let p = Math.max(1, Math.ceil(total / targetPerPage));
 
-        // Safe per-page density: ~7 questions per page with explanations, ~10 without
-        const targetPerPage = includeExplanations ? 7 : 10;
-        const maxPerPage = includeExplanations ? 8 : 12;
+        while (p < total) {
+            const base = Math.floor(total / p);
+            const rem = total % p;
+            const pages = [];
+            let idx = 0;
+            for (let i = 0; i < p; i++) {
+                const cnt = base + (i < rem ? 1 : 0);
+                pages.push(questions.slice(idx, idx + cnt));
+                idx += cnt;
+            }
 
-        let bestP = Math.max(2, Math.round(total / targetPerPage));
-        while ((total / bestP) > maxPerPage) {
-            bestP++;
+            let allFit = true;
+            for (let pIdx = 0; pIdx < pages.length; pIdx++) {
+                const pageQs = pages[pIdx];
+                if (pageQs.length > maxPerPage) {
+                    allFit = false;
+                    break;
+                }
+                const limit = (pIdx === 0) ? 860 : 910;
+                let c1 = 0;
+                let c2 = 0;
+                for (let i = 0; i < pageQs.length; i++) {
+                    const h = this.estimateQuestionHeight(pageQs[i], includeExplanations);
+                    if (i % 2 === 0) c1 += h;
+                    else c2 += h;
+                }
+                if (c1 > limit || c2 > limit) {
+                    allFit = false;
+                    break;
+                }
+            }
+
+            if (allFit) {
+                return pages;
+            }
+            p++;
         }
 
-        const base = Math.floor(total / bestP);
-        const rem = total % bestP;
+        const base = Math.floor(total / p);
+        const rem = total % p;
         const pages = [];
         let idx = 0;
-        for (let i = 0; i < bestP; i++) {
+        for (let i = 0; i < p; i++) {
             const cnt = base + (i < rem ? 1 : 0);
             pages.push(questions.slice(idx, idx + cnt));
             idx += cnt;
@@ -5698,7 +5770,9 @@ window.AdminApp = {
 
     renderQuizCardHtml(q, globalQIdx, includeExplanation) {
         const qType = q.type || 'mcq';
-        const qText = this.escapeHtml(String(q.question || '').trim());
+        const rawQuestion = String(q.question || '').trim();
+        const cleanQuestion = this.stripQuestionPrefix ? this.stripQuestionPrefix(rawQuestion) : rawQuestion;
+        const qText = this.escapeHtml(cleanQuestion);
         const chapter = this.escapeHtml(String(q.assignedChapter || '').trim());
         const isRtl = (this.detectQuestionLanguage(q) === 'ar');
         const rtlClass = isRtl ? ' is-rtl' : '';
@@ -5780,14 +5854,6 @@ window.AdminApp = {
         const pages = this.calculateSmartPages(allQuestions, includeExplanations);
         const totalPages = pages.length;
 
-        const getQWeight = (q) => {
-            const qLen = String(q.question || '').length;
-            const optsLen = Array.isArray(q.options) ? q.options.reduce((s, o) => s + String(o).length, 0) : 0;
-            const expLen = (includeExplanations && q.explanation) ? String(q.explanation).length : 0;
-            const ansLen = (q.answer) ? String(q.answer).length : 0;
-            return 120 + (qLen * 0.45) + (optsLen * 0.4) + (expLen * 0.35) + (ansLen * 0.4);
-        };
-
         let globalQIdx = 1;
         const renderedPages = [];
 
@@ -5795,44 +5861,26 @@ window.AdminApp = {
             const pIdx = pIdx0 + 1;
             const n = pageQs.length;
 
-            // Content-aware column splitting to balance column heights
-            let splitIdx = Math.ceil(n / 2);
-            if (n >= 4) {
-                const optA = Math.floor(n / 2);
-                const optB = Math.ceil(n / 2);
-                const wA1 = pageQs.slice(0, optA).reduce((s, q) => s + getQWeight(q), 0);
-                const wA2 = pageQs.slice(optA).reduce((s, q) => s + getQWeight(q), 0);
-                const diffA = Math.abs(wA1 - wA2);
-
-                const wB1 = pageQs.slice(0, optB).reduce((s, q) => s + getQWeight(q), 0);
-                const wB2 = pageQs.slice(optB).reduce((s, q) => s + getQWeight(q), 0);
-                const diffB = Math.abs(wB1 - wB2);
-
-                splitIdx = (diffA < diffB) ? optA : optB;
-            }
-
-            const col1Qs = pageQs.slice(0, splitIdx);
-            const col2Qs = pageQs.slice(splitIdx);
-
             const isComfortable = (n <= 7);
             const densityClass = isComfortable ? ' density-comfortable' : ' density-compact';
 
-            const col1Cards = col1Qs.map(q => {
-                const cardHtml = this.renderQuizCardHtml(q, globalQIdx, includeExplanations);
-                globalQIdx++;
-                return cardHtml;
-            }).join('');
+            const col1Cards = [];
+            const col2Cards = [];
 
-            const col2Cards = col2Qs.map(q => {
+            pageQs.forEach((q, i) => {
                 const cardHtml = this.renderQuizCardHtml(q, globalQIdx, includeExplanations);
                 globalQIdx++;
-                return cardHtml;
-            }).join('');
+                if (i % 2 === 0) {
+                    col1Cards.push(cardHtml);
+                } else {
+                    col2Cards.push(cardHtml);
+                }
+            });
 
             const columnsHtml = `
                 <div class="page-two-columns${densityClass}">
-                    <div class="col-half">${col1Cards}</div>
-                    <div class="col-half">${col2Cards}</div>
+                    <div class="col-half">${col1Cards.join('')}</div>
+                    <div class="col-half">${col2Cards.join('')}</div>
                 </div>
             `;
 

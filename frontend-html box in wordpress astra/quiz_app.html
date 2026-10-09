@@ -3113,28 +3113,80 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         return window._dentHtmlToImagePromise;
     }
 
+    function estimateQuestionHeight(q, includeExplanations = true) {
+        let h = 35;
+        const qLen = String(q?.question || '').length;
+        h += Math.max(1, Math.ceil(qLen / 45)) * 17;
+        const qType = q?.type || 'mcq';
+        if (qType === 'card' || qType === 'short' || qType === 'info') {
+            const ans = String(q?.answer || '');
+            const lines = ans.split(/\n|<br\s*\/?>|<li/i).length;
+            h += 14 + (Math.max(1, lines) * 18);
+        } else {
+            const opts = Array.isArray(q?.options) ? q.options : [];
+            opts.forEach(opt => {
+                const optLen = String(opt || '').length;
+                h += Math.max(1, Math.ceil(optLen / 38)) * 19;
+            });
+        }
+        if (includeExplanations && q?.explanation) {
+            const expLen = String(q.explanation || '').length;
+            h += 12 + (Math.max(1, Math.ceil(expLen / 45)) * 15);
+        }
+        return h + 4;
+    }
+
     function calculateSmartPages(questions, includeExplanations = true) {
         if (!Array.isArray(questions) || questions.length === 0) return [];
         const total = questions.length;
         
-        // 1 to 7 questions fit comfortably on a single A4 page with explanations (up to 10 without explanations)
-        const singlePageLimit = includeExplanations ? 7 : 10;
-        if (total <= singlePageLimit) return [questions];
+        const targetPerPage = includeExplanations ? 6 : 8;
+        const maxPerPage = includeExplanations ? 7 : 10;
+        let p = Math.max(1, Math.ceil(total / targetPerPage));
 
-        // Safe per-page density: ~7 questions per page with explanations, ~10 without
-        const targetPerPage = includeExplanations ? 7 : 10;
-        const maxPerPage = includeExplanations ? 8 : 12;
+        while (p < total) {
+            const base = Math.floor(total / p);
+            const rem = total % p;
+            const pages = [];
+            let idx = 0;
+            for (let i = 0; i < p; i++) {
+                const cnt = base + (i < rem ? 1 : 0);
+                pages.push(questions.slice(idx, idx + cnt));
+                idx += cnt;
+            }
 
-        let bestP = Math.max(2, Math.round(total / targetPerPage));
-        while ((total / bestP) > maxPerPage) {
-            bestP++;
+            let allFit = true;
+            for (let pIdx = 0; pIdx < pages.length; pIdx++) {
+                const pageQs = pages[pIdx];
+                if (pageQs.length > maxPerPage) {
+                    allFit = false;
+                    break;
+                }
+                const limit = (pIdx === 0) ? 860 : 910;
+                let c1 = 0;
+                let c2 = 0;
+                for (let i = 0; i < pageQs.length; i++) {
+                    const h = estimateQuestionHeight(pageQs[i], includeExplanations);
+                    if (i % 2 === 0) c1 += h;
+                    else c2 += h;
+                }
+                if (c1 > limit || c2 > limit) {
+                    allFit = false;
+                    break;
+                }
+            }
+
+            if (allFit) {
+                return pages;
+            }
+            p++;
         }
 
-        const base = Math.floor(total / bestP);
-        const rem = total % bestP;
+        const base = Math.floor(total / p);
+        const rem = total % p;
         const pages = [];
         let idx = 0;
-        for (let i = 0; i < bestP; i++) {
+        for (let i = 0; i < p; i++) {
             const cnt = base + (i < rem ? 1 : 0);
             pages.push(questions.slice(idx, idx + cnt));
             idx += cnt;
