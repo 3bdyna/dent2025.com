@@ -6621,7 +6621,54 @@ window.AdminApp = {
 
         document.getElementById('admin-export-pdf-btn').addEventListener('click', () => {
             const incExp = !!document.getElementById('admin-export-inc-exp')?.checked;
-            this.executeSaveQuizAsPdf(quizData, incExp, document.getElementById('admin-export-pdf-btn'));
+            let targetTab = null;
+            try {
+                targetTab = window.open('about:blank', '_blank');
+                if (targetTab) {
+                    targetTab.document.write(`
+                        <!DOCTYPE html>
+                        <html lang="ar" dir="rtl">
+                        <head>
+                            <meta charset="UTF-8">
+                            <title>جاري تجهيز الاختبار...</title>
+                            <style>
+                                body {
+                                    margin: 0;
+                                    background: #121212;
+                                    color: #f8fafc;
+                                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    justify-content: center;
+                                    height: 100vh;
+                                    gap: 16px;
+                                    user-select: none;
+                                }
+                                .spinner {
+                                    width: 38px;
+                                    height: 38px;
+                                    border: 3px solid rgba(255, 255, 255, 0.15);
+                                    border-top-color: #6366f1;
+                                    border-radius: 50%;
+                                    animation: spin 0.8s linear infinite;
+                                }
+                                @keyframes spin { to { transform: rotate(360deg); } }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="spinner"></div>
+                            <div style="font-size: 1.05rem; font-weight: 600;">جاري إنشاء وتجهيز كتيب الاختبار (PDF)...</div>
+                            <div style="font-size: 0.82rem; color: #94a3b8;">سيتم فتح ملف الاختبار تلقائياً في هذه الصفحة فور اكتماله</div>
+                        </body>
+                        </html>
+                    `);
+                    targetTab.document.close();
+                }
+            } catch(e) {
+                targetTab = null;
+            }
+            this.executeSaveQuizAsPdf(quizData, incExp, document.getElementById('admin-export-pdf-btn'), targetTab);
         });
 
         document.getElementById('admin-export-img-btn').addEventListener('click', () => {
@@ -6635,7 +6682,7 @@ window.AdminApp = {
         if (modal) modal.remove();
     },
 
-    async executeSaveQuizAsPdf(quizData, includeExplanations, btn) {
+    async executeSaveQuizAsPdf(quizData, includeExplanations, btn, targetTab = null) {
         const origHtml = btn ? btn.innerHTML : '';
         const imgBtn = document.getElementById('admin-export-img-btn');
         if (btn) {
@@ -6726,10 +6773,13 @@ window.AdminApp = {
             const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
             this.closeQuizExportModal();
-            await this.deliverQuizFile(file, pdfBlob, fileName, 'pdf', false);
+            await this.deliverQuizFile(file, pdfBlob, fileName, 'pdf', false, targetTab);
 
         } catch (err) {
             console.error('Admin quiz PDF export error:', err);
+            if (targetTab && !targetTab.closed) {
+                try { targetTab.close(); } catch(e) {}
+            }
             this.showToast('حدث خطأ أثناء إنشاء ملف الـ PDF: ' + (err.message || err), true);
             if (btn) {
                 btn.disabled = false;
@@ -6861,44 +6911,80 @@ window.AdminApp = {
         }, 600);
     },
 
-    async deliverQuizFile(file, blob, fileName, fileType, copiedToClipboard = false) {
+    async deliverQuizFile(file, blob, fileName, fileType, copiedToClipboard = false, targetTab = null) {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
                          (window.matchMedia && window.matchMedia('(max-width: 768px)').matches && 'ontouchstart' in window);
 
         const blobUrl = URL.createObjectURL(blob);
 
-        // 1. On mobile devices, use native Web Share API for BOTH PDF and PNG
-        if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
-            try {
-                await navigator.share({
-                    files: [file]
-                });
-                setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
-                return;
-            } catch(shareErr) {
-                if (shareErr.name !== 'AbortError') console.warn('Native share failed:', shareErr);
+        if (fileType === 'pdf') {
+            let openedSuccessfully = false;
+            if (targetTab && !targetTab.closed) {
+                try {
+                    targetTab.location.href = blobUrl;
+                    openedSuccessfully = true;
+                } catch(e) {
+                    openedSuccessfully = false;
+                }
             }
-        }
+            if (!openedSuccessfully) {
+                try {
+                    const fallbackTab = window.open(blobUrl, '_blank');
+                    if (fallbackTab) {
+                        openedSuccessfully = true;
+                    }
+                } catch(e) {
+                    openedSuccessfully = false;
+                }
+            }
+            // If opening tab was blocked by browser, fallback to download
+            if (!openedSuccessfully) {
+                try {
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => document.body.removeChild(a), 500);
+                } catch(dlErr) {
+                    console.warn('Fallback download failed:', dlErr);
+                }
+            }
+        } else {
+            // PNG branch:
+            // 1. On mobile devices, use native Web Share API
+            if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file]
+                    });
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+                    return;
+                } catch(shareErr) {
+                    if (shareErr.name !== 'AbortError') console.warn('Native share failed:', shareErr);
+                }
+            }
 
-        // 2. Direct automatic browser download ONLY if it's a PDF or if image copy failed
-        if (fileType === 'pdf' || !copiedToClipboard) {
-            try {
-                const a = document.createElement('a');
-                a.href = blobUrl;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => document.body.removeChild(a), 500);
-            } catch(dlErr) {
-                console.warn('Download failed:', dlErr);
+            // 2. Direct automatic browser download if image copy failed
+            if (!copiedToClipboard) {
+                try {
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => document.body.removeChild(a), 500);
+                } catch(dlErr) {
+                    console.warn('Download failed:', dlErr);
+                }
             }
         }
 
         // 3. Show sleek toast prompting to send, copy, or view (matching schedule export)
         this.showQuizExportToast(file, blob, fileName, fileType, blobUrl, copiedToClipboard);
 
-        // Revoke Object URL after 60 seconds to prevent memory leaks
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+        // Keep blobUrl valid for at least 30 minutes so user can read/print/download from the new tab
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 30 * 60 * 1000);
     },
 
     showQuizExportToast(file, blob, fileName, fileType, blobUrl, copiedToClipboard = false) {
@@ -6919,7 +7005,7 @@ window.AdminApp = {
                 subText = '';
             }
         } else {
-            mainTitle = 'تم تجهيز ملف PDF';
+            mainTitle = 'تم فتح ملف PDF في صفحة جديدة';
             subText = '';
         }
 
