@@ -6077,49 +6077,70 @@ window.AdminApp = {
     },
 
     estimateQuestionHeight(q, includeExplanations = true) {
-        let h = 20;
-        const qLen = String(q?.question || '').length;
-        h += Math.max(1, Math.ceil(qLen / 55)) * 14;
+        // Base container overhead: padding (6px) + border (2px) + top-row badge (14px) + margin (3px)
+        let h = 25;
+        const rawQuestion = String(q?.question || '').trim();
+        const cleanQuestion = this.stripQuestionPrefix(rawQuestion);
+        const qLen = cleanQuestion.length;
+        // ~52 characters per line in ~385px column width (font ~11px)
+        const qLines = Math.max(1, Math.ceil(qLen / 52));
+        h += (qLines * 13) + 2;
+
         const qType = q?.type || 'mcq';
         if (qType === 'card' || qType === 'short' || qType === 'info') {
-            const ans = String(q?.answer || '');
-            let lines = ans.split(/\n|<br\s*\/?>/i).length;
-            const liMatches = ans.match(/<li/gi);
-            if (liMatches) lines += liMatches.length;
-            const divMatches = ans.match(/<div/gi);
-            if (divMatches) lines += divMatches.length;
-            h += 10 + (Math.max(1, lines) * 14);
+            const rawAns = String(q?.answer || '');
+            const textOnly = rawAns.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            const brLines = (rawAns.match(/<br\s*\/?>/gi) || []).length;
+            const liLines = (rawAns.match(/<li[\s>]/gi) || []).length;
+            const nlLines = (rawAns.match(/\n/g) || []).length;
+            const explicitLines = brLines + liLines + nlLines;
+            const textWrapLines = Math.max(1, Math.ceil(textOnly.length / 50));
+            const estimatedLines = Math.min(Math.max(explicitLines, textWrapLines), 16);
+            h += 12 + (estimatedLines * 13);
         } else {
             const opts = Array.isArray(q?.options) ? q.options : [];
             opts.forEach(opt => {
-                const optLen = String(opt || '').length;
-                h += Math.max(1, Math.ceil(optLen / 50)) * 14 + 1;
+                const cleanOpt = this.stripOptionPrefix(opt);
+                const optLen = cleanOpt.length;
+                const optLines = Math.max(1, Math.ceil(optLen / 48));
+                // Each option is ~15px base + 12px per extra line
+                h += 15 + ((optLines - 1) * 12);
             });
         }
+
         if (includeExplanations && q?.explanation) {
-            const expLen = String(q.explanation || '').length;
-            h += 8 + (Math.max(1, Math.ceil(expLen / 55)) * 12);
+            const exp = String(q.explanation).trim();
+            if (exp) {
+                const expClean = exp.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+                const expLines = Math.max(1, Math.ceil(expClean.length / 52));
+                h += 8 + (expLines * 12);
+            }
         }
-        return h + 2.5;
+
+        // Inter-card gap
+        return h + 3;
     },
 
     calculateSmartPages(questions, includeExplanations = true) {
         if (!Array.isArray(questions) || questions.length === 0) return [];
         const n = questions.length;
-        const maxPerPage = includeExplanations ? 10 : 16;
+        // Allow up to 26 questions per page for compact MCQs, or 16 with explanations
+        const maxPerPage = includeExplanations ? 16 : 26;
 
         const estH = (q) => this.estimateQuestionHeight(q, includeExplanations);
+        const heights = questions.map(estH);
 
-        const pageFits = (sliceQs, pIdx) => {
-            if (sliceQs.length === 0) return false;
-            if (sliceQs.length === 1) return true;
-            if (sliceQs.length > maxPerPage) return false;
-            const limit = (pIdx === 0) ? 940 : 980;
+        const pageFits = (sliceStart, sliceEnd, pIdx) => {
+            const count = sliceEnd - sliceStart;
+            if (count === 0) return false;
+            if (count === 1) return true;
+            if (count > maxPerPage) return false;
+            // Page 1 has main header (~50px), subsequent pages have compact header (~32px)
+            const limit = (pIdx === 0) ? 950 : 990;
             let c1 = 0, c2 = 0;
-            for (let i = 0; i < sliceQs.length; i++) {
-                const h = estH(sliceQs[i]);
-                if (i % 2 === 0) c1 += h;
-                else c2 += h;
+            for (let i = sliceStart; i < sliceEnd; i++) {
+                if ((i - sliceStart) % 2 === 0) c1 += heights[i];
+                else c2 += heights[i];
             }
             return (c1 <= limit && c2 <= limit);
         };
@@ -6135,9 +6156,8 @@ window.AdminApp = {
                 const remQs = n - startIdx;
 
                 if (remPages === 1) {
-                    const sliceQs = questions.slice(startIdx);
-                    if (pageFits(sliceQs, pageIdx)) {
-                        const res = [sliceQs.length];
+                    if (pageFits(startIdx, n, pageIdx)) {
+                        const res = [remQs];
                         memo.set(key, res);
                         return res;
                     }
@@ -6145,16 +6165,16 @@ window.AdminApp = {
                     return null;
                 }
 
-                const ideal = remQs / remPages;
-                const candidates = [];
                 const maxCandidate = Math.min(maxPerPage, remQs - remPages + 1);
+                const candidates = [];
                 for (let cnt = 1; cnt <= maxCandidate; cnt++) {
-                    const sliceQs = questions.slice(startIdx, startIdx + cnt);
-                    if (pageFits(sliceQs, pageIdx)) {
+                    if (pageFits(startIdx, startIdx + cnt, pageIdx)) {
                         candidates.push(cnt);
                     }
                 }
 
+                // Balance remaining questions evenly across remaining pages
+                const ideal = remQs / remPages;
                 candidates.sort((a, b) => Math.abs(a - ideal) - Math.abs(b - ideal));
 
                 for (const cnt of candidates) {
@@ -6370,11 +6390,10 @@ window.AdminApp = {
                 `;
             }
 
-            const qid = quizData.id || '';
-            const docFooterUrl = qid ? `dent2025.com/quiz/${qid}` : 'dent2025.com';
+            const docFooterBrand = 'dent2025.com';
             const footerHtml = `
                 <div class="doc-footer">
-                    <span class="doc-footer-right">${docFooterUrl}</span>
+                    <span class="doc-footer-right">${docFooterBrand}</span>
                     <span class="doc-footer-center">${pageOfLabel}</span>
                     <span class="doc-footer-spacer"></span>
                 </div>
@@ -6555,9 +6574,13 @@ window.AdminApp = {
 
             const { pagesJoinedHtml } = this.generateExamBookletHtml(quizData, includeExplanations);
 
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                             (window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
+            const pdfPixelRatio = isMobile ? 1.6 : 2.0;
+
             sandbox = document.createElement('div');
             sandbox.id = 'dent-admin-quiz-sandbox';
-            sandbox.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1;';
+            sandbox.style.cssText = 'position: fixed; top: 0; left: -9999px; width: 794px; min-width: 794px; max-width: 794px; overflow: hidden; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;';
             const sandboxCss = this.getQuizExportCss().replace(/(^|[\s,{}])html\s*,\s*body(?=[\s,{:]|$)/gi, '$1#dent-admin-quiz-sandbox').replace(/(^|[\s,{}])body(?=[\s,{:]|$)/gi, '$1#dent-admin-quiz-sandbox');
             sandbox.innerHTML = `<style>${sandboxCss}</style>` + pagesJoinedHtml;
             document.body.appendChild(sandbox);
@@ -6576,11 +6599,11 @@ window.AdminApp = {
                     btn.querySelector('span').innerText = `معالجة صفحة ${i + 1} من ${pageEls.length}...`;
                 }
                 const dataUrl = await htmlToImage.toPng(pageEl, {
-                    pixelRatio: 2.0,
+                    pixelRatio: pdfPixelRatio,
                     width: 794,
                     height: 1120,
-                    canvasWidth: Math.round(794 * 2.0),
-                    canvasHeight: Math.round(1120 * 2.0),
+                    canvasWidth: Math.round(794 * pdfPixelRatio),
+                    canvasHeight: Math.round(1120 * pdfPixelRatio),
                     skipFonts: true,
                     backgroundColor: '#121212',
                     style: {
@@ -6589,6 +6612,7 @@ window.AdminApp = {
                     }
                 });
                 imgDataList.push(dataUrl);
+                if (isMobile) await new Promise(r => setTimeout(r, 30));
             }
 
             sandbox.remove();
@@ -6647,9 +6671,12 @@ window.AdminApp = {
             const htmlToImage = await this.loadHtmlToImage();
             const { pagesJoinedHtml } = this.generateExamBookletHtml(quizData, includeExplanations);
 
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                             (window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
+
             sandbox = document.createElement('div');
             sandbox.id = 'dent-admin-quiz-sandbox';
-            sandbox.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1;';
+            sandbox.style.cssText = 'position: fixed; top: 0; left: -9999px; width: 794px; min-width: 794px; max-width: 794px; overflow: hidden; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;';
             const sandboxCss = this.getQuizExportCss().replace(/(^|[\s,{}])html\s*,\s*body(?=[\s,{:]|$)/gi, '$1#dent-admin-quiz-sandbox').replace(/(^|[\s,{}])body(?=[\s,{:]|$)/gi, '$1#dent-admin-quiz-sandbox');
             sandbox.innerHTML = `<style>${sandboxCss}</style><div id="dent-admin-capture-wrapper" style="display:flex; flex-direction:column; gap:12px; background:#0b0b0e; width:794px;">${pagesJoinedHtml}</div>`;
             document.body.appendChild(sandbox);
@@ -6663,12 +6690,20 @@ window.AdminApp = {
             const width = 794;
             const height = captureTarget.offsetHeight || captureTarget.scrollHeight || 1120;
 
+            // Safe pixel ratio scaling to prevent mobile GPU canvas memory exhaustion
+            let pixelRatio = 2.0;
+            if (isMobile || height > 2200) {
+                pixelRatio = Math.min(2.0, Math.max(1.0, 3600 / height));
+            }
+            const canvasWidth = Math.round(width * pixelRatio);
+            const canvasHeight = Math.round(height * pixelRatio);
+
             const blob = await htmlToImage.toBlob(captureTarget, {
-                pixelRatio: 2.0,
+                pixelRatio: pixelRatio,
                 width: width,
                 height: height,
-                canvasWidth: Math.round(width * 2.0),
-                canvasHeight: Math.round(height * 2.0),
+                canvasWidth: canvasWidth,
+                canvasHeight: canvasHeight,
                 skipFonts: true,
                 backgroundColor: '#121212',
                 style: {
@@ -6688,9 +6723,9 @@ window.AdminApp = {
 
             this.closeQuizExportModal();
 
-            // 1. Direct copy to system clipboard
+            // 1. Direct copy to system clipboard (desktop priority)
             let copiedToClipboard = false;
-            if (navigator.clipboard && window.ClipboardItem) {
+            if (!isMobile && navigator.clipboard && window.ClipboardItem) {
                 try {
                     await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
                     copiedToClipboard = true;
@@ -6699,7 +6734,7 @@ window.AdminApp = {
                 }
             }
 
-            // 2. Deliver file (ONLY downloads if clipboard copy failed!)
+            // 2. Deliver file (uses Web Share on mobile, download on desktop if copy not supported)
             await this.deliverQuizFile(file, blob, fileName, 'png', copiedToClipboard);
 
         } catch (err) {
@@ -6745,8 +6780,8 @@ window.AdminApp = {
 
         const blobUrl = URL.createObjectURL(blob);
 
-        // 1. On mobile devices, for PDF try native Web Share API
-        if (fileType === 'pdf' && isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+        // 1. On mobile devices, use native Web Share API for BOTH PDF and PNG
+        if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
             try {
                 await navigator.share({
                     files: [file],
