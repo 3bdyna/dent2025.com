@@ -324,8 +324,14 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
                 <!-- Target Chapters Selection -->
                 <div class="dent-quiz-form-group">
-                    <label class="dent-quiz-label">1. حدد الشابترات المستهدفة (التي تريد استخراج أسئلتها فقط):</label>
-                    <div style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 8px 10px;">
+                    <label class="dent-quiz-label">1. حدد أو ارفع الشابترات المستهدفة (التي تريد استخراج أسئلتها فقط):</label>
+                    <div class="dent-sub-tabs" id="dq-target-source-tabs" style="margin-bottom: 8px;">
+                        <button type="button" class="dent-sub-tab-btn active" data-tab="drive">من Google Drive</button>
+                        <button type="button" class="dent-sub-tab-btn" data-tab="upload">رفع ملفات الشابترات من جهازك</button>
+                    </div>
+
+                    <!-- Drive Chapters View -->
+                    <div id="dq-target-drive-view" style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 8px 10px;">
                         <div style="display: flex; gap: 6px; margin-bottom: 6px;">
                             <button type="button" id="dq-target-select-all" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem; flex: 1;">تحديد الكل</button>
                             <button type="button" id="dq-target-deselect-all" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem; flex: 1;">إلغاء التحديد</button>
@@ -334,6 +340,23 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                             <div style="color: #64748b; font-size: 0.82rem; text-align: center; padding: 6px;">اختر المادة أولاً لعرض الشابترات...</div>
                         </div>
                     </div>
+
+                    <!-- Upload Chapters View -->
+                    <div id="dq-target-upload-view" style="display: none;">
+                        <div class="dent-upload-zone" id="dq-target-dropzone" style="padding: 14px 10px; margin-bottom: 8px;">
+                            <div class="dent-upload-title" style="font-size: 0.86rem;">اسحب ملفات أو شرائح الشابترات هنا، أو انقر للاختيار</div>
+                            <div class="dent-upload-sub" style="font-size: 0.72rem;">يدعم ملفات PDF، سلايدات PPTX، ومستندات DOCX للمحاضرات</div>
+                            <input type="file" id="dq-target-file-input" multiple accept=".pdf,.pptx,.docx,image/*" style="display: none;">
+                        </div>
+                        <div class="dent-uploaded-chips" id="dq-target-uploaded-chips"></div>
+                    </div>
+
+                    <!-- Quick Custom Chapter Text Input -->
+                    <div style="display: flex; gap: 6px; margin-top: 8px;">
+                        <input type="text" id="dq-target-custom-input" class="dent-quiz-input" placeholder="أو اكتب اسم شابتر يدوياً (مثال: Complete Denture Parts)..." style="font-size: 0.78rem; padding: 5px 10px;">
+                        <button type="button" id="dq-target-add-custom-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 5px 12px; font-size: 0.76rem; white-space: nowrap;">+ إضافة</button>
+                    </div>
+                    <div id="dq-target-custom-chips" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;"></div>
                 </div>
 
                 <!-- Past Exam Source Selector (Google Drive vs Device Upload) -->
@@ -643,6 +666,9 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
     let aiUploadedFiles = [];
     let pastExamUploadedFiles = [];
+    let targetChapterUploadedFiles = [];
+    let targetCustomChapters = [];
+    let currentTargetSource = 'drive';
     let isAdminTitleCustomized = false;
 
     function checkUrlDirectQuiz() {
@@ -664,6 +690,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         setupWizardStepper();
         setupFolderTabs();
         setupPastExamSourceTabs();
+        setupTargetChaptersTabs();
         setupFileUploaders();
         setupDifficultySelector();
 
@@ -686,8 +713,12 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             pastExamDriveFilesMap.clear();
             aiUploadedFiles = [];
             pastExamUploadedFiles = [];
+            targetChapterUploadedFiles = [];
+            targetCustomChapters = [];
             renderUploadedChips('ai');
             renderUploadedChips('pastexam');
+            renderUploadedChips('target_chaps');
+            renderCustomChapterChips();
             loadFilesForSubject();
         });
         document.getElementById('dq-generate-btn').addEventListener('click', startQuizGeneration);
@@ -1017,7 +1048,10 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             return baseName;
         } else {
             // Mode 2: Past Exam Filter
-            const checkedTargets = Array.from(document.querySelectorAll('.dq-target-chap-checkbox:checked')).map(cb => cb.value);
+            const driveTargets = Array.from(document.querySelectorAll('.dq-target-chap-checkbox:checked')).map(cb => cb.value.trim()).filter(Boolean);
+            const uploadedTargets = targetChapterUploadedFiles.map(f => cleanFileNameForTitle(f.name)).filter(Boolean);
+            const customTargets = targetCustomChapters.map(c => c.trim()).filter(Boolean);
+            const checkedTargets = Array.from(new Set([...driveTargets, ...uploadedTargets, ...customTargets]));
             let examFileName = '';
             if (currentPastExamSource === 'drive') {
                 const f = Array.from(pastExamDriveFilesMap.values())[0];
@@ -1221,6 +1255,70 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         });
     }
 
+    function setupTargetChaptersTabs() {
+        const tabs = document.querySelectorAll('#dq-target-source-tabs .dent-sub-tab-btn');
+        const driveView = document.getElementById('dq-target-drive-view');
+        const uploadView = document.getElementById('dq-target-upload-view');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentTargetSource = tab.dataset.tab || 'drive';
+                if (currentTargetSource === 'drive') {
+                    if (driveView) driveView.style.display = 'block';
+                    if (uploadView) uploadView.style.display = 'none';
+                } else {
+                    if (driveView) driveView.style.display = 'none';
+                    if (uploadView) uploadView.style.display = 'block';
+                }
+            });
+        });
+
+        const addCustomChapBtn = document.getElementById('dq-target-add-custom-btn');
+        const customChapInput = document.getElementById('dq-target-custom-input');
+        if (addCustomChapBtn && customChapInput) {
+            const addCustomChap = () => {
+                const val = customChapInput.value.trim();
+                if (!val) return;
+                if (!targetCustomChapters.includes(val)) {
+                    targetCustomChapters.push(val);
+                    renderCustomChapterChips();
+                    updateSmartQuizName();
+                }
+                customChapInput.value = '';
+            };
+            addCustomChapBtn.addEventListener('click', addCustomChap);
+            customChapInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addCustomChap();
+                }
+            });
+        }
+    }
+
+    function renderCustomChapterChips() {
+        const container = document.getElementById('dq-target-custom-chips');
+        if (!container) return;
+        container.innerHTML = '';
+        targetCustomChapters.forEach((chap, idx) => {
+            const chip = document.createElement('div');
+            chip.className = 'dent-file-chip';
+            chip.innerHTML = `
+                <span>${escapeHtml(chap)}</span>
+                <span class="dent-chip-remove" title="حذف">✕</span>
+            `;
+            chip.querySelector('.dent-chip-remove').addEventListener('click', (e) => {
+                e.stopPropagation();
+                targetCustomChapters.splice(idx, 1);
+                renderCustomChapterChips();
+                updateSmartQuizName();
+            });
+            container.appendChild(chip);
+        });
+    }
+
     function setupDifficultySelector() {
         const diffBtns = document.querySelectorAll('.dent-diff-btn');
         diffBtns.forEach(btn => {
@@ -1235,40 +1333,64 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     function setupFileUploaders() {
         const aiDropzone = document.getElementById('dq-ai-dropzone');
         const aiFileInput = document.getElementById('dq-ai-file-input');
-        aiDropzone.addEventListener('click', () => aiFileInput.click());
-        aiFileInput.addEventListener('change', (e) => {
-            handleFilesSelected(e.target.files, 'ai');
-            e.target.value = '';
-        });
+        if (aiDropzone && aiFileInput) {
+            aiDropzone.addEventListener('click', () => aiFileInput.click());
+            aiFileInput.addEventListener('change', (e) => {
+                handleFilesSelected(e.target.files, 'ai');
+                e.target.value = '';
+            });
 
-        aiDropzone.addEventListener('dragover', (e) => { e.preventDefault(); aiDropzone.classList.add('dragover'); });
-        aiDropzone.addEventListener('dragleave', () => aiDropzone.classList.remove('dragover'));
-        aiDropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            aiDropzone.classList.remove('dragover');
-            if (e.dataTransfer.files) handleFilesSelected(e.dataTransfer.files, 'ai');
-        });
+            aiDropzone.addEventListener('dragover', (e) => { e.preventDefault(); aiDropzone.classList.add('dragover'); });
+            aiDropzone.addEventListener('dragleave', () => aiDropzone.classList.remove('dragover'));
+            aiDropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                aiDropzone.classList.remove('dragover');
+                if (e.dataTransfer.files) handleFilesSelected(e.dataTransfer.files, 'ai');
+            });
+        }
 
         const pastDropzone = document.getElementById('dq-pastexam-dropzone');
         const pastFileInput = document.getElementById('dq-pastexam-file-input');
-        pastDropzone.addEventListener('click', () => pastFileInput.click());
-        pastFileInput.addEventListener('change', (e) => {
-            handleFilesSelected(e.target.files, 'pastexam');
-            e.target.value = '';
-        });
+        if (pastDropzone && pastFileInput) {
+            pastDropzone.addEventListener('click', () => pastFileInput.click());
+            pastFileInput.addEventListener('change', (e) => {
+                handleFilesSelected(e.target.files, 'pastexam');
+                e.target.value = '';
+            });
 
-        pastDropzone.addEventListener('dragover', (e) => { e.preventDefault(); pastDropzone.classList.add('dragover'); });
-        pastDropzone.addEventListener('dragleave', () => pastDropzone.classList.remove('dragover'));
-        pastDropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            pastDropzone.classList.remove('dragover');
-            if (e.dataTransfer.files) handleFilesSelected(e.dataTransfer.files, 'pastexam');
-        });
+            pastDropzone.addEventListener('dragover', (e) => { e.preventDefault(); pastDropzone.classList.add('dragover'); });
+            pastDropzone.addEventListener('dragleave', () => pastDropzone.classList.remove('dragover'));
+            pastDropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                pastDropzone.classList.remove('dragover');
+                if (e.dataTransfer.files) handleFilesSelected(e.dataTransfer.files, 'pastexam');
+            });
+        }
+
+        const targetDropzone = document.getElementById('dq-target-dropzone');
+        const targetFileInput = document.getElementById('dq-target-file-input');
+        if (targetDropzone && targetFileInput) {
+            targetDropzone.addEventListener('click', () => targetFileInput.click());
+            targetFileInput.addEventListener('change', (e) => {
+                handleFilesSelected(e.target.files, 'target_chaps');
+                e.target.value = '';
+            });
+
+            targetDropzone.addEventListener('dragover', (e) => { e.preventDefault(); targetDropzone.classList.add('dragover'); });
+            targetDropzone.addEventListener('dragleave', () => targetDropzone.classList.remove('dragover'));
+            targetDropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                targetDropzone.classList.remove('dragover');
+                if (e.dataTransfer.files) handleFilesSelected(e.dataTransfer.files, 'target_chaps');
+            });
+        }
     }
 
     async function handleFilesSelected(filesList, target) {
         if (!filesList || filesList.length === 0) return;
-        const targetArray = (target === 'ai') ? aiUploadedFiles : pastExamUploadedFiles;
+        let targetArray = aiUploadedFiles;
+        if (target === 'pastexam') targetArray = pastExamUploadedFiles;
+        else if (target === 'target_chaps') targetArray = targetChapterUploadedFiles;
 
         if (targetArray.length + filesList.length > 10) {
             alert("الحد الأقصى المسموح برفع ملفاته هو 10 ملفات.");
@@ -1296,6 +1418,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         }
 
         renderUploadedChips(target);
+        updateSmartQuizName();
     }
 
     function readFileAsOptimizedBase64(file) {
@@ -1345,8 +1468,16 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     }
 
     function renderUploadedChips(target) {
-        const container = (target === 'ai') ? document.getElementById('dq-ai-uploaded-chips') : document.getElementById('dq-pastexam-uploaded-chips');
-        const list = (target === 'ai') ? aiUploadedFiles : pastExamUploadedFiles;
+        let container = document.getElementById('dq-ai-uploaded-chips');
+        let list = aiUploadedFiles;
+        if (target === 'pastexam') {
+            container = document.getElementById('dq-pastexam-uploaded-chips');
+            list = pastExamUploadedFiles;
+        } else if (target === 'target_chaps') {
+            container = document.getElementById('dq-target-uploaded-chips');
+            list = targetChapterUploadedFiles;
+        }
+        if (!container) return;
 
         container.innerHTML = '';
         list.forEach((f, idx) => {
@@ -1360,6 +1491,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 e.stopPropagation();
                 list.splice(idx, 1);
                 renderUploadedChips(target);
+                updateSmartQuizName();
             });
             container.appendChild(chip);
         });
@@ -1743,9 +1875,12 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
         if (currentCreationMode === 'past_exam_filter') {
             // === MODE 2: PAST EXAM FILTER PAYLOAD ===
-            const checkedTargets = Array.from(document.querySelectorAll('.dq-target-chap-checkbox:checked')).map(cb => cb.value);
+            const driveTargets = Array.from(document.querySelectorAll('.dq-target-chap-checkbox:checked')).map(cb => cb.value.trim()).filter(Boolean);
+            const uploadedTargets = targetChapterUploadedFiles.map(f => cleanFileNameForTitle(f.name)).filter(Boolean);
+            const customTargets = targetCustomChapters.map(c => c.trim()).filter(Boolean);
+            const checkedTargets = Array.from(new Set([...driveTargets, ...uploadedTargets, ...customTargets]));
             if (checkedTargets.length === 0) {
-                alert("يرجى تحديد شابتر مستهدف واحد على الأقل للبحث عن أسئلته.");
+                alert("يرجى تحديد أو رفع شابتر مستهدف واحد على الأقل للبحث عن أسئلته ومطابقتها.");
                 return;
             }
 
@@ -1780,6 +1915,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             payload.chapterName = combinedChapterName;
             payload.typesSummary = (formatPref === 'mcq_only') ? 'تجميعات خيارات متعددة' : 'تجميعات سنوات سابقة';
             payload.targetChapters = checkedTargets;
+            payload.targetChapterFiles = targetChapterUploadedFiles;
             payload.selectedChapters = (currentPastExamSource === 'drive') ? pastExamDriveFiles : [];
             payload.uploadedFiles = (currentPastExamSource === 'upload') ? pastExamUploadedFiles : [];
             payload.numQuestions = numQs;

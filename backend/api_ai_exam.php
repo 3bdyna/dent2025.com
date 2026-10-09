@@ -2330,10 +2330,15 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         }
 
         $targetChaptersStr = !empty($targetChapters) ? implode("\n- ", $targetChapters) : 'جميع مواضيع المقرر';
+        $targetChaptersContent = $data['targetChaptersContent'] ?? '';
         $stage2Prompt = "Act as an expert university professor and clinical examiner in {$subjectTitle} ({$spec}).\n";
         $stage2Prompt .= "You are provided with real past examination questions and marked slide points transcribed verbatim:\n";
         $stage2Prompt .= json_encode($chunk, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n\n";
         $stage2Prompt .= "STUDENT'S TARGET REVISION CHAPTERS / TOPICS:\n- " . $targetChaptersStr . "\n\n";
+        if (!empty($targetChaptersContent)) {
+            $stage2Prompt .= "DETAILED CONTENT OF STUDENT'S UPLOADED TARGET CHAPTERS / SYLLABUS:\n" . $targetChaptersContent . "\n\n";
+            $stage2Prompt .= "TOPIC CROSS-REFERENCE DIRECTIVE: Compare every question and slide point against the concepts, lectures, and terminology in the uploaded target chapter content above. If a question is taught in or directly related to these uploaded chapters, KEEP IT and solve it. If it belongs to an entirely different, unrelated topic outside these chapters, discard it.\n\n";
+        }
         $stage2Prompt .= "EXTRACTION FORMAT PREFERENCE: {$formatPref}\n";
         $stage2Prompt .= "(Values: 'hybrid' = keep original formats matching university revision banks; 'mcq_only' = only keep real MCQs; 'convert_all_mcq' = convert everything to 4-choice MCQs)\n\n";
         $stage2Prompt .= "YOUR TASKS:\n";
@@ -3638,6 +3643,25 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // 3. Process Uploaded Target Chapter Files (in Past Exam Filter mode)
+        $targetChapterFiles = $data['targetChapterFiles'] ?? [];
+        $targetChaptersExtractedText = '';
+        if (!empty($targetChapterFiles) && is_array($targetChapterFiles)) {
+            foreach ($targetChapterFiles as $tcFile) {
+                try {
+                    $tcRes = performDirectUploadedFileExtraction($tcFile);
+                    if ($tcRes['success'] && isset($tcRes['data'])) {
+                        $tcText = $tcRes['data']['text'] ?? '';
+                        $tcName = $tcFile['name'] ?? 'شابتر مستهدف';
+                        if (!empty($tcText)) {
+                            $tcCondensed = cleanAndCondenseExtractedText($tcText, 80000);
+                            $targetChaptersExtractedText .= "\n=== [محتوى الشابتر المستهدف: $tcName] ===\n" . $tcCondensed . "\n";
+                        }
+                    }
+                } catch (Throwable $tcErr) {}
+            }
+        }
+
         if (!$partialContent || (empty(trim($combinedText)) && empty($combinedImages) && empty($geminiFileUris))) {
             $detail = !empty($extractionErrors) ? implode(' | ', $extractionErrors) : 'لم يتم العثور على نصوص أو ملفات قابلة للاستخدام.';
             throw new Exception("تعذر استخراج المحتوى من الملفات المحددة. التفاصيل: " . $detail);
@@ -3671,6 +3695,7 @@ if ($action === 'start_job' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             'pageRange' => $data['pageRange'] ?? '',
             'focusArea' => $data['focusArea'] ?? '',
             'targetChapters' => $targetChapters,
+            'targetChaptersContent' => $targetChaptersExtractedText,
             'pastExamFormatPreference' => $data['pastExamFormatPreference'] ?? 'hybrid',
             'options' => $data['options'] ?? []
         ];
