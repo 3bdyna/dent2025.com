@@ -170,13 +170,15 @@ function getAiExamSubjectLinksTable($pdo) {
 }
 
 
-// Primary and fallback Gemini models
+// Primary and fallback Gemini models (starting with flagship 3.8-flash and cascading down)
 $GEMINI_MODELS = [
+    'gemini-3.8-flash',
+    'gemini-3.7-flash',
+    'gemini-3.6-flash',
     'gemini-3.5-flash',
     'gemini-flash-latest',
     'gemini-3.5-flash-lite',
-    'gemini-flash-lite-latest',
-    'gemini-3.8-flash'
+    'gemini-flash-lite-latest'
 ];
 
 /**
@@ -1736,7 +1738,7 @@ function summarizeQuizLanguage($questions) {
 function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches = 1) {
     global $GEMINI_MODELS;
     $hasFileUri = !empty($data['gemini_file_uri']);
-    $modelsToTry = $hasFileUri ? ['gemini-3.5-flash', 'gemini-flash-latest'] : (!empty($GEMINI_MODELS) ? $GEMINI_MODELS : ['gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-latest']);
+    $modelsToTry = !empty($GEMINI_MODELS) ? $GEMINI_MODELS : ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];
 
     $mode = $data['mode'] ?? 'ai_generation';
     $isPastExamFilter = ($mode === 'past_exam_filter');
@@ -2281,7 +2283,7 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         $jobFileCallback(1, 2, 0);
     }
 
-    $modelsToTry = !empty($GEMINI_MODELS) ? $GEMINI_MODELS : ['gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];
+    $modelsToTry = !empty($GEMINI_MODELS) ? $GEMINI_MODELS : ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];
     $stage1Res = null;
     $lastErrorMsg = '';
 
