@@ -138,6 +138,9 @@ add_action('wp_footer', function() {
             $content = preg_replace_callback('/<style\b[^>]*>(.*?)<\/style>/is', function($m) {
                 return '<style>' . preg_replace('/\s+/', ' ', $m[1]) . '</style>';
             }, $content);
+            $timer_js = ABSPATH . 'frontend_components/study_timer.js';
+            $js_mtime = file_exists($timer_js) ? filemtime($timer_js) : filemtime($timer_file);
+            $content = str_replace('/frontend_components/study_timer.js', '/frontend_components/study_timer.js?v=' . $js_mtime, $content);
             echo $content;
             $GLOBALS['dent2025_timer_rendered'] = true;
         }
