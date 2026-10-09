@@ -6701,7 +6701,9 @@ window.AdminApp = {
 
             const jsPdfClass = await jsPdfPromise;
             const firstH_mm = Math.round((pageDataList[0].heightPx / 794) * 210 * 10) / 10;
-            const pdf = new jsPdfClass('p', 'mm', [210, firstH_mm]);
+            const pdf = (firstH_mm >= 210)
+                ? new jsPdfClass('p', 'mm', [210, firstH_mm])
+                : new jsPdfClass('l', 'mm', [firstH_mm, 210]);
 
             for (let i = 0; i < pageDataList.length; i++) {
                 const item = pageDataList[i];
