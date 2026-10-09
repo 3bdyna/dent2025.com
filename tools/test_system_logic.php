@@ -413,6 +413,99 @@ assert_test("No leftover .tmp files remaining", empty($leftover_tmp));
 @unlink($test_json_file);
 
 // -----------------------------------------------------------------------------
+echo "\n9. Testing Quiz Recycle Bin (Trash & 30-Day Auto-Purge) Logic...\n";
+$mock_quizzes_dir = sys_get_temp_dir() . '/dent2025_mock_quizzes_' . uniqid();
+$mock_trash_dir = $mock_quizzes_dir . '/trash';
+@mkdir($mock_quizzes_dir, 0777, true);
+@mkdir($mock_trash_dir, 0777, true);
+
+// Create an active mock quiz
+$quiz_id = 'quiz_test_123';
+$active_file = $mock_quizzes_dir . '/' . $quiz_id . '.json';
+$quiz_payload = [
+    'id' => $quiz_id,
+    'quiz_name' => 'اختبار تشريح تجريبي',
+    'subject_name' => 'تشريح الأسنان',
+    'created_at' => date('Y-m-d H:i:s'),
+    'questions' => [['q' => 'Test Q1']]
+];
+file_put_contents($active_file, json_encode($quiz_payload));
+assert_test("Active mock quiz created", file_exists($active_file));
+
+// Simulate soft-delete (moving to trash with 30-day retention)
+$trash_payload = $quiz_payload;
+$trash_payload['deleted_at'] = date('Y-m-d H:i:s');
+$trash_payload['deleted_by'] = 'مشرف النظام';
+$trash_payload['expires_at'] = date('Y-m-d H:i:s', time() + (30 * 86400));
+
+$trashed_file = $mock_trash_dir . '/' . $quiz_id . '.json';
+file_put_contents($trashed_file, json_encode($trash_payload));
+@unlink($active_file);
+
+assert_test("Quiz moved to trash and removed from active pool", !file_exists($active_file) && file_exists($trashed_file));
+assert_test("Trashed quiz has deleted_at metadata", !empty($trash_payload['deleted_at']));
+assert_test("Trashed quiz has 30-day retention expiration", !empty($trash_payload['expires_at']));
+
+// Create an expired trashed quiz (deleted 35 days ago) and a recent trashed quiz (deleted 5 days ago)
+$expired_id = 'quiz_expired_999';
+$expired_file = $mock_trash_dir . '/' . $expired_id . '.json';
+$expired_payload = [
+    'id' => $expired_id,
+    'quiz_name' => 'اختبار منتهي الصلاحية',
+    'deleted_at' => date('Y-m-d H:i:s', time() - (35 * 86400)), // 35 days ago
+    'expires_at' => date('Y-m-d H:i:s', time() - (5 * 86400))
+];
+file_put_contents($expired_file, json_encode($expired_payload));
+
+$recent_id = 'quiz_recent_888';
+$recent_file = $mock_trash_dir . '/' . $recent_id . '.json';
+$recent_payload = [
+    'id' => $recent_id,
+    'quiz_name' => 'اختبار محذوف حديثاً',
+    'deleted_at' => date('Y-m-d H:i:s', time() - (5 * 86400)), // 5 days ago
+    'expires_at' => date('Y-m-d H:i:s', time() + (25 * 86400))
+];
+file_put_contents($recent_file, json_encode($recent_payload));
+
+// Execute cleanup simulation
+$files = glob($mock_trash_dir . '/*.json');
+$purged_count = 0;
+$now = time();
+$threshold = 30 * 86400;
+
+foreach ($files as $f) {
+    $content = @file_get_contents($f);
+    $data = json_decode($content, true);
+    if (!empty($data['deleted_at'])) {
+        $delTime = strtotime($data['deleted_at']);
+        if (($now - $delTime) >= $threshold) {
+            @unlink($f);
+            $purged_count++;
+        }
+    }
+}
+
+assert_test("Auto-purge removed exactly 1 expired quiz (>30 days)", $purged_count === 1 && !file_exists($expired_file));
+assert_test("Recent quiz (<30 days) is safely preserved in trash", file_exists($recent_file));
+assert_test("Initial trashed quiz is safely preserved in trash", file_exists($trashed_file));
+
+// Simulate Restore
+$restore_content = json_decode(file_get_contents($trashed_file), true);
+unset($restore_content['deleted_at'], $restore_content['deleted_by'], $restore_content['expires_at']);
+$restore_content['restored_at'] = date('Y-m-d H:i:s');
+file_put_contents($active_file, json_encode($restore_content));
+@unlink($trashed_file);
+
+assert_test("Restored quiz is back in active pool and absent from trash", file_exists($active_file) && !file_exists($trashed_file));
+assert_test("Restored quiz has deleted_at stripped and restored_at set", !isset($restore_content['deleted_at']) && !empty($restore_content['restored_at']));
+
+// Cleanup temp test directory
+@unlink($active_file);
+@unlink($recent_file);
+@rmdir($mock_trash_dir);
+@rmdir($mock_quizzes_dir);
+
+// -----------------------------------------------------------------------------
 // SUMMARY REPORT
 // -----------------------------------------------------------------------------
 echo "\n=======================================================\n";

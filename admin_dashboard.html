@@ -1128,6 +1128,68 @@
   </div>
  </div>
  </div>
+
+ <!-- TRASH CONTAINER (Hidden by default) -->
+ <div id="quizzes-trash-container" class="space-y-3 sm:space-y-4 hidden">
+   <!-- Info Alert -->
+   <div class="p-3 sm:p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+     <div class="flex items-start gap-3">
+       <div class="p-2 rounded-lg bg-rose-500/20 shrink-0 mt-0.5 sm:mt-0">
+         <svg class="w-4 h-4 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+       </div>
+       <div class="space-y-0.5">
+         <div class="font-bold text-sm text-white">سلة المحذوفات (فترة استبقاء 30 يوماً)</div>
+         <p class="text-rose-200/80 leading-relaxed text-[11px] sm:text-xs">
+           تبقى الاختبارات المحذوفة هنا لمدة 30 يوماً قبل الحذف التلقائي. يمكنك استعادة أي اختبار أو حذفه نهائياً في أي وقت.
+         </p>
+       </div>
+     </div>
+     <button onclick="AdminApp.emptyQuizTrash()" class="btn btn-danger text-xs py-1.5 px-3 shrink-0 flex items-center gap-1.5 bg-rose-600/30 hover:bg-rose-600/50 text-rose-200 border-rose-500/40" title="مسح جميع العناصر في السلة نهائياً">
+       <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+       <span>تفريغ السلة بالكامل</span>
+     </button>
+   </div>
+
+   <!-- Trash Filters -->
+   <div class="glass p-2.5 sm:p-3 rounded-xl flex flex-wrap sm:flex-nowrap gap-2 border border-white/5 shrink-0">
+     <input type="text" id="quizzes-trash-search-input" onkeyup="AdminApp.filterTrashedQuizzesTable()" class="input-field flex-1 text-xs py-1 px-2 h-9 min-w-[140px]" placeholder="بحث في المحذوفات باسم الاختبار...">
+     <button onclick="AdminApp.loadTrashedQuizzes()" class="btn btn-secondary text-xs py-1 px-3 shrink-0 flex items-center gap-1.5">
+       <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+       <span>تحديث السلة</span>
+     </button>
+   </div>
+
+   <!-- Trash Table -->
+   <div class="glass rounded-xl overflow-hidden border border-white/5">
+     <div class="hidden md:block overflow-x-auto">
+       <table class="w-full text-right text-xs min-w-[700px]">
+       <thead class="bg-white/5 text-gray-400 border-b border-white/5 sticky top-0">
+       <tr>
+       <th class="p-2.5 font-semibold">اسم الاختبار</th>
+       <th class="p-2.5 font-semibold">المادة</th>
+       <th class="p-2.5 font-semibold">الشابتر</th>
+       <th class="p-2.5 font-semibold text-center">الأسئلة</th>
+       <th class="p-2.5 font-semibold text-center">تاريخ الحذف</th>
+       <th class="p-2.5 font-semibold text-center">المهلة المتبقية</th>
+       <th class="p-2.5 font-semibold text-center">بواسطة</th>
+       <th class="p-2.5 font-semibold text-center">الإجراء</th>
+       </tr>
+       </thead>
+       <tbody id="quizzes-trash-table-body" class="divide-y divide-white/5">
+       <tr>
+       <td colspan="8" class="p-6 text-center text-gray-400">سلة المحذوفات فارغة.</td>
+       </tr>
+       </tbody>
+       </table>
+     </div>
+
+     <!-- Trash Mobile Cards View -->
+     <div id="quizzes-trash-mobile-cards" class="block md:hidden p-3 space-y-2.5">
+       <p class="p-6 text-center text-xs text-gray-400">سلة المحذوفات فارغة.</p>
+     </div>
+   </div>
+ </div>
+ </div>
  </template>
 
  <!-- Template for Cache & Pre-Warm Management -->
