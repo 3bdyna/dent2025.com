@@ -1143,6 +1143,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 context: sel,
                 onSuccess: function() {
                     proceedToEdit();
+                    loadSavedQuizzesBank();
                 }
             });
             return;
@@ -1165,6 +1166,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 sessionStorage.setItem('dent2025_permissions', JSON.stringify(perms));
                 if (res.data) sessionStorage.setItem('dent2025_passkey_info', JSON.stringify(res.data));
                 proceedToEdit();
+                loadSavedQuizzesBank();
             } else {
                 alert(res.message || "رمز PIN غير صحيح.");
             }
@@ -2133,21 +2135,22 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
             if (json.success && Array.isArray(json.data)) {
                 allSavedQuizzes = json.data;
-                countSpan.innerText = formatArabicQuizzesCount(allSavedQuizzes.length);
+                if (countSpan) countSpan.innerText = formatArabicQuizzesCount(allSavedQuizzes.length);
                 renderBankGrid();
             } else {
-                countSpan.innerText = '(لا توجد اختبارات محفوظة)';
+                if (countSpan) countSpan.innerText = '(لا توجد اختبارات محفوظة)';
             }
         } catch (err) {
-            countSpan.innerText = '(خطأ في الاتصال)';
+            if (countSpan) countSpan.innerText = '(خطأ في الاتصال)';
         }
     }
 
     function renderBankGrid() {
         const grid = document.getElementById('dent-bank-list');
-        const subjectFilter = document.getElementById('dent-bank-subject-filter').value;
-        const typeFilter = document.getElementById('dent-bank-type-filter').value;
-        const searchQuery = document.getElementById('dent-bank-search').value.toLowerCase().trim();
+        if (!grid) return;
+        const subjectFilter = document.getElementById('dent-bank-subject-filter')?.value || '';
+        const typeFilter = document.getElementById('dent-bank-type-filter')?.value || '';
+        const searchQuery = document.getElementById('dent-bank-search')?.value?.toLowerCase().trim() || '';
 
         let filtered = allSavedQuizzes.filter(q => {
             if (subjectFilter && q.subject_id != subjectFilter) return false;
@@ -4033,5 +4036,20 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             if (toast && toast.parentNode) toast.remove();
         }, 4500);
     }
+
+    // Expose reload hook and listen to auth change events for instant reactivity
+    window.dentReloadQuizBank = function() {
+        return loadSavedQuizzesBank();
+    };
+
+    window.addEventListener('dent2025:auth-changed', () => {
+        loadSavedQuizzesBank();
+    });
+
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'dent2025_admin_pass' || e.key === 'dent2025_permissions') {
+            loadSavedQuizzesBank();
+        }
+    });
 })();
 </script>

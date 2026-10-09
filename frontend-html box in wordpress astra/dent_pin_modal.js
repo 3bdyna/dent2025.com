@@ -638,6 +638,15 @@
                 const card = activeModal.overlay.querySelector('.dent-pin-card');
                 if (card) card.classList.add('dent-pin-success');
 
+                try {
+                    window.dispatchEvent(new CustomEvent('dent2025:auth-changed', {
+                        detail: { authenticated: true, pin: pin, permissions: perms, data: res.data }
+                    }));
+                } catch(e) {}
+                if (typeof window.dentReloadQuizBank === 'function') {
+                    try { window.dentReloadQuizBank(); } catch(e) {}
+                }
+
                 setTimeout(() => {
                     const cb = activeModal?.opts?.onSuccess;
                     closePinModal(false);

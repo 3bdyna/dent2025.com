@@ -236,6 +236,14 @@
         if (typeof renderChapters === 'function') {
             loadDashboardData(); 
         }
+        if (typeof window.dentReloadQuizBank === 'function') {
+            try { window.dentReloadQuizBank(); } catch(e) {}
+        }
+        try {
+            window.dispatchEvent(new CustomEvent('dent2025:auth-changed', {
+                detail: { authenticated: true }
+            }));
+        } catch(e) {}
     }
 
     function logoutAdmin() {
@@ -252,6 +260,14 @@
         if (typeof renderChapters === 'function') {
             loadDashboardData(); 
         }
+        if (typeof window.dentReloadQuizBank === 'function') {
+            try { window.dentReloadQuizBank(); } catch(e) {}
+        }
+        try {
+            window.dispatchEvent(new CustomEvent('dent2025:auth-changed', {
+                detail: { authenticated: false }
+            }));
+        } catch(e) {}
     }
 
     function submitNewSubject() {
