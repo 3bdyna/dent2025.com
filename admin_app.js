@@ -6863,9 +6863,7 @@ window.AdminApp = {
         if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
             try {
                 await navigator.share({
-                    files: [file],
-                    title: fileName.replace(/\.[^.]+$/, ''),
-                    text: 'كتيب اختبار • منصة Dent2025'
+                    files: [file]
                 });
                 setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
                 return;
@@ -7011,9 +7009,7 @@ window.AdminApp = {
                 shareBtn.onclick = async () => {
                     try {
                         await navigator.share({
-                            files: [file],
-                            title: fileName.replace(/\.[^.]+$/, ''),
-                            text: shortUrl ? `كتيب اختبار • منصة Dent2025\nرابط الاختبار: ${shortUrl}` : 'كتيب اختبار • منصة Dent2025'
+                            files: [file]
                         });
                     } catch(e) {}
                 };

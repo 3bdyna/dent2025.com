@@ -4196,9 +4196,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
             try {
                 await navigator.share({
-                    files: [file],
-                    title: fileName.replace(/\.[^.]+$/, ''),
-                    text: exportShortUrl ? `كتيب اختبار • منصة Dent2025\nرابط الاختبار: ${exportShortUrl}` : 'كتيب اختبار • منصة Dent2025'
+                    files: [file]
                 });
                 setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
                 return;
@@ -4373,9 +4371,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 shareBtn.onclick = async () => {
                     try {
                         await navigator.share({
-                            files: [file],
-                            title: fileName.replace(/\.[^.]+$/, ''),
-                            text: toastShortUrl ? `كتيب اختبار • منصة Dent2025\nرابط الاختبار: ${toastShortUrl}` : 'كتيب اختبار • منصة Dent2025'
+                            files: [file]
                         });
                     } catch(e) {}
                 };
