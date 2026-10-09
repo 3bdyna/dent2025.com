@@ -5681,7 +5681,7 @@ window.AdminApp = {
                 justify-content: space-between;
                 overflow: hidden;
             }
-            .page-inner-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+            .page-inner-content { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden !important; }
             .doc-header {
                 display: flex;
                 align-items: center;
@@ -6015,6 +6015,9 @@ window.AdminApp = {
                 color: #71717a;
                 flex-shrink: 0;
                 width: 100%;
+                background: #121212;
+                position: relative;
+                z-index: 20;
                 box-sizing: border-box;
             }
             .doc-footer-left {
@@ -6100,15 +6103,15 @@ window.AdminApp = {
         return text;
     },
 
-    estimateQuestionHeight(q, includeExplanations = true) {
-        // Base container overhead: padding (5px) + border (2px) + top-row badge (11px)
-        let h = 18;
+    estimateQuestionHeight(q, includeExplanations = true, isComfortable = false) {
+        // Base container overhead: padding + border + badge
+        let h = isComfortable ? 26 : 20;
         const rawQuestion = String(q?.question || '').trim();
         const cleanQuestion = this.stripQuestionPrefix(rawQuestion);
         const qLen = cleanQuestion.length;
-        // ~52 characters per line in ~385px column width (font ~11px)
-        const qLines = Math.max(1, Math.ceil(qLen / 52));
-        h += (qLines * 13) + 2;
+        // Characters per line in ~385px column
+        const qLines = Math.max(1, Math.ceil(qLen / (isComfortable ? 46 : 52)));
+        h += (qLines * (isComfortable ? 15 : 13)) + (isComfortable ? 4 : 2);
 
         const qType = q?.type || 'mcq';
         if (qType === 'card' || qType === 'short' || qType === 'info') {
@@ -6118,17 +6121,18 @@ window.AdminApp = {
             const liLines = (rawAns.match(/<li[\s>]/gi) || []).length;
             const nlLines = (rawAns.match(/\n/g) || []).length;
             const explicitLines = brLines + liLines + nlLines;
-            const textWrapLines = Math.max(1, Math.ceil(textOnly.length / 50));
+            const textWrapLines = Math.max(1, Math.ceil(textOnly.length / 48));
             const estimatedLines = Math.min(Math.max(explicitLines, textWrapLines), 16);
-            h += 12 + (estimatedLines * 13);
+            h += 12 + (estimatedLines * (isComfortable ? 15 : 13));
         } else {
             const opts = Array.isArray(q?.options) ? q.options : [];
             opts.forEach(opt => {
                 const cleanOpt = this.stripOptionPrefix(opt);
                 const optLen = cleanOpt.length;
-                const optLines = Math.max(1, Math.ceil(optLen / 48));
-                // Each option is ~13.5px base + 11.5px per extra line
-                h += 13.5 + ((optLines - 1) * 11.5);
+                const optLines = Math.max(1, Math.ceil(optLen / (isComfortable ? 42 : 46)));
+                const baseH = isComfortable ? 19 : 15;
+                const lineH = isComfortable ? 14 : 12;
+                h += baseH + ((optLines - 1) * lineH);
             });
         }
 
@@ -6136,13 +6140,12 @@ window.AdminApp = {
             const exp = String(q.explanation).trim();
             if (exp) {
                 const expClean = exp.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-                const expLines = Math.max(1, Math.ceil(expClean.length / 52));
-                h += 7 + (expLines * 12);
+                const expLines = Math.max(1, Math.ceil(expClean.length / (isComfortable ? 46 : 50)));
+                h += 8 + (expLines * (isComfortable ? 14 : 12));
             }
         }
 
-        // Inter-card gap
-        return h + 2.5;
+        return h + (isComfortable ? 8 : 3);
     },
 
     calculateSmartPages(questions, includeExplanations = true) {
@@ -6151,20 +6154,21 @@ window.AdminApp = {
         // Allow up to 26 questions per page for compact MCQs, or 16 with explanations
         const maxPerPage = includeExplanations ? 16 : 26;
 
-        const estH = (q) => this.estimateQuestionHeight(q, includeExplanations);
-        const heights = questions.map(estH);
+        const estH = (q, isComfortable) => this.estimateQuestionHeight(q, includeExplanations, isComfortable);
 
         const pageFits = (sliceStart, sliceEnd, pIdx) => {
             const count = sliceEnd - sliceStart;
             if (count === 0) return false;
             if (count === 1) return true;
             if (count > maxPerPage) return false;
-            // Page 1 has main header (~45px), subsequent pages have compact header (~32px)
-            const limit = (pIdx === 0) ? 970 : 1000;
+            // Maximum safe column height with 80px safety buffer above footer
+            const limit = (pIdx === 0) ? 910 : 930;
+            const isComfortable = (count <= 8);
             let c1 = 0, c2 = 0;
             for (let i = sliceStart; i < sliceEnd; i++) {
-                if ((i - sliceStart) % 2 === 0) c1 += heights[i];
-                else c2 += heights[i];
+                const h = estH(questions[i], isComfortable);
+                if (c1 <= c2) c1 += h;
+                else c2 += h;
             }
             return (c1 <= limit && c2 <= limit);
         };
@@ -6361,19 +6365,24 @@ window.AdminApp = {
             const pIdx = pIdx0 + 1;
             const n = pageQs.length;
 
-            const isComfortable = (n <= 14);
+            const isComfortable = (n <= 8);
             const densityClass = isComfortable ? ' density-comfortable' : ' density-compact';
 
             const col1Cards = [];
             const col2Cards = [];
+            let col1H = 0;
+            let col2H = 0;
 
-            pageQs.forEach((q, i) => {
+            pageQs.forEach((q) => {
                 const cardHtml = this.renderQuizCardHtml(q, globalQIdx, includeExplanations);
                 globalQIdx++;
-                if (i % 2 === 0) {
+                const h = this.estimateQuestionHeight(q, includeExplanations, isComfortable);
+                if (col1H <= col2H) {
                     col1Cards.push(cardHtml);
+                    col1H += h;
                 } else {
                     col2Cards.push(cardHtml);
+                    col2H += h;
                 }
             });
 
