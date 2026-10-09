@@ -117,6 +117,7 @@ textarea.dent-quiz-input { height: auto !important; min-height: 60px !important;
 .dent-nav-pill.correct { background: rgba(34, 197, 94, 0.4) !important; border-color: rgba(34, 197, 94, 0.5) !important; }
 .dent-nav-pill.wrong { background: rgba(239, 68, 68, 0.4) !important; border-color: rgba(239, 68, 68, 0.5) !important; }
 .dent-nav-pill.active-focused { background: #f8fafc !important; border-color: #ffffff !important; box-shadow: 0 0 6px rgba(255, 255, 255, 0.5); transform: scale(1.25); }
+.dent-nav-pill.is-card-pill { border-radius: 2px; }
 .dent-q-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 
 /* Saved Exams Bank Section */
@@ -2334,10 +2335,12 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         if (navBar) {
             navBar.innerHTML = '';
             navBar.style.display = 'flex';
-            questions.forEach((_, idx) => {
+            questions.forEach((q, idx) => {
                 const pill = document.createElement('button');
                 pill.className = 'dent-nav-pill';
-                pill.title = `السؤال ${idx + 1}`;
+                const isCard = (q.type === 'card' || q.type === 'info');
+                pill.title = isCard ? `بطاقة دراسية ${idx + 1}` : `السؤال ${idx + 1}`;
+                if (isCard) pill.classList.add('is-card-pill');
                 pill.dataset.idx = idx;
                 pill.addEventListener('click', () => {
                     if (currentViewMode === 'focused') {
@@ -2499,9 +2502,9 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                         const expBox = qBlock.querySelector('.dent-explanation-box');
                         if (expBox) expBox.style.display = 'block';
 
-                        const totalQuestions = generatedQuestions.length;
+                        const totalScoredQuestions = generatedQuestions.filter(q => q.type !== 'card' && q.type !== 'info').length;
                         const answeredQuestions = document.querySelectorAll('.dent-q-block input[type="radio"]:checked').length;
-                        if (answeredQuestions === totalQuestions) {
+                        if (totalScoredQuestions > 0 && answeredQuestions === totalScoredQuestions) {
                             const subBtn = document.getElementById('dp-submit-btn');
                             if (subBtn) subBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
@@ -2562,9 +2565,18 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const qBlocks = document.querySelectorAll('.dent-q-block');
         const missedQuestions = [];
         const breakdown = {};
+        const scoredQuestions = generatedQuestions.filter(q => q.type !== 'card' && q.type !== 'info');
+        const totalQs = scoredQuestions.length > 0 ? scoredQuestions.length : generatedQuestions.length;
 
         qBlocks.forEach((block, index) => {
             const qData = generatedQuestions[index];
+            const isNonScored = (qData.type === 'card' || qData.type === 'info');
+
+            const expBox = block.querySelector('.dent-explanation-box');
+            if (expBox) expBox.style.display = 'block';
+
+            if (isNonScored) return;
+
             const correctAns = (qData.correctAnswer || '').toString().trim();
             const selectedRadio = block.querySelector(`input[name="q_${index}"]:checked`);
             const assignedCh = qData.assignedChapter || 'عام';
@@ -2574,8 +2586,6 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 breakdown[assignedCh] = { correct: 0, total: 0 };
             }
             breakdown[assignedCh].total++;
-            
-            block.querySelector('.dent-explanation-box').style.display = 'block';
 
             let isCorrect = false;
             if (selectedRadio) {
@@ -2594,7 +2604,6 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             }
         });
 
-        const totalQs = generatedQuestions.length;
         const pct = Math.round((score / totalQs) * 100);
         let badge = 'نتيجة ممتازة!';
         if (pct < 60) badge = 'تحتاج لمراجعة إضافية للمادة';
