@@ -5764,6 +5764,84 @@ window.AdminApp = {
             .density-comfortable .quiz-q-top-row {
                 margin-bottom: 3px !important;
             }
+
+            /* Compact Density Standards (Space Saver) */
+            .density-compact .col-half {
+                gap: 2.5px !important;
+            }
+            .density-compact .quiz-q-block {
+                padding: 3px 5.5px !important;
+                border-radius: 3px !important;
+            }
+            .density-compact .quiz-q-top-row {
+                margin-bottom: 2px !important;
+            }
+            .density-compact .quiz-q-num-badge {
+                font-size: 0.65rem !important;
+            }
+            .density-compact .quiz-type-badge {
+                font-size: 0.48rem !important;
+                padding: 1px 2.5px !important;
+            }
+            .density-compact .quiz-q-chapter {
+                font-size: 0.54rem !important;
+            }
+            .density-compact .quiz-q-title {
+                font-size: 0.67rem !important;
+                line-height: 1.20 !important;
+                margin-bottom: 2px !important;
+            }
+            .density-compact .quiz-options-list {
+                gap: 1.2px !important;
+            }
+            .density-compact .quiz-opt-row {
+                padding: 1.2px 3.5px !important;
+                font-size: 0.62rem !important;
+                line-height: 1.16 !important;
+            }
+            .density-compact .quiz-opt-letter {
+                font-size: 0.58rem !important;
+            }
+            .density-compact .quiz-short-answer-box {
+                padding: 2px 4px !important;
+            }
+            .density-compact .quiz-short-answer-label {
+                font-size: 0.50rem !important;
+                margin-bottom: 1px !important;
+            }
+            .density-compact .quiz-short-answer-content {
+                font-size: 0.62rem !important;
+                line-height: 1.18 !important;
+            }
+            .density-compact .quiz-short-answer-content ol,
+            .density-compact .quiz-short-answer-content ul {
+                padding-left: 0 !important;
+                padding-right: 8px !important;
+                margin: 0 !important;
+            }
+            .density-compact .quiz-short-answer-content li {
+                margin-bottom: 0px !important;
+            }
+            .density-compact .dent-subheading {
+                font-size: 0.60rem !important;
+                font-weight: 700 !important;
+                color: #d4d4d8 !important;
+                margin-top: 1.5px !important;
+                margin-bottom: 1px !important;
+            }
+            .density-compact .quiz-explanation-box {
+                margin-top: 1.2px !important;
+                padding: 2px 4px !important;
+                font-size: 0.57rem !important;
+                line-height: 1.18 !important;
+            }
+            .dent-subheading {
+                font-size: 0.64rem;
+                font-weight: 700;
+                color: #e4e4e7;
+                margin-top: 2px;
+                margin-bottom: 1px;
+            }
             .doc-meta-badge {
                 text-align: left;
                 direction: ltr;
@@ -5999,32 +6077,36 @@ window.AdminApp = {
     },
 
     estimateQuestionHeight(q, includeExplanations = true) {
-        let h = 24;
+        let h = 20;
         const qLen = String(q?.question || '').length;
-        h += Math.max(1, Math.ceil(qLen / 55)) * 15;
+        h += Math.max(1, Math.ceil(qLen / 55)) * 14;
         const qType = q?.type || 'mcq';
         if (qType === 'card' || qType === 'short' || qType === 'info') {
             const ans = String(q?.answer || '');
-            const lines = ans.split(/\n|<br\s*\/?>|<li/i).length;
-            h += 12 + (Math.max(1, lines) * 16);
+            let lines = ans.split(/\n|<br\s*\/?>/i).length;
+            const liMatches = ans.match(/<li/gi);
+            if (liMatches) lines += liMatches.length;
+            const divMatches = ans.match(/<div/gi);
+            if (divMatches) lines += divMatches.length;
+            h += 10 + (Math.max(1, lines) * 14);
         } else {
             const opts = Array.isArray(q?.options) ? q.options : [];
             opts.forEach(opt => {
                 const optLen = String(opt || '').length;
-                h += Math.max(1, Math.ceil(optLen / 50)) * 17 + 1.5;
+                h += Math.max(1, Math.ceil(optLen / 50)) * 14 + 1;
             });
         }
         if (includeExplanations && q?.explanation) {
             const expLen = String(q.explanation || '').length;
-            h += 10 + (Math.max(1, Math.ceil(expLen / 55)) * 14);
+            h += 8 + (Math.max(1, Math.ceil(expLen / 55)) * 12);
         }
-        return h + 3.5;
+        return h + 2.5;
     },
 
     calculateSmartPages(questions, includeExplanations = true) {
         if (!Array.isArray(questions) || questions.length === 0) return [];
         const n = questions.length;
-        const maxPerPage = includeExplanations ? 8 : 14;
+        const maxPerPage = includeExplanations ? 10 : 16;
 
         const estH = (q) => this.estimateQuestionHeight(q, includeExplanations);
 
@@ -6032,7 +6114,7 @@ window.AdminApp = {
             if (sliceQs.length === 0) return false;
             if (sliceQs.length === 1) return true;
             if (sliceQs.length > maxPerPage) return false;
-            const limit = (pIdx === 0) ? 900 : 940;
+            const limit = (pIdx === 0) ? 940 : 980;
             let c1 = 0, c2 = 0;
             for (let i = 0; i < sliceQs.length; i++) {
                 const h = estH(sliceQs[i]);
@@ -6288,9 +6370,11 @@ window.AdminApp = {
                 `;
             }
 
+            const qid = quizData.id || '';
+            const docFooterUrl = qid ? `dent2025.com/quiz/${qid}` : 'dent2025.com';
             const footerHtml = `
                 <div class="doc-footer">
-                    <span class="doc-footer-right">dent2025.com</span>
+                    <span class="doc-footer-right">${docFooterUrl}</span>
                     <span class="doc-footer-center">${pageOfLabel}</span>
                     <span class="doc-footer-spacer"></span>
                 </div>
@@ -6376,15 +6460,31 @@ window.AdminApp = {
             return `${pgs.length} صفحات A4 (${breakdown})`;
         };
 
+        const exportQid = quizData.id || (typeof quizOrId === 'string' || typeof quizOrId === 'number' ? String(quizOrId) : '');
+        const origin = (window.location && window.location.origin) ? window.location.origin : 'https://dent2025.com';
+        const exportShortUrl = exportQid ? `${origin}/quiz/${encodeURIComponent(exportQid)}` : origin;
+
         modal.innerHTML = `
             <style>@keyframes adminSpin { to { transform: rotate(360deg); } }</style>
             <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 22px; width: 100%; max-width: 460px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: #fff; box-sizing: border-box;">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
                     <div>
-                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #f8fafc; line-height: 1.3;">تصدير الاختبار (كتيب A4)</h3>
+                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #f8fafc; line-height: 1.3;">تصدير ومشاركة الاختبار (A4)</h3>
                         <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 4px;">${this.escapeHtml(quizData.quiz_name || quizData.title)}</div>
                     </div>
                     <button type="button" onclick="AdminApp.closeQuizExportModal()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">×</button>
+                </div>
+
+                <!-- Direct Short Share Link Card -->
+                <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.22); border-radius: 12px; padding: 10px 13px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <div style="min-width: 0; flex: 1;">
+                        <div style="font-size: 0.73rem; color: #94a3b8; margin-bottom: 3px; font-weight: 600;">رابط الاختبار المباشر (قصير وأنيق):</div>
+                        <div style="font-size: 0.79rem; color: #38bdf8; font-family: monospace; direction: ltr; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${exportShortUrl}</div>
+                    </div>
+                    <button type="button" id="admin-export-copy-link-btn" style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; border-radius: 9px; padding: 7px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; flex-shrink: 0; font-family: inherit; transition: all 0.2s;" onmouseover="this.style.background='rgba(56, 189, 248, 0.25)';" onmouseout="this.style.background='rgba(56, 189, 248, 0.15)';">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>نسخ الرابط</span>
+                    </button>
                 </div>
 
                 <!-- Quiz Layout Info Card -->
@@ -6435,6 +6535,18 @@ window.AdminApp = {
                 if (sumEl) sumEl.innerText = getSummaryText(freshPages);
             });
         }
+
+        document.getElementById('admin-export-copy-link-btn')?.addEventListener('click', () => {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(exportShortUrl).then(() => {
+                    this.showToast('تم نسخ رابط الاختبار المباشر بنجاح!');
+                }).catch(() => {
+                    prompt('انسخ رابط الاختبار المباشر:', exportShortUrl);
+                });
+            } else {
+                prompt('انسخ رابط الاختبار المباشر:', exportShortUrl);
+            }
+        });
 
         document.getElementById('admin-export-pdf-btn').addEventListener('click', () => {
             const incExp = !!document.getElementById('admin-export-inc-exp')?.checked;
@@ -6775,6 +6887,10 @@ window.AdminApp = {
                         <span>حفظ</span>
                     </a>
                 ` : ''}
+                <button id="dent-admin-toast-copy-link-btn" type="button" class="dent-toast-btn" title="نسخ رابط الاختبار المباشر (قصير وأنيق)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    <span>رابط الاختبار</span>
+                </button>
                 <a href="${blobUrl}" target="_blank" rel="noopener noreferrer" class="dent-toast-btn" title="عرض الملف">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                     <span>عرض</span>
@@ -6784,6 +6900,25 @@ window.AdminApp = {
 
         document.body.appendChild(toast);
 
+        const qid = this.currentExportQuizData?.id || '';
+        const origin = (window.location && window.location.origin) ? window.location.origin : 'https://dent2025.com';
+        const shortUrl = qid ? `${origin}/quiz/${encodeURIComponent(qid)}` : '';
+
+        const copyLinkBtn = document.getElementById('dent-admin-toast-copy-link-btn');
+        if (copyLinkBtn && shortUrl) {
+            copyLinkBtn.onclick = () => {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(shortUrl).then(() => {
+                        this.showToast('تم نسخ رابط الاختبار المباشر بنجاح!');
+                    }).catch(() => {
+                        prompt('انسخ رابط الاختبار المباشر:', shortUrl);
+                    });
+                } else {
+                    prompt('انسخ رابط الاختبار المباشر:', shortUrl);
+                }
+            };
+        }
+
         if (canShareNative) {
             const shareBtn = document.getElementById('dent-admin-toast-share-btn');
             if (shareBtn) {
@@ -6792,7 +6927,7 @@ window.AdminApp = {
                         await navigator.share({
                             files: [file],
                             title: fileName.replace(/\.[^.]+$/, ''),
-                            text: 'كتيب اختبار • منصة Dent2025'
+                            text: shortUrl ? `كتيب اختبار • منصة Dent2025\nرابط الاختبار: ${shortUrl}` : 'كتيب اختبار • منصة Dent2025'
                         });
                     } catch(e) {}
                 };

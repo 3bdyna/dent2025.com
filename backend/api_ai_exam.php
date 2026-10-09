@@ -3392,6 +3392,10 @@ if ($action === 'get') {
         }
     }
 
+    if (empty($quizData['id'])) {
+        $quizData['id'] = $quizId;
+    }
+
     sendResponse(true, $quizData);
 }
 

@@ -598,6 +598,10 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 تصدير الاختبار
             </button>
+            <button id="dp-share-btn" class="dent-quiz-btn dent-btn-secondary" style="display: inline-flex; align-items: center; gap: 5px;" title="مشاركة رابط الاختبار المباشر">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                مشاركة الرابط
+            </button>
         </div>
 
         <div class="dent-player-modes-row" style="display: flex; gap: 10px; margin-bottom: 18px; text-align: right;">
@@ -774,6 +778,14 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         document.getElementById('dp-export-btn')?.addEventListener('click', () => {
             if (currentActiveQuiz) {
                 openQuizExportModal(currentActiveQuiz);
+            }
+        });
+        document.getElementById('dp-share-btn')?.addEventListener('click', () => {
+            if (currentActiveQuiz) {
+                const qid = currentActiveQuiz.id || currentActiveQuiz.metaObj?.id || currentActiveQuiz.metaObj?.quiz_id;
+                if (qid) {
+                    copyQuizShareLink(qid, currentActiveQuiz.quiz_name);
+                }
             }
         });
         
@@ -2107,6 +2119,53 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         return `(${count} اختبار متوفر)`;
     }
 
+    // --- CLEAN SHORT QUIZ URL & SHARE HELPERS ---
+    function getQuizShortUrl(quizId) {
+        if (!quizId) return (window.location && window.location.origin) ? window.location.origin : 'https://dent2025.com';
+        const cleanId = String(quizId).trim();
+        const origin = (window.location && window.location.origin) ? window.location.origin : 'https://dent2025.com';
+        return `${origin}/quiz/${encodeURIComponent(cleanId)}`;
+    }
+
+    function showQuizCopyToast(message, link = '') {
+        let old = document.getElementById('dent-quiz-copy-toast');
+        if (old) old.remove();
+
+        const toast = document.createElement('div');
+        toast.id = 'dent-quiz-copy-toast';
+        toast.style.cssText = 'position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 99999999; background: rgba(13, 15, 20, 0.96); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 999px; padding: 8px 18px; box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75); color: #f8fafc; font-family: "Outfit", "Noto Kufi Arabic", sans-serif; direction: rtl; display: flex; align-items: center; gap: 10px; max-width: min(540px, calc(100vw - 24px)); box-sizing: border-box; transition: opacity 0.25s ease, transform 0.25s ease;';
+
+        const displayLink = link ? link.replace(/^https?:\/\//, '') : '';
+        toast.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span style="font-weight: 600; font-size: 0.82rem; color: #f8fafc; white-space: nowrap;">${message}</span>
+            ${displayLink ? `<span style="font-size: 0.72rem; color: #38bdf8; direction: ltr; font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">${displayLink}</span>` : ''}
+        `;
+
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            if (toast && toast.parentNode) {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(-50%) translateY(8px)';
+                setTimeout(() => toast.remove(), 250);
+            }
+        }, 3200);
+    }
+
+    function copyQuizShareLink(quizId, quizTitle = '') {
+        const link = getQuizShortUrl(quizId);
+        const titleText = quizTitle ? `رابط "${quizTitle}"` : 'رابط الاختبار';
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(link).then(() => {
+                showQuizCopyToast(`تم نسخ ${titleText} بنجاح!`, link);
+            }).catch(() => {
+                prompt(`انسخ رابط الاختبار المباشر:`, link);
+            });
+        } else {
+            prompt(`انسخ رابط الاختبار المباشر:`, link);
+        }
+    }
+
     // --- SAVED EXAMS BANK LOGIC ---
     async function loadSavedQuizzesBank() {
         const countSpan = document.getElementById('dent-bank-count');
@@ -2275,26 +2334,19 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                             تصدير
                         </button>
-                        <button class="dent-quiz-btn dent-btn-secondary share-btn" style="margin-top:0; padding:7px 9px; font-size:0.82rem;">مشاركة الرابط</button>
+                        <button class="dent-quiz-btn dent-btn-secondary share-btn" style="margin-top:0; padding:7px 9px; font-size:0.82rem; display:inline-flex; align-items:center; gap:4px;" title="مشاركة رابط الاختبار المباشر (قصير وأنيق)">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                            مشاركة الرابط
+                        </button>
                     </div>
                 </div>
             `;
 
             card.querySelector('.start-btn').addEventListener('click', () => playSavedQuiz(q.id));
             card.querySelector('.export-btn').addEventListener('click', () => openQuizExportModal(q.id));
-            card.querySelector('.share-btn').addEventListener('click', () => {
-                const shareUrl = new URL(window.location.href);
-                shareUrl.searchParams.set('quiz_id', q.id);
-                const link = shareUrl.toString();
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(link).then(() => {
-                        alert("تم نسخ رابط الاختبار المباشر للحافظة!");
-                    }).catch(() => {
-                        prompt("انسخ رابط الاختبار المباشر:", link);
-                    });
-                } else {
-                    prompt("انسخ رابط الاختبار المباشر:", link);
-                }
+            card.querySelector('.share-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                copyQuizShareLink(q.id, q.quiz_name);
             });
 
             // Admin Quick Actions (Rename, Hide & Delete)
@@ -2489,12 +2541,18 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     // --- PLAYER LOGIC ---
     function openPlayer(title, metaSub, questions, metaObj = {}) {
         generatedQuestions = questions;
+        const activeQid = metaObj.id || metaObj.quiz_id || '';
         currentActiveQuiz = {
+            id: activeQid,
             quiz_name: title,
             subject_name: (metaSub || '').split(' — ')[0].trim(),
             questions: questions,
             metaObj: metaObj
         };
+
+        if (activeQid && window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', `/quiz/${encodeURIComponent(activeQid)}`);
+        }
         
         let chapList = [];
         if (metaSub.includes(' — ')) {
@@ -2879,6 +2937,9 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         document.getElementById('dent-player-view').style.display = 'none';
         document.getElementById('dent-generator-view').style.display = 'block';
         document.getElementById('dent-bank-view').style.display = 'block';
+        if (window.history && window.history.replaceState && window.location.pathname.startsWith('/quiz')) {
+            window.history.replaceState(null, '', '/المقررات-والاختبارات/');
+        }
         goToWizardStep(1);
         scrollToQuizContainer();
     }
@@ -3540,9 +3601,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 `;
             }
 
+            const qid = quizData.id || (quizData.metaObj && quizData.metaObj.id) || '';
+            const docFooterUrl = qid ? `dent2025.com/quiz/${qid}` : 'dent2025.com';
             const footerHtml = `
                 <div class="doc-footer">
-                    <span class="doc-footer-right">dent2025.com</span>
+                    <span class="doc-footer-right">${docFooterUrl}</span>
                     <span class="doc-footer-center">${pageOfLabel}</span>
                     <span class="doc-footer-spacer"></span>
                 </div>
@@ -3606,7 +3669,12 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             return;
         }
 
+        if (!quizData.id && (typeof quizOrId === 'string' || typeof quizOrId === 'number')) {
+            quizData.id = String(quizOrId);
+        }
         currentExportQuizData = quizData;
+        const exportQid = quizData.id || '';
+        const exportShortUrl = getQuizShortUrl(exportQid);
         const questions = quizData.questions;
         const totalQ = questions.length;
         const initialIncExp = false;
@@ -3635,10 +3703,22 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 22px; width: 100%; max-width: 460px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: #fff; box-sizing: border-box;">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
                     <div>
-                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #f8fafc; line-height: 1.3;">تصدير الاختبار (كتيب A4)</h3>
+                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #f8fafc; line-height: 1.3;">تصدير ومشاركة الاختبار (A4)</h3>
                         <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 4px;">${escapeHtml(quizData.quiz_name || quizData.title)}</div>
                     </div>
                     <button type="button" onclick="closeQuizExportModal()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">×</button>
+                </div>
+
+                <!-- Direct Short Share Link Card -->
+                <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.22); border-radius: 12px; padding: 10px 13px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <div style="min-width: 0; flex: 1;">
+                        <div style="font-size: 0.73rem; color: #94a3b8; margin-bottom: 3px; font-weight: 600;">رابط الاختبار المباشر (قصير وأنيق):</div>
+                        <div style="font-size: 0.79rem; color: #38bdf8; font-family: monospace; direction: ltr; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${exportShortUrl}</div>
+                    </div>
+                    <button type="button" id="dent-export-copy-link-btn" style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; border-radius: 9px; padding: 7px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; flex-shrink: 0; font-family: inherit; transition: all 0.2s;" onmouseover="this.style.background='rgba(56, 189, 248, 0.25)';" onmouseout="this.style.background='rgba(56, 189, 248, 0.15)';">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>نسخ الرابط</span>
+                    </button>
                 </div>
 
                 <!-- Quiz Layout Info Card -->
@@ -3680,6 +3760,10 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         `;
 
         document.body.appendChild(modal);
+
+        document.getElementById('dent-export-copy-link-btn')?.addEventListener('click', () => {
+            copyQuizShareLink(exportQid, quizData.quiz_name || quizData.title || '');
+        });
 
         const expToggle = document.getElementById('dent-export-inc-exp');
         if (expToggle) {
@@ -3902,12 +3986,14 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const blobUrl = URL.createObjectURL(blob);
 
         // 1. On mobile devices, for PDF try native Web Share API
+        const exportQid = currentExportQuizData?.id || (currentActiveQuiz && currentActiveQuiz.id) || '';
+        const exportShortUrl = exportQid ? getQuizShortUrl(exportQid) : '';
         if (fileType === 'pdf' && isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
             try {
                 await navigator.share({
                     files: [file],
                     title: fileName.replace(/\.[^.]+$/, ''),
-                    text: 'كتيب اختبار • منصة Dent2025'
+                    text: exportShortUrl ? `كتيب اختبار • منصة Dent2025\nرابط الاختبار: ${exportShortUrl}` : 'كتيب اختبار • منصة Dent2025'
                 });
                 setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
                 return;
@@ -4016,6 +4102,10 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                         <span>حفظ</span>
                     </a>
                 ` : ''}
+                <button id="dent-quiz-toast-copy-link-btn" type="button" class="dent-toast-btn" title="نسخ رابط الاختبار المباشر (قصير وأنيق)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    <span>رابط الاختبار</span>
+                </button>
                 <a href="${blobUrl}" target="_blank" rel="noopener noreferrer" class="dent-toast-btn" title="عرض الملف">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                     <span>عرض</span>
@@ -4025,6 +4115,18 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
         document.body.appendChild(toast);
 
+        const toastQid = currentExportQuizData?.id || (currentActiveQuiz && currentActiveQuiz.id) || '';
+        const toastShortUrl = toastQid ? getQuizShortUrl(toastQid) : '';
+
+        const toastCopyBtn = document.getElementById('dent-quiz-toast-copy-link-btn');
+        if (toastCopyBtn) {
+            toastCopyBtn.onclick = () => {
+                if (toastQid) {
+                    copyQuizShareLink(toastQid, currentExportQuizData?.quiz_name || currentExportQuizData?.title || '');
+                }
+            };
+        }
+
         if (canShareNative) {
             const shareBtn = document.getElementById('dent-quiz-toast-share-btn');
             if (shareBtn) {
@@ -4033,7 +4135,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                         await navigator.share({
                             files: [file],
                             title: fileName.replace(/\.[^.]+$/, ''),
-                            text: 'كتيب اختبار • منصة Dent2025'
+                            text: toastShortUrl ? `كتيب اختبار • منصة Dent2025\nرابط الاختبار: ${toastShortUrl}` : 'كتيب اختبار • منصة Dent2025'
                         });
                     } catch(e) {}
                 };
@@ -4042,7 +4144,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
         setTimeout(() => {
             if (toast && toast.parentNode) toast.remove();
-        }, 4500);
+        }, 5000);
     }
 
     // Expose reload hook and listen to auth change events for instant reactivity
