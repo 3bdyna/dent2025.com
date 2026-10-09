@@ -6365,7 +6365,16 @@ window.AdminApp = {
             const pIdx = pIdx0 + 1;
             const n = pageQs.length;
 
-            const isComfortable = (n <= 8);
+            // Dynamically check if page comfortably fits without overflowing
+            let testCol1 = 0;
+            let testCol2 = 0;
+            pageQs.forEach((q) => {
+                const h = this.estimateQuestionHeight(q, includeExplanations, true);
+                if (testCol1 <= testCol2) testCol1 += h;
+                else testCol2 += h;
+            });
+            const pageLimit = (pIdx === 1) ? 910 : 930;
+            const isComfortable = (Math.max(testCol1, testCol2) <= pageLimit);
             const densityClass = isComfortable ? ' density-comfortable' : ' density-compact';
 
             const col1Cards = [];
@@ -6395,6 +6404,7 @@ window.AdminApp = {
 
             let headerHtml = '';
             const qCountLabel = isDocRtl ? `${qCount} أسئلة` : `${qCount} Questions`;
+            const continueLabel = isDocRtl ? `تابع • ${qCountLabel}` : `Cont. • ${qCountLabel}`;
             const pageOfLabel = isDocRtl ? `صفحة ${pIdx} من ${totalPages}` : `Page ${pIdx} of ${totalPages}`;
 
             if (pIdx === 1) {
@@ -6417,7 +6427,7 @@ window.AdminApp = {
                             <div class="doc-compact-sub" dir="auto"><bdi>${subjectName}</bdi></div>
                         </div>
                         <div class="doc-meta-badge">
-                            <span class="period" dir="ltr">${pageOfLabel}</span>
+                            <span class="period" dir="ltr">${continueLabel}</span>
                         </div>
                     </div>
                 `;
