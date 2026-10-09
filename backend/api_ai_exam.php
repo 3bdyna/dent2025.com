@@ -2406,15 +2406,20 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         $stage2Prompt .= "EXTRACTION FORMAT PREFERENCE: {$formatPref}\n";
         $stage2Prompt .= "(Values: 'hybrid' = keep original formats matching university revision banks; 'mcq_only' = only keep real MCQs; 'convert_all_mcq' = convert everything to 4-choice MCQs)\n\n";
 
-        $stage2Prompt .= "CRITICAL DIRECTIVE 1: PROFESSIONAL ACADEMIC QUESTION RE-FORMULATION & SLANG REMOVAL:\n";
-        $stage2Prompt .= "- Students frequently recall exam questions in informal chat, WhatsApp messages, or colloquial summaries (e.g., 'عرف الـ sterilization و اذكر الـ Methods حق الي هي', 'اذكر 4 من الـ precautions للـ infection control', 'الثالث اذكر له الـ Variation of buccal mucosa', 'الرابع كيس هيستوري مريض معاه pain في الـ lower tooth مدري lip يشاك تتكلم عن الـ Hopi له حقه اذكر 4', 'الخامس كان يتكلم عن Patient Previous dental history يبغى 3 اكتب له اي شي').\n";
-        $stage2Prompt .= "- YOU MUST TRANSFORM AND ELEVATE each item into a clean, formal university examination question stem as written by a university professor.\n";
-        $stage2Prompt .= "- STRIP ALL CASUAL CHAT SLANG, uncertainty ('مدري', 'يشاك'), conversational phrasing ('اذكر له', 'حق الي هي'), and personal commentary ('اكتب له أي شي'). State the question authoritatively, professionally, and clearly.\n\n";
+        $stage2Prompt .= "CRITICAL DIRECTIVE 1: NATURAL, CRISP QUESTION STEM (FAITHFUL TO STUDENT PROMPT):\n";
+        $stage2Prompt .= "- Translate and elevate student chat recollections into clean, direct university exam questions.\n";
+        $stage2Prompt .= "- Strip dialect and slang ('عرف الـ', 'اذكر له', 'حق الي هي', 'مدري', 'يبغى 3 اكتب له اي شي').\n";
+        $stage2Prompt .= "- DO NOT over-elaborate or invent flowery bureaucratic prose. Keep the stem simple, crisp, and direct:\n";
+        $stage2Prompt .= "  * Good: 'Enumerate 4 infection control precautions.' (NOT: 'Enumerate four standard precautions required for effective infection control in clinical dental practice.')\n";
+        $stage2Prompt .= "  * Good: 'Define sterilization and list 3 methods of sterilization.'\n";
+        $stage2Prompt .= "  * Good: 'List normal anatomical variations of the buccal mucosa.'\n";
+        $stage2Prompt .= "  * Good: 'A patient presents with pain in the lower lip/tooth. Detail 4 components of the History of Present Illness (HOPI).'\n";
+        $stage2Prompt .= "  * Good: 'List 3 components of Patient Previous Dental History.'\n\n";
 
         if ($isEnglishMedium) {
             $stage2Prompt .= "CRITICAL DIRECTIVE 2: MEDIUM OF INSTRUCTION IS 100% ACADEMIC ENGLISH:\n";
             $stage2Prompt .= "- In {$subjectTitle} ({$spec}), university exams, curricula, scientific terms, and answers are 100% in ACADEMIC ENGLISH.\n";
-            $stage2Prompt .= "- Even if the student recollected the questions in Arabic or Arabic-English chat in the uploaded screenshot, YOU MUST FORMULATE the question stem in pristine, formal ACADEMIC ENGLISH and provide all answers/options strictly in ACADEMIC ENGLISH matching dental/medical textbooks (e.g. Autoclave, Dry Heat, Radiation, Linea Alba, Fordyce Granules, HOPI: Onset, Location, Character, Severity).\n";
+            $stage2Prompt .= "- Even if the student recollected the questions in Arabic or Arabic-English chat in the uploaded screenshot, YOU MUST FORMULATE the question stem in pristine, formal ACADEMIC ENGLISH and provide all answers/options strictly in ACADEMIC ENGLISH matching dental/medical textbooks.\n";
             $stage2Prompt .= "- DO NOT translate medical answers or scientific terminology into Arabic! The entire quiz ('question', 'answer', 'options', 'explanation') must be in academic English.\n";
             $stage2Prompt .= "- Set 'language': 'en' for all items.\n\n";
         } else {
@@ -2423,16 +2428,25 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
             $stage2Prompt .= "- Set 'language': 'ar' for all items.\n\n";
         }
 
-        $stage2Prompt .= "CRITICAL DIRECTIVE 3: EXACT ITEM COUNT & SOURCE FIDELITY (NO EXTRA FABRICATED ITEMS):\n";
-        $stage2Prompt .= "- If the source specifies exact items or a count (e.g. '3 methods: Autoclave, Dry heat, Radiation', '4 precautions', '3 components'):\n";
-        $stage2Prompt .= "  Stick STRICTLY to that exact count and those specific items. DO NOT volunteer extra unasked items (e.g., do NOT add a 4th method like Chemiclave when only 3 were listed/asked).\n\n";
+        $stage2Prompt .= "CRITICAL DIRECTIVE 3: STRICT PROHIBITION ON UNASKED-FOR DEFINITIONS IN LIST QUESTIONS:\n";
+        $stage2Prompt .= "- When a question asks to 'Enumerate', 'List', 'Name', 'State', or 'Mention':\n";
+        $stage2Prompt .= "  PROVIDE ONLY THE CLEAN ITEMS / NAMES / TERMS THEMSELVES! STRICTLY DO NOT APPEND DEFINITIONS OR MECHANISMS FOR EACH ITEM!\n";
+        $stage2Prompt .= "  * FORBIDDEN: 'Hand Hygiene: Perform thorough handwashing or alcohol rubs before and after patient contact.' (The question did NOT ask to define hand hygiene!)\n";
+        $stage2Prompt .= "  * CORRECT: 'Hand hygiene'\n";
+        $stage2Prompt .= "  * FORBIDDEN: 'Linea Alba: A horizontal white line matching the occlusal plane caused by frictional hyperkeratosis.' (The question did NOT ask to define Linea Alba!)\n";
+        $stage2Prompt .= "  * CORRECT: 'Linea alba'\n";
+        $stage2Prompt .= "  * FORBIDDEN: 'Steam Under Pressure (Autoclave): Uses moist heat at 121°C to denature microbial proteins.'\n";
+        $stage2Prompt .= "  * CORRECT: 'Steam under pressure (Autoclave)'\n";
+        $stage2Prompt .= "- If and ONLY IF a question explicitly asks to define a concept (e.g. 'Define sterilization and list 3 methods...'):\n";
+        $stage2Prompt .= "  Provide ONE single direct sentence for the requested definition under <div class=\"dent-subheading\">Definition of [Term]:</div><p>...</p>, and then provide the list items cleanly without definitions!\n\n";
 
-        $stage2Prompt .= "CRITICAL DIRECTIVE 4: CONCISE, HIGH-YIELD MODEL ANSWERS (STRICTLY DO NOT OVER-ANSWER):\n";
-        $stage2Prompt .= "- DO NOT write long, dense paragraphs, exhaustive textbook dissertations, or verbose background mini-essays.\n";
-        $stage2Prompt .= "- These cards are designed for student rapid active recall and exam memorization: KEEP EVERY POINT PUNCHY, CRISP, AND CONCISE.\n";
-        $stage2Prompt .= "- Each bullet/numbered point must be exactly ONE brief line (max 8–15 words per point), leading with the key term in <strong>Bold:</strong> followed by its core clinical takeaway.\n";
-        $stage2Prompt .= "- Definitions must be ONE single, direct, clear sentence without run-on technical fluff.\n";
-        $stage2Prompt .= "- Answer strictly and directly what the question asks for—nothing more, nothing less.\n\n";
+        $stage2Prompt .= "CRITICAL DIRECTIVE 4: COMPLETE CURRICULUM LIST + 'CHOOSE ANY X' DIRECTIVE:\n";
+        $stage2Prompt .= "- When a question asks for a specific count (e.g. 'List 4 variations...', 'List 3 components...', 'Enumerate 4 precautions...'):\n";
+        $stage2Prompt .= "  If the lecture/slides contain more standard items (e.g. 5 to 7 items total in the curriculum):\n";
+        $stage2Prompt .= "  List ALL standard high-yield items from the slides/curriculum concisely (as clean terms/names without definitions), and ABOVE the list add a clear instruction telling the student how many the exam question asked for:\n";
+        $stage2Prompt .= "  <div style=\"color:#94a3b8;font-size:0.85rem;margin-bottom:6px;\"><em>(Choose / Memorize any X for the exam):</em></div>\n";
+        $stage2Prompt .= "  Example: If the question asked for 4 precautions, put '(Choose any 4 for the exam):' followed by the 5-6 standard precautions.\n";
+        $stage2Prompt .= "  This allows students to pick and memorize whichever X items are easiest for them!\n\n";
 
         $stage2Prompt .= "CRITICAL DIRECTIVE 5: TOPIC INCLUSION & CHAPTER MAPPING (MAXIMUM RETENTION):\n";
         $stage2Prompt .= "1. BE GENEROUS AND HIGHLY INCLUSIVE: You MUST KEEP every question and marked slide point that belongs or relates to the course ({$subjectTitle}) or to any of the student's target chapters.\n";
@@ -2448,10 +2462,11 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         $stage2Prompt .= "   - If FORMAT PREFERENCE is 'mcq_only': Discard this item.\n";
         $stage2Prompt .= "   - If FORMAT PREFERENCE is 'convert_all_mcq': Construct 4 plausible choices with distractors, prefix question with '*', and return as type: 'mcq'.\n";
         $stage2Prompt .= "   - If FORMAT PREFERENCE is 'hybrid' (Default - matching our official college revision banks):\n";
-        $stage2Prompt .= "     Elevate the question stem to formal academic phrasing and provide a concise, high-yield model answer in 'answer' using clean HTML:\n";
-        $stage2Prompt .= "     * Use <div class=\"dent-subheading\">Heading/Category:</div>\n";
-        $stage2Prompt .= "     * Use concise <ol><li><strong>Keyword:</strong> Brief key fact (1 line)</li></ol> or <ul><li><strong>Term:</strong> Key feature (1 line)</li></ul>\n";
-        $stage2Prompt .= "     * Keep explanations crisp, direct, and easy to memorize in 5–10 seconds (no long prose paragraphs).\n";
+        $stage2Prompt .= "     Provide a clean, focused model answer in 'answer' using HTML:\n";
+        $stage2Prompt .= "     * If a definition was explicitly asked: <div class=\"dent-subheading\">Definition of [Term]:</div><p>One direct sentence.</p>\n";
+        $stage2Prompt .= "     * For lists: <div class=\"dent-subheading\">[Category Heading]:</div>\n";
+        $stage2Prompt .= "     * Add the choice hint if a count was asked: <div style=\"color:#94a3b8;font-size:0.85rem;margin-bottom:6px;\"><em>(Choose any X for the exam):</em></div>\n";
+        $stage2Prompt .= "     * List items as clean names/terms only: <ol><li><strong>Term</strong></li></ol> or <ul><li><strong>Term</strong></li></ul>. STRICTLY NO unasked-for definitions!\n";
         $stage2Prompt .= "     Return as type: 'card' (with 'question', 'answer', 'assignedChapter', NO options array).\n";
         $stage2Prompt .= "3. SLIDE HIGHLIGHTS & TESTED CONCEPTS (type 'slide_highlight'):\n";
         $stage2Prompt .= "   - If FORMAT PREFERENCE is 'mcq_only': Discard this item.\n";
@@ -2465,7 +2480,7 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         $stage2Prompt .= "OUTPUT FORMAT (Return ONLY a raw JSON array):\n";
         $stage2Prompt .= "[\n";
         $stage2Prompt .= '  {"type":"mcq","language":"' . ($isEnglishMedium ? 'en' : 'ar') . '","question":"MCQ text","options":["A","B","C","D"],"correctIndex":0,"correctAnswer":"A","explanation":"Explanation...","assignedChapter":"Chapter Name"},' . "\n";
-        $stage2Prompt .= '  {"type":"card","language":"' . ($isEnglishMedium ? 'en' : 'ar') . '","question":"Q1. Enumerate 4 essential...","answer":"<div class=\"dent-subheading\">Infection Control Precautions:</div><ol><li>Item 1</li></ol>","assignedChapter":"Chapter Name"},' . "\n";
+        $stage2Prompt .= '  {"type":"card","language":"' . ($isEnglishMedium ? 'en' : 'ar') . '","question":"Enumerate 4 infection control precautions.","answer":"<div class=\"dent-subheading\">Infection Control Precautions:</div><div style=\"color:#94a3b8;font-size:0.85rem;margin-bottom:6px;\"><em>(Choose any 4 for the exam):</em></div><ol><li>Hand hygiene</li><li>Personal Protective Equipment (PPE)</li><li>Sharps safety</li><li>Instrument sterilization</li><li>Environmental surface disinfection</li></ol>","assignedChapter":"Chapter Name"},' . "\n";
         $stage2Prompt .= '  {"type":"info","language":"' . ($isEnglishMedium ? 'en' : 'ar') . '","question":"1. Landmark Name","answer":"<ul><li><strong>Feature:</strong> Anatomical detail...</li></ul>","assignedChapter":"Chapter Name"}' . "\n";
         $stage2Prompt .= "]\n";
 
