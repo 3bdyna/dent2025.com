@@ -3250,35 +3250,35 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     }
 
     function estimateQuestionHeight(q, includeExplanations = true) {
-        let h = 35;
+        let h = 24;
         const qLen = String(q?.question || '').length;
-        h += Math.max(1, Math.ceil(qLen / 45)) * 17;
+        h += Math.max(1, Math.ceil(qLen / 55)) * 15;
         const qType = q?.type || 'mcq';
         if (qType === 'card' || qType === 'short' || qType === 'info') {
             const ans = String(q?.answer || '');
             const lines = ans.split(/\n|<br\s*\/?>|<li/i).length;
-            h += 14 + (Math.max(1, lines) * 18);
+            h += 12 + (Math.max(1, lines) * 16);
         } else {
             const opts = Array.isArray(q?.options) ? q.options : [];
             opts.forEach(opt => {
                 const optLen = String(opt || '').length;
-                h += Math.max(1, Math.ceil(optLen / 38)) * 19;
+                h += Math.max(1, Math.ceil(optLen / 50)) * 17 + 1.5;
             });
         }
         if (includeExplanations && q?.explanation) {
             const expLen = String(q.explanation || '').length;
-            h += 12 + (Math.max(1, Math.ceil(expLen / 45)) * 15);
+            h += 10 + (Math.max(1, Math.ceil(expLen / 55)) * 14);
         }
-        return h + 4;
+        return h + 3.5;
     }
 
     function calculateSmartPages(questions, includeExplanations = true) {
         if (!Array.isArray(questions) || questions.length === 0) return [];
         const total = questions.length;
         
-        const targetPerPage = includeExplanations ? 6 : 8;
-        const maxPerPage = includeExplanations ? 7 : 10;
-        let p = Math.max(1, Math.ceil(total / targetPerPage));
+        const targetPerPage = includeExplanations ? 6 : 10;
+        const maxPerPage = includeExplanations ? 7 : 12;
+        let p = Math.max(1, Math.round(total / targetPerPage));
 
         while (p < total) {
             const base = Math.floor(total / p);
@@ -3298,7 +3298,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                     allFit = false;
                     break;
                 }
-                const limit = (pIdx === 0) ? 860 : 910;
+                const limit = (pIdx === 0) ? 900 : 940;
                 let c1 = 0;
                 let c2 = 0;
                 for (let i = 0; i < pageQs.length; i++) {
