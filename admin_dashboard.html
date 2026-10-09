@@ -1019,6 +1019,10 @@
  <button onclick="AdminApp.loadQuizzes()" class="btn btn-secondary text-xs py-1 px-3 shrink-0">
  تحديث
  </button>
+ <button onclick="AdminApp.promptTakeQuizById()" class="btn btn-secondary text-xs py-1 px-3 shrink-0 flex items-center gap-1.5 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10" title="خوض اختبار فورياً عبر إدخال معرف الاختبار">
+  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+  <span>خوض بالمعرف</span>
+ </button>
  </div>
 
  <!-- Table -->
@@ -1781,6 +1785,163 @@
  </div>
  </div>
  </div>
+
+  <!-- 10. Admin Interactive Quiz Player Modal -->
+  <div id="admin-quiz-player-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden overflow-hidden p-0 sm:p-4">
+    <div class="glass w-full h-full sm:h-[94vh] max-w-4xl flex flex-col sm:rounded-2xl border border-white/10 shadow-2xl bg-[#161616] overflow-hidden">
+      
+      <!-- Top Bar / Header -->
+      <div class="px-4 py-3 sm:px-6 sm:py-3.5 border-b border-white/10 flex items-center justify-between gap-3 shrink-0 bg-black/40">
+        <div class="flex items-center gap-3 min-w-0">
+          <button type="button" onclick="AdminApp.closeAdminQuizPlayer()" class="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition" title="إغلاق الاختبار">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+          <div class="min-w-0">
+            <h3 id="admin-qp-title" class="text-sm sm:text-base font-bold text-white truncate leading-tight">عنوان الاختبار</h3>
+            <div class="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+              <span id="admin-qp-meta" class="truncate">اسم المادة</span>
+              <span>•</span>
+              <span id="admin-qp-progress" class="font-mono text-emerald-400 font-semibold">سؤال 1 من 10</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Header Controls & Timer -->
+        <div class="flex items-center gap-2 shrink-0">
+          <!-- Timer Badge -->
+          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 font-mono text-xs text-gray-200" title="الوقت المنقضي">
+            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"></circle><path stroke-linecap="round" stroke-width="2" d="M12 6v6l4 2"></path></svg>
+            <span id="admin-qp-timer">00:00</span>
+          </div>
+
+          <!-- Mode Toggle (Practice vs Exam) -->
+          <div class="hidden sm:flex items-center bg-black/40 border border-white/10 rounded-lg p-0.5 text-xs">
+            <button type="button" id="admin-qp-mode-practice" onclick="AdminApp.setAdminQuizMode('practice')" class="px-2.5 py-1 rounded-md transition font-medium text-white bg-white/15" title="عرض الحل والشرح فورياً بعد اختيار الإجابة">تدريب فوري</button>
+            <button type="button" id="admin-qp-mode-exam" onclick="AdminApp.setAdminQuizMode('exam')" class="px-2.5 py-1 rounded-md transition text-gray-400 hover:text-white" title="إخفاء الحلول حتى إنهاء وتسليم الاختبار">نمط اختبار</button>
+          </div>
+
+          <!-- Quick Reveal All (Admin feature) -->
+          <button type="button" id="admin-qp-reveal-btn" onclick="AdminApp.toggleAdminQuizReveal()" class="px-2.5 py-1 rounded-lg text-xs font-medium border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 transition flex items-center gap-1" title="كشف / إخفاء الإجابة النموذجية فوراً">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+            <span class="hidden md:inline" id="admin-qp-reveal-label">كشف الحل</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Strip (Question Pills) -->
+      <div class="px-3 sm:px-6 py-2 border-b border-white/5 bg-black/20 overflow-x-auto shrink-0 select-none flex items-center gap-1.5 custom-scrollbar" id="admin-qp-pills-bar">
+        <!-- Rendered dynamically: 1, 2, 3 ... N -->
+      </div>
+
+      <!-- Content Area (Scrollable) -->
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar relative" id="admin-qp-content-area">
+        
+        <!-- Active Question View -->
+        <div id="admin-qp-question-view" class="max-w-3xl mx-auto space-y-4">
+          <!-- Question Meta Header -->
+          <div class="flex items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-2">
+              <span id="admin-qp-qnum-badge" class="px-2.5 py-0.5 rounded-full bg-white/10 font-bold text-gray-200">سؤال 1</span>
+              <span id="admin-qp-qtype-badge" class="px-2 py-0.5 rounded-md bg-white/5 text-gray-400">خيارات متعددة</span>
+            </div>
+            <span id="admin-qp-chapter-badge" class="text-gray-400 text-[11px] truncate max-w-[260px]"></span>
+          </div>
+
+          <!-- Question Text -->
+          <div id="admin-qp-qtext" class="text-base sm:text-lg font-semibold text-white leading-relaxed p-3.5 sm:p-4 rounded-xl bg-white/[0.03] border border-white/5 select-text">
+            نص السؤال
+          </div>
+
+          <!-- Options List -->
+          <div id="admin-qp-options" class="space-y-2.5 pt-1">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <!-- Explanation Box -->
+          <div id="admin-qp-explanation" class="hidden p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-2 text-sm">
+            <div class="flex items-center justify-between text-xs font-bold text-emerald-400 pb-1.5 border-b border-white/5">
+              <span class="flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>الشرح والتعليل النموذجي:</span>
+              </span>
+              <span id="admin-qp-exp-correct-letter" class="font-mono text-white"></span>
+            </div>
+            <div id="admin-qp-exp-text" class="text-gray-300 leading-relaxed text-xs sm:text-sm select-text">
+              شرح تفصيلي للسؤال...
+            </div>
+          </div>
+        </div>
+
+        <!-- Result / Score Screen (Shown upon submission) -->
+        <div id="admin-qp-results-view" class="hidden max-w-xl mx-auto py-6 text-center space-y-6">
+          <div class="p-6 rounded-2xl bg-black/40 border border-white/10 shadow-xl space-y-4">
+            <div id="admin-qp-score-icon" class="text-4xl">🏆</div>
+            <h4 class="text-xl sm:text-2xl font-bold text-white" id="admin-qp-score-title">اكتمل الاختبار!</h4>
+            <div class="flex justify-center items-baseline gap-2">
+              <span id="admin-qp-score-pct" class="text-4xl sm:text-5xl font-black text-emerald-400 font-mono">100%</span>
+              <span id="admin-qp-score-fraction" class="text-sm text-gray-400 font-mono">(15 / 15)</span>
+            </div>
+            <p id="admin-qp-score-msg" class="text-sm text-gray-300">أداء رائع جداً! تم حل جميع الأسئلة بدقة.</p>
+            
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-3 gap-2.5 pt-2 border-t border-white/10 text-xs">
+              <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
+                <span class="block text-[11px] text-gray-400">إجابات صحيحة</span>
+                <span id="admin-qp-stat-correct" class="text-base font-bold font-mono">0</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300">
+                <span class="block text-[11px] text-gray-400">إجابات خاطئة</span>
+                <span id="admin-qp-stat-wrong" class="text-base font-bold font-mono">0</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-200">
+                <span class="block text-[11px] text-gray-400">الوقت المستغرق</span>
+                <span id="admin-qp-stat-time" class="text-base font-bold font-mono">00:00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Results Actions -->
+          <div class="flex flex-wrap items-center justify-center gap-2.5">
+            <button type="button" onclick="AdminApp.reviewAdminQuiz()" class="btn btn-primary text-xs py-2 px-4 font-semibold flex items-center gap-1.5">
+              <span>مراجعة كافة الحلول</span>
+            </button>
+            <button type="button" id="admin-qp-review-wrong-btn" onclick="AdminApp.reviewAdminQuizWrongOnly()" class="btn btn-secondary text-xs py-2 px-4 flex items-center gap-1.5 text-rose-300 border-rose-500/30">
+              <span>مراجعة الأخطاء فقط</span>
+            </button>
+            <button type="button" onclick="AdminApp.restartAdminQuiz()" class="btn btn-secondary text-xs py-2 px-4 flex items-center gap-1.5">
+              <span>إعادة المحاولة</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Action Bar -->
+      <div id="admin-qp-bottom-bar" class="px-4 py-3 sm:px-6 sm:py-3.5 border-t border-white/10 bg-black/40 flex items-center justify-between gap-3 shrink-0">
+        <div class="flex items-center gap-2">
+          <button type="button" id="admin-qp-prev-btn" onclick="AdminApp.prevAdminQuizQuestion()" class="btn btn-secondary text-xs py-2 px-3.5 flex items-center gap-1">
+            <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            <span>السابق</span>
+          </button>
+          <button type="button" id="admin-qp-next-btn" onclick="AdminApp.nextAdminQuizQuestion()" class="btn btn-secondary text-xs py-2 px-3.5 flex items-center gap-1">
+            <span>التالي</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" id="admin-qp-clear-btn" onclick="AdminApp.clearCurrentAnswer()" class="btn btn-secondary text-xs py-2 px-3 text-gray-400 hover:text-white" title="مسح اختيار هذا السؤال">
+            مسح الاختيار
+          </button>
+          <button type="button" id="admin-qp-submit-btn" onclick="AdminApp.submitAdminQuiz()" class="btn btn-primary text-xs py-2 px-4 font-semibold bg-emerald-600/30 hover:bg-emerald-600/40 text-emerald-200 border-emerald-500/40 flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <span>إنهاء وتسليم الاختبار</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
 
 
 

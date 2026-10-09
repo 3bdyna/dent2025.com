@@ -4447,6 +4447,10 @@ window.AdminApp = {
                     <td class="p-4 text-center text-xs text-gray-400 font-mono">${q.created_at || 'N/A'}</td>
                     <td class="p-4 text-center">
                         <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="AdminApp.takeQuiz('${q.id}')" class="btn btn-primary text-xs px-2.5 py-1.5 font-semibold flex items-center gap-1.5 bg-emerald-600/25 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-500/35 shadow-sm" title="خوض / تجربة الاختبار الآن">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                <span>بدء الاختبار</span>
+                            </button>
                             <button onclick="AdminApp.exportQuizBooklet('${q.id}')" class="btn btn-secondary text-xs px-2.5 py-1.5 font-medium flex items-center gap-1 text-sky-400 border-sky-500/30 hover:bg-sky-500/10" title="تصدير الاختبار (PDF / طباعة)">
                                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                 <span>تصدير</span>
@@ -4494,6 +4498,10 @@ window.AdminApp = {
                     <div class="pt-1.5 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
                         <span class="text-gray-500 font-mono text-[11px]">${q.created_at || ''}</span>
                         <div class="flex items-center gap-1.5">
+                            <button onclick="AdminApp.takeQuiz('${q.id}')" class="btn btn-primary text-xs px-2.5 py-1 font-semibold flex items-center gap-1 bg-emerald-600/25 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-500/35">
+                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                <span>بدء</span>
+                            </button>
                             <button onclick="AdminApp.exportQuizBooklet('${q.id}')" class="btn btn-secondary text-xs px-2 py-1 text-sky-400 border-sky-500/30">تصدير</button>
                             <button onclick="AdminApp.openRenameQuizModal('${q.id}')" class="btn btn-secondary text-xs px-2.5 py-1">تعديل الاسم</button>
                             ${mobileHideShowBtn}
@@ -4686,6 +4694,615 @@ window.AdminApp = {
     },
 
     // ==========================================
+    // INTERACTIVE ADMIN QUIZ / EXAM PLAYER
+    // ==========================================
+
+    adminQuizState: {
+        quizData: null,
+        currentIndex: 0,
+        answers: {}, // questionIndex -> selectedOptionIndex
+        mode: 'practice', // 'practice' | 'exam'
+        revealAll: false,
+        submitted: false,
+        startTime: null,
+        timerInterval: null,
+        filterWrongOnly: false,
+        filteredIndices: null
+    },
+
+    async takeQuiz(quizId) {
+        if (!quizId) {
+            this.showToast('معرف الاختبار غير صالح', true);
+            return;
+        }
+
+        this.showLoading(true);
+        try {
+            const res = await fetch(API_BASE + '/backend/api_ai_exam.php?action=get&id=' + encodeURIComponent(quizId), {
+                headers: { 'X-Admin-Pass': this.pass || '' }
+            });
+            const json = await res.json();
+            this.showLoading(false);
+
+            if (json && json.success && json.data) {
+                this.initAdminQuiz(json.data);
+            } else {
+                this.showToast(json?.message || 'تعذر تحميل بيانات الاختبار', true);
+            }
+        } catch (err) {
+            this.showLoading(false);
+            console.error('Error fetching quiz to play:', err);
+            this.showToast('خطأ أثناء تحميل بيانات الاختبار: ' + err.message, true);
+        }
+    },
+
+    promptTakeQuizById() {
+        const input = prompt('أدخل معرف الاختبار الذي ترغب بخوضه (مثال: quiz_6aaea8921eacb_1a7f):');
+        if (!input || !input.trim()) return;
+        this.takeQuiz(input.trim());
+    },
+
+    detectQuestionLanguage(q) {
+        const explicit = String(q?.language || '').toLowerCase().trim();
+        if (explicit === 'ar' || explicit === 'arabic' || explicit === 'العربية') return 'ar';
+        if (explicit === 'en' || explicit === 'english') return 'en';
+
+        const sample = [q?.question || '', q?.explanation || '', ...(Array.isArray(q?.options) ? q.options : [])].join(' ');
+        const arabicCount = (sample.match(/[\u0600-\u06FF]/g) || []).length;
+        const latinCount = (sample.match(/[A-Za-z]/g) || []).length;
+        return arabicCount > latinCount ? 'ar' : 'en';
+    },
+
+    stripOptionPrefix(value) {
+        let text = String(value || '').trim();
+        let prev = '';
+        while (text !== prev) {
+            prev = text;
+            text = text.replace(/^\s*(?:[\([（]\s*(?:[A-Ha-h]|[0-9]{1,2}|[أإآابجدههـوزح]|ح[A-Za-z]?)\s*[\)\]）]\s*|\s*(?:[A-Ha-h]|[0-9]{1,2}|[أإآابجدههـوزح]|ح[A-Za-z]?)\s*[\)\]）.:\-]\s*)+/u, '').trim();
+        }
+        return text;
+    },
+
+    getCorrectOptionIndex(question, options) {
+        if (!Array.isArray(options) || options.length === 0) return -1;
+
+        if (question?.correctIndex !== null && question?.correctIndex !== undefined && question?.correctIndex !== '') {
+            const explicitIndex = Number(question.correctIndex);
+            if (Number.isInteger(explicitIndex) && explicitIndex >= 0 && explicitIndex < options.length) {
+                return explicitIndex;
+            }
+        }
+
+        const correct = String(question?.correctAnswer || '').trim();
+        if (!correct) return -1;
+
+        const exactIndex = options.findIndex(option => String(option).trim().toLowerCase() === correct.toLowerCase());
+        if (exactIndex !== -1) return exactIndex;
+
+        const cleanCorrect = this.stripOptionPrefix(correct).toLowerCase();
+        const textIndex = options.findIndex(option => this.stripOptionPrefix(option).toLowerCase() === cleanCorrect);
+        if (textIndex !== -1) return textIndex;
+
+        const latinMatch = correct.match(/^([A-H])(?:\s*[.)\-:]*)?$/i);
+        if (latinMatch) {
+            const idx = latinMatch[1].toUpperCase().charCodeAt(0) - 65;
+            return idx >= 0 && idx < options.length ? idx : -1;
+        }
+
+        const normalizedArabic = correct.replace(/[إأآ]/g, 'ا').replace(/[.)\-:\s]+$/u, '').trim();
+        const arabicLetters = ['ا', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح'];
+        const arabicIndex = arabicLetters.indexOf(normalizedArabic);
+        return arabicIndex >= 0 && arabicIndex < options.length ? arabicIndex : -1;
+    },
+
+    isQuestionAnswerCorrect(question, selectedIndex, options) {
+        const correctIndex = this.getCorrectOptionIndex(question, options);
+        if (correctIndex < 0 || selectedIndex < 0 || selectedIndex === undefined || selectedIndex === null) return false;
+        return selectedIndex === correctIndex;
+    },
+
+    initAdminQuiz(quizData) {
+        if (!quizData || !Array.isArray(quizData.questions) || quizData.questions.length === 0) {
+            this.showToast('الاختبار لا يحتوي على أية أسئلة صالحة', true);
+            return;
+        }
+
+        this.adminQuizState = {
+            quizData: quizData,
+            currentIndex: 0,
+            answers: {},
+            mode: 'practice',
+            revealAll: false,
+            submitted: false,
+            startTime: Date.now(),
+            timerInterval: null,
+            filterWrongOnly: false,
+            filteredIndices: null
+        };
+
+        const titleEl = document.getElementById('admin-qp-title');
+        const metaEl = document.getElementById('admin-qp-meta');
+        if (titleEl) titleEl.innerText = quizData.quiz_name || 'اختبار تقييمي';
+        if (metaEl) metaEl.innerText = quizData.subject_name || 'مادة دراسية';
+
+        this.setAdminQuizMode('practice');
+        this.updateAdminQuizRevealBtnUI();
+        this.startAdminQuizTimer();
+        this.openModal('admin-quiz-player-modal');
+        this.renderAdminQuizQuestion();
+        this.renderAdminQuizPills();
+    },
+
+    startAdminQuizTimer() {
+        this.stopAdminQuizTimer();
+        const timerEl = document.getElementById('admin-qp-timer');
+        if (timerEl) timerEl.innerText = '00:00';
+
+        this.adminQuizState.timerInterval = setInterval(() => {
+            if (!this.adminQuizState || !this.adminQuizState.startTime) return;
+            const elapsed = Math.floor((Date.now() - this.adminQuizState.startTime) / 1000);
+            if (timerEl) timerEl.innerText = this.formatAdminQuizTime(elapsed);
+        }, 1000);
+    },
+
+    stopAdminQuizTimer() {
+        if (this.adminQuizState?.timerInterval) {
+            clearInterval(this.adminQuizState.timerInterval);
+            this.adminQuizState.timerInterval = null;
+        }
+    },
+
+    formatAdminQuizTime(seconds) {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    },
+
+    setAdminQuizMode(mode) {
+        this.adminQuizState.mode = mode;
+        const practiceBtn = document.getElementById('admin-qp-mode-practice');
+        const examBtn = document.getElementById('admin-qp-mode-exam');
+
+        if (practiceBtn && examBtn) {
+            if (mode === 'practice') {
+                practiceBtn.className = 'px-2.5 py-1 rounded-md transition font-medium text-white bg-white/15';
+                examBtn.className = 'px-2.5 py-1 rounded-md transition text-gray-400 hover:text-white';
+            } else {
+                examBtn.className = 'px-2.5 py-1 rounded-md transition font-medium text-white bg-white/15';
+                practiceBtn.className = 'px-2.5 py-1 rounded-md transition text-gray-400 hover:text-white';
+            }
+        }
+
+        this.renderAdminQuizQuestion();
+        this.renderAdminQuizPills();
+    },
+
+    toggleAdminQuizReveal() {
+        this.adminQuizState.revealAll = !this.adminQuizState.revealAll;
+        this.updateAdminQuizRevealBtnUI();
+        this.renderAdminQuizQuestion();
+        this.renderAdminQuizPills();
+    },
+
+    updateAdminQuizRevealBtnUI() {
+        const btn = document.getElementById('admin-qp-reveal-btn');
+        const label = document.getElementById('admin-qp-reveal-label');
+        if (!btn) return;
+
+        if (this.adminQuizState.revealAll) {
+            btn.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold border border-amber-500/40 bg-amber-500/15 text-amber-300 transition flex items-center gap-1 shadow-sm';
+            if (label) label.innerText = 'إخفاء الحل';
+        } else {
+            btn.className = 'px-2.5 py-1 rounded-lg text-xs font-medium border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 transition flex items-center gap-1';
+            if (label) label.innerText = 'كشف الحل';
+        }
+    },
+
+    getEffectiveQuestionIndex() {
+        if (!this.adminQuizState) return 0;
+        if (this.adminQuizState.filterWrongOnly && Array.isArray(this.adminQuizState.filteredIndices)) {
+            return this.adminQuizState.filteredIndices[this.adminQuizState.currentIndex] ?? 0;
+        }
+        return this.adminQuizState.currentIndex;
+    },
+
+    getTotalQuestionsCount() {
+        if (!this.adminQuizState?.quizData?.questions) return 0;
+        if (this.adminQuizState.filterWrongOnly && Array.isArray(this.adminQuizState.filteredIndices)) {
+            return this.adminQuizState.filteredIndices.length;
+        }
+        return this.adminQuizState.quizData.questions.length;
+    },
+
+    renderAdminQuizPills() {
+        const pillsBar = document.getElementById('admin-qp-pills-bar');
+        if (!pillsBar || !this.adminQuizState?.quizData?.questions) return;
+
+        const questions = this.adminQuizState.quizData.questions;
+        const total = this.getTotalQuestionsCount();
+        const currentLocalIdx = this.adminQuizState.currentIndex;
+
+        let html = '';
+        for (let i = 0; i < total; i++) {
+            const actualQIdx = (this.adminQuizState.filterWrongOnly && this.adminQuizState.filteredIndices)
+                ? this.adminQuizState.filteredIndices[i]
+                : i;
+            const q = questions[actualQIdx];
+            const isCurrent = i === currentLocalIdx;
+            const userAns = this.adminQuizState.answers[actualQIdx];
+            const isAnswered = userAns !== undefined && userAns !== null;
+            const showFeedback = this.adminQuizState.submitted || this.adminQuizState.revealAll || (this.adminQuizState.mode === 'practice' && isAnswered);
+
+            let pillClass = 'w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs font-mono font-bold flex items-center justify-center shrink-0 transition-all cursor-pointer select-none ';
+
+            if (isCurrent) {
+                pillClass += 'ring-2 ring-white shadow-md ';
+            }
+
+            if (showFeedback && isAnswered) {
+                const isCorrect = this.isQuestionAnswerCorrect(q, userAns, q.options);
+                if (isCorrect) {
+                    pillClass += 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+                } else {
+                    pillClass += 'bg-rose-500/20 text-rose-300 border border-rose-500/40';
+                }
+            } else if (isAnswered) {
+                pillClass += 'bg-slate-700/80 text-white border border-white/20';
+            } else {
+                pillClass += 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/5';
+            }
+
+            html += `<button type="button" onclick="AdminApp.jumpToAdminQuizQuestion(${i})" class="${pillClass}" title="السؤال ${actualQIdx + 1}">${actualQIdx + 1}</button>`;
+        }
+
+        pillsBar.innerHTML = html;
+
+        // Auto-scroll the active pill into view smoothly
+        const activeBtn = pillsBar.children[currentLocalIdx];
+        if (activeBtn) {
+            activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+    },
+
+    renderAdminQuizQuestion() {
+        if (!this.adminQuizState || !this.adminQuizState.quizData) return;
+
+        const questions = this.adminQuizState.quizData.questions;
+        const total = this.getTotalQuestionsCount();
+        const localIdx = this.adminQuizState.currentIndex;
+        const actualIdx = this.getEffectiveQuestionIndex();
+        const q = questions[actualIdx];
+
+        if (!q) return;
+
+        // Ensure question view is visible and results view hidden
+        const qView = document.getElementById('admin-qp-question-view');
+        const resView = document.getElementById('admin-qp-results-view');
+        if (qView) qView.classList.remove('hidden');
+        if (resView) resView.classList.add('hidden');
+
+        // Progress text
+        const progressEl = document.getElementById('admin-qp-progress');
+        if (progressEl) {
+            progressEl.innerText = `سؤال ${localIdx + 1} من ${total}`;
+        }
+
+        // Meta badges
+        const qnumBadge = document.getElementById('admin-qp-qnum-badge');
+        const qtypeBadge = document.getElementById('admin-qp-qtype-badge');
+        const chapBadge = document.getElementById('admin-qp-chapter-badge');
+
+        if (qnumBadge) qnumBadge.innerText = `سؤال ${actualIdx + 1}`;
+        if (qtypeBadge) {
+            const t = (q.type || '').toLowerCase();
+            if (t === 'mcq') qtypeBadge.innerText = 'خيارات متعددة';
+            else if (t === 'true_false' || t === 'tf') qtypeBadge.innerText = 'صح أم خطأ';
+            else if (t === 'exception') qtypeBadge.innerText = 'استثناء';
+            else qtypeBadge.innerText = 'سؤال تقييمي';
+        }
+        if (chapBadge) {
+            chapBadge.innerText = q.assignedChapter ? '📁 ' + q.assignedChapter : '';
+            chapBadge.title = q.assignedChapter || '';
+        }
+
+        // Question text
+        const qTextEl = document.getElementById('admin-qp-qtext');
+        const lang = this.detectQuestionLanguage(q);
+        if (qTextEl) {
+            qTextEl.dir = lang === 'en' ? 'ltr' : 'rtl';
+            qTextEl.style.textAlign = lang === 'en' ? 'left' : 'right';
+            qTextEl.innerText = q.question || '';
+        }
+
+        // Options
+        const optionsContainer = document.getElementById('admin-qp-options');
+        const options = Array.isArray(q.options) ? q.options : [];
+        const correctIdx = this.getCorrectOptionIndex(q, options);
+        const userSelectedIdx = this.adminQuizState.answers[actualIdx];
+        const isAnswered = userSelectedIdx !== undefined && userSelectedIdx !== null;
+        const showFeedback = this.adminQuizState.submitted || this.adminQuizState.revealAll || (this.adminQuizState.mode === 'practice' && isAnswered);
+
+        const letters = lang === 'en' ? ['A', 'B', 'C', 'D', 'E', 'F'] : ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
+
+        let optsHtml = '';
+        options.forEach((opt, optIdx) => {
+            const letter = letters[optIdx] || String(optIdx + 1);
+            const cleanText = this.stripOptionPrefix(opt);
+            const isSelected = userSelectedIdx === optIdx;
+            const isCorrect = optIdx === correctIdx;
+
+            let cardStyle = 'w-full p-3 sm:p-3.5 rounded-xl border transition-all text-right flex items-start gap-3 cursor-pointer text-xs sm:text-sm select-text ';
+            let badgeStyle = 'w-6 h-6 rounded-lg text-xs font-mono font-bold flex items-center justify-center shrink-0 mt-0.5 ';
+
+            if (lang === 'en') {
+                cardStyle += 'flex-row-reverse text-left ';
+            }
+
+            if (showFeedback) {
+                if (isCorrect) {
+                    cardStyle += 'bg-emerald-500/10 border-emerald-500/50 text-emerald-200 font-medium shadow-sm ';
+                    badgeStyle += 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 ';
+                } else if (isSelected && !isCorrect) {
+                    cardStyle += 'bg-rose-500/10 border-rose-500/50 text-rose-200 shadow-sm ';
+                    badgeStyle += 'bg-rose-500/30 text-rose-300 border border-rose-500/40 ';
+                } else {
+                    cardStyle += 'bg-black/20 border-white/5 text-gray-400 opacity-60 hover:opacity-80 ';
+                    badgeStyle += 'bg-white/5 text-gray-400 ';
+                }
+            } else {
+                if (isSelected) {
+                    cardStyle += 'bg-white/10 border-white/30 text-white font-medium shadow-md ';
+                    badgeStyle += 'bg-white/20 text-white border border-white/30 ';
+                } else {
+                    cardStyle += 'bg-black/20 hover:bg-white/[0.04] border-white/10 text-gray-200 hover:border-white/20 ';
+                    badgeStyle += 'bg-white/5 text-gray-400 ';
+                }
+            }
+
+            let indicatorIcon = '';
+            if (showFeedback) {
+                if (isCorrect) {
+                    indicatorIcon = `<span class="text-emerald-400 text-sm font-bold shrink-0 self-center">✓</span>`;
+                } else if (isSelected && !isCorrect) {
+                    indicatorIcon = `<span class="text-rose-400 text-sm font-bold shrink-0 self-center">✕</span>`;
+                }
+            }
+
+            optsHtml += `
+                <div onclick="AdminApp.selectAdminQuizOption(${optIdx})" class="${cardStyle}">
+                    <span class="${badgeStyle}">${letter}</span>
+                    <span class="flex-1 leading-relaxed ${lang === 'en' ? 'text-left' : 'text-right'}" dir="${lang === 'en' ? 'ltr' : 'rtl'}">${this.escapeHtml(cleanText)}</span>
+                    ${indicatorIcon}
+                </div>
+            `;
+        });
+
+        if (optionsContainer) optionsContainer.innerHTML = optsHtml;
+
+        // Explanation Box
+        const expBox = document.getElementById('admin-qp-explanation');
+        const expText = document.getElementById('admin-qp-exp-text');
+        const expLetter = document.getElementById('admin-qp-exp-correct-letter');
+
+        if (expBox && expText) {
+            if (showFeedback && (q.explanation || correctIdx >= 0)) {
+                expBox.classList.remove('hidden');
+                expBox.dir = lang === 'en' ? 'ltr' : 'rtl';
+                if (expLetter) {
+                    const cLetter = correctIdx >= 0 ? (letters[correctIdx] || String(correctIdx + 1)) : '';
+                    expLetter.innerText = cLetter ? `الإجابة: ${cLetter}` : '';
+                }
+                expText.innerText = q.explanation || 'لا يتوفر تعليل نصي إضافي لهذا السؤال.';
+                expText.style.textAlign = lang === 'en' ? 'left' : 'right';
+            } else {
+                expBox.classList.add('hidden');
+            }
+        }
+
+        // Navigation button states
+        const prevBtn = document.getElementById('admin-qp-prev-btn');
+        const nextBtn = document.getElementById('admin-qp-next-btn');
+
+        if (prevBtn) {
+            prevBtn.disabled = localIdx === 0;
+            prevBtn.classList.toggle('opacity-40', localIdx === 0);
+            prevBtn.classList.toggle('pointer-events-none', localIdx === 0);
+        }
+
+        if (nextBtn) {
+            const isLast = localIdx === total - 1;
+            nextBtn.innerHTML = isLast
+                ? `<span>إنهاء</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
+                : `<span>التالي</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>`;
+        }
+    },
+
+    selectAdminQuizOption(optIdx) {
+        if (!this.adminQuizState || this.adminQuizState.submitted) return;
+
+        const actualIdx = this.getEffectiveQuestionIndex();
+        this.adminQuizState.answers[actualIdx] = optIdx;
+
+        this.renderAdminQuizQuestion();
+        this.renderAdminQuizPills();
+    },
+
+    clearCurrentAnswer() {
+        if (!this.adminQuizState || this.adminQuizState.submitted) return;
+
+        const actualIdx = this.getEffectiveQuestionIndex();
+        delete this.adminQuizState.answers[actualIdx];
+
+        this.renderAdminQuizQuestion();
+        this.renderAdminQuizPills();
+    },
+
+    prevAdminQuizQuestion() {
+        if (!this.adminQuizState || this.adminQuizState.currentIndex <= 0) return;
+        this.adminQuizState.currentIndex--;
+        this.renderAdminQuizQuestion();
+        this.renderAdminQuizPills();
+    },
+
+    nextAdminQuizQuestion() {
+        if (!this.adminQuizState) return;
+        const total = this.getTotalQuestionsCount();
+        if (this.adminQuizState.currentIndex < total - 1) {
+            this.adminQuizState.currentIndex++;
+            this.renderAdminQuizQuestion();
+            this.renderAdminQuizPills();
+        } else if (!this.adminQuizState.submitted) {
+            this.submitAdminQuiz();
+        }
+    },
+
+    jumpToAdminQuizQuestion(targetIdx) {
+        if (!this.adminQuizState) return;
+        const total = this.getTotalQuestionsCount();
+        if (targetIdx >= 0 && targetIdx < total) {
+            this.adminQuizState.currentIndex = targetIdx;
+            this.renderAdminQuizQuestion();
+            this.renderAdminQuizPills();
+        }
+    },
+
+    submitAdminQuiz() {
+        if (!this.adminQuizState || !this.adminQuizState.quizData?.questions) return;
+
+        const questions = this.adminQuizState.quizData.questions;
+        const total = questions.length;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let unansweredCount = 0;
+
+        questions.forEach((q, idx) => {
+            const userAns = this.adminQuizState.answers[idx];
+            if (userAns === undefined || userAns === null) {
+                unansweredCount++;
+            } else if (this.isQuestionAnswerCorrect(q, userAns, q.options)) {
+                correctCount++;
+            } else {
+                wrongCount++;
+            }
+        });
+
+        const pct = Math.round((correctCount / total) * 100);
+        this.adminQuizState.submitted = true;
+        this.stopAdminQuizTimer();
+
+        // Calculate time elapsed
+        const elapsed = Math.floor((Date.now() - this.adminQuizState.startTime) / 1000);
+        const formattedTime = this.formatAdminQuizTime(elapsed);
+
+        // Update Results Elements
+        const pctEl = document.getElementById('admin-qp-score-pct');
+        const fracEl = document.getElementById('admin-qp-score-fraction');
+        const statCorrect = document.getElementById('admin-qp-stat-correct');
+        const statWrong = document.getElementById('admin-qp-stat-wrong');
+        const statTime = document.getElementById('admin-qp-stat-time');
+        const titleEl = document.getElementById('admin-qp-score-title');
+        const msgEl = document.getElementById('admin-qp-score-msg');
+        const iconEl = document.getElementById('admin-qp-score-icon');
+        const wrongBtn = document.getElementById('admin-qp-review-wrong-btn');
+
+        if (pctEl) pctEl.innerText = `${pct}%`;
+        if (fracEl) fracEl.innerText = `(${correctCount} / ${total})`;
+        if (statCorrect) statCorrect.innerText = correctCount;
+        if (statWrong) statWrong.innerText = wrongCount;
+        if (statTime) statTime.innerText = formattedTime;
+
+        if (pct >= 90) {
+            if (iconEl) iconEl.innerText = '🏆';
+            if (titleEl) titleEl.innerText = 'ممتاز ومتقن تماماً!';
+            if (msgEl) msgEl.innerText = 'أداء باهر ومتميز! تم استيعاب وفهم مفاهيم الشباتر بدرجة عالية جداً.';
+            if (pctEl) pctEl.className = 'text-4xl sm:text-5xl font-black text-emerald-400 font-mono';
+        } else if (pct >= 75) {
+            if (iconEl) iconEl.innerText = '🌟';
+            if (titleEl) titleEl.innerText = 'أداء جيد جداً!';
+            if (msgEl) msgEl.innerText = 'أحسنت! إجابات موفقة مع حاجة طفيفة لمراجعة الأسئلة غير الدقيقة.';
+            if (pctEl) pctEl.className = 'text-4xl sm:text-5xl font-black text-blue-400 font-mono';
+        } else if (pct >= 60) {
+            if (iconEl) iconEl.innerText = '💡';
+            if (titleEl) titleEl.innerText = 'نتيجة مقبولة';
+            if (msgEl) msgEl.innerText = 'تم اجتياز الاختبار، ويُنصح بمراجعة التعليلات والحلول لترسيخ المعلومات.';
+            if (pctEl) pctEl.className = 'text-4xl sm:text-5xl font-black text-amber-400 font-mono';
+        } else {
+            if (iconEl) iconEl.innerText = '📖';
+            if (titleEl) titleEl.innerText = 'بحاجة لمزيد من المذاكرة';
+            if (msgEl) msgEl.innerText = 'يُفضل مراجعة سلايدات المحاضرة والشباتر ثم إعادة المحاولة لتحقيق نتيجة أفضل.';
+            if (pctEl) pctEl.className = 'text-4xl sm:text-5xl font-black text-rose-400 font-mono';
+        }
+
+        if (wrongBtn) {
+            wrongBtn.style.display = wrongCount > 0 ? 'inline-flex' : 'none';
+        }
+
+        // Switch to Results View
+        const qView = document.getElementById('admin-qp-question-view');
+        const resView = document.getElementById('admin-qp-results-view');
+        if (qView) qView.classList.add('hidden');
+        if (resView) resView.classList.remove('hidden');
+
+        // Refresh pills with full submitted feedback
+        this.renderAdminQuizPills();
+    },
+
+    reviewAdminQuiz() {
+        this.adminQuizState.filterWrongOnly = false;
+        this.adminQuizState.filteredIndices = null;
+        this.adminQuizState.currentIndex = 0;
+
+        this.renderAdminQuizQuestion();
+        this.renderAdminQuizPills();
+    },
+
+    reviewAdminQuizWrongOnly() {
+        if (!this.adminQuizState || !this.adminQuizState.quizData?.questions) return;
+
+        const questions = this.adminQuizState.quizData.questions;
+        const wrongIndices = [];
+
+        questions.forEach((q, idx) => {
+            const userAns = this.adminQuizState.answers[idx];
+            if (!this.isQuestionAnswerCorrect(q, userAns, q.options)) {
+                wrongIndices.push(idx);
+            }
+        });
+
+        if (wrongIndices.length === 0) {
+            this.showToast('لا توجد إجابات خاطئة، جميع إجاباتك صحيحة! 🎉');
+            return;
+        }
+
+        this.adminQuizState.filterWrongOnly = true;
+        this.adminQuizState.filteredIndices = wrongIndices;
+        this.adminQuizState.currentIndex = 0;
+
+        this.renderAdminQuizQuestion();
+        this.renderAdminQuizPills();
+    },
+
+    restartAdminQuiz() {
+        if (!this.adminQuizState || !this.adminQuizState.quizData) return;
+        this.initAdminQuiz(this.adminQuizState.quizData);
+    },
+
+    closeAdminQuizPlayer() {
+        if (this.adminQuizState && !this.adminQuizState.submitted) {
+            const answeredCount = Object.keys(this.adminQuizState.answers || {}).length;
+            if (answeredCount > 0) {
+                if (!confirm('هل أنت متأكد من الخروج من مشغل الاختبار؟ سيتم فقدان تقدمك في الإجابات.')) {
+                    return;
+                }
+            }
+        }
+
+        this.stopAdminQuizTimer();
+        this.adminQuizState = null;
+        this.closeModal('admin-quiz-player-modal');
+    },
+
+    // ==========================================
     // OPTION 1: ACADEMIC 2-COLUMN EXAM BOOKLET EXPORT (ADMIN)
     // ==========================================
 
@@ -4765,14 +5382,26 @@ window.AdminApp = {
                 flex-shrink: 0;
             }
             .doc-header-compact {
-                padding-bottom: 3px;
-                margin-bottom: 4px;
+                padding-bottom: 3.5px !important;
+                margin-bottom: 6px !important;
                 border-bottom: 1px solid #242424;
             }
             .doc-compact-heading {
-                font-size: 0.80rem !important;
+                font-size: 0.86rem !important;
                 font-weight: 800 !important;
-                color: #e4e4e7 !important;
+                color: #f4f4f5 !important;
+                line-height: 1.25 !important;
+                margin: 0 0 1px 0 !important;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .doc-compact-sub {
+                font-size: 0.63rem !important;
+                color: #a1a1aa !important;
+                font-weight: 600 !important;
+                margin: 0 !important;
+                line-height: 1.2;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -4793,6 +5422,36 @@ window.AdminApp = {
                 font-weight: 700 !important;
                 margin: 0 !important;
                 line-height: 1.2;
+            }
+            
+            /* Responsive Density Scaling */
+            .density-comfortable .col-half {
+                gap: 5.5px !important;
+            }
+            .density-comfortable .quiz-q-block {
+                padding: 5px 7px !important;
+            }
+            .density-comfortable .quiz-q-title {
+                font-size: 0.74rem !important;
+                line-height: 1.30 !important;
+                margin-bottom: 3px !important;
+            }
+            .density-comfortable .quiz-options-list {
+                gap: 2.2px !important;
+            }
+            .density-comfortable .quiz-opt-row {
+                padding: 2.5px 5px !important;
+                font-size: 0.68rem !important;
+                line-height: 1.24 !important;
+            }
+            .density-comfortable .quiz-explanation-box {
+                margin-top: 2.5px !important;
+                padding: 3px 5px !important;
+                font-size: 0.61rem !important;
+                line-height: 1.24 !important;
+            }
+            .density-comfortable .quiz-q-top-row {
+                margin-bottom: 3px !important;
             }
             .doc-meta-badge {
                 text-align: left;
@@ -5169,14 +5828,42 @@ window.AdminApp = {
         const pages = this.calculateSmartPages(allQuestions, includeExplanations);
         const totalPages = pages.length;
 
+        const getQWeight = (q) => {
+            const qLen = String(q.question || '').length;
+            const optsLen = Array.isArray(q.options) ? q.options.reduce((s, o) => s + String(o).length, 0) : 0;
+            const expLen = (includeExplanations && q.explanation) ? String(q.explanation).length : 0;
+            const ansLen = (q.answer) ? String(q.answer).length : 0;
+            return 120 + (qLen * 0.45) + (optsLen * 0.4) + (expLen * 0.35) + (ansLen * 0.4);
+        };
+
         let globalQIdx = 1;
         const renderedPages = [];
 
         pages.forEach((pageQs, pIdx0) => {
             const pIdx = pIdx0 + 1;
-            const col1Count = Math.ceil(pageQs.length / 2);
-            const col1Qs = pageQs.slice(0, col1Count);
-            const col2Qs = pageQs.slice(col1Count);
+            const n = pageQs.length;
+
+            // Content-aware column splitting to balance column heights
+            let splitIdx = Math.ceil(n / 2);
+            if (n >= 4) {
+                const optA = Math.floor(n / 2);
+                const optB = Math.ceil(n / 2);
+                const wA1 = pageQs.slice(0, optA).reduce((s, q) => s + getQWeight(q), 0);
+                const wA2 = pageQs.slice(optA).reduce((s, q) => s + getQWeight(q), 0);
+                const diffA = Math.abs(wA1 - wA2);
+
+                const wB1 = pageQs.slice(0, optB).reduce((s, q) => s + getQWeight(q), 0);
+                const wB2 = pageQs.slice(optB).reduce((s, q) => s + getQWeight(q), 0);
+                const diffB = Math.abs(wB1 - wB2);
+
+                splitIdx = (diffA < diffB) ? optA : optB;
+            }
+
+            const col1Qs = pageQs.slice(0, splitIdx);
+            const col2Qs = pageQs.slice(splitIdx);
+
+            const isComfortable = (n <= 7);
+            const densityClass = isComfortable ? ' density-comfortable' : ' density-compact';
 
             const col1Cards = col1Qs.map(q => {
                 const cardHtml = this.renderQuizCardHtml(q, globalQIdx, includeExplanations);
@@ -5191,7 +5878,7 @@ window.AdminApp = {
             }).join('');
 
             const columnsHtml = `
-                <div class="page-two-columns">
+                <div class="page-two-columns${densityClass}">
                     <div class="col-half">${col1Cards}</div>
                     <div class="col-half">${col2Cards}</div>
                 </div>
@@ -5205,8 +5892,8 @@ window.AdminApp = {
                 headerHtml = `
                     <div class="doc-header">
                         <div class="doc-titles">
-                            <div class="doc-main-heading">${quizName}</div>
-                            <div class="doc-sub-heading">${subjectName}</div>
+                            <div class="doc-main-heading" dir="auto"><bdi>${quizName}</bdi></div>
+                            <div class="doc-sub-heading" dir="auto"><bdi>${subjectName}</bdi></div>
                         </div>
                         <div class="doc-meta-badge">
                             <span class="period" dir="ltr">${qCountLabel}</span>
@@ -5217,7 +5904,8 @@ window.AdminApp = {
                 headerHtml = `
                     <div class="doc-header doc-header-compact">
                         <div class="doc-titles">
-                            <div class="doc-compact-heading">${quizName} — ${subjectName}</div>
+                            <div class="doc-compact-heading" dir="auto"><bdi>${quizName}</bdi></div>
+                            <div class="doc-compact-sub" dir="auto"><bdi>${subjectName}</bdi></div>
                         </div>
                         <div class="doc-meta-badge">
                             <span class="period" dir="ltr">${pageOfLabel}</span>
@@ -5235,7 +5923,7 @@ window.AdminApp = {
             `;
 
             renderedPages.push(`
-                <div class="a4-page-sheet" id="quiz-page-${pIdx}" data-page="${pIdx}">
+                <div class="a4-page-sheet${densityClass}" id="quiz-page-${pIdx}" data-page="${pIdx}">
                     <div class="page-inner-content">
                         ${headerHtml}
                         ${columnsHtml}
