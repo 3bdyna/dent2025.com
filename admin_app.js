@@ -5933,7 +5933,7 @@ window.AdminApp = {
 
         const questions = quizData.questions;
         const totalQ = questions.length;
-        const initialIncExp = true;
+        const initialIncExp = false;
         const pages = this.calculateSmartPages(questions, initialIncExp);
         const totalPages = pages.length;
 
@@ -5979,7 +5979,7 @@ window.AdminApp = {
 
                 <!-- Options -->
                 <label style="display: flex; align-items: center; gap: 9px; padding: 9px 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 10px; font-size: 0.80rem; color: #cbd5e1; cursor: pointer; user-select: none; margin-bottom: 16px;">
-                    <input type="checkbox" id="admin-export-inc-exp" checked style="accent-color: #6366f1; width: 16px; height: 16px; cursor: pointer;">
+                    <input type="checkbox" id="admin-export-inc-exp" style="accent-color: #6366f1; width: 16px; height: 16px; cursor: pointer;">
                     <span>تضمين الشروحات وتوضيح الإجابات (Explanation)</span>
                 </label>
 
