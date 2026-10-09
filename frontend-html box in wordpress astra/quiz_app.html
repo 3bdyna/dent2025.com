@@ -2228,7 +2228,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         let prev = '';
         while (text !== prev) {
             prev = text;
-            text = text.replace(/^\s*(?:[\([（]?\s*(?:[A-Ha-h]|[0-9]{1,2}|[أإآابجدههـوزح]|ح[A-Za-z]?)\s*[\)\]）]?\s*[.)\-:\s]+)+/u, '').trim();
+            text = text.replace(/^\s*(?:[\([（]\s*(?:[A-Ha-h]|[0-9]{1,2}|[أإآابجدههـوزح]|ح[A-Za-z]?)\s*[\)\]）]\s*|\s*(?:[A-Ha-h]|[0-9]{1,2}|[أإآابجدههـوزح]|ح[A-Za-z]?)\s*[\)\]）.:\-]\s*)+/u, '').trim();
         }
         return text;
     }
@@ -2747,7 +2747,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             .a4-page-sheet:last-child { page-break-after: avoid !important; break-after: avoid !important; }
         }
         .a4-page-sheet {
-            font-family: 'Cairo', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Outfit', 'Noto Kufi Arabic', 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: #121212 !important;
             background-image: radial-gradient(rgba(255, 255, 255, 0.075) 1.2px, transparent 1.2px) !important;
             background-size: 20px 20px !important;
@@ -3023,12 +3023,12 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     }
 
     function calculateSmartPages(questions, includeExplanations = true) {
+        if (!Array.isArray(questions) || questions.length === 0) return [];
         const total = questions.length;
-        if (total === 0) return [];
         
-        // 1 to 10 questions fit comfortably on a single A4 page
-        if (total <= 10) return [questions];
-        if (!includeExplanations && total <= 12) return [questions];
+        // 1 to 7 questions fit comfortably on a single A4 page with explanations (up to 10 without explanations)
+        const singlePageLimit = includeExplanations ? 7 : 10;
+        if (total <= singlePageLimit) return [questions];
 
         // Safe per-page density: ~7 questions per page with explanations, ~10 without
         const targetPerPage = includeExplanations ? 7 : 10;
@@ -3376,6 +3376,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         }
         if (imgBtn) imgBtn.disabled = true;
 
+        let sandbox = null;
         try {
             const jsPdfPromise = loadJsPdf();
             const htmlToImage = await loadHtmlToImage();
@@ -3383,7 +3384,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             const { pagesJoinedHtml } = generateExamBookletHtml(quizData, includeExplanations);
 
             // Mount isolated sandbox in DOM
-            const sandbox = document.createElement('div');
+            sandbox = document.createElement('div');
             sandbox.id = 'dent-quiz-render-sandbox';
             sandbox.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1;';
             const sandboxCss = DENT_QUIZ_EXPORT_CSS.replace(/(^|[\s,{}])html\s*,\s*body(?=[\s,{:]|$)/gi, '$1#dent-quiz-render-sandbox').replace(/(^|[\s,{}])body(?=[\s,{:]|$)/gi, '$1#dent-quiz-render-sandbox');
@@ -3420,6 +3421,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             }
 
             sandbox.remove();
+            sandbox = null;
 
             const jsPdfClass = await jsPdfPromise;
             const pdf = new jsPdfClass({
@@ -3452,6 +3454,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 btn.innerHTML = origHtml;
             }
             if (imgBtn) imgBtn.disabled = false;
+        } finally {
+            if (sandbox && sandbox.parentNode) sandbox.remove();
         }
     }
 
@@ -3467,11 +3471,12 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         }
         if (pdfBtn) pdfBtn.disabled = true;
 
+        let sandbox = null;
         try {
             const htmlToImage = await loadHtmlToImage();
             const { pagesJoinedHtml } = generateExamBookletHtml(quizData, includeExplanations);
 
-            const sandbox = document.createElement('div');
+            sandbox = document.createElement('div');
             sandbox.id = 'dent-quiz-render-sandbox';
             sandbox.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1;';
             const sandboxCss = DENT_QUIZ_EXPORT_CSS.replace(/(^|[\s,{}])html\s*,\s*body(?=[\s,{:]|$)/gi, '$1#dent-quiz-render-sandbox').replace(/(^|[\s,{}])body(?=[\s,{:]|$)/gi, '$1#dent-quiz-render-sandbox');
@@ -3502,6 +3507,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             });
 
             sandbox.remove();
+            sandbox = null;
 
             if (!blob) throw new Error('فشل إنشاء ملف الصورة.');
 
@@ -3535,6 +3541,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 btn.innerHTML = origHtml;
             }
             if (pdfBtn) pdfBtn.disabled = false;
+        } finally {
+            if (sandbox && sandbox.parentNode) sandbox.remove();
         }
     }
 
@@ -3568,7 +3576,6 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 document.body.appendChild(a);
                 a.click();
                 setTimeout(() => document.body.removeChild(a), 500);
-                setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
             } catch(dlErr) {
                 console.warn('Download failed:', dlErr);
             }
@@ -3576,6 +3583,9 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
         // 3. Show sleek toast prompting to send, copy, or view (matching schedule export)
         showQuizExportToast(file, blob, fileName, fileType, blobUrl, copiedToClipboard);
+
+        // Revoke Object URL after 60 seconds to prevent memory leaks
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
     }
 
     function showQuizExportToast(file, blob, fileName, fileType, blobUrl, copiedToClipboard = false) {

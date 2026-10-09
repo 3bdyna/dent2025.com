@@ -4732,7 +4732,7 @@ window.AdminApp = {
                 .a4-page-sheet:last-child { page-break-after: avoid !important; break-after: avoid !important; }
             }
             .a4-page-sheet {
-                font-family: 'Cairo', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                font-family: 'Outfit', 'Noto Kufi Arabic', 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                 background-color: #121212 !important;
                 background-image: radial-gradient(rgba(255, 255, 255, 0.075) 1.2px, transparent 1.2px) !important;
                 background-size: 20px 20px !important;
@@ -4966,8 +4966,8 @@ window.AdminApp = {
                 flex-shrink: 0;
             }
             .doc-footer-right { font-family: 'Outfit', sans-serif; font-weight: 700; color: #a1a1aa; direction: ltr; }
-            .doc-footer-center { font-family: 'Cairo', sans-serif; font-weight: 600; color: #71717a; }
-            .doc-footer-left { font-family: 'Outfit', sans-serif; font-weight: 600; color: #71717a; direction: ltr; }
+            .doc-footer-center { font-family: 'Cairo', 'Outfit', sans-serif; font-weight: 600; color: #71717a; }
+            .doc-footer-spacer { width: 60px; visibility: hidden; }
         `;
     },
 
@@ -5008,30 +5008,31 @@ window.AdminApp = {
         return window._dentHtmlToImagePromise;
     },
 
-    calculateSmartPages(questions) {
-        const total = questions.length;
-        if (total === 0) return [];
-        if (total <= 12) return [questions];
-
-        if (total === 21) {
-            return [questions.slice(0, 10), questions.slice(10)];
+    stripOptionPrefix(value) {
+        let text = String(value || '').trim();
+        let prev = '';
+        while (text !== prev) {
+            prev = text;
+            text = text.replace(/^\s*(?:[\([（]\s*(?:[A-Ha-h]|[0-9]{1,2}|[أإآابجدههـوزح]|ح[A-Za-z]?)\s*[\)\]）]\s*|\s*(?:[A-Ha-h]|[0-9]{1,2}|[أإآابجدههـوزح]|ح[A-Za-z]?)\s*[\)\]）.:\-]\s*)+/u, '').trim();
         }
+        return text;
+    },
 
-        let bestP = 2;
-        let bestDiff = 999.0;
-        const maxP = Math.floor(total / 4) + 1;
-        for (let p = 2; p <= maxP; p++) {
-            const base = Math.floor(total / p);
-            const rem = total % p;
-            if (base < 4) break;
-            const maxInP = base + (rem > 0 ? 1 : 0);
-            if (maxInP > 12) continue;
-            const avg = total / p;
-            const diff = Math.abs(avg - 9.5);
-            if (diff < bestDiff) {
-                bestDiff = diff;
-                bestP = p;
-            }
+    calculateSmartPages(questions, includeExplanations = true) {
+        if (!Array.isArray(questions) || questions.length === 0) return [];
+        const total = questions.length;
+        
+        // 1 to 7 questions fit comfortably on a single A4 page with explanations (up to 10 without explanations)
+        const singlePageLimit = includeExplanations ? 7 : 10;
+        if (total <= singlePageLimit) return [questions];
+
+        // Safe per-page density: ~7 questions per page with explanations, ~10 without
+        const targetPerPage = includeExplanations ? 7 : 10;
+        const maxPerPage = includeExplanations ? 8 : 12;
+
+        let bestP = Math.max(2, Math.round(total / targetPerPage));
+        while ((total / bestP) > maxPerPage) {
+            bestP++;
         }
 
         const base = Math.floor(total / bestP);
@@ -5067,9 +5068,8 @@ window.AdminApp = {
         const exactIndex = options.findIndex(opt => String(opt).trim().toLowerCase() === correct.toLowerCase());
         if (exactIndex !== -1) return exactIndex;
 
-        const stripOpt = (val) => String(val || '').replace(/^\s*(?:[A-Ha-h]|[أإآابجدههـوزح])\s*[.)\-:\s]+/u, '').trim().toLowerCase();
-        const cleanCorrect = stripOpt(correct);
-        const textIndex = options.findIndex(opt => stripOpt(opt) === cleanCorrect);
+        const cleanCorrect = this.stripOptionPrefix(correct).toLowerCase();
+        const textIndex = options.findIndex(opt => this.stripOptionPrefix(opt).toLowerCase() === cleanCorrect);
         if (textIndex !== -1) return textIndex;
 
         const latinMatch = correct.match(/^([A-H])(?:\s*[.)\-:]*)?$/i);
@@ -5092,7 +5092,14 @@ window.AdminApp = {
         const isRtl = (this.detectQuestionLanguage(q) === 'ar');
         const rtlClass = isRtl ? ' is-rtl' : '';
 
-        const typeLbl = qType === 'mcq' ? 'MCQ' : (qType === 'tf' ? 'صح / خطأ' : 'سؤال قصير');
+        // Dynamic bilingual type label
+        let typeLbl = 'MCQ';
+        if (qType === 'tf') {
+            typeLbl = isRtl ? 'صح / خطأ' : 'T / F';
+        } else if (qType === 'card' || qType === 'short' || qType === 'info') {
+            typeLbl = isRtl ? 'سؤال قصير' : 'Short Answer';
+        }
+
         const chapHtml = chapter ? `<div class="quiz-q-chapter">${chapter}</div>` : '';
 
         const bodyLines = [`<div class="quiz-q-title${rtlClass}">${qText}</div>`];
@@ -5105,10 +5112,11 @@ window.AdminApp = {
                 const isC = (oIdx === cIdx);
                 const optLetter = String.fromCharCode(65 + oIdx);
                 const rowCls = isC ? `quiz-opt-row is-correct${rtlClass}` : `quiz-opt-row${rtlClass}`;
+                const cleanOptText = this.escapeHtml(this.stripOptionPrefix(opt));
                 bodyLines.push(`
                     <div class="${rowCls}">
                         <span class="quiz-opt-letter">${optLetter}.</span>
-                        <span class="quiz-opt-text">${this.escapeHtml(String(opt))}</span>
+                        <span class="quiz-opt-text">${cleanOptText}</span>
                     </div>
                 `);
             });
@@ -5117,7 +5125,7 @@ window.AdminApp = {
             const ans = String(q.answer || '');
             const ansRend = (ans.includes('<li') || ans.includes('<p') || ans.includes('<br'))
                 ? ans
-                : this.escapeHtml(ans).replace(/\n/g, '<br>');
+                : this.escapeHtml(ans).replace(/\\n|\r?\n/g, '<br>');
             const lbl = isRtl ? 'الإجابة النموذجية:' : 'Model Answer:';
             bodyLines.push(`
                 <div class="quiz-short-answer-box${rtlClass}">
@@ -5146,7 +5154,7 @@ window.AdminApp = {
                     </div>
                     ${chapHtml}
                 </div>
-                ${bodyLines.join('\n')}
+                ${bodyLines.join('')}
             </div>
         `;
     },
@@ -5156,8 +5164,9 @@ window.AdminApp = {
         const subjectName = this.escapeHtml(quizData.subject_name || 'مادة دراسية');
         const allQuestions = Array.isArray(quizData.questions) ? quizData.questions : [];
         const qCount = allQuestions.length;
+        const isDocRtl = (this.detectQuestionLanguage(allQuestions[0] || {}) === 'ar');
 
-        const pages = this.calculateSmartPages(allQuestions);
+        const pages = this.calculateSmartPages(allQuestions, includeExplanations);
         const totalPages = pages.length;
 
         let globalQIdx = 1;
@@ -5189,6 +5198,9 @@ window.AdminApp = {
             `;
 
             let headerHtml = '';
+            const qCountLabel = isDocRtl ? `${qCount} أسئلة` : `${qCount} Questions`;
+            const pageOfLabel = isDocRtl ? `صفحة ${pIdx} من ${totalPages}` : `Page ${pIdx} of ${totalPages}`;
+
             if (pIdx === 1) {
                 headerHtml = `
                     <div class="doc-header">
@@ -5197,8 +5209,7 @@ window.AdminApp = {
                             <div class="doc-sub-heading">${subjectName}</div>
                         </div>
                         <div class="doc-meta-badge">
-                            <span class="period" dir="ltr">${qCount} Questions</span>
-                            <span class="subperiod" dir="rtl"><bdi>Dent2025 Academic Portal</bdi></span>
+                            <span class="period" dir="ltr">${qCountLabel}</span>
                         </div>
                     </div>
                 `;
@@ -5209,7 +5220,7 @@ window.AdminApp = {
                             <div class="doc-compact-heading">${quizName} — ${subjectName}</div>
                         </div>
                         <div class="doc-meta-badge">
-                            <span class="period" dir="ltr">Page ${pIdx} of ${totalPages}</span>
+                            <span class="period" dir="ltr">${pageOfLabel}</span>
                         </div>
                     </div>
                 `;
@@ -5218,8 +5229,8 @@ window.AdminApp = {
             const footerHtml = `
                 <div class="doc-footer">
                     <span class="doc-footer-right">dent2025.com</span>
-                    <span class="doc-footer-center">صفحة ${pIdx} من ${totalPages}</span>
-                    <span class="doc-footer-left" dir="ltr">Academic Year 2026</span>
+                    <span class="doc-footer-center">${pageOfLabel}</span>
+                    <span class="doc-footer-spacer"></span>
                 </div>
             `;
 
@@ -5247,10 +5258,10 @@ window.AdminApp = {
     <style>${this.getQuizExportCss()}</style>
 </head>
 <body>
-    ${renderedPages.join('\n')}
+    ${renderedPages.join('')}
 </body>
 </html>`,
-            pagesJoinedHtml: renderedPages.join('\n')
+            pagesJoinedHtml: renderedPages.join('')
         };
     },
 
@@ -5282,8 +5293,13 @@ window.AdminApp = {
 
         const questions = quizData.questions;
         const totalQ = questions.length;
-        const pages = this.calculateSmartPages(questions);
+        const initialIncExp = true;
+        const pages = this.calculateSmartPages(questions, initialIncExp);
         const totalPages = pages.length;
+
+        // Preload export libraries in parallel immediately
+        this.loadHtmlToImage().catch(() => {});
+        this.loadJsPdf().catch(() => {});
 
         let modal = document.getElementById('admin-quiz-export-modal');
         if (modal) modal.remove();
@@ -5292,13 +5308,11 @@ window.AdminApp = {
         modal.id = 'admin-quiz-export-modal';
         modal.style.cssText = 'position: fixed; inset: 0; background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 999999; display: flex; justify-content: center; align-items: center; direction: rtl; font-family: "Outfit", "Noto Kufi Arabic", sans-serif; padding: 16px; box-sizing: border-box;';
 
-        let pageSummaryText = '';
-        if (totalPages === 1) {
-            pageSummaryText = 'صفحة A4 واحدة (تنسيق عمودين متوازنين)';
-        } else {
-            const breakdown = pages.map((p, i) => `صفحة ${i + 1}: ${p.length} أسئلة`).join('، ');
-            pageSummaryText = `${totalPages} صفحات A4 (${breakdown})`;
-        }
+        const getSummaryText = (pgs) => {
+            if (pgs.length === 1) return 'صفحة A4 واحدة (تنسيق عمودين متوازنين)';
+            const breakdown = pgs.map((p, i) => `صفحة ${i + 1}: ${p.length} أسئلة`).join('، ');
+            return `${pgs.length} صفحات A4 (${breakdown})`;
+        };
 
         modal.innerHTML = `
             <style>@keyframes adminSpin { to { transform: rotate(360deg); } }</style>
@@ -5319,7 +5333,7 @@ window.AdminApp = {
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-size: 0.76rem; color: #a1a1aa; font-weight: 600;">توزيع الصفحات:</span>
-                        <span style="font-size: 0.76rem; color: #cbd5e1; font-weight: 600;">${pageSummaryText}</span>
+                        <span id="admin-export-page-summary" style="font-size: 0.76rem; color: #cbd5e1; font-weight: 600;">${getSummaryText(pages)}</span>
                     </div>
                 </div>
 
@@ -5351,6 +5365,15 @@ window.AdminApp = {
 
         document.body.appendChild(modal);
 
+        const expToggle = document.getElementById('admin-export-inc-exp');
+        if (expToggle) {
+            expToggle.addEventListener('change', () => {
+                const freshPages = this.calculateSmartPages(questions, expToggle.checked);
+                const sumEl = document.getElementById('admin-export-page-summary');
+                if (sumEl) sumEl.innerText = getSummaryText(freshPages);
+            });
+        }
+
         document.getElementById('admin-export-pdf-btn').addEventListener('click', () => {
             const incExp = !!document.getElementById('admin-export-inc-exp')?.checked;
             this.executeSaveQuizAsPdf(quizData, incExp, document.getElementById('admin-export-pdf-btn'));
@@ -5379,19 +5402,23 @@ window.AdminApp = {
         }
         if (imgBtn) imgBtn.disabled = true;
 
+        let sandbox = null;
         try {
             const jsPdfPromise = this.loadJsPdf();
             const htmlToImage = await this.loadHtmlToImage();
 
             const { pagesJoinedHtml } = this.generateExamBookletHtml(quizData, includeExplanations);
 
-            const sandbox = document.createElement('div');
+            sandbox = document.createElement('div');
             sandbox.id = 'dent-admin-quiz-sandbox';
-            sandbox.style.cssText = 'position: fixed; left: -99999px; top: 0; width: 794px; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1;';
+            sandbox.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1;';
             const sandboxCss = this.getQuizExportCss().replace(/(^|[\s,{}])html\s*,\s*body(?=[\s,{:]|$)/gi, '$1#dent-admin-quiz-sandbox').replace(/(^|[\s,{}])body(?=[\s,{:]|$)/gi, '$1#dent-admin-quiz-sandbox');
             sandbox.innerHTML = `<style>${sandboxCss}</style>` + pagesJoinedHtml;
             document.body.appendChild(sandbox);
 
+            if (document.fonts && document.fonts.ready) {
+                await document.fonts.ready;
+            }
             await new Promise(r => setTimeout(r, 60));
 
             const pageEls = sandbox.querySelectorAll('.a4-page-sheet');
@@ -5419,6 +5446,7 @@ window.AdminApp = {
             }
 
             sandbox.remove();
+            sandbox = null;
 
             const jsPdfClass = await jsPdfPromise;
             const pdf = new jsPdfClass({
@@ -5451,6 +5479,8 @@ window.AdminApp = {
                 btn.innerHTML = origHtml;
             }
             if (imgBtn) imgBtn.disabled = false;
+        } finally {
+            if (sandbox && sandbox.parentNode) sandbox.remove();
         }
     },
 
@@ -5466,17 +5496,21 @@ window.AdminApp = {
         }
         if (pdfBtn) pdfBtn.disabled = true;
 
+        let sandbox = null;
         try {
             const htmlToImage = await this.loadHtmlToImage();
             const { pagesJoinedHtml } = this.generateExamBookletHtml(quizData, includeExplanations);
 
-            const sandbox = document.createElement('div');
+            sandbox = document.createElement('div');
             sandbox.id = 'dent-admin-quiz-sandbox';
-            sandbox.style.cssText = 'position: fixed; left: -99999px; top: 0; width: 794px; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1;';
+            sandbox.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: #0b0b0e; z-index: -9999; pointer-events: none; opacity: 1;';
             const sandboxCss = this.getQuizExportCss().replace(/(^|[\s,{}])html\s*,\s*body(?=[\s,{:]|$)/gi, '$1#dent-admin-quiz-sandbox').replace(/(^|[\s,{}])body(?=[\s,{:]|$)/gi, '$1#dent-admin-quiz-sandbox');
             sandbox.innerHTML = `<style>${sandboxCss}</style><div id="dent-admin-capture-wrapper" style="display:flex; flex-direction:column; gap:12px; background:#0b0b0e; width:794px;">${pagesJoinedHtml}</div>`;
             document.body.appendChild(sandbox);
 
+            if (document.fonts && document.fonts.ready) {
+                await document.fonts.ready;
+            }
             await new Promise(r => setTimeout(r, 60));
 
             const captureTarget = sandbox.querySelector('#dent-admin-capture-wrapper') || sandbox.querySelector('.a4-page-sheet');
@@ -5498,6 +5532,7 @@ window.AdminApp = {
             });
 
             sandbox.remove();
+            sandbox = null;
 
             if (!blob) throw new Error('فشل إنشاء ملف الصورة.');
 
@@ -5529,6 +5564,8 @@ window.AdminApp = {
                 btn.innerHTML = origHtml;
             }
             if (pdfBtn) pdfBtn.disabled = false;
+        } finally {
+            if (sandbox && sandbox.parentNode) sandbox.remove();
         }
     },
 
@@ -5593,6 +5630,9 @@ window.AdminApp = {
 
         // 3. Show sleek toast prompting to send, copy, or view (matching schedule export)
         this.showQuizExportToast(file, blob, fileName, fileType, blobUrl, copiedToClipboard);
+
+        // Revoke Object URL after 60 seconds to prevent memory leaks
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
     },
 
     showQuizExportToast(file, blob, fileName, fileType, blobUrl, copiedToClipboard = false) {
