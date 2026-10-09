@@ -6577,18 +6577,18 @@ window.AdminApp = {
                 </label>
 
                 <!-- Action Buttons Grid (PDF & Copy Image) -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px;">
+                <div id="admin-export-buttons-grid" style="display: grid; grid-template-columns: ${totalPages === 1 ? '1fr 1fr' : '1fr'}; gap: 10px; margin-bottom: 6px;">
                     <button type="button" id="admin-export-pdf-btn" style="width: 100%; height: 48px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);" onmouseover="this.style.background='#3f3f46';" onmouseout="this.style.background='#27272a';">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                         <span style="white-space: nowrap;">ملف PDF</span>
                     </button>
 
-                    <button type="button" id="admin-export-img-btn" style="width: 100%; height: 48px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);" onmouseover="this.style.background='#3f3f46';" onmouseout="this.style.background='#27272a';">
+                    <button type="button" id="admin-export-img-btn" style="width: 100%; height: 48px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: ${totalPages === 1 ? 'flex' : 'none'}; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);" onmouseover="this.style.background='#3f3f46';" onmouseout="this.style.background='#27272a';">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="flex-shrink:0;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         <span style="white-space: nowrap;">نسخ كصورة</span>
                     </button>
                 </div>
-                <div style="font-size: 0.74rem; color: #94a3b8; text-align: center; margin: 4px 0 14px 0;">اختر ملف PDF للإرسال أو نسخ كصورة للصق الفوري في واتساب وتيليجرام</div>
+                <div id="admin-export-hint-text" style="font-size: 0.74rem; color: #94a3b8; text-align: center; margin: 4px 0 14px 0;">${totalPages === 1 ? 'اختر ملف PDF للإرسال أو نسخ كصورة للصق الفوري في واتساب وتيليجرام' : 'تصدير الاختبار ككتيب أكاديمي منظم بصيغة PDF'}</div>
 
                 <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
                     <button type="button" onclick="AdminApp.closeQuizExportModal()" style="padding: 7px 16px; background: #27272a; border: 1px solid rgba(255,255,255,0.1); color: #a1a1aa; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.82rem; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#a1a1aa';">إلغاء</button>
@@ -6604,6 +6604,17 @@ window.AdminApp = {
                 const freshPages = this.calculateSmartPages(questions, expToggle.checked);
                 const sumEl = document.getElementById('admin-export-page-summary');
                 if (sumEl) sumEl.innerText = getSummaryText(freshPages);
+                const gridEl = document.getElementById('admin-export-buttons-grid');
+                const imgBtnEl = document.getElementById('admin-export-img-btn');
+                const hintEl = document.getElementById('admin-export-hint-text');
+                const isSingle = (freshPages.length === 1);
+                if (gridEl) gridEl.style.gridTemplateColumns = isSingle ? '1fr 1fr' : '1fr';
+                if (imgBtnEl) imgBtnEl.style.display = isSingle ? 'flex' : 'none';
+                if (hintEl) {
+                    hintEl.innerText = isSingle
+                        ? 'اختر ملف PDF للإرسال أو نسخ كصورة للصق الفوري في واتساب وتيليجرام'
+                        : 'تصدير الاختبار ككتيب أكاديمي منظم بصيغة PDF';
+                }
             });
         }
 
