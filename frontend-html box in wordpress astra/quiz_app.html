@@ -3070,18 +3070,17 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             box-sizing: border-box !important;
             width: 794px !important;
             min-width: 794px !important;
-            max-width: 794px !important;
-            height: 1120px;
-            max-height: 1120px;
-            padding: 6mm 8mm 5mm 8mm !important;
+            height: auto;
+            min-height: 0;
+            max-height: none;
+            padding: 6mm 8mm 6mm 8mm !important;
             border: 1px solid #262626;
             border-radius: 4px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             overflow: hidden;
         }
-        .page-inner-content { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden !important; }
+        .page-inner-content { display: flex; flex-direction: column; min-height: 0; }
         .doc-header {
             display: flex;
             align-items: center;
@@ -3762,8 +3761,8 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
             const columnsHtml = `
                 <div class="page-two-columns${densityClass}">
-                    <div class="col-half"${col1Cards.length >= 4 ? ' style="justify-content: space-between;"' : ''}>${col1Cards.join('')}</div>
-                    <div class="col-half"${col2Cards.length >= 4 ? ' style="justify-content: space-between;"' : ''}>${col2Cards.join('')}</div>
+                    <div class="col-half">${col1Cards.join('')}</div>
+                    <div class="col-half">${col2Cards.join('')}</div>
                 </div>
             `;
 
@@ -4027,20 +4026,21 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             await new Promise(r => setTimeout(r, 40));
 
             const pageEls = sandbox.querySelectorAll('.a4-page-sheet');
-            const imgDataList = [];
+            const pageDataList = [];
 
             for (let i = 0; i < pageEls.length; i++) {
                 const pageEl = pageEls[i];
                 if (btn && btn.querySelector('span')) {
                     btn.querySelector('span').innerText = `معالجة صفحة ${i + 1} من ${pageEls.length}...`;
                 }
+                const pageH = Math.max(200, Math.ceil(pageEl.getBoundingClientRect().height));
                 const dataUrl = await htmlToImage.toJpeg(pageEl, {
                     quality: 0.95,
                     pixelRatio: pdfPixelRatio,
                     width: 794,
-                    height: 1120,
+                    height: pageH,
                     canvasWidth: Math.round(794 * pdfPixelRatio),
-                    canvasHeight: Math.round(1120 * pdfPixelRatio),
+                    canvasHeight: Math.round(pageH * pdfPixelRatio),
                     skipFonts: true,
                     backgroundColor: '#121212',
                     style: {
@@ -4048,25 +4048,29 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                         filter: 'none'
                     }
                 });
-                imgDataList.push(dataUrl);
+                pageDataList.push({ dataUrl, heightPx: pageH });
             }
 
             sandbox.remove();
             sandbox = null;
 
             const jsPdfClass = await jsPdfPromise;
-            const pdf = new jsPdfClass({
-                orientation: 'p',
-                unit: 'mm',
-                format: 'a4',
-                compress: true
-            });
+            const firstH_mm = Math.round((pageDataList[0].heightPx / 794) * 210 * 10) / 10;
+            const pdf = new jsPdfClass('p', 'mm', [210, firstH_mm]);
 
-            for (let i = 0; i < imgDataList.length; i++) {
-                if (i > 0) pdf.addPage('a4', 'p');
+            for (let i = 0; i < pageDataList.length; i++) {
+                const item = pageDataList[i];
+                const h_mm = Math.round((item.heightPx / 794) * 210 * 10) / 10;
+                if (i > 0) {
+                    if (h_mm >= 210) {
+                        pdf.addPage([210, h_mm], 'p');
+                    } else {
+                        pdf.addPage([h_mm, 210], 'l');
+                    }
+                }
                 pdf.setFillColor(18, 18, 18);
-                pdf.rect(0, 0, 210, 297, 'F');
-                pdf.addImage(imgDataList[i], 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+                pdf.rect(0, 0, 210, h_mm, 'F');
+                pdf.addImage(item.dataUrl, 'JPEG', 0, 0, 210, h_mm, undefined, 'FAST');
             }
 
             const safeTitle = (quizData.quiz_name || quizData.title || 'Quiz').replace(/[\\/:*?"<>|]+/g, '_').trim();
