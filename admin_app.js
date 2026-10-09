@@ -5808,7 +5808,7 @@ window.AdminApp = {
             bodyLines.push('</div>');
         } else if (qType === 'card' || qType === 'short' || qType === 'info') {
             const ans = String(q.answer || '');
-            const ansRend = (ans.includes('<li') || ans.includes('<p') || ans.includes('<br'))
+            const ansRend = /<[a-z][\s\S]*>/i.test(ans)
                 ? ans
                 : this.escapeHtml(ans).replace(/\\n|\r?\n/g, '<br>');
             const lbl = isRtl ? 'الإجابة النموذجية:' : 'Model Answer:';
@@ -5823,9 +5823,10 @@ window.AdminApp = {
         const exp = String(q.explanation || '').trim();
         if (includeExplanation && exp) {
             const expLbl = isRtl ? 'الشرح:' : 'Explanation:';
+            const expRend = /<[a-z][\s\S]*>/i.test(exp) ? exp : this.escapeHtml(exp);
             bodyLines.push(`
                 <div class="quiz-explanation-box${rtlClass}">
-                    <strong>${expLbl}</strong> ${this.escapeHtml(exp)}
+                    <strong>${expLbl}</strong> ${expRend}
                 </div>
             `);
         }

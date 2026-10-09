@@ -3369,7 +3369,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             bodyLines.push('</div>');
         } else if (qType === 'card' || qType === 'short' || qType === 'info') {
             const ans = String(q.answer || '');
-            const ansRend = (ans.includes('<li') || ans.includes('<p') || ans.includes('<br'))
+            const ansRend = /<[a-z][\s\S]*>/i.test(ans)
                 ? ans
                 : escapeHtml(ans).replace(/\\n|\r?\n/g, '<br>');
             const lbl = isRtl ? 'الإجابة النموذجية:' : 'Model Answer:';
@@ -3384,9 +3384,10 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         const exp = String(q.explanation || '').trim();
         if (includeExplanation && exp) {
             const expLbl = isRtl ? 'الشرح:' : 'Explanation:';
+            const expRend = /<[a-z][\s\S]*>/i.test(exp) ? exp : escapeHtml(exp);
             bodyLines.push(`
                 <div class="quiz-explanation-box${rtlClass}">
-                    <strong>${expLbl}</strong> ${escapeHtml(exp)}
+                    <strong>${expLbl}</strong> ${expRend}
                 </div>
             `);
         }
