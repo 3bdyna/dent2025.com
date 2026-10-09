@@ -2201,6 +2201,32 @@ function cleanAndParseGeminiJson($rawContent) {
 }
 
 /**
+ * Determine if a course/subject is naturally taught and examined in academic English.
+ * Dentistry, Medicine, and Pre-Med health sciences are 100% English medium of instruction,
+ * while Islamic Culture and Arabic Language courses are in Arabic.
+ */
+function isCourseNaturallyEnglish($specialty, $subjectTitle) {
+    $spec = strtolower(trim((string)$specialty));
+    $sub = trim((string)$subjectTitle);
+
+    // Explicit Islamic or Arabic humanities courses
+    if (preg_match('/(إسلام|اسلام|سلم|عرب|لغة عربية|قرآن|حديث|فقه|عقيدة|سيرة|تحرير|وطن)/ui', $sub)) {
+        return false;
+    }
+
+    // Medical, dental, and pre-med health sciences courses are 100% English medium of instruction
+    if ($spec === 'dentistry' || $spec === 'medicine' || $spec === 'pre-med' || strpos($spec, 'dent') !== false || strpos($spec, 'med') !== false) {
+        return true;
+    }
+
+    if (preg_match('/[A-Za-z]/', $sub)) {
+        return true;
+    }
+
+    return true; // Health and dental academic portal default
+}
+
+/**
  * Two-stage high-precision past exam extraction & curation pipeline:
  * Stage 1: Strict Verbatim OCR Transcription (Zero Hallucination, temp=0.1)
  * Stage 2: Target Topic Filter, Scientific Solving, Non-MCQ Conversion & Explanation
@@ -2324,6 +2350,7 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
     $targetChapters = $data['targetChapters'] ?? [];
     $subjectTitle = trim($data['subjectName'] ?? '');
     $spec = strtolower(trim($data['specialty'] ?? ''));
+    $isEnglishMedium = isCourseNaturallyEnglish($spec, $subjectTitle);
 
     // Batch raw questions in groups of 25 to guarantee zero token overflow in Stage 2
     $rawBatches = array_chunk($rawQuestions, 25);
@@ -2343,9 +2370,9 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
 
         $targetChaptersStr = !empty($targetChapters) ? implode("\n- ", $targetChapters) : 'جميع مواضيع المقرر';
         $targetChaptersContent = $data['targetChaptersContent'] ?? '';
-        $firstChapterName = !empty($targetChapters) ? $targetChapters[0] : (!empty($subjectTitle) ? $subjectTitle : 'عام');
-        $stage2Prompt = "Act as an expert university professor and clinical examiner in {$subjectTitle} ({$spec}).\n";
-        $stage2Prompt .= "You are provided with real past examination questions and marked slide points transcribed verbatim:\n";
+        $firstChapterName = !empty($targetChapters) ? $targetChapters[0] : (!empty($subjectTitle) ? $subjectTitle : 'General');
+        $stage2Prompt = "Act as an expert university professor and lead clinical examiner in {$subjectTitle} ({$spec}).\n";
+        $stage2Prompt .= "You are provided with real past examination questions and marked slide points transcribed from student exam papers or recollections:\n";
         $stage2Prompt .= json_encode($chunk, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n\n";
         $stage2Prompt .= "STUDENT'S TARGET REVISION CHAPTERS / TOPICS:\n- " . $targetChaptersStr . "\n\n";
         if (!empty($targetChaptersContent)) {
@@ -2353,39 +2380,61 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         }
         $stage2Prompt .= "EXTRACTION FORMAT PREFERENCE: {$formatPref}\n";
         $stage2Prompt .= "(Values: 'hybrid' = keep original formats matching university revision banks; 'mcq_only' = only keep real MCQs; 'convert_all_mcq' = convert everything to 4-choice MCQs)\n\n";
-        $stage2Prompt .= "CRITICAL DIRECTIVE ON TOPIC MATCHING & CHAPTER ASSIGNMENT (MAXIMUM RETENTION):\n";
-        $stage2Prompt .= "1. BE GENEROUS AND HIGHLY INCLUSIVE: University students often submit past exam questions with brief, informal, or recalled phrasing. You MUST KEEP every question and marked slide point that belongs or relates to the course ({$subjectTitle}) or to any of the student's target chapters.\n";
+
+        $stage2Prompt .= "CRITICAL DIRECTIVE 1: PROFESSIONAL ACADEMIC QUESTION RE-FORMULATION & SLANG REMOVAL:\n";
+        $stage2Prompt .= "- Students frequently recall exam questions in informal chat, WhatsApp messages, or colloquial summaries (e.g., 'عرف الـ sterilization و اذكر الـ Methods حق الي هي', 'اذكر 4 من الـ precautions للـ infection control', 'الثالث اذكر له الـ Variation of buccal mucosa', 'الرابع كيس هيستوري مريض معاه pain في الـ lower tooth مدري lip يشاك تتكلم عن الـ Hopi له حقه اذكر 4', 'الخامس كان يتكلم عن Patient Previous dental history يبغى 3 اكتب له اي شي').\n";
+        $stage2Prompt .= "- YOU MUST TRANSFORM AND ELEVATE each item into a clean, formal university examination question stem as written by a university professor.\n";
+        $stage2Prompt .= "- STRIP ALL CASUAL CHAT SLANG, uncertainty ('مدري', 'يشاك'), conversational phrasing ('اذكر له', 'حق الي هي'), and personal commentary ('اكتب له أي شي'). State the question authoritatively, professionally, and clearly.\n\n";
+
+        if ($isEnglishMedium) {
+            $stage2Prompt .= "CRITICAL DIRECTIVE 2: MEDIUM OF INSTRUCTION IS 100% ACADEMIC ENGLISH:\n";
+            $stage2Prompt .= "- In {$subjectTitle} ({$spec}), university exams, curricula, scientific terms, and answers are 100% in ACADEMIC ENGLISH.\n";
+            $stage2Prompt .= "- Even if the student recollected the questions in Arabic or Arabic-English chat in the uploaded screenshot, YOU MUST FORMULATE the question stem in pristine, formal ACADEMIC ENGLISH and provide all answers/options strictly in ACADEMIC ENGLISH matching dental/medical textbooks (e.g. Autoclave, Dry Heat, Radiation, Linea Alba, Fordyce Granules, HOPI: Onset, Location, Character, Severity).\n";
+            $stage2Prompt .= "- DO NOT translate medical answers or scientific terminology into Arabic! The entire quiz ('question', 'answer', 'options', 'explanation') must be in academic English.\n";
+            $stage2Prompt .= "- Set 'language': 'en' for all items.\n\n";
+        } else {
+            $stage2Prompt .= "CRITICAL DIRECTIVE 2: COURSE LANGUAGE IS FORMAL ACADEMIC ARABIC (الفصحى):\n";
+            $stage2Prompt .= "- Formulate the question stems and model answers in eloquent, formal academic Arabic. Eliminate all colloquial dialects.\n";
+            $stage2Prompt .= "- Set 'language': 'ar' for all items.\n\n";
+        }
+
+        $stage2Prompt .= "CRITICAL DIRECTIVE 3: EXACT ITEM COUNT FIDELITY:\n";
+        $stage2Prompt .= "- When a question asks for a specific count (e.g. '4 precautions', '4 components of HOPI', '3 components of dental history'):\n";
+        $stage2Prompt .= "  Provide the exact requested number of items in the model answer (e.g. exactly 4 numbered points or 3 numbered points), focusing on the highest-yield clinical facts.\n\n";
+
+        $stage2Prompt .= "CRITICAL DIRECTIVE 4: TOPIC INCLUSION & CHAPTER MAPPING (MAXIMUM RETENTION):\n";
+        $stage2Prompt .= "1. BE GENEROUS AND HIGHLY INCLUSIVE: You MUST KEEP every question and marked slide point that belongs or relates to the course ({$subjectTitle}) or to any of the student's target chapters.\n";
         $stage2Prompt .= "2. CHAPTER MAPPING: Assign each retained question to the closest matching target chapter in 'assignedChapter'. If a question broadly fits the subject but doesn't explicitly match a specific chapter title, assign it to: '{$firstChapterName}'. DO NOT discard questions simply because the wording differs from the chapter heading!\n";
-        $stage2Prompt .= "3. ONLY DISCARD if the item is 100% indisputably from an entirely distinct, completely unrelated medical specialty or academic course (e.g. general chemistry questions inside a prosthodontics exam). When in doubt, ALWAYS KEEP IT.\n\n";
-        $stage2Prompt .= "YOUR TASKS:\n";
-        $stage2Prompt .= "1. ACADEMIC STRUCTURING BY ITEM TYPE:\n";
-        $stage2Prompt .= "   A) MULTIPLE CHOICE QUESTIONS (type 'mcq' or 'truefalse'):\n";
-        $stage2Prompt .= "      - Scientifically verify and solve the 100% correct answer (ignore incorrect student pencil marks).\n";
-        $stage2Prompt .= "      - Provide high-yield scientific explanation in 'explanation' strictly matching the language of the question.\n";
-        $stage2Prompt .= "      - Return as type: 'mcq' with options, correctIndex, correctAnswer, and explanation.\n";
-        $stage2Prompt .= "   B) WRITTEN / ESSAY / SHORT ANSWER / ENUMERATION / FILL-IN-THE-BLANK (type 'written'):\n";
-        $stage2Prompt .= "      - If FORMAT PREFERENCE is 'mcq_only': Discard this item.\n";
-        $stage2Prompt .= "      - If FORMAT PREFERENCE is 'convert_all_mcq': Construct 4 plausible choices with distractors, prefix question with '*', and return as type: 'mcq'.\n";
-        $stage2Prompt .= "      - If FORMAT PREFERENCE is 'hybrid' (Default - matching our official college revision banks):\n";
-        $stage2Prompt .= "        Keep the original question format and provide a pristine, structured model answer in 'answer' using clean HTML:\n";
-        $stage2Prompt .= "        * Use <div class=\"dent-subheading\">Heading/Category:</div>\n";
-        $stage2Prompt .= "        * Use <ol><li>Numbered items</li></ol> or <ul><li>Bullet points</li></ul>\n";
-        $stage2Prompt .= "        * Bold key terms with <strong>...</strong>.\n";
-        $stage2Prompt .= "        Return as type: 'card' (with 'question', 'answer', 'assignedChapter', NO options array).\n";
-        $stage2Prompt .= "   C) SLIDE HIGHLIGHTS & TESTED CONCEPTS (type 'slide_highlight'):\n";
-        $stage2Prompt .= "      - If FORMAT PREFERENCE is 'mcq_only': Discard this item.\n";
-        $stage2Prompt .= "      - If FORMAT PREFERENCE is 'convert_all_mcq': Convert tested fact into a 4-choice MCQ, prefix stem with '*', return as type: 'mcq'.\n";
-        $stage2Prompt .= "      - If FORMAT PREFERENCE is 'hybrid' (Default):\n";
-        $stage2Prompt .= "        Format as a high-yield focus information card:\n";
-        $stage2Prompt .= "        * 'question': Numbered concept or landmark name (e.g., '1. Labial Frenum (Maxilla)').\n";
-        $stage2Prompt .= "        * 'answer': Structured HTML bullet points of ONLY the highlighted facts: <ul><li><strong>Key Feature:</strong> Fact...</li></ul>.\n";
-        $stage2Prompt .= "        Return as type: 'info' (with 'question', 'answer', 'assignedChapter').\n";
-        $stage2Prompt .= "2. LANGUAGE MATCHING: English questions must have 100% academic English explanations/answers. Arabic questions must be 100% Arabic.\n\n";
+        $stage2Prompt .= "3. ONLY DISCARD if the item is 100% indisputably from an entirely distinct, completely unrelated medical specialty or academic course. When in doubt, ALWAYS KEEP IT.\n\n";
+
+        $stage2Prompt .= "YOUR TASKS & ACADEMIC STRUCTURING BY ITEM TYPE:\n";
+        $stage2Prompt .= "1. MULTIPLE CHOICE QUESTIONS (type 'mcq' or 'truefalse'):\n";
+        $stage2Prompt .= "   - Scientifically verify and solve the 100% correct answer (ignore incorrect student pencil marks).\n";
+        $stage2Prompt .= "   - Provide high-yield scientific explanation in 'explanation' strictly matching the course medium of instruction (" . ($isEnglishMedium ? "English" : "Arabic") . ").\n";
+        $stage2Prompt .= "   - Return as type: 'mcq' with options, correctIndex, correctAnswer, and explanation.\n";
+        $stage2Prompt .= "2. WRITTEN / ESSAY / SHORT ANSWER / ENUMERATION / FILL-IN-THE-BLANK (type 'written'):\n";
+        $stage2Prompt .= "   - If FORMAT PREFERENCE is 'mcq_only': Discard this item.\n";
+        $stage2Prompt .= "   - If FORMAT PREFERENCE is 'convert_all_mcq': Construct 4 plausible choices with distractors, prefix question with '*', and return as type: 'mcq'.\n";
+        $stage2Prompt .= "   - If FORMAT PREFERENCE is 'hybrid' (Default - matching our official college revision banks):\n";
+        $stage2Prompt .= "     Elevate the question stem to formal academic phrasing and provide a pristine, structured model answer in 'answer' using clean HTML:\n";
+        $stage2Prompt .= "     * Use <div class=\"dent-subheading\">Heading/Category:</div>\n";
+        $stage2Prompt .= "     * Use <ol><li>Numbered items</li></ol> or <ul><li>Bullet points</li></ul>\n";
+        $stage2Prompt .= "     * Bold key terms with <strong>...</strong>.\n";
+        $stage2Prompt .= "     Return as type: 'card' (with 'question', 'answer', 'assignedChapter', NO options array).\n";
+        $stage2Prompt .= "3. SLIDE HIGHLIGHTS & TESTED CONCEPTS (type 'slide_highlight'):\n";
+        $stage2Prompt .= "   - If FORMAT PREFERENCE is 'mcq_only': Discard this item.\n";
+        $stage2Prompt .= "   - If FORMAT PREFERENCE is 'convert_all_mcq': Convert tested fact into a 4-choice MCQ, prefix stem with '*', return as type: 'mcq'.\n";
+        $stage2Prompt .= "   - If FORMAT PREFERENCE is 'hybrid' (Default):\n";
+        $stage2Prompt .= "     Format as a high-yield focus information card:\n";
+        $stage2Prompt .= "     * 'question': Numbered concept or landmark name (e.g., '1. Labial Frenum (Maxilla)').\n";
+        $stage2Prompt .= "     * 'answer': Structured HTML bullet points of ONLY the highlighted facts: <ul><li><strong>Key Feature:</strong> Fact...</li></ul>.\n";
+        $stage2Prompt .= "     Return as type: 'info' (with 'question', 'answer', 'assignedChapter').\n\n";
+
         $stage2Prompt .= "OUTPUT FORMAT (Return ONLY a raw JSON array):\n";
         $stage2Prompt .= "[\n";
-        $stage2Prompt .= '  {"type":"mcq","language":"en|ar","question":"MCQ text","options":["A","B","C","D"],"correctIndex":0,"correctAnswer":"A","explanation":"Explanation...","assignedChapter":"Chapter Name"},' . "\n";
-        $stage2Prompt .= '  {"type":"card","language":"en|ar","question":"Q1. Write the 4 parts of...","answer":"<div class=\"dent-subheading\">4 Parts:</div><ol><li>Part 1</li></ol>","assignedChapter":"Chapter Name"},' . "\n";
-        $stage2Prompt .= '  {"type":"info","language":"en|ar","question":"1. Landmark Name","answer":"<ul><li><strong>Notch:</strong> V-shaped notch...</li></ul>","assignedChapter":"Chapter Name"}' . "\n";
+        $stage2Prompt .= '  {"type":"mcq","language":"' . ($isEnglishMedium ? 'en' : 'ar') . '","question":"MCQ text","options":["A","B","C","D"],"correctIndex":0,"correctAnswer":"A","explanation":"Explanation...","assignedChapter":"Chapter Name"},' . "\n";
+        $stage2Prompt .= '  {"type":"card","language":"' . ($isEnglishMedium ? 'en' : 'ar') . '","question":"Q1. Enumerate 4 essential...","answer":"<div class=\"dent-subheading\">Infection Control Precautions:</div><ol><li>Item 1</li></ol>","assignedChapter":"Chapter Name"},' . "\n";
+        $stage2Prompt .= '  {"type":"info","language":"' . ($isEnglishMedium ? 'en' : 'ar') . '","question":"1. Landmark Name","answer":"<ul><li><strong>Feature:</strong> Anatomical detail...</li></ul>","assignedChapter":"Chapter Name"}' . "\n";
         $stage2Prompt .= "]\n";
 
         $stage2Payload = json_encode([
@@ -2425,12 +2474,13 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
             if (!empty($parsedCur) && is_array($parsedCur)) {
                 foreach ($parsedCur as $q) {
                     $qType = strtolower(trim($q['type'] ?? 'mcq'));
+                    $itemLang = $isEnglishMedium ? 'en' : ($q['language'] ?? 'ar');
                     if ($qType === 'card' || $qType === 'info') {
                         $ans = trim($q['answer'] ?? ($q['explanation'] ?? ''));
                         if (!empty($q['question']) && !empty($ans)) {
                             $finalQuestions[] = [
                                 'type' => $qType,
-                                'language' => $q['language'] ?? 'en',
+                                'language' => $itemLang,
                                 'question' => trim($q['question']),
                                 'answer' => $ans,
                                 'assignedChapter' => trim($q['assignedChapter'] ?? ($targetChapters[0] ?? 'عام'))
@@ -2446,6 +2496,7 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
                                 $q['correctAnswer'] = $q['options'][$cIdx];
                             }
                             $q['type'] = 'mcq';
+                            $q['language'] = $itemLang;
                             $finalQuestions[] = $q;
                         }
                     }
@@ -2458,13 +2509,14 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
     // salvage transcribed questions from Stage 1 so students never lose their exam materials!
     if (empty($finalQuestions) && !empty($rawQuestions) && is_array($rawQuestions)) {
         $defaultChapter = !empty($targetChapters) ? $targetChapters[0] : (!empty($subjectTitle) ? $subjectTitle : 'عام');
+        $fallbackLang = $isEnglishMedium ? 'en' : 'ar';
         foreach ($rawQuestions as $raw) {
             if (!is_array($raw)) continue;
             $stem = trim($raw['question'] ?? '');
             if (empty($stem)) continue;
 
             $rType = strtolower(trim($raw['type'] ?? 'mcq'));
-            $detectedLang = detectQuizQuestionLanguage($stem, $raw['options'] ?? [], $raw['indicatedAnswer'] ?? '');
+            $detectedLang = $fallbackLang;
 
             if ($rType === 'slide_highlight') {
                 $highlightContent = trim($raw['highlightedContent'] ?? ($raw['indicatedAnswer'] ?? ''));
