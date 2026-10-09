@@ -6045,13 +6045,10 @@ window.AdminApp = {
                 box-sizing: border-box;
             }
             .doc-footer-left {
-                font-family: 'Outfit', sans-serif;
-                font-weight: 700;
-                color: #a1a1aa;
-                direction: ltr !important;
-                text-align: left;
-                white-space: nowrap !important;
                 flex: 1;
+                text-align: left;
+                visibility: hidden;
+                white-space: nowrap !important;
             }
             .doc-footer-center {
                 font-family: 'Cairo', 'Outfit', sans-serif;
@@ -6062,10 +6059,13 @@ window.AdminApp = {
                 flex: 1;
             }
             .doc-footer-right {
-                flex: 1;
+                font-family: 'Outfit', sans-serif;
+                font-weight: 700;
+                color: #a1a1aa;
+                direction: ltr !important;
                 text-align: right;
-                visibility: hidden;
                 white-space: nowrap !important;
+                flex: 1;
             }
         `;
     },
