@@ -1078,7 +1078,7 @@ function injectPathChanger(selection) {
 // ---------------------------------------------------------
 function renderLogo(selection) {
     let logoPath = '/logos/dent2025.png';
-    if (selection.specialty === 'dentistry') logoPath = '/logos/dentistry.webp';
+    if (selection.specialty === 'dentistry') logoPath = '/logos/dentistry.webp?v=20261010';
     else if (selection.specialty === 'medicine') logoPath = '/logos/medicine.webp';
     else if (selection.specialty === 'pre-med') logoPath = '/logos/pre-med.webp';
     
