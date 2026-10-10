@@ -243,6 +243,29 @@ if (dent2025_is_frontend_head()) {
         $multi_specialty_mode = (bool) get_option('dent2025_multi_specialty_mode', true);
         $head .= "\n" . '<script id="dent-portal-config">window.DENT_MULTI_SPECIALTY_MODE = ' . ($multi_specialty_mode ? 'true' : 'false') . ';</script>' . "\n";
 
+        // Instant early logo swap before first paint to prevent logo flicker/reversion
+        $dent_logo_v = file_exists(ABSPATH . 'logos/dentistry.webp') ? filemtime(ABSPATH . 'logos/dentistry.webp') : 1;
+        $head .= '<script id="dent-instant-logo">
+(function() {
+    if (window.location.pathname.indexOf("/wolcome") !== -1) return;
+    try {
+        var raw = localStorage.getItem("dent2025_selection");
+        if (!raw) return;
+        var sel = JSON.parse(raw);
+        var path = "";
+        if (sel.specialty === "dentistry") path = "/logos/dentistry.webp?v=' . $dent_logo_v . '";
+        else if (sel.specialty === "medicine") path = "/logos/medicine.webp";
+        else if (sel.specialty === "pre-med") path = "/logos/pre-med.webp";
+        if (path) {
+            var s = document.createElement("style");
+            s.id = "dent-instant-logo-css";
+            s.innerHTML = ".site-logo img, .custom-logo { content: url(\"" + path + "\") !important; }";
+            document.head.appendChild(s);
+        }
+    } catch(e) {}
+})();
+</script>' . "\n";
+
         // Accelerate Google Drive iframe embed connection (DNS + TCP + TLS early warmup)
         $head .= '<link rel="preconnect" href="https://drive.google.com" crossorigin>' . "\n" .
             '<link rel="preconnect" href="https://docs.google.com" crossorigin>' . "\n" .
