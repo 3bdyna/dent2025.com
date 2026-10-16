@@ -43,10 +43,21 @@ window.AdminApp = {
     },
 
     init() {
-        this.pass = sessionStorage.getItem('dent2025_admin_pass');
-        const storedPerms = sessionStorage.getItem('dent2025_permissions');
-        if (storedPerms) {
-            try { this.permissions = JSON.parse(storedPerms); } catch(e) { this.permissions = {}; }
+        if (this._initialized) return;
+        this._initialized = true;
+
+        try {
+            this.pass = localStorage.getItem('dent2025_admin_pass') || sessionStorage.getItem('dent2025_admin_pass');
+            const storedPerms = localStorage.getItem('dent2025_permissions') || sessionStorage.getItem('dent2025_permissions');
+            if (storedPerms) {
+                try { this.permissions = JSON.parse(storedPerms); } catch(e) { this.permissions = {}; }
+            }
+            const storedInfo = localStorage.getItem('dent2025_passkey_info') || sessionStorage.getItem('dent2025_passkey_info');
+            if (storedInfo) {
+                try { this.passkeyInfo = JSON.parse(storedInfo); } catch(e) { this.passkeyInfo = null; }
+            }
+        } catch(e) {
+            this.pass = null;
         }
 
         const loginBtn = document.getElementById('login-btn');
@@ -75,6 +86,10 @@ window.AdminApp = {
         this.initFocusMode();
 
         if (this.pass) {
+            const overlay = document.getElementById('login-overlay');
+            if (overlay) overlay.classList.add('hidden');
+            this.applyPermissionsUI();
+            this.showMain();
             this.verifyAuth(this.pass);
         } else {
             const overlay = document.getElementById('login-overlay');
@@ -83,17 +98,30 @@ window.AdminApp = {
     },
 
     verifyAuth(pass) {
-        const url = (API_BASE ? API_BASE : '.') + '/dent2025_api.php?action=check_auth';
-        fetch(url, {
-            method: 'POST',
-            body: JSON.stringify({ password: pass })
-        })
-        .then(r => r.json())
+        const primaryUrl = (API_BASE ? API_BASE : '.') + '/dent2025_api.php?action=check_auth';
+        const doAuthRequest = (endpoint) => {
+            return fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pass })
+            }).then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            });
+        };
+
+        doAuthRequest(primaryUrl)
+        .catch(() => doAuthRequest('./dent2025_api.php?action=check_auth'))
         .then(res => {
             if (res.success && res.data) {
                 this.pass = pass;
                 this.passkeyInfo = res.data;
                 this.permissions = res.data.permissions || {};
+                try {
+                    localStorage.setItem('dent2025_admin_pass', pass);
+                    localStorage.setItem('dent2025_permissions', JSON.stringify(this.permissions));
+                    localStorage.setItem('dent2025_passkey_info', JSON.stringify(res.data));
+                } catch(e) {}
                 sessionStorage.setItem('dent2025_admin_pass', pass);
                 sessionStorage.setItem('dent2025_permissions', JSON.stringify(this.permissions));
                 sessionStorage.setItem('dent2025_passkey_info', JSON.stringify(res.data));
@@ -102,18 +130,21 @@ window.AdminApp = {
                 const err = document.getElementById('login-error');
                 if (err) err.classList.add('hidden');
                 this.applyPermissionsUI();
-                this.showMain();
             } else {
                 this.logout();
+                const err = document.getElementById('login-error');
+                if (err) {
+                    err.innerText = res.message || 'انتهت صلاحية جلسة المشرف، يرجى إعادة تسجيل الدخول';
+                    err.classList.remove('hidden');
+                }
             }
         })
         .catch(e => {
-            console.error('Auth check error:', e);
+            console.warn('Auth verify background check error (using cached credentials):', e);
             if (this.pass) {
                 const overlay = document.getElementById('login-overlay');
                 if (overlay) overlay.classList.add('hidden');
                 this.applyPermissionsUI();
-                this.showMain();
             }
         });
     },
@@ -159,6 +190,11 @@ window.AdminApp = {
                 this.pass = pass;
                 this.passkeyInfo = res.data;
                 this.permissions = res.data.permissions || {};
+                try {
+                    localStorage.setItem('dent2025_admin_pass', pass);
+                    localStorage.setItem('dent2025_permissions', JSON.stringify(this.permissions));
+                    localStorage.setItem('dent2025_passkey_info', JSON.stringify(res.data));
+                } catch(e) {}
                 sessionStorage.setItem('dent2025_admin_pass', pass);
                 sessionStorage.setItem('dent2025_permissions', JSON.stringify(this.permissions));
                 sessionStorage.setItem('dent2025_passkey_info', JSON.stringify(res.data));
@@ -194,6 +230,12 @@ window.AdminApp = {
         this.pass = null;
         this.permissions = {};
         this.passkeyInfo = null;
+        try {
+            localStorage.removeItem('dent2025_admin_pass');
+            localStorage.removeItem('dent2025_permissions');
+            localStorage.removeItem('dent2025_passkey_info');
+            sessionStorage.removeItem('dent2025_admin_tab');
+        } catch(e) {}
         sessionStorage.removeItem('dent2025_admin_pass');
         sessionStorage.removeItem('dent2025_permissions');
         sessionStorage.removeItem('dent2025_passkey_info');
@@ -361,7 +403,7 @@ window.AdminApp = {
 
     prefetchQuizzes() {
         if (this.quizzesData && this.quizzesData.length) return;
-        const pass = this.pass || sessionStorage.getItem('dent2025_admin_pass') || '';
+        const pass = this.pass || localStorage.getItem('dent2025_admin_pass') || sessionStorage.getItem('dent2025_admin_pass') || '';
         let url = API_BASE + '/backend/api_ai_exam.php?action=list_quizzes&include_hidden=1';
         if (pass) url += '&password=' + encodeURIComponent(pass);
         fetch(url, { headers: { 'X-Admin-Pass': pass } })
@@ -423,8 +465,10 @@ window.AdminApp = {
     showMain() {
         this.initFocusMode();
         this.loadPortalSettings();
-        let initialTab = 'subjects';
-        this.switchTab(this.currentTab && this.currentTab !== 'dashboard' ? this.currentTab : initialTab);
+        let savedTab = null;
+        try { savedTab = sessionStorage.getItem('dent2025_admin_tab'); } catch(e) {}
+        let initialTab = savedTab || this.currentTab || 'subjects';
+        this.switchTab(initialTab && initialTab !== 'dashboard' ? initialTab : 'subjects');
         this.scheduleBackgroundPrefetch();
     },
 
@@ -439,6 +483,7 @@ window.AdminApp = {
         }
 
         this.currentTab = tabId;
+        try { sessionStorage.setItem('dent2025_admin_tab', tabId); } catch(e) {}
 
         const tabNames = {
             'subjects': 'المواد والروابط',
@@ -7873,9 +7918,13 @@ window.AdminApp = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.AdminApp.init();
+    });
+} else {
     window.AdminApp.init();
-});
+}
 
 
 

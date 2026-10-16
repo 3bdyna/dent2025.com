@@ -206,6 +206,19 @@
  </div>
  </div>
 
+ <!-- Immediate pre-check to prevent overlay flash if already authenticated -->
+ <script>
+ (function() {
+   try {
+     var savedPass = localStorage.getItem('dent2025_admin_pass') || sessionStorage.getItem('dent2025_admin_pass');
+     if (savedPass) {
+       var overlay = document.getElementById('login-overlay');
+       if (overlay) overlay.classList.add('hidden');
+     }
+   } catch(e) {}
+ })();
+ </script>
+
  <!-- Inline fallback: guarantees login works even if admin_app.js fails to load -->
  <script>
  (function() {
@@ -233,6 +246,11 @@
  .then(function(res) {
  if (btn) { btn.innerText = 'دخول'; btn.disabled = false; }
  if (res.success && res.data) {
+ try {
+   localStorage.setItem('dent2025_admin_pass', pass);
+   localStorage.setItem('dent2025_permissions', JSON.stringify(res.data.permissions || {}));
+   localStorage.setItem('dent2025_passkey_info', JSON.stringify(res.data));
+ } catch(e) {}
  sessionStorage.setItem('dent2025_admin_pass', pass);
  sessionStorage.setItem('dent2025_permissions', JSON.stringify(res.data.permissions || {}));
  sessionStorage.setItem('dent2025_passkey_info', JSON.stringify(res.data));
@@ -270,9 +288,14 @@
  inp.style.pointerEvents = 'auto';
  }
  var overlay = document.getElementById('login-overlay');
+ var savedPass = null;
+ try { savedPass = localStorage.getItem('dent2025_admin_pass') || sessionStorage.getItem('dent2025_admin_pass'); } catch(e) {}
  if (overlay) {
  overlay.style.pointerEvents = 'auto';
  overlay.style.zIndex = '9999';
+ if (savedPass) {
+   overlay.classList.add('hidden');
+ }
  }
  });
  })();

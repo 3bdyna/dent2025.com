@@ -628,6 +628,12 @@
                     return;
                 }
 
+                try {
+                    localStorage.setItem('dent2025_admin_pass', pin);
+                    localStorage.setItem('dent2025_schedule_admin_pass', pin);
+                    localStorage.setItem('dent2025_permissions', JSON.stringify(res.data.permissions || {}));
+                    localStorage.setItem('dent2025_passkey_info', JSON.stringify(res.data));
+                } catch(e) {}
                 sessionStorage.setItem('dent2025_admin_pass', pin);
                 sessionStorage.setItem('dent2025_schedule_admin_pass', pin);
                 const perms = res.data.permissions || {};
