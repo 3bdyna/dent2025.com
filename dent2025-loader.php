@@ -265,7 +265,7 @@ if (dent2025_is_frontend_head()) {
     } catch(e) {}
 })();
 </script>' . "\n";
-        // Compact navigation header bar to fit logo with small margins (~56px bar)
+        // Compact navigation header bar to fit logo with balanced breathing room (64px bar)
         $head .= '<style id="dent-compact-header-css">
 #masthead,
 #ast-desktop-header,
@@ -275,22 +275,22 @@ if (dent2025_is_frontend_head()) {
 .site-primary-header-wrap,
 .main-header-bar,
 .ast-builder-grid-row {
-    min-height: 56px !important;
-    height: 56px !important;
+    min-height: 64px !important;
+    height: 64px !important;
 }
 .main-header-menu,
 .main-header-bar-navigation,
 .ast-desktop:not(:has(.ast-header-sticked)) .ast-primary-header-bar .main-header-menu > .menu-item,
 .main-header-menu > .menu-item,
 .main-header-menu > .menu-item > .menu-link {
-    height: 56px !important;
-    line-height: 56px !important;
+    height: 64px !important;
+    line-height: 64px !important;
 }
 .site-branding,
 .ast-site-identity,
 .site-header-primary-section-left,
 .site-header-primary-section-right {
-    height: 56px !important;
+    height: 64px !important;
     display: flex !important;
     align-items: center !important;
 }
@@ -302,7 +302,7 @@ if (dent2025_is_frontend_head()) {
 }
 .custom-logo-link img,
 .custom-logo {
-    max-height: 48px !important;
+    max-height: 54px !important;
     width: auto !important;
     height: auto !important;
 }
