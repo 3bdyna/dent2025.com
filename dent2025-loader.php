@@ -265,6 +265,21 @@ if (dent2025_is_frontend_head()) {
     } catch(e) {}
 })();
 </script>' . "\n";
+        // Compact navigation header bar to fit logo with small margins (65px bar)
+        $head .= '<style id="dent-compact-header-css">
+.ast-mobile-header-wrap .ast-primary-header-bar,
+.ast-primary-header-bar .site-primary-header-wrap,
+.main-header-bar {
+    min-height: 65px !important;
+}
+.ast-desktop:not(:has(.ast-header-sticked)) .ast-primary-header-bar .main-header-menu > .menu-item {
+    line-height: 65px !important;
+}
+.site-branding, .ast-site-identity {
+    display: flex !important;
+    align-items: center !important;
+}
+</style>' . "\n";
 
         // Accelerate Google Drive iframe embed connection (DNS + TCP + TLS early warmup)
         $head .= '<link rel="preconnect" href="https://drive.google.com" crossorigin>' . "\n" .
