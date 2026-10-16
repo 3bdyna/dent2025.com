@@ -265,19 +265,46 @@ if (dent2025_is_frontend_head()) {
     } catch(e) {}
 })();
 </script>' . "\n";
-        // Compact navigation header bar to fit logo with small margins (65px bar)
+        // Compact navigation header bar to fit logo with small margins (~56px bar)
         $head .= '<style id="dent-compact-header-css">
-.ast-mobile-header-wrap .ast-primary-header-bar,
-.ast-primary-header-bar .site-primary-header-wrap,
-.main-header-bar {
-    min-height: 65px !important;
+#masthead,
+#ast-desktop-header,
+#ast-mobile-header,
+.ast-main-header-wrap,
+.ast-primary-header-bar,
+.site-primary-header-wrap,
+.main-header-bar,
+.ast-builder-grid-row {
+    min-height: 56px !important;
+    height: 56px !important;
 }
-.ast-desktop:not(:has(.ast-header-sticked)) .ast-primary-header-bar .main-header-menu > .menu-item {
-    line-height: 65px !important;
+.main-header-menu,
+.main-header-bar-navigation,
+.ast-desktop:not(:has(.ast-header-sticked)) .ast-primary-header-bar .main-header-menu > .menu-item,
+.main-header-menu > .menu-item,
+.main-header-menu > .menu-item > .menu-link {
+    height: 56px !important;
+    line-height: 56px !important;
 }
-.site-branding, .ast-site-identity {
+.site-branding,
+.ast-site-identity,
+.site-header-primary-section-left,
+.site-header-primary-section-right {
+    height: 56px !important;
     display: flex !important;
     align-items: center !important;
+}
+.site-logo-img,
+.custom-logo-link {
+    display: flex !important;
+    align-items: center !important;
+    height: 100% !important;
+}
+.custom-logo-link img,
+.custom-logo {
+    max-height: 48px !important;
+    width: auto !important;
+    height: auto !important;
 }
 </style>' . "\n";
 
