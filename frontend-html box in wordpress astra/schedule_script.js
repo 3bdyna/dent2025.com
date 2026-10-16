@@ -605,16 +605,43 @@ const ScheduleApp = {
         let finalsEvent = null;
         let startEvent = null;
         
-        const isQuiz = (ev) => {
+        const isTest = (ev) => {
             if (!ev || !ev.title) return false;
             const t = ev.title.toLowerCase();
             const id = (ev.id || '').toLowerCase();
             const type = (ev.type || '').toLowerCase();
             const typeLabel = (ev.type_label || '').toLowerCase();
-            if (t.includes('واجب') || t.includes('تكليف') || t.includes('مشروع') || t.includes('تقرير') || t.includes('نهائ') || t.includes('فاينل') || type === 'homework' || type === 'research' || type === 'final' || type === 'deadline') {
+
+            // Non-test event types
+            if (type === 'holiday' || type === 'payment' || type === 'start') {
                 return false;
             }
-            return t.includes('كويز') || t.includes('quiz') || id.includes('quiz') || t.includes('اختبار قصير') || type === 'quiz' || type === 'assessment' || typeLabel.includes('كويز') || typeLabel.includes('اسسمنت') || (type === 'exam' && !t.includes('نهائ') && !t.includes('فاينل'));
+            if ((type === 'homework' || type === 'research') && !t.includes('اختبار') && !t.includes('امتحان') && !t.includes('كويز') && !t.includes('quiz') && !t.includes('ميد') && !t.includes('midterm')) {
+                return false;
+            }
+            if ((t.includes('واجب') || t.includes('تكليف') || t.includes('مشروع') || t.includes('تقرير') || t.includes('بحث')) && !t.includes('اختبار') && !t.includes('امتحان') && !t.includes('كويز') && !t.includes('quiz') && !t.includes('ميد') && !t.includes('midterm')) {
+                return false;
+            }
+
+            // Test event types
+            if (type === 'exam' || type === 'quiz' || type === 'midterm' || type === 'final' || type === 'assessment' || type === 'test') {
+                return true;
+            }
+
+            // Test type labels
+            if (typeLabel.includes('كويز') || typeLabel.includes('اختبار') || typeLabel.includes('امتحان') || typeLabel.includes('ميد') || typeLabel.includes('فاينل') || typeLabel.includes('نهائ') || typeLabel.includes('نصف') || typeLabel.includes('اسسمنت') || typeLabel.includes('تقييم') || typeLabel.includes('quiz') || typeLabel.includes('exam') || typeLabel.includes('midterm')) {
+                return true;
+            }
+
+            // Test titles & ids
+            if (t.includes('كويز') || t.includes('quiz') || id.includes('quiz') || id.includes('exam') || id.includes('midterm') || id.includes('test')) {
+                return true;
+            }
+            if (t.includes('اختبار') || t.includes('امتحان') || t.includes('ميد') || t.includes('midterm') || t.includes('فاينل') || t.includes('نهائ') || t.includes('final') || t.includes('اسسمنت') || t.includes('assessment') || t.includes('أوسكي') || t.includes('اوسكي') || t.includes('osce') || t.includes('شفوي') || t.includes('oral exam')) {
+                return true;
+            }
+
+            return false;
         };
 
         events.forEach(ev => {
@@ -626,8 +653,26 @@ const ScheduleApp = {
             else if (!finalsEvent && ev.type === 'exam') finalsEvent = ev;
             
             if (evDate && evDate >= today) {
-                if (isQuiz(ev) && !closestExam) closestExam = ev;
-                if (ev.type === 'holiday' && !nextVacation) nextVacation = ev;
+                if (isTest(ev)) {
+                    if (!closestExam) {
+                        closestExam = ev;
+                    } else {
+                        const existingDate = this.parseLocalDate(closestExam.date);
+                        if (existingDate && evDate < existingDate) {
+                            closestExam = ev;
+                        }
+                    }
+                }
+                if (ev.type === 'holiday') {
+                    if (!nextVacation) {
+                        nextVacation = ev;
+                    } else {
+                        const existingVacDate = this.parseLocalDate(nextVacation.date);
+                        if (existingVacDate && evDate < existingVacDate) {
+                            nextVacation = ev;
+                        }
+                    }
+                }
             }
             
             if (ev.type === 'holiday' && ev.end_date) {
@@ -641,7 +686,7 @@ const ScheduleApp = {
         const elExamName = document.getElementById('val-exam-name');
         const statExamCard = document.getElementById('stat-exam');
         const elExamTitle = statExamCard ? statExamCard.querySelector('.stat-title') : null;
-        if (elExamTitle) elExamTitle.innerText = 'أقرب كويز';
+        if (elExamTitle) elExamTitle.innerText = 'أقرب اختبار';
 
         if (closestExam) {
             const cDate = this.parseLocalDate(closestExam.date);
@@ -680,7 +725,7 @@ const ScheduleApp = {
                 elExam.style.color = '';
             }
             if (elExamName) {
-                elExamName.innerText = 'لا توجد كويزات قادمة';
+                elExamName.innerText = 'لا توجد اختبارات قادمة';
                 elExamName.title = '';
             }
             if (statExamCard) {
