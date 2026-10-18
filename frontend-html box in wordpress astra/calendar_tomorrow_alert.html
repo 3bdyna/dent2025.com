@@ -10,10 +10,10 @@
         margin: 12px 0 5px;
         padding: 12px 14px;
         box-sizing: border-box;
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08));
         border-radius: 12px;
-        background: rgba(255, 255, 255, 0.045);
-        color: #f1f1f3;
+        background: var(--dent-bg-pill, rgba(255, 255, 255, 0.045));
+        color: var(--dent-text-primary, #f1f1f3);
         direction: rtl;
         font-family: 'Noto Kufi Arabic', 'Outfit', sans-serif;
     }
@@ -39,11 +39,11 @@
         align-self: stretch;
         width: 1px;
         margin: 5px 0;
-        background: rgba(255, 255, 255, 0.13);
+        background: var(--dent-border-dashed, rgba(255, 255, 255, 0.13));
     }
 
     .dent-tomorrow-calendar-date-day {
-        color: #eeeeef;
+        color: var(--dent-text-primary, #eeeeef);
         font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
         font-size: 0.98rem;
         font-weight: 700;
@@ -51,7 +51,7 @@
     }
 
     .dent-tomorrow-calendar-date-month {
-        color: #9b9ba3;
+        color: var(--dent-text-secondary, #9b9ba3);
         font-size: 0.60rem;
         line-height: 1.3;
         white-space: nowrap;

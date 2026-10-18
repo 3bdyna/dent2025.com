@@ -8,14 +8,14 @@
        - Clean, distraction-free RTL typography
        ========================================================= */
     :root {
-        --bg-color: rgba(255, 255, 255, 0.03);
-        --card-bg: rgba(0, 0, 0, 0.25);
-        --card-hover-bg: rgba(255, 255, 255, 0.08);
-        --border-color: rgba(255, 255, 255, 0.08);
-        --border-hover: rgba(255, 255, 255, 0.22);
-        --text-primary: #f8fafc;
-        --text-secondary: #94a3b8;
-        --text-muted: #64748b;
+        --bg-color: var(--dent-bg-canvas-subtle, rgba(255, 255, 255, 0.03));
+        --card-bg: var(--dent-bg-card-subtle, rgba(0, 0, 0, 0.25));
+        --card-hover-bg: var(--dent-bg-card-hover, rgba(255, 255, 255, 0.08));
+        --border-color: var(--dent-border-subtle, rgba(255, 255, 255, 0.08));
+        --border-hover: var(--dent-border-hover, rgba(255, 255, 255, 0.22));
+        --text-primary: var(--dent-text-primary, #f8fafc);
+        --text-secondary: var(--dent-text-secondary, #94a3b8);
+        --text-muted: var(--dent-text-muted, #64748b);
     }
 
     .dent-schedule-container {

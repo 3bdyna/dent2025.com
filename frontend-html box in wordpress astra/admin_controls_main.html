@@ -24,10 +24,10 @@
         position: absolute;
         bottom: 20px;
         right: 15px;
-        background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;
+        background: var(--dent-accent-danger-bg, rgba(239, 68, 68, 0.15)); border: 1px solid var(--dent-accent-danger-border, rgba(239, 68, 68, 0.3)); color: var(--dent-accent-danger-bright, #f87171);
         padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-family: 'Outfit', sans-serif;
         display: none; /* Hidden by default */
-        backdrop-filter: blur(10px);
+        backdrop-filter: var(--dent-backdrop-blur, blur(10px));
     }
     .dent-logout-main:hover { background: rgba(239, 68, 68, 0.3); }
 </style>

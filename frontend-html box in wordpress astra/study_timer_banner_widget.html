@@ -60,8 +60,8 @@
   }
 
   .dent-timer-modal-container {
-    background: #18181b !important;
-    color: #f8fafc !important;
+    background: var(--dent-bg-modal, #18181b) !important;
+    color: var(--dent-text-primary, #f8fafc) !important;
     font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif !important;
     padding: 24px !important;
     border-radius: 20px !important;
@@ -73,8 +73,8 @@
     position: relative !important;
     transform: translateY(20px);
     transition: transform 0.25s ease !important;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8) !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: var(--dent-shadow-modal, 0 25px 60px rgba(0, 0, 0, 0.8)) !important;
+    border: 1px solid var(--dent-border-hover, rgba(255, 255, 255, 0.14)) !important;
     box-sizing: border-box !important;
   }
 
@@ -156,13 +156,13 @@
   }
 
   :root {
-    --dent-timer-bg: #18181b;
-    --dent-timer-surface: #27272a;
-    --dent-timer-border: rgba(255, 255, 255, 0.08);
-    --dent-timer-text-primary: #f4f4f5;
-    --dent-timer-text-secondary: #a1a1aa;
-    --dent-timer-accent: #e4e4e7;
-    --dent-timer-danger: #ef4444;
+    --dent-timer-bg: var(--dent-bg-modal, #18181b);
+    --dent-timer-surface: var(--dent-bg-button, #27272a);
+    --dent-timer-border: var(--dent-border-subtle, rgba(255, 255, 255, 0.08));
+    --dent-timer-text-primary: var(--dent-text-primary, #f4f4f5);
+    --dent-timer-text-secondary: var(--dent-text-secondary, #a1a1aa);
+    --dent-timer-accent: var(--dent-text-light, #e4e4e7);
+    --dent-timer-danger: var(--dent-accent-danger, #ef4444);
     --dent-timer-font: 'Outfit', 'Noto Kufi Arabic', sans-serif;
   }
 

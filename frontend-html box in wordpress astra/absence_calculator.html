@@ -31,8 +31,8 @@
         opacity: 1;
     }
     .dent-absence-modal {
-        background: #18181b;
-        color: #f8fafc;
+        background: var(--dent-bg-modal, #18181b);
+        color: var(--dent-text-primary, #f8fafc);
         font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
         padding: 14px 12px;
         border-radius: 16px;
@@ -46,8 +46,8 @@
         position: relative;
         transform: translateY(20px);
         transition: transform 0.25s ease;
-        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75);
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: var(--dent-shadow-modal, 0 25px 60px rgba(0, 0, 0, 0.75));
+        border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.12));
         box-sizing: border-box;
         min-width: 0;
     }
@@ -65,9 +65,9 @@
         position: absolute;
         top: 12px;
         left: 12px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        color: #e2e8f0;
+        background: var(--dent-bg-pill, rgba(255, 255, 255, 0.08));
+        border: 1px solid var(--dent-border-dashed, rgba(255, 255, 255, 0.15));
+        color: var(--dent-text-primary, #e2e8f0);
         width: 28px;
         height: 28px;
         border-radius: 8px;
@@ -81,8 +81,8 @@
         z-index: 2;
     }
     .dent-absence-close:hover {
-        background: rgba(255, 255, 255, 0.18);
-        color: #ffffff;
+        background: var(--dent-bg-pill-hover, rgba(255, 255, 255, 0.18));
+        color: var(--dent-text-light, #ffffff);
     }
 
     /* Header */

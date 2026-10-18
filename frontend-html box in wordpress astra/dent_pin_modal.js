@@ -19,9 +19,9 @@
             bottom: 0;
             width: 100%;
             height: 100%;
-            background: rgba(10, 12, 16, 0.85);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            background: var(--dent-bg-overlay, rgba(10, 12, 16, 0.85));
+            backdrop-filter: var(--dent-backdrop-blur, blur(10px));
+            -webkit-backdrop-filter: var(--dent-backdrop-blur, blur(10px));
             z-index: 9999999;
             display: flex;
             align-items: center;
@@ -42,12 +42,12 @@
             position: relative;
             width: 100%;
             max-width: 340px;
-            background: #181b21;
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: var(--dent-bg-modal, #181b21);
+            border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.12));
             border-radius: 18px;
             padding: 20px 22px 18px;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75);
-            color: #f8fafc;
+            box-shadow: var(--dent-shadow-modal, 0 25px 60px rgba(0, 0, 0, 0.75));
+            color: var(--dent-text-primary, #f8fafc);
             text-align: right;
             transform: scale(0.96) translateY(8px);
             transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
@@ -64,7 +64,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08));
             padding-bottom: 12px;
             gap: 10px;
         }
@@ -79,30 +79,30 @@
             margin-bottom: 4px;
         }
         .dent-pin-lock-icon {
-            color: #cbd5e1;
+            color: var(--dent-text-secondary, #cbd5e1);
             flex-shrink: 0;
         }
         .dent-pin-title {
             margin: 0;
             font-size: 1.05rem;
             font-weight: 700;
-            color: #f8fafc;
+            color: var(--dent-text-primary, #f8fafc);
             line-height: 1.3;
         }
         .dent-pin-context-pill {
             font-size: 0.74rem;
-            color: #a1a1aa;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--dent-text-secondary, #a1a1aa);
+            background: var(--dent-bg-pill, rgba(255, 255, 255, 0.05));
+            border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1));
             border-radius: 6px;
             padding: 2px 8px;
             display: inline-block;
             font-weight: 500;
         }
         .dent-pin-close-btn {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #9ca3af;
+            background: var(--dent-bg-pill, rgba(255, 255, 255, 0.06));
+            border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1));
+            color: var(--dent-text-secondary, #9ca3af);
             width: 32px;
             height: 32px;
             border-radius: 8px;
@@ -117,15 +117,15 @@
             padding: 0;
         }
         .dent-pin-close-btn:hover {
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-            border-color: rgba(239, 68, 68, 0.3);
+            background: var(--dent-accent-danger-bg, rgba(239, 68, 68, 0.15));
+            color: var(--dent-accent-danger, #ef4444);
+            border-color: var(--dent-accent-danger-border, rgba(239, 68, 68, 0.3));
         }
 
         /* Instruction label */
         .dent-pin-label {
             font-size: 0.82rem;
-            color: #a1a1aa;
+            color: var(--dent-text-secondary, #a1a1aa);
             font-weight: 600;
             margin-bottom: 12px;
             display: block;
@@ -144,8 +144,8 @@
             width: 52px;
             height: 56px;
             border-radius: 12px;
-            background: #111317;
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: var(--dent-bg-input, #111317);
+            border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.12));
             display: flex;
             align-items: center;
             justify-content: center;
@@ -156,20 +156,20 @@
             cursor: pointer;
         }
         .dent-pin-cell.active-focus {
-            border-color: rgba(255, 255, 255, 0.45);
-            background: rgba(255, 255, 255, 0.04);
-            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
+            border-color: var(--dent-border-focus, rgba(255, 255, 255, 0.45));
+            background: var(--dent-bg-card-hover, rgba(255, 255, 255, 0.04));
+            box-shadow: 0 0 0 2px var(--dent-border-subtle, rgba(255, 255, 255, 0.08));
         }
         .dent-pin-cell.filled {
-            background: #1f232b;
-            border-color: rgba(255, 255, 255, 0.28);
-            color: #f8fafc;
+            background: var(--dent-bg-button, #1f232b);
+            border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.28));
+            color: var(--dent-text-primary, #f8fafc);
         }
         .dent-pin-cell.filled::after {
             content: '●';
             font-size: 1.15rem;
             line-height: 1;
-            color: #f8fafc;
+            color: var(--dent-text-primary, #f8fafc);
         }
 
         /* Hidden native input for keyboard/paste capture */
@@ -194,17 +194,17 @@
             margin-bottom: 12px;
             font-weight: 500;
             text-align: center;
-            color: #94a3b8;
+            color: var(--dent-text-secondary, #94a3b8);
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
         }
         .dent-pin-status.error {
-            color: #f87171;
+            color: var(--dent-accent-danger-bright, #f87171);
         }
         .dent-pin-status.success {
-            color: #34d399;
+            color: var(--dent-accent-success-bright, #34d399);
         }
 
         /* Compact, Subdued Numpad matching Dent2025 button language */
@@ -219,12 +219,12 @@
         .dent-pin-key {
             height: 42px;
             border-radius: 8px;
-            background: #27272a;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--dent-bg-button, #27272a);
+            border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1));
             font-size: 1.2rem;
             font-weight: 600;
             font-family: 'Outfit', sans-serif;
-            color: #f8fafc;
+            color: var(--dent-text-primary, #f8fafc);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -235,34 +235,34 @@
             padding: 0;
         }
         .dent-pin-key:hover {
-            background: #3f3f46;
-            border-color: rgba(255, 255, 255, 0.2);
+            background: var(--dent-bg-button-hover, #3f3f46);
+            border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.2));
             transform: translateY(-1px);
         }
         .dent-pin-key:active {
             transform: translateY(0);
-            background: #52525b;
+            background: var(--dent-bg-button-active, #52525b);
         }
         .dent-pin-key.action-key {
             font-size: 0.8rem;
-            color: #a1a1aa;
+            color: var(--dent-text-secondary, #a1a1aa);
             font-weight: 500;
-            background: rgba(255, 255, 255, 0.04);
-            border-color: rgba(255, 255, 255, 0.06);
+            background: var(--dent-bg-pill, rgba(255, 255, 255, 0.04));
+            border-color: var(--dent-border-subtle, rgba(255, 255, 255, 0.06));
             font-family: inherit;
         }
         .dent-pin-key.action-key:hover {
-            color: #f8fafc;
-            background: rgba(255, 255, 255, 0.08);
+            color: var(--dent-text-primary, #f8fafc);
+            background: var(--dent-bg-pill-hover, rgba(255, 255, 255, 0.08));
         }
 
         /* Primary Submit Button matching Dent2025 primary action buttons */
         .dent-pin-submit-btn {
             width: 100%;
             height: 44px;
-            background: #27272a;
-            color: #f8fafc;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: var(--dent-bg-button, #27272a);
+            color: var(--dent-text-primary, #f8fafc);
+            border: 1px solid var(--dent-border-hover, rgba(255, 255, 255, 0.15));
             border-radius: 10px;
             font-size: 0.92rem;
             font-weight: 600;
@@ -276,8 +276,8 @@
             box-sizing: border-box;
         }
         .dent-pin-submit-btn:hover {
-            background: #3f3f46;
-            border-color: rgba(255, 255, 255, 0.25);
+            background: var(--dent-bg-button-hover, #3f3f46);
+            border-color: var(--dent-border-focus, rgba(255, 255, 255, 0.25));
             transform: translateY(-1px);
         }
         .dent-pin-submit-btn:disabled {

@@ -50,17 +50,88 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
   font-family: 'Outfit', 'Noto Kufi Arabic', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
+/* ========================================================
+   DENT2025 UNIFIED DESIGN TOKENS (MASTER THEME HUB)
+   To change the website theme or palette, edit values HERE.
+   All components site-wide consume these tokens.
+   ======================================================== */
+:root {
+  /* Canvas & Page Backgrounds */
+  --dent-bg-page: #121212;
+  --dent-bg-canvas-subtle: rgba(255, 255, 255, 0.03);
+
+  /* Elevation Surfaces (Cards, Modals, Panels) */
+  --dent-bg-card: #1e1e1e;
+  --dent-bg-card-hover: rgba(255, 255, 255, 0.06);
+  --dent-bg-card-subtle: rgba(0, 0, 0, 0.25);
+  --dent-bg-modal: #18181b;
+  --dent-bg-overlay: rgba(0, 0, 0, 0.82);
+
+  /* Interactive Elements (Buttons, Inputs, Tabs, Pills) */
+  --dent-bg-input: #121212;
+  --dent-bg-input-subtle: rgba(0, 0, 0, 0.35);
+  --dent-bg-button: #27272a;
+  --dent-bg-button-hover: #3f3f46;
+  --dent-bg-button-active: #52525b;
+  --dent-bg-pill: rgba(255, 255, 255, 0.05);
+  --dent-bg-pill-hover: rgba(255, 255, 255, 0.12);
+  --dent-bg-pill-active: rgba(255, 255, 255, 0.16);
+
+  /* Borders & Dividers */
+  --dent-border-subtle: rgba(255, 255, 255, 0.08);
+  --dent-border-card: rgba(255, 255, 255, 0.10);
+  --dent-border-hover: rgba(255, 255, 255, 0.22);
+  --dent-border-focus: rgba(255, 255, 255, 0.35);
+  --dent-border-dashed: rgba(255, 255, 255, 0.15);
+
+  /* Typography / Text Colors */
+  --dent-text-primary: #f8fafc;
+  --dent-text-secondary: #94a3b8;
+  --dent-text-muted: #64748b;
+  --dent-text-dim: #475569;
+  --dent-text-light: #ffffff;
+
+  /* Semantic Accent - Brand / Action */
+  --dent-accent-primary: #3b82f6;
+  --dent-accent-primary-hover: #60a5fa;
+  --dent-accent-primary-bg: rgba(59, 130, 246, 0.12);
+  --dent-accent-primary-border: rgba(59, 130, 246, 0.28);
+
+  /* Semantic Accent - Success / Safe / Completed */
+  --dent-accent-success: #10b981;
+  --dent-accent-success-bright: #34d399;
+  --dent-accent-success-bg: rgba(16, 185, 129, 0.12);
+  --dent-accent-success-border: rgba(16, 185, 129, 0.30);
+
+  /* Semantic Accent - Warning / Caution */
+  --dent-accent-warning: #f59e0b;
+  --dent-accent-warning-bright: #fbbf24;
+  --dent-accent-warning-bg: rgba(245, 158, 11, 0.12);
+  --dent-accent-warning-border: rgba(245, 158, 11, 0.30);
+
+  /* Semantic Accent - Danger / Denial / Delete */
+  --dent-accent-danger: #ef4444;
+  --dent-accent-danger-bright: #f87171;
+  --dent-accent-danger-bg: rgba(239, 68, 68, 0.12);
+  --dent-accent-danger-border: rgba(239, 68, 68, 0.30);
+
+  /* Shadows & Backdrops */
+  --dent-shadow-card: 0 4px 15px rgba(0, 0, 0, 0.25);
+  --dent-shadow-modal: 0 25px 60px rgba(0, 0, 0, 0.75);
+  --dent-backdrop-blur: blur(10px);
+}
+
 /* --------------------------------------------------
    Dent2025 Universal UI: Banners, Overlays & Dialogs
    -------------------------------------------------- */
 .gpa-banner,
 .dent-absence-banner,
 .dent-timer-banner-override {
-  background: #1e1e1e !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: var(--dent-bg-card, #1e1e1e) !important;
+  border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1)) !important;
   padding: 14px 20px !important;
   border-radius: 14px !important;
-  color: #f8fafc !important;
+  color: var(--dent-text-primary, #f8fafc) !important;
   font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif !important;
   display: flex !important;
   justify-content: space-between !important;
@@ -71,7 +142,7 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
   width: 100% !important;
   max-width: 100% !important;
   margin: 10px 0 !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: var(--dent-shadow-card, 0 4px 15px rgba(0, 0, 0, 0.2)) !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
   user-select: none !important;
@@ -80,8 +151,8 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
 .gpa-banner:hover,
 .dent-absence-banner:hover,
 .dent-timer-banner-override:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 255, 255, 0.25) !important;
+  background: var(--dent-bg-card-hover, rgba(255, 255, 255, 0.06)) !important;
+  border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.25)) !important;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
   transform: translateY(-2px) !important;
 }
@@ -99,7 +170,7 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
   margin: 0 !important;
   font-size: 1.05rem !important;
   font-weight: 700 !important;
-  color: #f8fafc !important;
+  color: var(--dent-text-primary, #f8fafc) !important;
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
@@ -110,15 +181,15 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
 .gpa-banner-text-timer p {
   margin: 3px 0 0 0 !important;
   font-size: 0.82rem !important;
-  color: #9ca3af !important;
+  color: var(--dent-text-secondary, #9ca3af) !important;
 }
 
 .gpa-banner-arrow,
 .dent-absence-banner-arrow {
-  color: #f8fafc !important;
+  color: var(--dent-text-primary, #f8fafc) !important;
   font-size: 1.1rem !important;
   font-weight: bold !important;
-  background: rgba(255, 255, 255, 0.06) !important;
+  background: var(--dent-bg-pill, rgba(255, 255, 255, 0.06)) !important;
   width: 36px !important;
   height: 36px !important;
   display: flex !important;
@@ -132,7 +203,7 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
 .gpa-banner:hover .gpa-banner-arrow,
 .dent-absence-banner:hover .dent-absence-banner-arrow,
 .dent-timer-banner-override:hover .gpa-banner-arrow {
-  background: rgba(255, 255, 255, 0.15) !important;
+  background: var(--dent-bg-pill-hover, rgba(255, 255, 255, 0.15)) !important;
   transform: scale(1.05) !important;
 }
 
@@ -147,9 +218,9 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
   bottom: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
-  background: rgba(0, 0, 0, 0.82) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: var(--dent-bg-overlay, rgba(0, 0, 0, 0.82)) !important;
+  backdrop-filter: var(--dent-backdrop-blur, blur(10px));
+  -webkit-backdrop-filter: var(--dent-backdrop-blur, blur(10px));
   z-index: 999999 !important;
   display: none;
   align-items: center;
@@ -167,9 +238,9 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
 .gpa-modal-close,
 .dent-absence-close-btn,
 .dent-timer-close-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #9ca3af;
+  background: var(--dent-bg-pill, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.12));
+  color: var(--dent-text-secondary, #9ca3af);
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -184,7 +255,7 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
 .gpa-modal-close:hover,
 .dent-absence-close-btn:hover,
 .dent-timer-close-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.4);
+  background: var(--dent-accent-danger-bg, rgba(239, 68, 68, 0.2));
+  color: var(--dent-accent-danger, #ef4444);
+  border-color: var(--dent-accent-danger-border, rgba(239, 68, 68, 0.4));
 }
