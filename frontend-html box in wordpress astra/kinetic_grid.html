@@ -8,7 +8,7 @@
         height: 100vh !important;
         z-index: -1 !important;
         pointer-events: none !important;
-        background-color: #0d0d0f !important;
+        background-color: #121212 !important;
     }
     /* Minimal container transparency so canvas shines through without touching any site layout/components */
     html, body, #page, .site-content, .ast-plain-container, .site, #primary {
@@ -16,7 +16,7 @@
         background-image: none !important;
     }
     body {
-        background-color: #0d0d0f !important;
+        background-color: #121212 !important;
     }
 </style>
 
@@ -33,12 +33,12 @@
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Monochrome White Theme Tokens
+    // Exact site color match (#121212) + Monochrome White tokens
     const THEME = {
-        bg: "#0d0d0f",
-        lineBase: { r: 255, g: 255, b: 255, a: 0.065 },
+        bg: "#121212",
+        lineBase: { r: 255, g: 255, b: 255, a: 0.05 },
         lineActive: { r: 255, g: 255, b: 255, a: 0.85 },
-        nodeBase: { r: 255, g: 255, b: 255, a: 0.16 },
+        nodeBase: { r: 255, g: 255, b: 255, a: 0.14 },
         nodeActive: { r: 255, g: 255, b: 255, a: 1.0 },
         glow: "255, 255, 255",
         ripple: "255, 255, 255"
@@ -46,14 +46,13 @@
 
     // Responsive configuration
     const isMobile = (window.innerWidth < 768) || ('ontouchstart' in window);
-    const CELL_SIZE = isMobile ? 68 : 52;
+    const CELL_SIZE = isMobile ? 66 : 52;
     const INFLUENCE_RADIUS = isMobile ? 220 : 280;
     const MAX_WARP = isMobile ? 20 : 28;
     const LERP_SPEED = 0.085;
     const NODE_BASE_RADIUS = 1.6;
     const NODE_ACTIVE_RADIUS = 3.2;
 
-    // Motion sensitivity check
     const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     let W = 0, H = 0;
@@ -61,44 +60,50 @@
     const targetMouse = { x: -9999, y: -9999 };
     const ripples = [];
     let rafId = 0;
-    let isSleeping = false;
-    let lastActiveTime = performance.now();
+    let isDirty = true; // High-efficiency render flag (0% idle CPU without ever freezing)
 
     function resize() {
         W = window.innerWidth;
         H = window.innerHeight;
         canvas.width = W;
         canvas.height = H;
-        wakeUp();
+        isDirty = true;
     }
     window.addEventListener('resize', resize, { passive: true });
     resize();
 
-    // Awakening / Sleep Management (0% Idle CPU)
-    function wakeUp() {
-        lastActiveTime = performance.now();
-        if (isSleeping) {
-            isSleeping = false;
-            if (!rafId && !prefersReducedMotion) {
-                rafId = requestAnimationFrame(draw);
-            }
-        }
+    // Interaction Listeners (Window & Document level for 100% reliable tracking)
+    function handlePointerMove(clientX, clientY) {
+        targetMouse.x = clientX;
+        targetMouse.y = clientY;
+        isDirty = true;
     }
 
-    // Interaction Listeners (Window-level with passive listeners for max performance)
     window.addEventListener('mousemove', function(e) {
-        targetMouse.x = e.clientX;
-        targetMouse.y = e.clientY;
-        wakeUp();
+        handlePointerMove(e.clientX, e.clientY);
     }, { passive: true });
 
     window.addEventListener('touchmove', function(e) {
         if (e.touches && e.touches[0]) {
-            targetMouse.x = e.touches[0].clientX;
-            targetMouse.y = e.touches[0].clientY;
-            wakeUp();
+            handlePointerMove(e.touches[0].clientX, e.touches[0].clientY);
         }
     }, { passive: true });
+
+    // Smoothly unwind & disappear warp when cursor leaves the window or tab loses focus
+    function handlePointerLeave() {
+        targetMouse.x = -9999;
+        targetMouse.y = -9999;
+        isDirty = true;
+    }
+
+    document.addEventListener('mouseleave', handlePointerLeave);
+    document.documentElement.addEventListener('mouseleave', handlePointerLeave);
+    window.addEventListener('blur', handlePointerLeave);
+    window.addEventListener('mouseout', function(e) {
+        if (!e.relatedTarget && !e.toElement) {
+            handlePointerLeave();
+        }
+    });
 
     window.addEventListener('click', function(e) {
         ripples.push({
@@ -108,19 +113,21 @@
             opacity: 1,
             born: performance.now()
         });
-        wakeUp();
+        isDirty = true;
     }, { passive: true });
 
-    // Page Visibility Freeze (0% CPU when tab is hidden or backgrounded)
+    // Page Visibility Freeze (Stops RAF when hidden, resumes instantly when visible)
     document.addEventListener('visibilitychange', function() {
         if (document.hidden) {
-            isSleeping = true;
             if (rafId) {
                 cancelAnimationFrame(rafId);
                 rafId = 0;
             }
         } else {
-            wakeUp();
+            isDirty = true;
+            if (!rafId && !prefersReducedMotion) {
+                rafId = requestAnimationFrame(draw);
+            }
         }
     });
 
@@ -185,11 +192,25 @@
         };
     }
 
-    // Main 60 FPS Render Loop
+    // Main 60 FPS Render Loop with Zero-Lag Dirty Checking
     function draw(now) {
-        // Interpolate mouse smoothly toward pointer
-        const dmx = targetMouse.x - mouse.x;
-        const dmy = targetMouse.y - mouse.y;
+        // Continue animation while mouse is lerping or ripples are active
+        const dmx = Math.abs(targetMouse.x - mouse.x);
+        const dmy = Math.abs(targetMouse.y - mouse.y);
+        const isConverging = dmx > 0.1 || dmy > 0.1;
+        const hasRipples = ripples.length > 0;
+
+        if (isConverging || hasRipples) {
+            isDirty = true;
+        }
+
+        if (!isDirty) {
+            // Screen is completely still — idle loop checks next frame without drawing (0% CPU)
+            rafId = requestAnimationFrame(draw);
+            return;
+        }
+
+        // Lerp mouse coordinates toward target
         mouse.x = lerp(mouse.x, targetMouse.x, LERP_SPEED);
         mouse.y = lerp(mouse.y, targetMouse.y, LERP_SPEED);
 
@@ -283,23 +304,15 @@
             }
         }
 
-        // Idle detection: sleep if motionless and all ripples settled for > 2 seconds
-        const isMouseMoving = Math.abs(dmx) > 0.4 || Math.abs(dmy) > 0.4;
-        if (isMouseMoving) {
-            lastActiveTime = now;
-        }
-
-        if (ripples.length === 0 && !isMouseMoving && (now - lastActiveTime > 2000)) {
-            isSleeping = true;
-            rafId = 0;
-            return; // Loop pauses until wakeUp()
+        // If no movement and no ripples, mark clean until next interaction
+        if (!isConverging && !hasRipples) {
+            isDirty = false;
         }
 
         rafId = requestAnimationFrame(draw);
     }
 
     if (prefersReducedMotion) {
-        // Render a single static frame for accessibility
         draw(performance.now());
     } else {
         rafId = requestAnimationFrame(draw);
