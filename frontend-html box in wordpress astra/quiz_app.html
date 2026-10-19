@@ -3,8 +3,9 @@
 
 /* Dent2025 AI Exam Portal - Unified Site Design System */
 .dent-quiz-container { max-width: 850px; margin: 20px auto; padding: 0 10px; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif; color: var(--dent-text-primary, #e2e8f0); direction: rtl; }
-.dent-quiz-card { background: var(--dent-bg-card, #1e1e1e); padding: 20px 18px; border-radius: 12px; box-shadow: var(--dent-shadow-card, 0 4px 15px rgba(0,0,0,0.2)); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1)); margin-bottom: 20px; overflow: hidden; box-sizing: border-box; }
-.dent-quiz-header { text-align: center; margin-bottom: 14px; border-bottom: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.05)); padding-bottom: 10px; font-weight: 700; font-size: 1.25rem; background: linear-gradient(90deg, var(--dent-text-primary, #e2e8f0), var(--dent-text-secondary, #94a3b8)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.dent-quiz-card { background: rgba(30, 30, 30, 0.72) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; border: 1px solid rgba(255, 255, 255, 0.07) !important; border-radius: 16px !important; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.38) !important; padding: 24px 22px !important; margin-bottom: 24px !important; overflow: hidden !important; box-sizing: border-box !important; transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease !important; }
+.dent-quiz-card:hover { background-color: rgba(38, 38, 38, 0.85) !important; border-color: rgba(255, 255, 255, 0.14) !important; transform: translateY(-2px) !important; box-shadow: 0 14px 38px rgba(0, 0, 0, 0.55) !important; }
+.dent-quiz-header { text-align: center; margin-bottom: 16px; border-bottom: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.06)); padding-bottom: 12px; font-weight: 700; font-size: 1.25rem; color: var(--dent-text-primary, #f8fafc) !important; background: none !important; -webkit-background-clip: initial !important; -webkit-text-fill-color: var(--dent-text-primary, #f8fafc) !important; }
 
 /* Main Mode Tabs - Compact horizontal on all screens */
 .dent-quiz-card .dent-tab-switcher, .dent-tab-switcher { display: flex; flex-direction: row; background: var(--dent-bg-card-subtle, rgba(0, 0, 0, 0.25)); border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08)); border-radius: 8px; padding: 4px; gap: 4px; margin-bottom: 14px; }
@@ -148,7 +149,7 @@ button.export-btn:hover,
 .dent-q-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 
 /* Saved Exams Bank Section */
-.dent-bank-header { font-size: 1.05rem; font-weight: 700; color: var(--dent-text-primary, #f8fafc); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+.dent-bank-header { font-size: 1.15rem; font-weight: 700; color: var(--dent-text-primary, #f8fafc) !important; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.06)); padding-bottom: 10px; }
 .dent-bank-filters { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
 .dent-bank-filters select, .dent-bank-filters input { flex: 1; min-width: 140px; }
 
