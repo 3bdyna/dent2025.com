@@ -60,6 +60,7 @@ __pycache__/
 .vscode/
 .idea/
 mockups/
+scratch/
 *.swp
 *.swo
 
