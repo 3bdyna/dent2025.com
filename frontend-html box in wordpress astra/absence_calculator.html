@@ -177,16 +177,6 @@
         background: var(--dent-border-card, rgba(255, 255, 255, 0.1));
         border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.22));
         color: var(--dent-text-light, #ffffff);
-    }
-    .dent-absence-btn-action.btn-portal {
-        background: var(--dent-accent-success-bg, rgba(16, 185, 129, 0.12));
-        border-color: var(--dent-accent-success-border, rgba(16, 185, 129, 0.3));
-        color: var(--dent-accent-success-bright, #34d399);
-    }
-    .dent-absence-btn-action.btn-portal:hover {
-        background: rgba(16, 185, 129, 0.22);
-        border-color: var(--dent-accent-success, #10b981);
-    }
     .dent-absence-btn-action svg {
         flex-shrink: 0;
     }
@@ -793,7 +783,7 @@
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
                 <span>إضافة مادة</span>
             </button>
-            <button type="button" class="dent-absence-btn-action btn-portal" onclick="importOfficialPortalAbsences()" title="استيراد وتعيين الغيابات المسجلة في البوابة الأكاديمية">
+            <button type="button" class="dent-absence-btn-action" onclick="importOfficialPortalAbsences()" title="استيراد وتعيين الغيابات المسجلة في البوابة الأكاديمية">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 <span>استيراد غيابات البوابة</span>
             </button>
