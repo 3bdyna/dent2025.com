@@ -41,26 +41,37 @@
         transition: transform 0.25s ease !important;
     }
 
-    /* Soft, feathered diffused blur aura strictly behind the photo, title & button (Zero hard lines / Zero card box) */
+    /* Soft, feathered diffused blur aura wrapping BOTH photo and text seamlessly (Zero hard lines / Zero card box) */
     #resources .wp-block-column > .wp-block-group::before {
         content: '' !important;
         position: absolute !important;
-        inset: -15px !important;
+        inset: -30px -20px !important;
         z-index: 0 !important;
         pointer-events: none !important;
-        background: radial-gradient(ellipse at center, rgba(18, 18, 18, 0.65) 0%, rgba(18, 18, 18, 0.35) 45%, transparent 75%) !important;
-        backdrop-filter: blur(10px) !important;
-        -webkit-backdrop-filter: blur(10px) !important;
-        -webkit-mask-image: radial-gradient(ellipse at center, black 35%, transparent 75%) !important;
-        mask-image: radial-gradient(ellipse at center, black 35%, transparent 75%) !important;
+        background: 
+            radial-gradient(ellipse 95% 65% at 50% 30%, rgba(20, 20, 20, 0.72) 0%, rgba(20, 20, 20, 0.38) 50%, transparent 82%),
+            radial-gradient(ellipse 95% 55% at 50% 76%, rgba(20, 20, 20, 0.68) 0%, rgba(20, 20, 20, 0.32) 50%, transparent 82%) !important;
+        backdrop-filter: blur(14px) !important;
+        -webkit-backdrop-filter: blur(14px) !important;
+        -webkit-mask-image: 
+            radial-gradient(ellipse 95% 65% at 50% 30%, black 45%, transparent 82%),
+            radial-gradient(ellipse 95% 55% at 50% 76%, black 40%, transparent 82%) !important;
+        mask-image: 
+            radial-gradient(ellipse 95% 65% at 50% 30%, black 45%, transparent 82%),
+            radial-gradient(ellipse 95% 55% at 50% 76%, black 40%, transparent 82%) !important;
         border: none !important;
-        border-radius: 30px !important;
+        border-radius: 36px !important;
         box-shadow: none !important;
     }
 
     #resources .wp-block-column > .wp-block-group > * {
         position: relative !important;
         z-index: 1 !important;
+    }
+
+    #resources figure.wp-block-image img {
+        border-radius: 16px !important;
+        filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.45)) !important;
     }
 
     #resources .wp-block-column > .wp-block-group:hover {
