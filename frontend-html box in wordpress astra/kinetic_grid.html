@@ -89,6 +89,32 @@
         -webkit-background-clip: initial !important;
         -webkit-text-fill-color: var(--dent-text-primary, #f8fafc) !important;
     }
+
+    /* Pure Neutral Action Buttons (No Slate / Navy Tints) */
+    .dent-quiz-btn:not(.dent-btn-secondary),
+    button.start-btn,
+    button.dent-btn-next,
+    #dq-btn-next,
+    #dq-generate-btn,
+    #dp-submit-btn,
+    #dp-next-btn {
+        background-color: #262626 !important;
+        background: #262626 !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        color: #ffffff !important;
+    }
+    .dent-quiz-btn:not(.dent-btn-secondary):hover,
+    button.start-btn:hover,
+    button.dent-btn-next:hover,
+    #dq-btn-next:hover,
+    #dq-generate-btn:hover,
+    #dp-submit-btn:hover,
+    #dp-next-btn:hover {
+        background-color: #333333 !important;
+        background: #333333 !important;
+        border-color: rgba(255, 255, 255, 0.25) !important;
+        color: #ffffff !important;
+    }
 </style>
 
 <canvas id="dent-kinetic-canvas" aria-hidden="true"></canvas>

@@ -57,22 +57,22 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
    ======================================================== */
 :root {
   /* Canvas & Page Backgrounds */
-  --dent-bg-page: #0f1013;
+  --dent-bg-page: #121212;
   --dent-bg-canvas-subtle: rgba(255, 255, 255, 0.03);
 
   /* Elevation Surfaces (Cards, Modals, Panels) */
-  --dent-bg-card: #16171d;
+  --dent-bg-card: #1e1e1e;
   --dent-bg-card-hover: rgba(255, 255, 255, 0.06);
   --dent-bg-card-subtle: rgba(0, 0, 0, 0.35);
-  --dent-bg-modal: #121316;
+  --dent-bg-modal: #181818;
   --dent-bg-overlay: rgba(0, 0, 0, 0.85);
 
   /* Interactive Elements (Buttons, Inputs, Tabs, Pills) */
-  --dent-bg-input: #0c0d10;
+  --dent-bg-input: #121212;
   --dent-bg-input-subtle: rgba(0, 0, 0, 0.45);
-  --dent-bg-button: #1f222a;
-  --dent-bg-button-hover: #2b2e39;
-  --dent-bg-button-active: #353947;
+  --dent-bg-button: #262626;
+  --dent-bg-button-hover: #333333;
+  --dent-bg-button-active: #3f3f46;
   --dent-bg-pill: rgba(255, 255, 255, 0.06);
   --dent-bg-pill-hover: rgba(255, 255, 255, 0.12);
   --dent-bg-pill-active: rgba(255, 255, 255, 0.18);
