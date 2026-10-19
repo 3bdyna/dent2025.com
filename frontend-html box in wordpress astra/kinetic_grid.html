@@ -19,45 +19,48 @@
         background-color: #121212 !important;
     }
 
-    /* ── Floating Depth, Soft Shadow & Subtle Opacity for Cards and Banners ── */
+    /* ── 1. Reset all outer/parent wrappers so no ghost boxes or nested blur rectangles appear ── */
     #resources,
-    .wp-block-group#resources {
+    .wp-block-group#resources,
+    .wp-block-columns,
+    .wp-block-column,
+    #resources .wp-block-column > .wp-block-group .wp-block-group {
         background: transparent !important;
         background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
     }
 
-    .wp-block-columns .wp-block-column > .wp-block-group,
-    .is-style-ext-preset--group--natural-1--item-card-1--align-center,
+    /* ── 2. Precise, Diffused Glassmorphism & Soft Ambient Shadow for Specific Cards & Banners ── */
+    #resources .wp-block-column > .wp-block-group,
+    .dent-tomorrow-calendar-alert,
+    .dent-announcements-simple,
     .gpa-banner,
+    .dent-absence-banner,
     .dent-timer-banner-override,
-    #dent-absence-banner,
-    #dent-announcements-card,
-    .dent-ann-card,
-    .dent-feedback-container,
-    details.wp-block-details {
-        background-color: rgba(30, 30, 30, 0.78) !important;
-        backdrop-filter: blur(12px) !important;
-        -webkit-backdrop-filter: blur(12px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 18px !important;
-        box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.52), 0 0 1px 1px rgba(255, 255, 255, 0.05) !important;
-        transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease !important;
+    .dent-feedback-container {
+        background-color: rgba(26, 26, 30, 0.70) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.04) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.38) !important;
+        transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease !important;
     }
 
-    .wp-block-columns .wp-block-column > .wp-block-group:hover,
-    .is-style-ext-preset--group--natural-1--item-card-1--align-center:hover,
+    /* ── 3. Subtle Diffused Hover States ── */
+    #resources .wp-block-column > .wp-block-group:hover,
+    .dent-tomorrow-calendar-alert:hover,
+    .dent-announcements-simple:hover,
     .gpa-banner:hover,
-    .dent-timer-banner-override:hover,
-    #dent-absence-banner:hover,
-    #dent-announcements-card:hover,
-    .dent-ann-card:hover,
-    details.wp-block-details:hover {
-        background-color: rgba(38, 38, 44, 0.88) !important;
-        border-color: rgba(255, 255, 255, 0.18) !important;
-        transform: translateY(-3px) !important;
-        box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.68), 0 0 1px 1px rgba(255, 255, 255, 0.12) !important;
+    .dent-absence-banner:hover,
+    .dent-timer-banner-override:hover {
+        background-color: rgba(34, 34, 40, 0.82) !important;
+        border-color: rgba(255, 255, 255, 0.10) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 14px 38px rgba(0, 0, 0, 0.55) !important;
     }
 </style>
 
