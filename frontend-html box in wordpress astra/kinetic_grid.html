@@ -33,14 +33,19 @@
         -webkit-backdrop-filter: none !important;
     }
 
-    /* ── 2. Precise, Diffused Glassmorphism & Soft Ambient Shadow for Specific Cards & Banners ── */
+    /* ── 2. Precise, Diffused Glassmorphism & Soft Ambient Shadow across ALL Pages ── */
     #resources .wp-block-column > .wp-block-group,
+    .dent-schedule-container,
+    .dent-classes-widget,
+    .dent-spotlight-bar,
     .dent-tomorrow-calendar-alert,
     .dent-announcements-simple,
     .gpa-banner,
     .dent-absence-banner,
     .dent-timer-banner-override,
-    .dent-feedback-container {
+    .dent-feedback-container,
+    details.wp-block-details,
+    .dent-chapter-card {
         background-color: rgba(26, 26, 30, 0.70) !important;
         backdrop-filter: blur(8px) !important;
         -webkit-backdrop-filter: blur(8px) !important;
@@ -48,6 +53,15 @@
         border-radius: 16px !important;
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.38) !important;
         transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease !important;
+    }
+
+    /* Sub-cards inside Schedule Container */
+    .dent-schedule-container .stat-card {
+        background: rgba(255, 255, 255, 0.035) !important;
+        border: 1px solid rgba(255, 255, 255, 0.06) !important;
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+        border-radius: 12px !important;
     }
 
     /* ── 3. Subtle Diffused Hover States ── */
