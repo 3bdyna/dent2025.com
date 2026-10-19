@@ -19,7 +19,7 @@
         background-color: #121212 !important;
     }
 
-    /* ── 1. Seamless Floating Items in #resources (No dark card box around photo, title & button) ── */
+    /* ── 1. Seamless Floating Items in #resources with Soft Diffused Blur Behind Them ── */
     #resources,
     .wp-block-group#resources,
     .wp-block-columns,
@@ -34,16 +34,36 @@
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
     }
+
     #resources .wp-block-column > .wp-block-group {
+        position: relative !important;
+        overflow: visible !important;
         transition: transform 0.25s ease !important;
     }
-    #resources .wp-block-column > .wp-block-group:hover {
-        background: transparent !important;
-        background-color: transparent !important;
+
+    /* Soft, feathered diffused blur aura strictly behind the photo, title & button (Zero hard lines / Zero card box) */
+    #resources .wp-block-column > .wp-block-group::before {
+        content: '' !important;
+        position: absolute !important;
+        inset: -15px !important;
+        z-index: 0 !important;
+        pointer-events: none !important;
+        background: radial-gradient(ellipse at center, rgba(18, 18, 18, 0.65) 0%, rgba(18, 18, 18, 0.35) 45%, transparent 75%) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        -webkit-mask-image: radial-gradient(ellipse at center, black 35%, transparent 75%) !important;
+        mask-image: radial-gradient(ellipse at center, black 35%, transparent 75%) !important;
         border: none !important;
+        border-radius: 30px !important;
         box-shadow: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
+    }
+
+    #resources .wp-block-column > .wp-block-group > * {
+        position: relative !important;
+        z-index: 1 !important;
+    }
+
+    #resources .wp-block-column > .wp-block-group:hover {
         transform: translateY(-4px) !important;
     }
 
