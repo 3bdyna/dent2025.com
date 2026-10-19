@@ -45,7 +45,7 @@
     .dent-timer-banner-override,
     .dent-feedback-container,
     details.wp-block-details,
-    .dent-chapter-card {
+    .dent-chapter-details {
         background-color: rgba(30, 30, 30, 0.72) !important;
         backdrop-filter: blur(8px) !important;
         -webkit-backdrop-filter: blur(8px) !important;
@@ -71,11 +71,19 @@
     .gpa-banner:hover,
     .dent-absence-banner:hover,
     .dent-timer-banner-override:hover,
-    .dent-chapter-card:hover {
+    .dent-chapter-details:hover {
         background-color: rgba(38, 38, 38, 0.85) !important;
         border-color: rgba(255, 255, 255, 0.14) !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 14px 38px rgba(0, 0, 0, 0.55) !important;
+    }
+
+    /* Solid White Section Title for 'المواد الدراسية' matching 'الجدول الدراسي' exactly */
+    .dent-section-title {
+        color: var(--dent-text-primary, #f8fafc) !important;
+        background: none !important;
+        -webkit-background-clip: initial !important;
+        -webkit-text-fill-color: var(--dent-text-primary, #f8fafc) !important;
     }
 </style>
 

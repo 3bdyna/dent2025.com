@@ -8,11 +8,24 @@
     margin: 20px 0; direction: rtl;
 }
 .dent-chapter-details {
-    background: var(--dent-bg-card, #1e1e1e); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1)); border-radius: 12px;
-    overflow: hidden; transition: all 0.3s ease;
-    box-shadow: var(--dent-shadow-card, 0 4px 15px rgba(0,0,0,0.2));
+    background: rgba(30, 30, 30, 0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.38);
 }
-.dent-chapter-details[open] { border-color: var(--dent-border-hover, rgba(255,255,255,0.2)); box-shadow: var(--dent-shadow-modal, 0 10px 30px rgba(0,0,0,0.5)); }
+.dent-chapter-details:hover {
+    background: rgba(38, 38, 38, 0.85);
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 14px 38px rgba(0, 0, 0, 0.55);
+}
+.dent-chapter-details[open] {
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.60);
+}
 .dent-chapter-summary {
     padding: 16px 20px; font-size: 1.05rem; font-weight: 600; color: var(--dent-text-primary, #f8fafc); cursor: pointer;
     list-style: none; display: flex; justify-content: space-between; align-items: center;
@@ -168,10 +181,13 @@
 }
 .dent-section-title {
     font-size: 1.5rem; font-weight: 700; margin: 0 0 6px 0;
-    background: linear-gradient(90deg, var(--dent-text-primary, #e2e8f0), var(--dent-text-secondary, #94a3b8)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    color: var(--dent-text-primary, #f8fafc) !important;
+    background: none !important;
+    -webkit-background-clip: initial !important;
+    -webkit-text-fill-color: var(--dent-text-primary, #f8fafc) !important;
 }
 .dent-section-subtitle {
-    font-size: 0.9rem; color: var(--dent-text-muted, #64748b); margin: 0; font-weight: 400;
+    font-size: 0.85rem; color: var(--dent-text-secondary, #94a3b8); margin: 0; font-weight: 500;
 }
 .dent-section-footer {
     text-align: center; direction: rtl; padding: 15px 10px; margin-top: 15px;
