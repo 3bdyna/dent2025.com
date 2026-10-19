@@ -46,10 +46,10 @@
     .dent-feedback-container,
     details.wp-block-details,
     .dent-chapter-card {
-        background-color: rgba(26, 26, 30, 0.70) !important;
+        background-color: rgba(30, 30, 30, 0.72) !important;
         backdrop-filter: blur(8px) !important;
         -webkit-backdrop-filter: blur(8px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(255, 255, 255, 0.07) !important;
         border-radius: 16px !important;
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.38) !important;
         transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease !important;
@@ -70,9 +70,10 @@
     .dent-announcements-simple:hover,
     .gpa-banner:hover,
     .dent-absence-banner:hover,
-    .dent-timer-banner-override:hover {
-        background-color: rgba(34, 34, 40, 0.82) !important;
-        border-color: rgba(255, 255, 255, 0.10) !important;
+    .dent-timer-banner-override:hover,
+    .dent-chapter-card:hover {
+        background-color: rgba(38, 38, 38, 0.85) !important;
+        border-color: rgba(255, 255, 255, 0.14) !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 14px 38px rgba(0, 0, 0, 0.55) !important;
     }
@@ -116,6 +117,8 @@
     let W = 0, H = 0;
     const mouse = { x: -9999, y: -9999 };
     const targetMouse = { x: -9999, y: -9999 };
+    let mouseStrength = 0;
+    let targetStrength = 0;
     const ripples = [];
     let rafId = 0;
     let isDirty = true; // High-efficiency render flag (0% idle CPU without ever freezing)
@@ -132,8 +135,13 @@
 
     // Interaction Listeners (Window & Document level for 100% reliable tracking)
     function handlePointerMove(clientX, clientY) {
+        if (mouse.x < -1000) {
+            mouse.x = clientX;
+            mouse.y = clientY;
+        }
         targetMouse.x = clientX;
         targetMouse.y = clientY;
+        targetStrength = 1.0;
         isDirty = true;
     }
 
@@ -147,10 +155,9 @@
         }
     }, { passive: true });
 
-    // Smoothly unwind & disappear warp when cursor leaves the window or tab loses focus
+    // Smoothly unwind & fade out warp when cursor leaves window or tab loses focus
     function handlePointerLeave() {
-        targetMouse.x = -9999;
-        targetMouse.y = -9999;
+        targetStrength = 0.0;
         isDirty = true;
     }
 
@@ -162,6 +169,8 @@
             handlePointerLeave();
         }
     });
+    window.addEventListener('touchend', handlePointerLeave, { passive: true });
+    window.addEventListener('touchcancel', handlePointerLeave, { passive: true });
 
     window.addEventListener('click', function(e) {
         ripples.push({
@@ -202,17 +211,10 @@
         return 'rgba(' + r + ',' + g + ',' + b + ',' + a.toFixed(3) + ')';
     }
 
-    function getWarpedPoint(gx, gy, col, row, cols, rows) {
-        const edgeMargin = 1.6;
-        const colPin = Math.min(col / edgeMargin, (cols - 1 - col) / edgeMargin, 1);
-        const rowPin = Math.min(row / edgeMargin, (rows - 1 - row) / edgeMargin, 1);
-        const pinFactor = colPin * colPin * rowPin * rowPin;
-
-        const dx = gx - mouse.x;
-        const dy = gy - mouse.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        const proximity = Math.max(0, 1 - dist / INFLUENCE_RADIUS) * pinFactor;
+    function getWarpedPoint(gx, gy) {
+        if (mouseStrength <= 0.0001 && ripples.length === 0) {
+            return { x: gx, y: gy, proximity: 0 };
+        }
 
         let rx = 0, ry = 0;
         for (let i = 0; i < ripples.length; i++) {
@@ -223,7 +225,7 @@
             const waveWidth = 65;
             const diff = rdist - r.radius;
             if (Math.abs(diff) < waveWidth) {
-                const strength = (1 - Math.abs(diff) / waveWidth) * r.opacity * 22 * pinFactor;
+                const strength = (1 - Math.abs(diff) / waveWidth) * r.opacity * 22;
                 const angle = Math.atan2(rdy, rdx);
                 const sign = diff < 0 ? -1 : 1;
                 rx += Math.cos(angle) * strength * sign * -1;
@@ -231,34 +233,50 @@
             }
         }
 
-        if (dist < INFLUENCE_RADIUS && dist > 0 && pinFactor > 0) {
-            const t = dist / INFLUENCE_RADIUS;
-            const eased = t < 0.01 ? 0 : (1 - t) * (1 - t) * Math.min(1, dist / 60);
-            const warpAmt = eased * MAX_WARP * pinFactor;
-            const angle = Math.atan2(dy, dx);
-            return {
-                x: gx - Math.cos(angle) * warpAmt + rx,
-                y: gy - Math.sin(angle) * warpAmt + ry,
-                proximity: proximity
-            };
+        if (mouseStrength > 0.0001) {
+            const dx = gx - mouse.x;
+            const dy = gy - mouse.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < INFLUENCE_RADIUS && dist > 0) {
+                const proximity = Math.max(0, 1 - dist / INFLUENCE_RADIUS) * mouseStrength;
+                const t = dist / INFLUENCE_RADIUS;
+                const eased = t < 0.01 ? 0 : (1 - t) * (1 - t) * Math.min(1, dist / 60);
+                const warpAmt = eased * MAX_WARP * mouseStrength;
+                const angle = Math.atan2(dy, dx);
+                return {
+                    x: gx - Math.cos(angle) * warpAmt + rx,
+                    y: gy - Math.sin(angle) * warpAmt + ry,
+                    proximity: proximity
+                };
+            }
         }
 
         return {
             x: gx + rx,
             y: gy + ry,
-            proximity: proximity
+            proximity: 0
         };
     }
 
-    // Main 60 FPS Render Loop with Zero-Lag Dirty Checking
+    // Main 60 FPS Render Loop with Zero-Lag Dirty Checking & Smooth Unwind Fade
     function draw(now) {
-        // Continue animation while mouse is lerping or ripples are active
+        // Smoothly lerp mouse strength (fade in/out over ~350ms)
+        const FADE_SPEED = 0.065;
+        mouseStrength = lerp(mouseStrength, targetStrength, FADE_SPEED);
+        if (mouseStrength < 0.0005) mouseStrength = 0;
+
+        // Lerp mouse coordinates toward target
+        mouse.x = lerp(mouse.x, targetMouse.x, LERP_SPEED);
+        mouse.y = lerp(mouse.y, targetMouse.y, LERP_SPEED);
+
         const dmx = Math.abs(targetMouse.x - mouse.x);
         const dmy = Math.abs(targetMouse.y - mouse.y);
-        const isConverging = dmx > 0.1 || dmy > 0.1;
+        const isConverging = (dmx > 0.1 || dmy > 0.1) && mouseStrength > 0;
+        const isFading = Math.abs(targetStrength - mouseStrength) > 0.0005;
         const hasRipples = ripples.length > 0;
 
-        if (isConverging || hasRipples) {
+        if (isConverging || isFading || hasRipples) {
             isDirty = true;
         }
 
@@ -267,10 +285,6 @@
             rafId = requestAnimationFrame(draw);
             return;
         }
-
-        // Lerp mouse coordinates toward target
-        mouse.x = lerp(mouse.x, targetMouse.x, LERP_SPEED);
-        mouse.y = lerp(mouse.y, targetMouse.y, LERP_SPEED);
 
         ctx.clearRect(0, 0, W, H);
         ctx.fillStyle = THEME.bg;
@@ -295,7 +309,7 @@
         for (let r = 0; r < rows; r++) {
             grid[r] = [];
             for (let c = 0; c < cols; c++) {
-                grid[r][c] = getWarpedPoint(c * cellW, r * cellH, c, r, cols, rows);
+                grid[r][c] = getWarpedPoint(c * cellW, r * cellH);
             }
         }
 
@@ -363,7 +377,7 @@
         }
 
         // If no movement and no ripples, mark clean until next interaction
-        if (!isConverging && !hasRipples) {
+        if (!isConverging && !isFading && !hasRipples) {
             isDirty = false;
         }
 
