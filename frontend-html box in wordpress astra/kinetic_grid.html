@@ -18,6 +18,47 @@
     body {
         background-color: #121212 !important;
     }
+
+    /* ── Floating Depth, Soft Shadow & Subtle Opacity for Cards and Banners ── */
+    #resources,
+    .wp-block-group#resources {
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .wp-block-columns .wp-block-column > .wp-block-group,
+    .is-style-ext-preset--group--natural-1--item-card-1--align-center,
+    .gpa-banner,
+    .dent-timer-banner-override,
+    #dent-absence-banner,
+    #dent-announcements-card,
+    .dent-ann-card,
+    .dent-feedback-container,
+    details.wp-block-details {
+        background-color: rgba(30, 30, 30, 0.78) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 18px !important;
+        box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.52), 0 0 1px 1px rgba(255, 255, 255, 0.05) !important;
+        transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease !important;
+    }
+
+    .wp-block-columns .wp-block-column > .wp-block-group:hover,
+    .is-style-ext-preset--group--natural-1--item-card-1--align-center:hover,
+    .gpa-banner:hover,
+    .dent-timer-banner-override:hover,
+    #dent-absence-banner:hover,
+    #dent-announcements-card:hover,
+    .dent-ann-card:hover,
+    details.wp-block-details:hover {
+        background-color: rgba(38, 38, 44, 0.88) !important;
+        border-color: rgba(255, 255, 255, 0.18) !important;
+        transform: translateY(-3px) !important;
+        box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.68), 0 0 1px 1px rgba(255, 255, 255, 0.12) !important;
+    }
 </style>
 
 <canvas id="dent-kinetic-canvas" aria-hidden="true"></canvas>
