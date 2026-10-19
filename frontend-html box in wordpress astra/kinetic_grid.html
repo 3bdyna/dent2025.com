@@ -19,12 +19,14 @@
         background-color: #121212 !important;
     }
 
-    /* ── 1. Reset all outer/parent wrappers so no ghost boxes or nested blur rectangles appear ── */
+    /* ── 1. Seamless Floating Items in #resources (No dark card box around photo, title & button) ── */
     #resources,
     .wp-block-group#resources,
     .wp-block-columns,
     .wp-block-column,
-    #resources .wp-block-column > .wp-block-group .wp-block-group {
+    #resources .wp-block-group,
+    #resources .wp-block-column > .wp-block-group,
+    #resources .is-style-ext-preset--group--natural-1--item-card-1--align-center {
         background: transparent !important;
         background-color: transparent !important;
         border: none !important;
@@ -32,9 +34,20 @@
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
     }
+    #resources .wp-block-column > .wp-block-group {
+        transition: transform 0.25s ease !important;
+    }
+    #resources .wp-block-column > .wp-block-group:hover {
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        transform: translateY(-4px) !important;
+    }
 
-    /* ── 2. Precise, Diffused Glassmorphism & Soft Ambient Shadow across ALL Pages ── */
-    #resources .wp-block-column > .wp-block-group,
+    /* ── 2. Precise, Diffused Glassmorphism & Soft Ambient Shadow across Specific Pages & Banners ── */
     .dent-schedule-container,
     .dent-classes-widget,
     .dent-spotlight-bar,
@@ -66,7 +79,6 @@
     }
 
     /* ── 3. Subtle Diffused Hover States ── */
-    #resources .wp-block-column > .wp-block-group:hover,
     .dent-tomorrow-calendar-alert:hover,
     .dent-announcements-simple:hover,
     .gpa-banner:hover,
