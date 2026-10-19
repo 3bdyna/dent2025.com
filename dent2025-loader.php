@@ -122,6 +122,21 @@ add_filter('the_content', function($content) {
     return $content;
 }, 999);
 
+// Automatically load Interactive Monochrome White Kinetic Grid background sitewide
+add_action('wp_footer', function() {
+    $grid_file = ABSPATH . 'frontend_components/kinetic_grid.html';
+    if (file_exists($grid_file)) {
+        $content = file_get_contents($grid_file);
+        if ($content !== false) {
+            $content = preg_replace('/<\?php.*?\?>/s', '', $content);
+            $content = preg_replace_callback('/<style\b[^>]*>(.*?)<\/style>/is', function($m) {
+                return '<style>' . preg_replace('/\s+/', ' ', $m[1]) . '</style>';
+            }, $content);
+            echo $content;
+        }
+    }
+}, 5);
+
 // Automatically load Study Timer & Tracker sitewide in wp_footer so the floating badge follows students across all pages
 add_action('wp_footer', function() {
     // Avoid loading timer on welcome selection page

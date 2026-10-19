@@ -1,0 +1,308 @@
+<!-- Dent2025 Interactive Monochrome White Kinetic Grid Background -->
+<style id="dent-kinetic-grid-style">
+    #dent-kinetic-canvas {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: -1 !important;
+        pointer-events: none !important;
+        background-color: #0d0d0f !important;
+    }
+    /* Minimal container transparency so canvas shines through without touching any site layout/components */
+    html, body, #page, .site-content, .ast-plain-container, .site, #primary {
+        background-color: transparent !important;
+        background-image: none !important;
+    }
+    body {
+        background-color: #0d0d0f !important;
+    }
+</style>
+
+<canvas id="dent-kinetic-canvas" aria-hidden="true"></canvas>
+
+<script>
+(function() {
+    // Avoid double initialization
+    if (window.__dentKineticGridInit) return;
+    window.__dentKineticGridInit = true;
+
+    const canvas = document.getElementById('dent-kinetic-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Monochrome White Theme Tokens
+    const THEME = {
+        bg: "#0d0d0f",
+        lineBase: { r: 255, g: 255, b: 255, a: 0.065 },
+        lineActive: { r: 255, g: 255, b: 255, a: 0.85 },
+        nodeBase: { r: 255, g: 255, b: 255, a: 0.16 },
+        nodeActive: { r: 255, g: 255, b: 255, a: 1.0 },
+        glow: "255, 255, 255",
+        ripple: "255, 255, 255"
+    };
+
+    // Responsive configuration
+    const isMobile = (window.innerWidth < 768) || ('ontouchstart' in window);
+    const CELL_SIZE = isMobile ? 68 : 52;
+    const INFLUENCE_RADIUS = isMobile ? 220 : 280;
+    const MAX_WARP = isMobile ? 20 : 28;
+    const LERP_SPEED = 0.085;
+    const NODE_BASE_RADIUS = 1.6;
+    const NODE_ACTIVE_RADIUS = 3.2;
+
+    // Motion sensitivity check
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let W = 0, H = 0;
+    const mouse = { x: -9999, y: -9999 };
+    const targetMouse = { x: -9999, y: -9999 };
+    const ripples = [];
+    let rafId = 0;
+    let isSleeping = false;
+    let lastActiveTime = performance.now();
+
+    function resize() {
+        W = window.innerWidth;
+        H = window.innerHeight;
+        canvas.width = W;
+        canvas.height = H;
+        wakeUp();
+    }
+    window.addEventListener('resize', resize, { passive: true });
+    resize();
+
+    // Awakening / Sleep Management (0% Idle CPU)
+    function wakeUp() {
+        lastActiveTime = performance.now();
+        if (isSleeping) {
+            isSleeping = false;
+            if (!rafId && !prefersReducedMotion) {
+                rafId = requestAnimationFrame(draw);
+            }
+        }
+    }
+
+    // Interaction Listeners (Window-level with passive listeners for max performance)
+    window.addEventListener('mousemove', function(e) {
+        targetMouse.x = e.clientX;
+        targetMouse.y = e.clientY;
+        wakeUp();
+    }, { passive: true });
+
+    window.addEventListener('touchmove', function(e) {
+        if (e.touches && e.touches[0]) {
+            targetMouse.x = e.touches[0].clientX;
+            targetMouse.y = e.touches[0].clientY;
+            wakeUp();
+        }
+    }, { passive: true });
+
+    window.addEventListener('click', function(e) {
+        ripples.push({
+            x: e.clientX,
+            y: e.clientY,
+            radius: 0,
+            opacity: 1,
+            born: performance.now()
+        });
+        wakeUp();
+    }, { passive: true });
+
+    // Page Visibility Freeze (0% CPU when tab is hidden or backgrounded)
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            isSleeping = true;
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = 0;
+            }
+        } else {
+            wakeUp();
+        }
+    });
+
+    // Pure math helpers
+    function lerp(a, b, t) {
+        return a + (b - a) * t;
+    }
+
+    function lerpColor(c1, c2, t) {
+        const r = Math.round(lerp(c1.r, c2.r, t));
+        const g = Math.round(lerp(c1.g, c2.g, t));
+        const b = Math.round(lerp(c1.b, c2.b, t));
+        const a = lerp(c1.a, c2.a, t);
+        return 'rgba(' + r + ',' + g + ',' + b + ',' + a.toFixed(3) + ')';
+    }
+
+    function getWarpedPoint(gx, gy, col, row, cols, rows) {
+        const edgeMargin = 1.6;
+        const colPin = Math.min(col / edgeMargin, (cols - 1 - col) / edgeMargin, 1);
+        const rowPin = Math.min(row / edgeMargin, (rows - 1 - row) / edgeMargin, 1);
+        const pinFactor = colPin * colPin * rowPin * rowPin;
+
+        const dx = gx - mouse.x;
+        const dy = gy - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        const proximity = Math.max(0, 1 - dist / INFLUENCE_RADIUS) * pinFactor;
+
+        let rx = 0, ry = 0;
+        for (let i = 0; i < ripples.length; i++) {
+            const r = ripples[i];
+            const rdx = gx - r.x;
+            const rdy = gy - r.y;
+            const rdist = Math.sqrt(rdx * rdx + rdy * rdy);
+            const waveWidth = 65;
+            const diff = rdist - r.radius;
+            if (Math.abs(diff) < waveWidth) {
+                const strength = (1 - Math.abs(diff) / waveWidth) * r.opacity * 22 * pinFactor;
+                const angle = Math.atan2(rdy, rdx);
+                const sign = diff < 0 ? -1 : 1;
+                rx += Math.cos(angle) * strength * sign * -1;
+                ry += Math.sin(angle) * strength * sign * -1;
+            }
+        }
+
+        if (dist < INFLUENCE_RADIUS && dist > 0 && pinFactor > 0) {
+            const t = dist / INFLUENCE_RADIUS;
+            const eased = t < 0.01 ? 0 : (1 - t) * (1 - t) * Math.min(1, dist / 60);
+            const warpAmt = eased * MAX_WARP * pinFactor;
+            const angle = Math.atan2(dy, dx);
+            return {
+                x: gx - Math.cos(angle) * warpAmt + rx,
+                y: gy - Math.sin(angle) * warpAmt + ry,
+                proximity: proximity
+            };
+        }
+
+        return {
+            x: gx + rx,
+            y: gy + ry,
+            proximity: proximity
+        };
+    }
+
+    // Main 60 FPS Render Loop
+    function draw(now) {
+        // Interpolate mouse smoothly toward pointer
+        const dmx = targetMouse.x - mouse.x;
+        const dmy = targetMouse.y - mouse.y;
+        mouse.x = lerp(mouse.x, targetMouse.x, LERP_SPEED);
+        mouse.y = lerp(mouse.y, targetMouse.y, LERP_SPEED);
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = THEME.bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // Advance active click ripples
+        for (let i = ripples.length - 1; i >= 0; i--) {
+            const r = ripples[i];
+            const age = (now - r.born) / 1000;
+            r.radius = Math.max(0, age * 450);
+            r.opacity = Math.max(0, 1 - age * 1.35);
+            if (r.opacity <= 0) ripples.splice(i, 1);
+        }
+
+        // Calculate responsive grid
+        const cols = Math.max(2, Math.ceil(W / CELL_SIZE)) + 1;
+        const rows = Math.max(2, Math.ceil(H / CELL_SIZE)) + 1;
+        const cellW = W / (cols - 1);
+        const cellH = H / (rows - 1);
+
+        const grid = [];
+        for (let r = 0; r < rows; r++) {
+            grid[r] = [];
+            for (let c = 0; c < cols; c++) {
+                grid[r][c] = getWarpedPoint(c * cellW, r * cellH, c, r, cols, rows);
+            }
+        }
+
+        // Draw line segments
+        const drawSegment = function(p1, p2) {
+            const avg = (p1.proximity + p2.proximity) * 0.5;
+            const t = avg * avg * (3 - 2 * avg);
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = lerpColor(THEME.lineBase, THEME.lineActive, t);
+            ctx.lineWidth = lerp(0.85, 1.6, t);
+            ctx.stroke();
+        };
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols - 1; c++) {
+                drawSegment(grid[r][c], grid[r][c + 1]);
+            }
+        }
+
+        for (let c = 0; c < cols; c++) {
+            for (let r = 0; r < rows - 1; r++) {
+                drawSegment(grid[r][c], grid[r + 1][c]);
+            }
+        }
+
+        // Draw intersection nodes
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const pt = grid[r][c];
+                const pr = pt.proximity;
+                const t = pr * pr * (3 - 2 * pr);
+                const radius = lerp(NODE_BASE_RADIUS, NODE_ACTIVE_RADIUS, t);
+
+                // Halo glow for nodes near cursor
+                if (t > 0.25) {
+                    const glowRadius = radius + lerp(0, 7, (t - 0.25) / 0.75);
+                    const grad = ctx.createRadialGradient(pt.x, pt.y, radius * 0.5, pt.x, pt.y, glowRadius);
+                    grad.addColorStop(0, 'rgba(' + THEME.glow + ', ' + (t * 0.45).toFixed(3) + ')');
+                    grad.addColorStop(1, 'rgba(' + THEME.glow + ', 0)');
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, glowRadius, 0, Math.PI * 2);
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+                }
+
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = lerpColor(THEME.nodeBase, THEME.nodeActive, t);
+                ctx.fill();
+            }
+        }
+
+        // Draw ripple shockwave rings
+        for (let i = 0; i < ripples.length; i++) {
+            const r = ripples[i];
+            if (r.radius > 0) {
+                ctx.beginPath();
+                ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(' + THEME.ripple + ', ' + (r.opacity * 0.35).toFixed(3) + ')';
+                ctx.lineWidth = 1.6;
+                ctx.stroke();
+            }
+        }
+
+        // Idle detection: sleep if motionless and all ripples settled for > 2 seconds
+        const isMouseMoving = Math.abs(dmx) > 0.4 || Math.abs(dmy) > 0.4;
+        if (isMouseMoving) {
+            lastActiveTime = now;
+        }
+
+        if (ripples.length === 0 && !isMouseMoving && (now - lastActiveTime > 2000)) {
+            isSleeping = true;
+            rafId = 0;
+            return; // Loop pauses until wakeUp()
+        }
+
+        rafId = requestAnimationFrame(draw);
+    }
+
+    if (prefersReducedMotion) {
+        // Render a single static frame for accessibility
+        draw(performance.now());
+    } else {
+        rafId = requestAnimationFrame(draw);
+    }
+})();
+</script>
