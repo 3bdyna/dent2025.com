@@ -401,7 +401,7 @@ All keys are strictly prefixed with `dent2025_`:
 
 > **CRITICAL DESIGN PHILOSOPHY**: Dent2025 follows a **premium, sleek, dark-mode aesthetic** tailored for medical and dental university students. The UI must feel state-of-the-art, clean, and professional.
 
-### Strict Aesthetic Rules & User Preferences:
+### A. Strict Aesthetic Rules & User Preferences:
 
 1. 🚫 **NO "Popping" or Loud Saturated Colors**:
    - **STRICTLY FORBIDDEN**: Loud saturated primary colors, bright neon accents, or aggressive flashy gradients.
@@ -413,9 +413,40 @@ All keys are strictly prefixed with `dent2025_`:
    - **REQUIRED**: Use clean SVG vector icons or modern typography. Emojis should only be used when strictly necessary or explicitly requested for functional triggers (e.g. secret `🔒` admin lock).
 
 3. 🎨 **Typography & Styling Standards**:
-   - **Font Family**: `'Outfit'`, `'Noto Kufi Arabic'`, `sans-serif`.
+   - **Font Family**: `'Outfit'`, `'Noto Kufi Arabic'`, `sans-serif` (self-hosted WOFF2, preloaded and inlined via `fonts/fonts.css`).
    - **Glassmorphism & Micro-animations**: Use subtle backdrop blurs (`backdrop-filter: blur(12px)`), rounded corners (`border-radius: 12px` to `18px`), and smooth micro-interactions (`transition: all 0.25s ease`).
    - **RTL Layout First**: Design all UI components with native Right-to-Left (RTL) Arabic text alignment and clean English technical/medical labels.
+
+### B. ⭐ Master Design Token Theme System (`fonts/fonts.css`)
+To eliminate visual drift and ensure seamless visual harmony across all 5 portal endpoints, Dent2025 uses a **centralized CSS Design Token System** defined in `:root` inside `frontend-html box in wordpress astra/fonts/fonts.css`.
+
+> **MANDATORY THEME CONTRACT**: All frontend HTML templates, injected widgets, dynamic JavaScript UI builders, modals, and drawers across all 5 portal endpoints **MUST consume these tokens** via `var(--dent-*)` instead of hardcoding raw hex/rgba color codes.
+
+#### Core Token Registry:
+- **Surface & Backgrounds**:
+  - `--dent-bg-page`: `#121212` (Base page canvas)
+  - `--dent-bg-card`: `#1e1e1e` (Primary cards & containers)
+  - `--dent-bg-card-hover`: `#262626` (Card hover state)
+  - `--dent-bg-modal`: `#18181b` (Modals, drawers & dialogs)
+  - `--dent-bg-input`: `#121212` (Form inputs & dropdowns)
+  - `--dent-bg-button`: `#27272a` (Secondary / utility buttons)
+  - `--dent-bg-pill`: `rgba(255, 255, 255, 0.05)` (Pills, badges & tags)
+  - `--dent-bg-canvas-subtle`: `rgba(255, 255, 255, 0.03)` (Subtle section fills)
+- **Typography & Foreground Text**:
+  - `--dent-text-primary`: `#f8fafc` (Headings & high-emphasis text)
+  - `--dent-text-secondary`: `#94a3b8` (Body text, subheadings & labels)
+  - `--dent-text-muted`: `#64748b` (Timestamps, notes & disabled states)
+  - `--dent-text-light`: `#ffffff` (Pure white accent text)
+- **Borders & Dividers**:
+  - `--dent-border-subtle`: `rgba(255, 255, 255, 0.08)` (Subtle separators)
+  - `--dent-border-card`: `rgba(255, 255, 255, 0.10)` (Card & modal outlines)
+  - `--dent-border-hover`: `rgba(255, 255, 255, 0.22)` (Card & button hover outline)
+  - `--dent-border-focus`: `rgba(255, 255, 255, 0.35)` (Input active focus ring)
+- **Semantic Accents & Statuses**:
+  - Primary / Brand: `--dent-accent-primary` (`#3b82f6`), `--dent-accent-primary-bright` (`#60a5fa`), `--dent-accent-primary-bg` (`rgba(59, 130, 246, 0.12)`), `--dent-accent-primary-border` (`rgba(59, 130, 246, 0.30)`)
+  - Success / Active: `--dent-accent-success` (`#10b981`), `--dent-accent-success-bright` (`#34d399`), `--dent-accent-success-bg` (`rgba(16, 185, 129, 0.12)`), `--dent-accent-success-border` (`rgba(16, 185, 129, 0.30)`)
+  - Warning / Alert: `--dent-accent-warning` (`#f59e0b`), `--dent-accent-warning-bright` (`#fbbf24`), `--dent-accent-warning-bg` (`rgba(245, 158, 11, 0.12)`), `--dent-accent-warning-border` (`rgba(245, 158, 11, 0.30)`)
+  - Danger / Delete: `--dent-accent-danger` (`#ef4444`), `--dent-accent-danger-bright` (`#f87171`), `--dent-accent-danger-bg` (`rgba(239, 68, 68, 0.12)`), `--dent-accent-danger-border` (`rgba(239, 68, 68, 0.30)`)
 
 ---
 

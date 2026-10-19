@@ -451,44 +451,44 @@ function dentEnsureBaseStyles() {
     dentEnsureStyle('dent-base-ui-styles', `
         .dent-chapter-admin-actions {
             margin-top: 15px; display: flex; gap: 8px; justify-content: flex-end;
-            border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 12px;
+            border-top: 1px dashed var(--dent-border-dashed, rgba(255,255,255,0.1)); padding-top: 12px;
         }
         .dent-admin-sub-btn {
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            padding: 6px 12px; border-radius: 8px; color: #cbd5e1; cursor: pointer;
+            background: var(--dent-bg-pill, rgba(255,255,255,0.05)); border: 1px solid var(--dent-border-card, rgba(255,255,255,0.1));
+            padding: 6px 12px; border-radius: 8px; color: var(--dent-text-secondary, #cbd5e1); cursor: pointer;
             transition: all 0.2s ease; font-family: inherit; font-size: 0.9rem;
         }
-        .dent-admin-sub-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+        .dent-admin-sub-btn:hover { background: var(--dent-bg-pill-hover, rgba(255,255,255,0.12)); color: var(--dent-text-light, #fff); }
         .dent-admin-sub-del {
-            background: rgba(185,28,28,0.12); border-color: rgba(185,28,28,0.25); color: #ef4444;
+            background: var(--dent-accent-danger-bg, rgba(185,28,28,0.12)); border-color: var(--dent-accent-danger-border, rgba(185,28,28,0.25)); color: var(--dent-accent-danger, #ef4444);
         }
-        .dent-admin-sub-del:hover { background: rgba(185,28,28,0.25); color: #fca5a5; }
+        .dent-admin-sub-del:hover { background: var(--dent-accent-danger, rgba(185,28,28,0.25)); color: var(--dent-text-light, #fca5a5); }
         .dent-modal-input {
-            width: 100%; box-sizing: border-box; background: #121212;
-            border: 1px solid rgba(255,255,255,0.12); padding: 10px 14px; border-radius: 10px;
-            color: #fff; font-size: 0.9rem; outline: none; font-family: inherit; transition: all 0.2s;
+            width: 100%; box-sizing: border-box; background: var(--dent-bg-input, #121212);
+            border: 1px solid var(--dent-border-subtle, rgba(255,255,255,0.12)); padding: 10px 14px; border-radius: 10px;
+            color: var(--dent-text-light, #fff); font-size: 0.9rem; outline: none; font-family: inherit; transition: all 0.2s;
         }
         .dent-modal-input:focus {
-            border-color: rgba(255,255,255,0.4); box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
+            border-color: var(--dent-border-focus, rgba(255,255,255,0.4)); box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
         }
         .dent-modal-input-danger {
-            border-color: rgba(239,68,68,0.3);
+            border-color: var(--dent-accent-danger-border, rgba(239,68,68,0.3));
         }
         .dent-modal-input-danger:focus {
-            border-color: #f87171; box-shadow: 0 0 0 3px rgba(239,68,68,0.15);
+            border-color: var(--dent-accent-danger-bright, #f87171); box-shadow: 0 0 0 3px var(--dent-accent-danger-bg, rgba(239,68,68,0.15));
         }
         .dent-modal-btn-cancel {
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            padding: 10px 18px; border-radius: 10px; color: #cbd5e1; font-weight: 500;
+            background: var(--dent-bg-pill, rgba(255,255,255,0.05)); border: 1px solid var(--dent-border-card, rgba(255,255,255,0.1));
+            padding: 10px 18px; border-radius: 10px; color: var(--dent-text-secondary, #cbd5e1); font-weight: 500;
             font-size: 0.9rem; cursor: pointer; transition: all 0.2s; font-family: inherit;
         }
-        .dent-modal-btn-cancel:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .dent-modal-btn-cancel:hover { background: var(--dent-bg-pill-hover, rgba(255,255,255,0.1)); color: var(--dent-text-light, #fff); }
         .dent-modal-btn-save {
-            background: #27272a; color: #f8fafc; border: 1px solid rgba(255,255,255,0.15);
+            background: var(--dent-bg-button, #27272a); color: var(--dent-text-primary, #f8fafc); border: 1px solid var(--dent-border-card, rgba(255,255,255,0.15));
             padding: 10px 22px; border-radius: 10px; font-weight: 600; font-size: 0.9rem;
             cursor: pointer; transition: all 0.2s; font-family: inherit;
         }
-        .dent-modal-btn-save:hover { background: #3f3f46; border-color: rgba(255,255,255,0.25); }
+        .dent-modal-btn-save:hover { background: var(--dent-bg-button-hover, #3f3f46); border-color: var(--dent-border-hover, rgba(255,255,255,0.25)); }
     `);
 }
 
@@ -990,25 +990,25 @@ function injectPathChanger(selection) {
         .dent-path-text {
             display: flex;
             align-items: center;
-            color: #f8fafc !important;
+            color: var(--dent-text-primary, #f8fafc) !important;
             font-size: 0.8rem;
             font-weight: 500;
             letter-spacing: 0.3px;
         }
         .dent-path-main {
             transition: all 0.4s ease;
-            color: #f8fafc !important;
+            color: var(--dent-text-primary, #f8fafc) !important;
         }
         .dent-path-changer-content.minimized .dent-path-main {
             font-size: 0.75rem;
-            color: #94a3b8 !important;
+            color: var(--dent-text-secondary, #94a3b8) !important;
         }
         .dent-path-extra {
             overflow: hidden;
             max-width: 300px;
             opacity: 1;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            color: #cbd5e1 !important;
+            color: var(--dent-text-secondary, #cbd5e1) !important;
         }
         .dent-path-changer-content.minimized .dent-path-extra {
             max-width: 0;
@@ -1017,7 +1017,7 @@ function injectPathChanger(selection) {
             margin: 0;
         }
         .dent-path-edit-icon {
-            color: #94a3b8 !important;
+            color: var(--dent-text-secondary, #94a3b8) !important;
             display: flex;
             align-items: center;
             transition: all 0.4s ease;
@@ -1032,7 +1032,7 @@ function injectPathChanger(selection) {
             margin-right: 0;
         }
         .dent-path-changer-content:hover .dent-path-edit-icon {
-            color: #f8fafc !important;
+            color: var(--dent-text-primary, #f8fafc) !important;
         }
         @media (max-width: 768px) {
             #dent-path-changer {
@@ -1158,7 +1158,7 @@ function renderAnnouncements(dataObj, selection) {
                 margin-bottom: 20px;
             }
         }
-        .dent-ann-content { font-size: 1rem; line-height: 1.6; color: #cbd5e1; }
+        .dent-ann-content { font-size: 1rem; line-height: 1.6; color: var(--dent-text-primary, #cbd5e1); }
         .dent-ann-content p { margin-top: 0; margin-bottom: 6px; }
         .dent-ann-content p:last-child,
         .dent-ann-content ul:last-child,
@@ -1167,11 +1167,11 @@ function renderAnnouncements(dataObj, selection) {
         .dent-ann-content p:empty,
         .dent-ann-content br:last-child { display: none; }
         .dent-ann-content[contenteditable="true"] {
-            background: rgba(0,0,0,0.3); border: 1px dashed #4f8cff; padding: 15px; border-radius: 8px; outline: none; min-height: 40px;
+            background: var(--dent-bg-card-subtle, rgba(0,0,0,0.3)); border: 1px dashed var(--dent-accent-primary, #3b82f6); padding: 15px; border-radius: 8px; outline: none; min-height: 40px;
         }
-        .dent-ann-toolbar { display: none; gap: 8px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
-        .dent-toolbar-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; padding: 5px 10px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; font-family: inherit; font-weight: bold; }
-        .dent-toolbar-btn:hover { background: rgba(255,255,255,0.15); }
+        .dent-ann-toolbar { display: none; gap: 8px; margin-bottom: 15px; border-bottom: 1px solid var(--dent-border-subtle, rgba(255,255,255,0.1)); padding-bottom: 10px; }
+        .dent-toolbar-btn { background: var(--dent-bg-pill, rgba(255,255,255,0.05)); border: 1px solid var(--dent-border-card, rgba(255,255,255,0.1)); color: var(--dent-text-secondary, #cbd5e1); padding: 5px 10px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; font-family: inherit; font-weight: bold; }
+        .dent-toolbar-btn:hover { background: var(--dent-bg-pill-hover, rgba(255,255,255,0.15)); }
         .dent-ann-top-left {
             position: absolute;
             top: 15px;
@@ -1182,9 +1182,9 @@ function renderAnnouncements(dataObj, selection) {
             z-index: 10;
         }
         .dent-ann-time-badge {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: #94a3b8;
+            background: var(--dent-bg-pill, rgba(255, 255, 255, 0.04));
+            border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08));
+            color: var(--dent-text-secondary, #94a3b8);
             padding: 3px 8px;
             border-radius: 6px;
             font-size: 0.75rem;
@@ -1195,9 +1195,9 @@ function renderAnnouncements(dataObj, selection) {
             gap: 4px;
         }
         .dent-ann-edit-btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #cbd5e1;
+            background: var(--dent-bg-pill, rgba(255,255,255,0.05));
+            border: 1px solid var(--dent-border-card, rgba(255,255,255,0.1));
+            color: var(--dent-text-secondary, #cbd5e1);
             padding: 4px 10px;
             border-radius: 6px;
             font-size: 0.75rem;
@@ -1205,11 +1205,11 @@ function renderAnnouncements(dataObj, selection) {
             transition: all 0.2s;
             font-family: inherit;
         }
-        .dent-ann-edit-btn:hover { background: rgba(255,255,255,0.1); }
+        .dent-ann-edit-btn:hover { background: var(--dent-bg-pill-hover, rgba(255,255,255,0.1)); }
         .dent-ann-save-btn {
-            background: #4f8cff;
+            background: var(--dent-accent-primary, #3b82f6);
             border: none;
-            color: white;
+            color: var(--dent-text-light, #ffffff);
             padding: 4px 10px;
             border-radius: 6px;
             font-size: 0.75rem;
@@ -1464,40 +1464,40 @@ function renderClassesWidget() {
 
     dentEnsureStyle('dent-classes-widget-styles', `
         .dent-classes-widget {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--dent-bg-canvas-subtle, rgba(255, 255, 255, 0.03));
+            border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.08));
             border-radius: 16px; padding: 24px; margin-top: 0; margin-bottom: 30px;
             direction: rtl; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            box-shadow: var(--dent-shadow-card, 0 10px 30px rgba(0,0,0,0.25));
         }
         .dent-classes-header {
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;
-            flex-wrap: wrap; gap: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.06));
             padding-bottom: 16px;
         }
         .dent-classes-title-wrap {
             display: flex; flex-direction: column; gap: 4px;
         }
         .dent-classes-title {
-            font-size: 1.25rem; font-weight: 700; color: #f8fafc; margin: 0;
+            font-size: 1.25rem; font-weight: 700; color: var(--dent-text-primary, #f8fafc); margin: 0;
         }
         .dent-classes-subtitle {
-            font-size: 0.8rem; color: #94a3b8; font-weight: 500;
+            font-size: 0.8rem; color: var(--dent-text-secondary, #94a3b8); font-weight: 500;
         }
         .dent-classes-controls {
             display: flex; align-items: center; gap: 10px;
         }
         .dent-classes-group-select {
-            background: #18181b; border: 1px solid rgba(255,255,255,0.15);
-            color: #f8fafc; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem;
+            background: var(--dent-bg-button, #18181b); border: 1px solid var(--dent-border-card, rgba(255,255,255,0.15));
+            color: var(--dent-text-primary, #f8fafc); padding: 6px 12px; border-radius: 8px; font-size: 0.85rem;
             font-family: inherit; outline: none; cursor: pointer; transition: border-color 0.2s;
         }
         .dent-classes-group-select:focus {
-            border-color: rgba(255,255,255,0.35);
+            border-color: var(--dent-border-focus, rgba(255,255,255,0.35));
         }
         .dent-spotlight-bar {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: var(--dent-bg-card, rgba(255, 255, 255, 0.05));
+            border: 1px solid var(--dent-border-hover, rgba(255, 255, 255, 0.18));
             border-radius: 12px;
             padding: 12px 16px;
             margin-bottom: 20px;
@@ -1505,7 +1505,7 @@ function renderClassesWidget() {
             justify-content: space-between;
             align-items: center;
             gap: 14px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+            box-shadow: var(--dent-shadow-card, 0 4px 20px rgba(0, 0, 0, 0.35));
             animation: dentSlideDown 0.22s ease-out;
         }
         @keyframes dentSlideDown {
@@ -1516,69 +1516,69 @@ function renderClassesWidget() {
             display: flex; flex-direction: column; gap: 4px; text-align: right;
         }
         .dent-spotlight-bar-title {
-            font-size: 0.95rem; font-weight: 700; color: #ffffff; display: flex;
+            font-size: 0.95rem; font-weight: 700; color: var(--dent-text-light, #ffffff); display: flex;
             align-items: center; gap: 8px; flex-wrap: wrap;
         }
         .dent-spotlight-count-badge {
-            font-size: 0.75rem; font-weight: 600; color: #cbd5e1; background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.12); padding: 2px 8px; border-radius: 6px;
+            font-size: 0.75rem; font-weight: 600; color: var(--dent-text-secondary, #cbd5e1); background: var(--dent-bg-pill, rgba(255, 255, 255, 0.1));
+            border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.12)); padding: 2px 8px; border-radius: 6px;
         }
         .dent-spotlight-bar-days {
-            font-size: 0.8rem; color: #94a3b8; line-height: 1.45;
+            font-size: 0.8rem; color: var(--dent-text-secondary, #94a3b8); line-height: 1.45;
         }
         .dent-spotlight-bar-days b {
-            color: #f8fafc; font-weight: 600;
+            color: var(--dent-text-primary, #f8fafc); font-weight: 600;
         }
         .dent-spotlight-clear-btn {
-            background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #f8fafc; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem;
+            background: var(--dent-bg-pill, rgba(255, 255, 255, 0.08)); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.15));
+            color: var(--dent-text-primary, #f8fafc); padding: 6px 12px; border-radius: 8px; font-size: 0.78rem;
             font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s; font-family: inherit;
         }
         .dent-spotlight-clear-btn:hover {
-            background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;
+            background: var(--dent-accent-danger-bg, rgba(239, 68, 68, 0.2)); border-color: var(--dent-accent-danger-border, rgba(239, 68, 68, 0.4)); color: var(--dent-accent-danger-bright, #fca5a5);
         }
         .dent-day-block {
-            background: rgba(0, 0, 0, 0.22); border: 1px solid rgba(255, 255, 255, 0.06);
+            background: var(--dent-bg-card-subtle, rgba(0, 0, 0, 0.22)); border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.06));
             border-radius: 14px; padding: 18px 20px; margin-bottom: 18px; transition: all 0.25s ease;
             scroll-margin-top: 80px;
         }
         .dent-day-block.is-today {
-            border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.04);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.22)); background: var(--dent-bg-card-hover, rgba(255, 255, 255, 0.04));
+            box-shadow: var(--dent-shadow-card, 0 4px 20px rgba(0,0,0,0.3));
         }
         .dent-day-header {
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06); padding-bottom: 10px;
+            border-bottom: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.06)); padding-bottom: 10px;
         }
         .dent-day-title-wrap {
             display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
         }
         .dent-day-name {
-            font-size: 1.05rem; font-weight: 700; color: #f8fafc; margin: 0;
+            font-size: 1.05rem; font-weight: 700; color: var(--dent-text-primary, #f8fafc); margin: 0;
         }
         .dent-today-badge {
-            background: rgba(255, 255, 255, 0.12); color: #ffffff; font-size: 0.72rem; font-weight: 600;
-            padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.15);
+            background: var(--dent-bg-pill-hover, rgba(255, 255, 255, 0.12)); color: var(--dent-text-light, #ffffff); font-size: 0.72rem; font-weight: 600;
+            padding: 2px 8px; border-radius: 6px; border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.15));
         }
         .dent-day-count {
-            font-size: 0.75rem; font-weight: 500; color: #94a3b8; background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08); padding: 2px 8px; border-radius: 6px;
+            font-size: 0.75rem; font-weight: 500; color: var(--dent-text-secondary, #94a3b8); background: var(--dent-bg-pill, rgba(255, 255, 255, 0.05));
+            border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08)); padding: 2px 8px; border-radius: 6px;
         }
         .dent-class-item {
             cursor: pointer; user-select: none; transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
         }
         .dent-class-item:hover {
-            transform: translateX(-3px); border-color: rgba(255, 255, 255, 0.22) !important;
-            background: rgba(255, 255, 255, 0.08) !important;
+            transform: translateX(-3px); border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.22)) !important;
+            background: var(--dent-bg-card-hover, rgba(255, 255, 255, 0.08)) !important;
         }
         .dent-class-item.dent-spotlight-active {
-            background: rgba(255, 255, 255, 0.14) !important; border-color: rgba(255, 255, 255, 0.45) !important;
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3), 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+            background: var(--dent-bg-pill-active, rgba(255, 255, 255, 0.14)) !important; border-color: var(--dent-border-focus, rgba(255, 255, 255, 0.45)) !important;
+            box-shadow: 0 0 0 1px var(--dent-border-hover, rgba(255, 255, 255, 0.3)), var(--dent-shadow-modal, 0 6px 20px rgba(0, 0, 0, 0.4)) !important;
             transform: scale(1.012) !important; opacity: 1 !important; filter: none !important;
         }
         .dent-class-item.dent-spotlight-active .dent-class-subject {
-            color: #ffffff !important; font-weight: 700 !important; text-shadow: 0 0 10px rgba(255,255,255,0.3);
+            color: var(--dent-text-light, #ffffff) !important; font-weight: 700 !important; text-shadow: 0 0 10px rgba(255,255,255,0.3);
         }
         .dent-class-item.dent-spotlight-dimmed {
             opacity: 0.22 !important; filter: grayscale(0.9) !important; transform: scale(0.99) !important;
@@ -1586,44 +1586,44 @@ function renderClassesWidget() {
         .dent-class-card {
             display: flex; justify-content: space-between; align-items: center;
             padding: 12px 16px; border-radius: 10px; margin-bottom: 9px;
-            background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.06); gap: 12px;
+            background: var(--dent-bg-card-subtle, rgba(0, 0, 0, 0.25)); border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.06)); gap: 12px;
         }
         .dent-class-card.active-now {
-            background: rgba(255, 255, 255, 0.12) !important; border-color: rgba(255, 255, 255, 0.35) !important;
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2), 0 4px 20px rgba(0, 0, 0, 0.35);
+            background: var(--dent-bg-pill-hover, rgba(255, 255, 255, 0.12)) !important; border-color: var(--dent-border-focus, rgba(255, 255, 255, 0.35)) !important;
+            box-shadow: 0 0 0 1px var(--dent-border-subtle, rgba(255, 255, 255, 0.2)), var(--dent-shadow-card, 0 4px 20px rgba(0, 0, 0, 0.35));
         }
         .dent-class-card.active-now .dent-class-subject {
-            color: #ffffff; font-weight: 700;
+            color: var(--dent-text-light, #ffffff); font-weight: 700;
         }
         .dent-class-info {
             display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
         }
         .dent-class-subject {
-            font-size: 0.95rem; font-weight: 600; margin: 0; color: #f8fafc;
+            font-size: 0.95rem; font-weight: 600; margin: 0; color: var(--dent-text-primary, #f8fafc);
         }
         .dent-type-badge {
             font-size: 0.72rem; padding: 2px 8px; border-radius: 5px; font-weight: 500;
-            background: rgba(255, 255, 255, 0.06); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--dent-bg-pill, rgba(255, 255, 255, 0.06)); color: var(--dent-text-secondary, #cbd5e1); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1));
             display: inline-block;
         }
         .dent-class-time-wrap {
             display: flex; align-items: center; gap: 8px; flex-shrink: 0;
         }
         .dent-class-active-badge {
-            font-size: 0.7rem; color: #ffffff; font-weight: 600; background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.25); padding: 2px 8px; border-radius: 4px;
+            font-size: 0.7rem; color: var(--dent-text-light, #ffffff); font-weight: 600; background: var(--dent-bg-pill-hover, rgba(255, 255, 255, 0.15));
+            border: 1px solid var(--dent-border-hover, rgba(255, 255, 255, 0.25)); padding: 2px 8px; border-radius: 4px;
             display: inline-flex; align-items: center;
         }
         .dent-class-time {
-            font-size: 0.82rem; color: #cbd5e1; direction: ltr; font-weight: 600; font-family: monospace;
+            font-size: 0.82rem; color: var(--dent-text-secondary, #cbd5e1); direction: ltr; font-weight: 600; font-family: monospace;
         }
         .dent-classes-empty-day {
-            color: #64748b; font-size: 0.84rem; text-align: center; padding: 14px;
-            background: rgba(255,255,255,0.015); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.06);
+            color: var(--dent-text-muted, #64748b); font-size: 0.84rem; text-align: center; padding: 14px;
+            background: var(--dent-bg-canvas-subtle, rgba(255,255,255,0.015)); border-radius: 8px; border: 1px dashed var(--dent-border-subtle, rgba(255,255,255,0.06));
         }
         .dent-classes-hint {
-            font-size: 0.78rem; color: #64748b; margin-top: 18px; text-align: center;
-            background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 8px;
+            font-size: 0.78rem; color: var(--dent-text-muted, #64748b); margin-top: 18px; text-align: center;
+            background: var(--dent-bg-canvas-subtle, rgba(255,255,255,0.02)); padding: 8px 12px; border-radius: 8px;
         }
     `);
     
@@ -1935,19 +1935,19 @@ function generateLinksHtml(links) {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 8px;
         }
         .dent-link-card {
-            background: rgba(255, 255, 255, 0.025); border: 1px solid rgba(255, 255, 255, 0.06);
+            background: var(--dent-bg-canvas-subtle, rgba(255, 255, 255, 0.025)); border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.06));
             border-radius: 8px; display: flex; align-items: center; justify-content: space-between;
             gap: 8px; transition: all 0.2s ease; box-sizing: border-box;
         }
         .dent-link-card:hover {
-            background: rgba(255, 255, 255, 0.055); border-color: rgba(255, 255, 255, 0.12);
+            background: var(--dent-bg-card-hover, rgba(255, 255, 255, 0.055)); border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.12));
             transform: translateY(-1px);
         }
         .dent-link-anchor {
-            text-decoration: none; color: #cbd5e1; display: flex; align-items: center;
+            text-decoration: none; color: var(--dent-text-secondary, #cbd5e1); display: flex; align-items: center;
             gap: 8px; flex: 1; min-width: 0;
         }
-        .dent-link-anchor:hover { color: #ffffff; }
+        .dent-link-anchor:hover { color: var(--dent-text-light, #ffffff); }
         .dent-link-icon-badge {
             border-radius: 5px; display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
@@ -2042,22 +2042,22 @@ function openAddLinkModal(subjectId) {
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'add-link-modal';
-        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,10,15,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:99999; display:flex; justify-content:center; align-items:center; direction:rtl; font-family:\'Outfit\', \'Noto Kufi Arabic\', sans-serif;';
+        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:var(--dent-bg-overlay, rgba(0,0,0,0.82)); backdrop-filter:var(--dent-backdrop-blur, blur(10px)); -webkit-backdrop-filter:var(--dent-backdrop-blur, blur(10px)); z-index:99999; display:flex; justify-content:center; align-items:center; direction:rtl; font-family:\'Outfit\', \'Noto Kufi Arabic\', sans-serif;';
         modal.innerHTML = `
-            <div style="background: #18181b; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 28px; width: 90%; max-width: 420px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); color: #fff;">
+            <div style="background: var(--dent-bg-modal, #18181b); border: 1px solid var(--dent-border-card, rgba(255,255,255,0.1)); border-radius: 16px; padding: 28px; width: 90%; max-width: 420px; box-shadow: var(--dent-shadow-modal, 0 25px 60px rgba(0,0,0,0.75)); color: var(--dent-text-primary, #fff);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: #f8fafc;">إضافة رابط مساعد</h3>
-                    <button type="button" onclick="document.getElementById('add-link-modal').style.display='none'" style="background:rgba(255,255,255,0.06); border:none; color:#9ca3af; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;" title="إغلاق">×</button>
+                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--dent-text-primary, #f8fafc);">إضافة رابط مساعد</h3>
+                    <button type="button" onclick="document.getElementById('add-link-modal').style.display='none'" style="background:var(--dent-bg-pill, rgba(255,255,255,0.06)); border:1px solid var(--dent-border-subtle, rgba(255,255,255,0.08)); color:var(--dent-text-secondary, #9ca3af); width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;" title="إغلاق">×</button>
                 </div>
                 <input type="hidden" id="link-sub-id">
                 
                 <div style="margin-bottom: 16px;">
-                    <label style="font-size:0.8rem; color:#9ca3af; font-weight:500; display:block; margin-bottom:6px;">عنوان الرابط</label>
+                    <label style="font-size:0.8rem; color:var(--dent-text-secondary, #9ca3af); font-weight:500; display:block; margin-bottom:6px;">عنوان الرابط</label>
                     <input type="text" id="link-title" placeholder="مثال: شرح شابتر 1" class="dent-modal-input">
                 </div>
                 
                 <div style="margin-bottom: 24px;">
-                    <label style="font-size:0.8rem; color:#9ca3af; font-weight:500; display:block; margin-bottom:6px;">رابط المادة</label>
+                    <label style="font-size:0.8rem; color:var(--dent-text-secondary, #9ca3af); font-weight:500; display:block; margin-bottom:6px;">رابط المادة</label>
                     <input type="url" id="link-url" placeholder="https://youtube.com/..." class="dent-modal-input" style="text-align: left; direction: ltr;">
                 </div>
                 

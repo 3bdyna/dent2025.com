@@ -531,7 +531,7 @@ const ScheduleApp = {
                                 <button class="event-edit-btn" title="تعديل الحدث" onclick="ScheduleApp.showEditModal('${escapedId}')">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                 </button>
-                                <button class="event-edit-btn" title="${hideTitle}" onclick="${hideAction}" style="opacity:${isHidden ? '1' : '0.6'}; color:${isHidden ? '#a3e635' : '#94a3b8'};">
+                                <button class="event-edit-btn" title="${hideTitle}" onclick="${hideAction}" style="opacity:${isHidden ? '1' : '0.6'}; color:${isHidden ? 'var(--dent-accent-warning-bright)' : 'var(--dent-text-secondary)'};">
                                     ${hideIcon}
                                 </button>
                                 <button class="event-delete-btn" title="حذف الحدث" onclick="ScheduleApp.deleteEvent('${escapedId}', ${isGlobal ? 'true' : 'false'}, '${eventSchedId}')">
@@ -545,7 +545,7 @@ const ScheduleApp = {
                     const nationalDayCardClass = isNationalDay ? ' event-card-national-day' : '';
                     const isHiddenCard = hiddenIds.has(String(ev.id));
                     const hiddenCardStyle = isHiddenCard ? ' style="opacity:0.35; filter:grayscale(0.6); border-style:dashed;"' : '';
-                    const hiddenBadge = isHiddenCard ? `<span class="badge" style="background:rgba(163,230,53,0.12);color:#a3e635;border:1px solid rgba(163,230,53,0.3);font-size:0.65rem;">مخفي</span>` : '';
+                    const hiddenBadge = isHiddenCard ? `<span class="badge" style="background:var(--dent-accent-warning-bg);color:var(--dent-accent-warning-bright);border:1px solid var(--dent-accent-warning-border);font-size:0.65rem;">مخفي</span>` : '';
                     
                     const typeMeta = this.getEventTypeMeta(ev);
                     let typeBadgeHtml = '';
@@ -858,17 +858,17 @@ const ScheduleApp = {
         let addBtn = document.createElement('button');
         addBtn.id = 'dent-add-event-btn';
         addBtn.innerHTML = '+ إضافة حدث جديد';
-        addBtn.style.cssText = 'width: 100%; padding: 12px 20px; background: #27272a; color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; font-size: 0.95rem; cursor: pointer; margin-bottom: 12px; font-family: inherit; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;';
-        addBtn.onmouseover = () => { addBtn.style.background = '#3f3f46'; addBtn.style.borderColor = 'rgba(255, 255, 255, 0.25)'; addBtn.style.transform = 'translateY(-1px)'; };
-        addBtn.onmouseout = () => { addBtn.style.background = '#27272a'; addBtn.style.borderColor = 'rgba(255, 255, 255, 0.15)'; addBtn.style.transform = 'none'; };
+        addBtn.style.cssText = 'width: 100%; padding: 12px 20px; background: var(--dent-bg-button); color: var(--dent-text-primary); border: 1px solid var(--dent-border-card); border-radius: 12px; font-size: 0.95rem; cursor: pointer; margin-bottom: 12px; font-family: inherit; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;';
+        addBtn.onmouseover = () => { addBtn.style.background = 'var(--dent-border-card)'; addBtn.style.borderColor = 'var(--dent-border-hover)'; addBtn.style.transform = 'translateY(-1px)'; };
+        addBtn.onmouseout = () => { addBtn.style.background = 'var(--dent-bg-button)'; addBtn.style.borderColor = 'var(--dent-border-card)'; addBtn.style.transform = 'none'; };
         addBtn.onclick = () => this.showAddModal();
         
         let logoutBtn = document.createElement('button');
         logoutBtn.id = 'dent-logout-btn';
         logoutBtn.innerHTML = 'تسجيل الخروج من الإدارة';
-        logoutBtn.style.cssText = 'width: 100%; padding: 10px; background: rgba(185, 28, 28, 0.15); color: #ef4444; border: 1px solid rgba(185, 28, 28, 0.25); border-radius: 10px; font-size: 0.85rem; cursor: pointer; margin-bottom: 20px; font-family: inherit; font-weight: 500; transition: all 0.2s;';
-        logoutBtn.onmouseover = () => logoutBtn.style.background = 'rgba(185, 28, 28, 0.28)';
-        logoutBtn.onmouseout = () => logoutBtn.style.background = 'rgba(185, 28, 28, 0.15)';
+        logoutBtn.style.cssText = 'width: 100%; padding: 10px; background: var(--dent-accent-danger-bg); color: var(--dent-accent-danger); border: 1px solid var(--dent-accent-danger-border); border-radius: 10px; font-size: 0.85rem; cursor: pointer; margin-bottom: 20px; font-family: inherit; font-weight: 500; transition: all 0.2s;';
+        logoutBtn.onmouseover = () => logoutBtn.style.background = 'rgba(239, 68, 68, 0.25)';
+        logoutBtn.onmouseout = () => logoutBtn.style.background = 'var(--dent-accent-danger-bg)';
         logoutBtn.onclick = () => {
             this.adminPassword = null;
             sessionStorage.removeItem('dent2025_schedule_admin_pass');
@@ -903,9 +903,9 @@ const ScheduleApp = {
             const hiddenBtn = document.createElement('button');
             hiddenBtn.id = 'dent-hidden-events-btn';
             hiddenBtn.innerHTML = `👁 الأحداث المخفية (${hiddenIds.size})`;
-            hiddenBtn.style.cssText = 'width: 100%; padding: 10px; background: rgba(163,230,53,0.08); color: #a3e635; border: 1px solid rgba(163,230,53,0.25); border-radius: 10px; font-size: 0.85rem; cursor: pointer; margin-bottom: 10px; font-family: inherit; font-weight: 500; transition: all 0.2s;';
-            hiddenBtn.onmouseover = () => hiddenBtn.style.background = 'rgba(163,230,53,0.16)';
-            hiddenBtn.onmouseout = () => hiddenBtn.style.background = 'rgba(163,230,53,0.08)';
+            hiddenBtn.style.cssText = 'width: 100%; padding: 10px; background: var(--dent-accent-warning-bg); color: var(--dent-accent-warning-bright); border: 1px solid var(--dent-accent-warning-border); border-radius: 10px; font-size: 0.85rem; cursor: pointer; margin-bottom: 10px; font-family: inherit; font-weight: 500; transition: all 0.2s;';
+            hiddenBtn.onmouseover = () => hiddenBtn.style.background = 'rgba(245, 158, 11, 0.22)';
+            hiddenBtn.onmouseout = () => hiddenBtn.style.background = 'var(--dent-accent-warning-bg)';
             hiddenBtn.onclick = () => this._showHiddenEventsPanel();
             stats.parentNode.insertBefore(hiddenBtn, addBtn.nextSibling);
         }
@@ -921,19 +921,19 @@ const ScheduleApp = {
 
         panel = document.createElement('div');
         panel.id = 'dent-hidden-panel';
-        panel.style.cssText = 'background:#18181b; border:1px solid rgba(163,230,53,0.25); border-radius:12px; padding:14px; margin-bottom:12px; direction:rtl;';
+        panel.style.cssText = 'background:var(--dent-bg-modal); border:1px solid var(--dent-accent-warning-border); border-radius:12px; padding:14px; margin-bottom:12px; direction:rtl;';
 
         let rows = hiddenEvents.map(ev => `
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
-                <span style="font-size:0.80rem; color:#e4e4e7; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${dentEscapeHtml(ev.title)}</span>
-                <button onclick="ScheduleApp.unhideEvent('${dentEscapeHtml(ev.id)}')" style="flex-shrink:0; font-size:0.72rem; color:#a3e635; background:rgba(163,230,53,0.1); border:1px solid rgba(163,230,53,0.25); border-radius:6px; padding:3px 9px; cursor:pointer; font-family:inherit; white-space:nowrap;">إظهار</button>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--dent-border-subtle);">
+                <span style="font-size:0.80rem; color:var(--dent-text-primary); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${dentEscapeHtml(ev.title)}</span>
+                <button onclick="ScheduleApp.unhideEvent('${dentEscapeHtml(ev.id)}')" style="flex-shrink:0; font-size:0.72rem; color:var(--dent-accent-warning-bright); background:var(--dent-accent-warning-bg); border:1px solid var(--dent-accent-warning-border); border-radius:6px; padding:3px 9px; cursor:pointer; font-family:inherit; white-space:nowrap;">إظهار</button>
             </div>
         `).join('');
 
         panel.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <span style="font-size:0.80rem; font-weight:700; color:#a3e635;">الأحداث المخفية</span>
-                <button onclick="ScheduleApp.unhideAllEvents()" style="font-size:0.70rem; color:#94a3b8; background:transparent; border:none; cursor:pointer; font-family:inherit; text-decoration:underline;">إظهار الكل</button>
+                <span style="font-size:0.80rem; font-weight:700; color:var(--dent-accent-warning-bright);">الأحداث المخفية</span>
+                <button onclick="ScheduleApp.unhideAllEvents()" style="font-size:0.70rem; color:var(--dent-text-secondary); background:transparent; border:none; cursor:pointer; font-family:inherit; text-decoration:underline;">إظهار الكل</button>
             </div>
             ${rows}
         `;
@@ -970,9 +970,9 @@ const ScheduleApp = {
                     -webkit-appearance: none !important;
                     appearance: none !important;
                     color-scheme: dark !important;
-                    color: #ffffff !important;
-                    background-color: #121212 !important;
-                    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+                    color: var(--dent-text-primary) !important;
+                    background-color: var(--dent-bg-input) !important;
+                    border: 1px solid var(--dent-border-card) !important;
                     border-radius: 10px !important;
                     height: 44px !important;
                     min-height: 44px !important;
@@ -988,7 +988,7 @@ const ScheduleApp = {
                     min-height: 44px !important;
                     line-height: 44px !important;
                     margin: 0 !important;
-                    color: #ffffff !important;
+                    color: var(--dent-text-primary) !important;
                 }
                 #dent-admin-modal input[type="date"]::-webkit-calendar-picker-indicator {
                     filter: invert(1) !important;
@@ -996,24 +996,24 @@ const ScheduleApp = {
                     cursor: pointer !important;
                 }
             </style>
-            <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 24px; width: 100%; max-width: 440px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: #fff; box-sizing: border-box;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; gap: 8px;">
+            <div style="background: var(--dent-bg-modal); border: 1px solid var(--dent-border-card); border-radius: 18px; padding: 24px; width: 100%; max-width: 440px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: var(--dent-text-primary); box-sizing: border-box;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; border-bottom: 1px solid var(--dent-border-subtle); padding-bottom: 12px; gap: 8px;">
                     <div style="flex:1;">
-                        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #f8fafc;">${modalTitle}</h3>
+                        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--dent-text-primary);">${modalTitle}</h3>
                     </div>
-                    <button type="button" onclick="document.getElementById('dent-admin-modal').remove()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; flex-shrink:0; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">×</button>
+                    <button type="button" onclick="document.getElementById('dent-admin-modal').remove()" style="background:var(--dent-bg-pill); border:1px solid var(--dent-border-card); color:var(--dent-text-secondary); width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; flex-shrink:0; transition:all 0.2s;" onmouseover="this.style.background='var(--dent-border-card)'; this.style.color='var(--dent-text-primary)';" onmouseout="this.style.background='var(--dent-bg-pill)'; this.style.color='var(--dent-text-secondary)';">×</button>
                 </div>
                 
                 <input type="hidden" id="ev-id" value="${dentEscapeHtml(eventId)}">
 
                 <div style="margin-bottom: 14px;">
-                    <label style="font-size:0.8rem; color:#a1a1aa; font-weight:600; display:block; margin-bottom:5px;">عنوان الحدث</label>
-                    <input type="text" id="ev-title" value="${titleVal}" placeholder="عنوان الحدث (مثال: بداية الاختبارات)" style="width: 100%; height: 44px; padding: 0 14px; background: #121212; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 0.9rem; font-family: inherit; box-sizing: border-box; outline: none; transition: all 0.2s;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)';">
+                    <label style="font-size:0.8rem; color:var(--dent-text-secondary); font-weight:600; display:block; margin-bottom:5px;">عنوان الحدث</label>
+                    <input type="text" id="ev-title" value="${titleVal}" placeholder="عنوان الحدث (مثال: بداية الاختبارات)" style="width: 100%; height: 44px; padding: 0 14px; background: var(--dent-bg-input); border: 1px solid var(--dent-border-card); border-radius: 10px; color: var(--dent-text-primary); font-size: 0.9rem; font-family: inherit; box-sizing: border-box; outline: none; transition: all 0.2s;" onfocus="this.style.borderColor='var(--dent-border-focus)';" onblur="this.style.borderColor='var(--dent-border-card)';">
                 </div>
                 
                 <div style="margin-bottom: 14px;">
-                    <label style="font-size:0.8rem; color:#a1a1aa; font-weight:600; display:block; margin-bottom:5px;">نوع الحدث</label>
-                    <select id="ev-type" onchange="ScheduleApp.toggleCustomTypeInput(this.value)" style="width: 100%; height: 44px; padding: 0 14px; background: #121212; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 0.9rem; font-family: inherit; box-sizing: border-box; outline: none; transition: all 0.2s; color-scheme: dark;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)';">
+                    <label style="font-size:0.8rem; color:var(--dent-text-secondary); font-weight:600; display:block; margin-bottom:5px;">نوع الحدث</label>
+                    <select id="ev-type" onchange="ScheduleApp.toggleCustomTypeInput(this.value)" style="width: 100%; height: 44px; padding: 0 14px; background: var(--dent-bg-input); border: 1px solid var(--dent-border-card); border-radius: 10px; color: var(--dent-text-primary); font-size: 0.9rem; font-family: inherit; box-sizing: border-box; outline: none; transition: all 0.2s; color-scheme: dark;" onfocus="this.style.borderColor='var(--dent-border-focus)';" onblur="this.style.borderColor='var(--dent-border-card)';">
                         <option value="quiz"${effectiveType === 'quiz' ? ' selected' : ''}>كويز</option>
                         <option value="assessment"${effectiveType === 'assessment' ? ' selected' : ''}>اسسمنت / تقييم</option>
                         <option value="research"${effectiveType === 'research' ? ' selected' : ''}>بحث / مشروع</option>
@@ -1029,24 +1029,24 @@ const ScheduleApp = {
                         <option value="custom"${effectiveType === 'custom' ? ' selected' : ''}>نوع مخصص (كتابة يدوية)...</option>
                     </select>
                     <div id="ev-custom-type-wrap" style="display: ${effectiveType === 'custom' ? 'block' : 'none'}; margin-top: 8px;">
-                        <input type="text" id="ev-custom-type" value="${dentEscapeHtml(customTypeVal)}" placeholder="اكتب نوع الحدث المخصص (مثال: بريزنتيشن، معمل، تسليم حالة...)" style="width: 100%; height: 40px; padding: 0 12px; background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.22); border-radius: 8px; color: #fff; font-size: 0.85rem; font-family: inherit; box-sizing: border-box; outline: none; transition: all 0.2s;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.22)';">
+                        <input type="text" id="ev-custom-type" value="${dentEscapeHtml(customTypeVal)}" placeholder="اكتب نوع الحدث المخصص (مثال: بريزنتيشن، معمل، تسليم حالة...)" style="width: 100%; height: 40px; padding: 0 12px; background: var(--dent-bg-canvas-subtle); border: 1px dashed var(--dent-border-hover); border-radius: 8px; color: var(--dent-text-primary); font-size: 0.85rem; font-family: inherit; box-sizing: border-box; outline: none; transition: all 0.2s;" onfocus="this.style.borderColor='var(--dent-border-focus)';" onblur="this.style.borderColor='var(--dent-border-hover)';">
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-bottom: 20px; width: 100%;">
                     <div style="flex:1; min-width: 0;">
-                        <label style="font-size:0.78rem; color:#a1a1aa; font-weight:600; display:block; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">تاريخ البداية (ميلادي)</label>
-                        <input type="date" id="ev-date" value="${dateVal}" style="width: 100%;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)';">
+                        <label style="font-size:0.78rem; color:var(--dent-text-secondary); font-weight:600; display:block; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">تاريخ البداية (ميلادي)</label>
+                        <input type="date" id="ev-date" value="${dateVal}" style="width: 100%;" onfocus="this.style.borderColor='var(--dent-border-focus)';" onblur="this.style.borderColor='var(--dent-border-card)';">
                     </div>
                     <div style="flex:1; min-width: 0;">
-                        <label style="font-size:0.78rem; color:#a1a1aa; font-weight:600; display:block; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">تاريخ النهاية (اختياري)</label>
-                        <input type="date" id="ev-end" value="${endDateVal}" style="width: 100%;" onfocus="this.style.borderColor='rgba(255,255,255,0.4)';" onblur="this.style.borderColor='rgba(255,255,255,0.12)';">
+                        <label style="font-size:0.78rem; color:var(--dent-text-secondary); font-weight:600; display:block; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">تاريخ النهاية (اختياري)</label>
+                        <input type="date" id="ev-end" value="${endDateVal}" style="width: 100%;" onfocus="this.style.borderColor='var(--dent-border-focus)';" onblur="this.style.borderColor='var(--dent-border-card)';">
                     </div>
                 </div>
                 
                 <div style="display: flex; gap: 10px;">
-                    <button type="button" id="dent-submit-event-btn" onclick="ScheduleApp.submitSaveEvent()" style="flex: 2; height: 44px; background: #3f3f46; color: #ffffff; border: 1px solid #52525b; border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.92rem; transition: all 0.2s; display:flex; align-items:center; justify-content:center;" onmouseover="this.style.background='#52525b';" onmouseout="this.style.background='#3f3f46';">${submitBtnText}</button>
-                    <button type="button" onclick="document.getElementById('dent-admin-modal').remove()" style="flex: 1; height: 44px; background: #27272a; border: 1px solid rgba(255,255,255,0.1); color: #a1a1aa; border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 500; font-size: 0.88rem; transition: all 0.2s; display:flex; align-items:center; justify-content:center;" onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.color='#fff';" onmouseout="this.style.background='#27272a'; this.style.color='#a1a1aa';">إلغاء</button>
+                    <button type="button" id="dent-submit-event-btn" onclick="ScheduleApp.submitSaveEvent()" style="flex: 2; height: 44px; background: var(--dent-border-hover); color: var(--dent-text-primary); border: 1px solid var(--dent-border-card); border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.92rem; transition: all 0.2s; display:flex; align-items:center; justify-content:center;" onmouseover="this.style.background='var(--dent-border-focus)';" onmouseout="this.style.background='var(--dent-border-hover)';">${submitBtnText}</button>
+                    <button type="button" onclick="document.getElementById('dent-admin-modal').remove()" style="flex: 1; height: 44px; background: var(--dent-bg-button); border: 1px solid var(--dent-border-card); color: var(--dent-text-secondary); border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 500; font-size: 0.88rem; transition: all 0.2s; display:flex; align-items:center; justify-content:center;" onmouseover="this.style.background='var(--dent-border-card)'; this.style.color='var(--dent-text-primary)';" onmouseout="this.style.background='var(--dent-bg-button)'; this.style.color='var(--dent-text-secondary)';">إلغاء</button>
                 </div>
             </div>
         `;
@@ -1262,61 +1262,61 @@ const ScheduleApp = {
         modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 9999999; display: flex; justify-content: center; align-items: center; direction: rtl; font-family: \'Outfit\', \'Noto Kufi Arabic\', sans-serif; padding: 16px; box-sizing: border-box;';
         modal.innerHTML = `
             <style>@keyframes dentSpin { to { transform: rotate(360deg); } }</style>
-            <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 24px; width: 100%; max-width: 460px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: #fff; box-sizing: border-box;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
-                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #f8fafc;">تصدير التقويم</h3>
-                    <button type="button" onclick="document.getElementById('dent-print-schedule-modal').remove()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">×</button>
+            <div style="background: var(--dent-bg-modal); border: 1px solid var(--dent-border-card); border-radius: 18px; padding: 24px; width: 100%; max-width: 460px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); color: var(--dent-text-primary); box-sizing: border-box;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px; border-bottom: 1px solid var(--dent-border-subtle); padding-bottom: 12px;">
+                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--dent-text-primary);">تصدير التقويم</h3>
+                    <button type="button" onclick="document.getElementById('dent-print-schedule-modal').remove()" style="background:var(--dent-bg-pill); border:1px solid var(--dent-border-card); color:var(--dent-text-secondary); width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='var(--dent-border-card)'; this.style.color='var(--dent-text-primary)';" onmouseout="this.style.background='var(--dent-bg-pill)'; this.style.color='var(--dent-text-secondary)';">×</button>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px;">
-                    <button type="button" id="dent-exec-print-btn" onclick="ScheduleApp.executeSaveAsPdf()" style="width: 100%; height: 48px; min-height: 48px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); white-space: nowrap; padding: 0 14px;" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.25)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.12)';">
+                    <button type="button" id="dent-exec-print-btn" onclick="ScheduleApp.executeSaveAsPdf()" style="width: 100%; height: 48px; min-height: 48px; background: var(--dent-bg-button); color: var(--dent-text-primary); border: 1px solid var(--dent-border-card); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); white-space: nowrap; padding: 0 14px;" onmouseover="this.style.background='var(--dent-border-card)'; this.style.borderColor='var(--dent-border-hover)';" onmouseout="this.style.background='var(--dent-bg-button)'; this.style.borderColor='var(--dent-border-card)';">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                         <span style="white-space: nowrap;">ملف PDF</span>
                     </button>
 
-                    <button type="button" id="dent-exec-image-btn" onclick="ScheduleApp.executeSaveAsImage()" style="width: 100%; height: 48px; min-height: 48px; background: #27272a; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); white-space: nowrap; padding: 0 14px;" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255, 255, 255, 0.25)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255, 255, 255, 0.12)';">
+                    <button type="button" id="dent-exec-image-btn" onclick="ScheduleApp.executeSaveAsImage()" style="width: 100%; height: 48px; min-height: 48px; background: var(--dent-bg-button); color: var(--dent-text-primary); border: 1px solid var(--dent-border-card); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); white-space: nowrap; padding: 0 14px;" onmouseover="this.style.background='var(--dent-border-card)'; this.style.borderColor='var(--dent-border-hover)';" onmouseout="this.style.background='var(--dent-bg-button)'; this.style.borderColor='var(--dent-border-card)';">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="flex-shrink:0;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         <span style="white-space: nowrap;">نسخ كصورة</span>
                     </button>
                 </div>
 
-                <div style="font-size: 0.74rem; color: #94a3b8; text-align: center; margin: 8px 0 14px 0;">اختر ملف PDF للإرسال أو نسخ كصورة للصق الفوري في واتساب</div>
+                <div style="font-size: 0.74rem; color: var(--dent-text-secondary); text-align: center; margin: 8px 0 14px 0;">اختر ملف PDF للإرسال أو نسخ كصورة للصق الفوري في واتساب</div>
 
                 <!-- Week range picker -->
-                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); border-radius: 12px; padding: 12px 14px; margin-bottom: 2px;">
-                    <div style="font-size: 0.76rem; color: #a1a1aa; font-weight: 600; margin-bottom: 10px;">نطاق الأسابيع المطبوعة</div>
+                <div style="background: var(--dent-bg-canvas-subtle); border: 1px solid var(--dent-border-subtle); border-radius: 12px; padding: 12px 14px; margin-bottom: 2px;">
+                    <div style="font-size: 0.76rem; color: var(--dent-text-secondary); font-weight: 600; margin-bottom: 10px;">نطاق الأسابيع المطبوعة</div>
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px;">
                         <button type="button" id="dent-print-week-prev" onclick="ScheduleApp._shiftPrintWeek(-1)" title="أسبوع للخلف"
-                            style="width:34px; height:34px; background:#27272a; border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#d4d4d8; font-size:1.1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.15s;"
-                            onmouseover="this.style.background='#3f3f46';" onmouseout="this.style.background='#27272a';">‹</button>
-                        <div style="flex:1; text-align:center; font-size:0.82rem; color:#f4f4f5; font-weight:600; line-height:1.4;" id="dent-print-week-label">…</div>
+                            style="width:34px; height:34px; background:var(--dent-bg-button); border:1px solid var(--dent-border-card); border-radius:8px; color:var(--dent-text-primary); font-size:1.1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.15s;"
+                            onmouseover="this.style.background='var(--dent-border-card)';" onmouseout="this.style.background='var(--dent-bg-button)';">‹</button>
+                        <div style="flex:1; text-align:center; font-size:0.82rem; color:var(--dent-text-primary); font-weight:600; line-height:1.4;" id="dent-print-week-label">…</div>
                         <button type="button" id="dent-print-week-next" onclick="ScheduleApp._shiftPrintWeek(+1)" title="أسبوع للأمام"
-                            style="width:34px; height:34px; background:#27272a; border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#d4d4d8; font-size:1.1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.15s;"
-                            onmouseover="this.style.background='#3f3f46';" onmouseout="this.style.background='#27272a';">›</button>
+                            style="width:34px; height:34px; background:var(--dent-bg-button); border:1px solid var(--dent-border-card); border-radius:8px; color:var(--dent-text-primary); font-size:1.1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.15s;"
+                            onmouseover="this.style.background='var(--dent-border-card)';" onmouseout="this.style.background='var(--dent-bg-button)';">›</button>
                     </div>
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
                         <button type="button" onclick="ScheduleApp._resetPrintWeek()" id="dent-print-week-reset"
-                            style="font-size:0.72rem; color:#71717a; background:transparent; border:none; cursor:pointer; padding:0; text-decoration:underline; font-family:inherit; transition:color 0.15s;"
-                            onmouseover="this.style.color='#a1a1aa';" onmouseout="this.style.color='#71717a';">العودة للافتراضي</button>
-                        <label style="display:flex; align-items:center; gap:7px; cursor:pointer; font-size:0.78rem; color:#cbd5e1; user-select:none;">
-                            <input type="checkbox" id="dent-print-4weeks" onchange="ScheduleApp._togglePrintWeekCount(this.checked)" style="accent-color:#6366f1; width:15px; height:15px; cursor:pointer;">
+                            style="font-size:0.72rem; color:var(--dent-text-muted); background:transparent; border:none; cursor:pointer; padding:0; text-decoration:underline; font-family:inherit; transition:color 0.15s;"
+                            onmouseover="this.style.color='var(--dent-text-secondary)';" onmouseout="this.style.color='var(--dent-text-muted)';">العودة للافتراضي</button>
+                        <label style="display:flex; align-items:center; gap:7px; cursor:pointer; font-size:0.78rem; color:var(--dent-text-secondary); user-select:none;">
+                            <input type="checkbox" id="dent-print-4weeks" onchange="ScheduleApp._togglePrintWeekCount(this.checked)" style="accent-color:var(--dent-accent-primary); width:15px; height:15px; cursor:pointer;">
                             طباعة 4 أسابيع
                         </label>
                     </div>
                 </div>
 
-                <label style="display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; padding: 10px 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; font-size: 0.80rem; color: #cbd5e1; cursor: pointer; user-select: none;">
-                    <input type="checkbox" id="dent-print-inc-announcements" style="accent-color: #52525b; width: 16px; height: 16px; margin-top: 2px; cursor: pointer;">
+                <label style="display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; padding: 10px 12px; background: var(--dent-bg-canvas-subtle); border: 1px solid var(--dent-border-subtle); border-radius: 10px; font-size: 0.80rem; color: var(--dent-text-secondary); cursor: pointer; user-select: none;">
+                    <input type="checkbox" id="dent-print-inc-announcements" style="accent-color: var(--dent-accent-primary); width: 16px; height: 16px; margin-top: 2px; cursor: pointer;">
                     <span>تضمين إعلانات الدفعة (الإعلان بالصفحة الرئيسية) في أسفل الورقة</span>
                 </label>
 
                 <div style="margin-top: 14px;">
-                    <label style="font-size: 0.78rem; color: #a1a1aa; font-weight: 600; display: block; margin-bottom: 6px;">ملاحظات أو تذكيرات إضافية (اختياري):</label>
-                    <textarea id="dent-print-custom-notes" placeholder="اكتب أي ملاحظات أو تذكيرات ترغب في ظهورها أسفل الورقة (اختياري - ستختفي هذه المساحة تلقائياً عند التصدير إذا تركتها فارغة)..." style="width: 100%; height: 80px; padding: 10px 12px; background: #121212; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 0.82rem; font-family: inherit; box-sizing: border-box; outline: none; resize: vertical; line-height: 1.5;"></textarea>
+                    <label style="font-size: 0.78rem; color: var(--dent-text-secondary); font-weight: 600; display: block; margin-bottom: 6px;">ملاحظات أو تذكيرات إضافية (اختياري):</label>
+                    <textarea id="dent-print-custom-notes" placeholder="اكتب أي ملاحظات أو تذكيرات ترغب في ظهورها أسفل الورقة (اختياري - ستختفي هذه المساحة تلقائياً عند التصدير إذا تركتها فارغة)..." style="width: 100%; height: 80px; padding: 10px 12px; background: var(--dent-bg-input); border: 1px solid var(--dent-border-card); border-radius: 10px; color: var(--dent-text-primary); font-size: 0.82rem; font-family: inherit; box-sizing: border-box; outline: none; resize: vertical; line-height: 1.5;"></textarea>
                 </div>
 
                 <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
-                    <button type="button" onclick="document.getElementById('dent-print-schedule-modal').remove()" style="padding: 8px 18px; background: #27272a; border: 1px solid rgba(255,255,255,0.1); color: #a1a1aa; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#a1a1aa';">إلغاء</button>
+                    <button type="button" onclick="document.getElementById('dent-print-schedule-modal').remove()" style="padding: 8px 18px; background: var(--dent-bg-button); border: 1px solid var(--dent-border-card); color: var(--dent-text-secondary); border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='var(--dent-border-card)'; this.style.color='var(--dent-text-primary)';" onmouseout="this.style.background='var(--dent-bg-button)'; this.style.color='var(--dent-text-secondary)';">إلغاء</button>
                 </div>
             </div>
         `;

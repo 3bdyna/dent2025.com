@@ -2,58 +2,58 @@
 /* Fonts (Outfit + Noto Kufi Arabic) are self-hosted and loaded globally via /frontend_components/fonts/fonts.css */
 
 /* Dent2025 AI Exam Portal - Unified Site Design System */
-.dent-quiz-container { max-width: 850px; margin: 20px auto; padding: 0 10px; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif; color: #e2e8f0; direction: rtl; }
-.dent-quiz-card { background: #1e1e1e; padding: 20px 18px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 20px; overflow: hidden; box-sizing: border-box; }
-.dent-quiz-header { text-align: center; margin-bottom: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 10px; font-weight: 700; font-size: 1.25rem; background: linear-gradient(90deg, #e2e8f0, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.dent-quiz-container { max-width: 850px; margin: 20px auto; padding: 0 10px; font-family: 'Outfit', 'Noto Kufi Arabic', sans-serif; color: var(--dent-text-primary, #e2e8f0); direction: rtl; }
+.dent-quiz-card { background: var(--dent-bg-card, #1e1e1e); padding: 20px 18px; border-radius: 12px; box-shadow: var(--dent-shadow-card, 0 4px 15px rgba(0,0,0,0.2)); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1)); margin-bottom: 20px; overflow: hidden; box-sizing: border-box; }
+.dent-quiz-header { text-align: center; margin-bottom: 14px; border-bottom: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.05)); padding-bottom: 10px; font-weight: 700; font-size: 1.25rem; background: linear-gradient(90deg, var(--dent-text-primary, #e2e8f0), var(--dent-text-secondary, #94a3b8)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
 /* Main Mode Tabs - Compact horizontal on all screens */
-.dent-quiz-card .dent-tab-switcher, .dent-tab-switcher { display: flex; flex-direction: row; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 4px; gap: 4px; margin-bottom: 14px; }
-.dent-quiz-card .dent-tab-btn, .dent-tab-btn { flex: 1 1 50%; min-width: 0; padding: 8px 10px; background: transparent; border: 1px solid transparent; border-radius: 6px; color: #94a3b8; font-size: 0.82rem; font-weight: 600; line-height: 1.35; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; user-select: none; box-sizing: border-box; }
-.dent-quiz-card .dent-tab-btn:hover, .dent-tab-btn:hover { color: #f8fafc; background: rgba(255, 255, 255, 0.04); }
-.dent-quiz-card .dent-tab-btn.active, .dent-tab-btn.active { color: #ffffff; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.12); }
+.dent-quiz-card .dent-tab-switcher, .dent-tab-switcher { display: flex; flex-direction: row; background: var(--dent-bg-card-subtle, rgba(0, 0, 0, 0.25)); border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08)); border-radius: 8px; padding: 4px; gap: 4px; margin-bottom: 14px; }
+.dent-quiz-card .dent-tab-btn, .dent-tab-btn { flex: 1 1 50%; min-width: 0; padding: 8px 10px; background: transparent; border: 1px solid transparent; border-radius: 6px; color: var(--dent-text-secondary, #94a3b8); font-size: 0.82rem; font-weight: 600; line-height: 1.35; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; user-select: none; box-sizing: border-box; }
+.dent-quiz-card .dent-tab-btn:hover, .dent-tab-btn:hover { color: var(--dent-text-primary, #f8fafc); background: var(--dent-bg-card-hover, rgba(255, 255, 255, 0.04)); }
+.dent-quiz-card .dent-tab-btn.active, .dent-tab-btn.active { color: var(--dent-text-light, #ffffff); background: var(--dent-bg-pill, rgba(255, 255, 255, 0.08)); border-color: var(--dent-border-subtle, rgba(255, 255, 255, 0.12)); }
 
 .dent-quiz-form-group { margin-bottom: 12px; }
-.dent-quiz-label { display: block; font-weight: 500; margin-bottom: 5px; color: #9ca3af; font-size: 0.82rem; }
-.dent-quiz-input { width: 100% !important; height: 38px !important; min-height: 38px !important; max-height: none !important; padding: 0 12px !important; line-height: 36px !important; background: #121212 !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: 8px !important; box-sizing: border-box !important; color: #fff !important; transition: all 0.2s !important; font-family: inherit !important; font-size: 0.88rem !important; vertical-align: middle !important; margin: 0 !important; }
+.dent-quiz-label { display: block; font-weight: 500; margin-bottom: 5px; color: var(--dent-text-secondary, #9ca3af); font-size: 0.82rem; }
+.dent-quiz-input { width: 100% !important; height: 38px !important; min-height: 38px !important; max-height: none !important; padding: 0 12px !important; line-height: 36px !important; background: var(--dent-bg-input, #121212) !important; border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.12)) !important; border-radius: 8px !important; box-sizing: border-box !important; color: var(--dent-text-light, #fff) !important; transition: all 0.2s !important; font-family: inherit !important; font-size: 0.88rem !important; vertical-align: middle !important; margin: 0 !important; }
 select.dent-quiz-input { appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important; background-repeat: no-repeat !important; background-position: left 14px center !important; background-size: 14px 14px !important; padding-top: 0 !important; padding-bottom: 0 !important; padding-left: 36px !important; padding-right: 12px !important; height: 38px !important; line-height: 36px !important; cursor: pointer !important; }
-select.dent-quiz-input option { background-color: #18181b !important; color: #f8fafc !important; padding: 8px !important; }
+select.dent-quiz-input option { background-color: var(--dent-bg-modal, #18181b) !important; color: var(--dent-text-primary, #f8fafc) !important; padding: 8px !important; }
 textarea.dent-quiz-input { height: auto !important; min-height: 60px !important; padding: 8px 12px !important; line-height: 1.4 !important; }
-.dent-quiz-input:focus { border-color: rgba(255, 255, 255, 0.35) !important; outline: none !important; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05) !important; }
+.dent-quiz-input:focus { border-color: var(--dent-border-focus, rgba(255, 255, 255, 0.35)) !important; outline: none !important; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05) !important; }
 
 /* Sub-Segmented Control (Folder Switching) */
-.dent-sub-tabs { display: flex; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 3px; gap: 3px; margin-bottom: 8px; }
-.dent-sub-tab-btn { flex: 1; padding: 5px 8px; background: transparent; border: 1px solid transparent; border-radius: 5px; color: #94a3b8; font-size: 0.78rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; text-align: center; }
-.dent-sub-tab-btn:hover { background: rgba(255, 255, 255, 0.04); color: #e2e8f0; }
-.dent-sub-tab-btn.active { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.12); color: #ffffff; font-weight: 600; }
+.dent-sub-tabs { display: flex; background: var(--dent-bg-input-subtle, rgba(0, 0, 0, 0.3)); border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08)); border-radius: 6px; padding: 3px; gap: 3px; margin-bottom: 8px; }
+.dent-sub-tab-btn { flex: 1; padding: 5px 8px; background: transparent; border: 1px solid transparent; border-radius: 5px; color: var(--dent-text-secondary, #94a3b8); font-size: 0.78rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; text-align: center; }
+.dent-sub-tab-btn:hover { background: var(--dent-bg-card-hover, rgba(255, 255, 255, 0.04)); color: var(--dent-text-primary, #e2e8f0); }
+.dent-sub-tab-btn.active { background: var(--dent-bg-pill, rgba(255, 255, 255, 0.08)); border-color: var(--dent-border-subtle, rgba(255, 255, 255, 0.12)); color: var(--dent-text-light, #ffffff); font-weight: 600; }
 
 /* Difficulty Selector */
 .dent-difficulty-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 3px; }
-.dent-diff-btn { padding: 7px 6px; background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: #94a3b8; font-size: 0.78rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; }
-.dent-diff-btn:hover { background: rgba(255, 255, 255, 0.05); color: #cbd5e1; }
-.dent-diff-btn.active { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); color: #ffffff; font-weight: 600; }
-.dent-diff-btn.active[data-diff="easy"] { border-color: rgba(34, 197, 94, 0.35); color: #a7f3d0; }
-.dent-diff-btn.active[data-diff="medium"] { border-color: rgba(59, 130, 246, 0.35); color: #bfdbfe; }
-.dent-diff-btn.active[data-diff="hard"] { border-color: rgba(239, 68, 68, 0.35); color: #fecaca; }
+.dent-diff-btn { padding: 7px 6px; background: var(--dent-bg-input, #121212); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1)); border-radius: 6px; color: var(--dent-text-secondary, #94a3b8); font-size: 0.78rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; }
+.dent-diff-btn:hover { background: var(--dent-bg-card-hover, rgba(255, 255, 255, 0.05)); color: var(--dent-text-secondary, #cbd5e1); }
+.dent-diff-btn.active { background: var(--dent-bg-pill, rgba(255, 255, 255, 0.08)); border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.2)); color: var(--dent-text-light, #ffffff); font-weight: 600; }
+.dent-diff-btn.active[data-diff="easy"] { border-color: var(--dent-accent-success-border, rgba(34, 197, 94, 0.35)); color: var(--dent-accent-success-bright, #a7f3d0); }
+.dent-diff-btn.active[data-diff="medium"] { border-color: var(--dent-accent-primary-border, rgba(59, 130, 246, 0.35)); color: var(--dent-accent-primary-hover, #bfdbfe); }
+.dent-diff-btn.active[data-diff="hard"] { border-color: var(--dent-accent-danger-border, rgba(239, 68, 68, 0.35)); color: var(--dent-accent-danger-bright, #fecaca); }
 
 /* Upload Dropzone */
-.dent-upload-zone { border: 1px dashed rgba(255, 255, 255, 0.15); background: rgba(0, 0, 0, 0.2); border-radius: 6px; padding: 9px 12px; text-align: center; cursor: pointer; transition: all 0.2s ease; position: relative; }
-.dent-upload-zone:hover, .dent-upload-zone.dragover { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.03); }
-.dent-upload-title { font-weight: 600; font-size: 0.82rem; color: #e2e8f0; margin-bottom: 2px; }
-.dent-upload-sub { font-size: 0.72rem; color: #64748b; }
+.dent-upload-zone { border: 1px dashed var(--dent-border-dashed, rgba(255, 255, 255, 0.15)); background: var(--dent-bg-card-subtle, rgba(0, 0, 0, 0.2)); border-radius: 6px; padding: 9px 12px; text-align: center; cursor: pointer; transition: all 0.2s ease; position: relative; }
+.dent-upload-zone:hover, .dent-upload-zone.dragover { border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.3)); background: var(--dent-bg-canvas-subtle, rgba(255, 255, 255, 0.03)); }
+.dent-upload-title { font-weight: 600; font-size: 0.82rem; color: var(--dent-text-primary, #e2e8f0); margin-bottom: 2px; }
+.dent-upload-sub { font-size: 0.72rem; color: var(--dent-text-muted, #64748b); }
 .dent-uploaded-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
-.dent-file-chip { display: flex; align-items: center; gap: 6px; background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); padding: 4px 8px; border-radius: 5px; font-size: 0.74rem; color: #cbd5e1; max-width: 100%; word-break: break-all; }
-.dent-chip-remove { cursor: pointer; color: #94a3b8; font-weight: bold; font-size: 0.85rem; line-height: 1; padding: 0 2px; }
-.dent-chip-remove:hover { color: #f87171; }
+.dent-file-chip { display: flex; align-items: center; gap: 6px; background: var(--dent-bg-input, #121212); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1)); padding: 4px 8px; border-radius: 5px; font-size: 0.74rem; color: var(--dent-text-secondary, #cbd5e1); max-width: 100%; word-break: break-all; }
+.dent-chip-remove { cursor: pointer; color: var(--dent-text-secondary, #94a3b8); font-weight: bold; font-size: 0.85rem; line-height: 1; padding: 0 2px; }
+.dent-chip-remove:hover { color: var(--dent-accent-danger-bright, #f87171); }
 
 /* Checkbox Grid: 2 columns on all devices! */
 .dent-quiz-checkbox-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: transparent; padding: 0; border: none; }
-.dent-quiz-checkbox-label { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; cursor: pointer; color: #cbd5e1; background: #121212; padding: 6px 9px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.2s; user-select: none; box-sizing: border-box; margin: 0; }
-.dent-quiz-checkbox-label:hover { border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.03); }
-.dent-quiz-checkbox-label input { width: 14px; height: 14px; accent-color: #94a3b8; cursor: pointer; margin: 0; flex-shrink: 0; }
+.dent-quiz-checkbox-label { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; cursor: pointer; color: var(--dent-text-secondary, #cbd5e1); background: var(--dent-bg-input, #121212); padding: 6px 9px; border-radius: 6px; border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08)); transition: all 0.2s; user-select: none; box-sizing: border-box; margin: 0; }
+.dent-quiz-checkbox-label:hover { border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.2)); background: var(--dent-bg-canvas-subtle, rgba(255, 255, 255, 0.03)); }
+.dent-quiz-checkbox-label input { width: 14px; height: 14px; accent-color: var(--dent-text-secondary, #94a3b8); cursor: pointer; margin: 0; flex-shrink: 0; }
 
 /* Standard Site Buttons */
-.dent-quiz-btn { width: 100%; height: 40px; padding: 0 14px; background: #27272a; color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; font-size: 0.9rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s; margin-top: 8px; display: flex; align-items: center; justify-content: center; }
-.dent-quiz-btn:hover { background: #3f3f46; border-color: rgba(255, 255, 255, 0.25); }
+.dent-quiz-btn { width: 100%; height: 40px; padding: 0 14px; background: var(--dent-bg-button, #27272a); color: var(--dent-text-primary, #f8fafc); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.15)); border-radius: 8px; font-size: 0.9rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s; margin-top: 8px; display: flex; align-items: center; justify-content: center; }
+.dent-quiz-btn:hover { background: var(--dent-bg-button-hover, #3f3f46); border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.25)); }
 .dent-quiz-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .dent-btn-secondary,
 .dent-quiz-btn.dent-btn-secondary,
@@ -64,9 +64,9 @@ button.export-btn,
 #dp-export-btn,
 #dp-back-btn,
 #dp-reveal-all-btn {
-    background: rgba(255, 255, 255, 0.05) !important;
-    color: #cbd5e1 !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background: var(--dent-bg-pill, rgba(255, 255, 255, 0.05)) !important;
+    color: var(--dent-text-secondary, #cbd5e1) !important;
+    border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.12)) !important;
     height: auto;
     padding: 6px 10px;
     box-shadow: none !important;
@@ -80,14 +80,14 @@ button.export-btn:hover,
 #dp-export-btn:hover,
 #dp-back-btn:hover,
 #dp-reveal-all-btn:hover {
-    background: rgba(255, 255, 255, 0.12) !important;
-    color: #ffffff !important;
-    border-color: rgba(255, 255, 255, 0.25) !important;
+    background: var(--dent-bg-pill-hover, rgba(255, 255, 255, 0.12)) !important;
+    color: var(--dent-text-light, #ffffff) !important;
+    border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.25)) !important;
 }
 
 /* Loader */
-.dent-quiz-loader { display: none; text-align: center; margin-top: 16px; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); }
-.dent-quiz-spinner { border: 3px solid rgba(255,255,255,0.08); border-top: 3px solid #cbd5e1; border-radius: 50%; width: 28px; height: 28px; animation: dent-spin 0.9s linear infinite; margin: 0 auto 8px; }
+.dent-quiz-loader { display: none; text-align: center; margin-top: 16px; padding: 16px; background: var(--dent-bg-card-subtle, rgba(0,0,0,0.2)); border-radius: 8px; border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08)); }
+.dent-quiz-spinner { border: 3px solid var(--dent-border-subtle, rgba(255,255,255,0.08)); border-top: 3px solid var(--dent-text-secondary, #cbd5e1); border-radius: 50%; width: 28px; height: 28px; animation: dent-spin 0.9s linear infinite; margin: 0 auto 8px; }
 @keyframes dent-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 .dent-spin-active { animation: dent-spin 0.8s linear infinite !important; }
 
@@ -96,16 +96,16 @@ button.export-btn:hover,
 .dent-player-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
 .dent-player-controls button { flex: 1; min-width: 140px; padding: 9px 12px; font-size: 0.85rem; }
 
-.dent-q-block { background: rgba(0, 0, 0, 0.2); padding: 16px; border-radius: 8px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.06); }
-.dent-q-text { font-size: 0.96rem; font-weight: 600; margin-bottom: 12px; color: #f8fafc; line-height: 1.55; }
+.dent-q-block { background: var(--dent-bg-card-subtle, rgba(0, 0, 0, 0.2)); padding: 16px; border-radius: 8px; margin-bottom: 14px; border: 1px solid var(--dent-border-subtle, rgba(255,255,255,0.06)); }
+.dent-q-text { font-size: 0.96rem; font-weight: 600; margin-bottom: 12px; color: var(--dent-text-primary, #f8fafc); line-height: 1.55; }
 .dent-q-badge-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-.dent-q-tag { font-size: 0.74rem; padding: 2px 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.06); }
+.dent-q-tag { font-size: 0.74rem; padding: 2px 8px; border-radius: 4px; background: var(--dent-bg-pill, rgba(255, 255, 255, 0.05)); color: var(--dent-text-secondary, #94a3b8); border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.06)); }
 
 .dent-opt-list { display: flex; flex-direction: column; gap: 8px; }
-.dent-opt-item { display: flex; align-items: center; padding: 9px 12px; background: #121212; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 0.88rem; color: #cbd5e1; }
-.dent-opt-item:hover { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.15); }
-.dent-opt-item input[type="radio"] { margin-left: 10px; width: 14px; height: 14px; accent-color: #94a3b8; cursor: pointer; } 
-.dent-opt-item .dent-opt-letter { display: inline-block; flex: 0 0 auto; margin-left: 6px; color: #f8fafc; font-weight: 600; direction: ltr; unicode-bidi: isolate; white-space: nowrap; }
+.dent-opt-item { display: flex; align-items: center; padding: 9px 12px; background: var(--dent-bg-input, #121212); border: 1px solid var(--dent-border-subtle, rgba(255,255,255,0.06)); border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 0.88rem; color: var(--dent-text-secondary, #cbd5e1); }
+.dent-opt-item:hover { background: var(--dent-bg-card-hover, rgba(255, 255, 255, 0.04)); border-color: var(--dent-border-card, rgba(255, 255, 255, 0.15)); }
+.dent-opt-item input[type="radio"] { margin-left: 10px; width: 14px; height: 14px; accent-color: var(--dent-text-secondary, #94a3b8); cursor: pointer; } 
+.dent-opt-item .dent-opt-letter { display: inline-block; flex: 0 0 auto; margin-left: 6px; color: var(--dent-text-primary, #f8fafc); font-weight: 600; direction: ltr; unicode-bidi: isolate; white-space: nowrap; }
 .dent-opt-item .dent-opt-text { flex: 1 1 auto; min-width: 0; text-align: right; }
 .dent-q-block[data-language="en"] { direction: ltr; }
 .dent-q-block[data-language="en"] .dent-q-text { direction: ltr; text-align: left; }
@@ -118,64 +118,64 @@ button.export-btn:hover,
 .dent-q-block[data-language="ar"] .dent-q-text,
 .dent-q-block[data-language="ar"] .dent-opt-text { direction: rtl; text-align: right; }
 .dent-q-block[data-language="ar"] .dent-explanation-box { direction: rtl; text-align: right; }
-.dent-opt-item.selected { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.06); color: #fff; }
+.dent-opt-item.selected { border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.3)); background: var(--dent-bg-pill, rgba(255, 255, 255, 0.06)); color: var(--dent-text-light, #fff); }
 
 /* Feedback Styles */
-.dent-opt-item.correct { border-color: rgba(34, 197, 94, 0.35) !important; background: rgba(34, 197, 94, 0.04) !important; color: #a7f3d0 !important; font-weight: 500; }
-.dent-opt-item.wrong { border-color: rgba(239, 68, 68, 0.3) !important; background: rgba(239, 68, 68, 0.03) !important; color: #fca5a5 !important; }
-.dent-explanation-box { display: none; margin-top: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 10px; font-size: 0.82rem; color: #cbd5e1; line-height: 1.5; }
+.dent-opt-item.correct { border-color: var(--dent-accent-success-border, rgba(34, 197, 94, 0.35)) !important; background: var(--dent-accent-success-bg, rgba(34, 197, 94, 0.04)) !important; color: var(--dent-accent-success-bright, #a7f3d0) !important; font-weight: 500; }
+.dent-opt-item.wrong { border-color: var(--dent-accent-danger-border, rgba(239, 68, 68, 0.3)) !important; background: var(--dent-accent-danger-bg, rgba(239, 68, 68, 0.03)) !important; color: var(--dent-accent-danger-bright, #fca5a5) !important; }
+.dent-explanation-box { display: none; margin-top: 10px; background: var(--dent-bg-canvas-subtle, rgba(255, 255, 255, 0.03)); border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08)); border-radius: 6px; padding: 10px; font-size: 0.82rem; color: var(--dent-text-secondary, #cbd5e1); line-height: 1.5; }
 .dent-explanation-box ol, .dent-explanation-box ul { margin-left: 20px; margin-top: 4px; }
 .dent-explanation-box li { margin-bottom: 4px; }
-.dent-subheading { font-size: 0.84rem; font-weight: 600; color: #f8fafc; margin-top: 8px; margin-bottom: 4px; }
-.dent-ans-toggle { background: transparent; border: 1px solid rgba(255, 255, 255, 0.12); color: #94a3b8; font-size: 0.78rem; font-weight: 500; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; margin-top: 10px; }
-.dent-ans-toggle:hover { color: #f8fafc; border-color: rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.04); }
-.dent-ans-toggle.active { color: #e2e8f0; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); }
-.dent-info-body { font-size: 0.86rem; color: #cbd5e1; line-height: 1.6; margin-top: 8px; direction: ltr; text-align: left; }
+.dent-subheading { font-size: 0.84rem; font-weight: 600; color: var(--dent-text-primary, #f8fafc); margin-top: 8px; margin-bottom: 4px; }
+.dent-ans-toggle { background: transparent; border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.12)); color: var(--dent-text-secondary, #94a3b8); font-size: 0.78rem; font-weight: 500; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; margin-top: 10px; }
+.dent-ans-toggle:hover { color: var(--dent-text-primary, #f8fafc); border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.25)); background: var(--dent-bg-card-hover, rgba(255, 255, 255, 0.04)); }
+.dent-ans-toggle.active { color: var(--dent-text-primary, #e2e8f0); background: var(--dent-bg-pill, rgba(255, 255, 255, 0.08)); border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.2)); }
+.dent-info-body { font-size: 0.86rem; color: var(--dent-text-secondary, #cbd5e1); line-height: 1.6; margin-top: 8px; direction: ltr; text-align: left; }
 .dent-info-body ul, .dent-info-body ol { margin-left: 20px; margin-top: 4px; }
 .dent-info-body li { margin-bottom: 4px; }
 
-.dent-score-board { text-align: center; font-size: 1.05rem; font-weight: 600; color: #f8fafc; margin-bottom: 18px; display: none; padding: 14px; background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06); }
+.dent-score-board { text-align: center; font-size: 1.05rem; font-weight: 600; color: var(--dent-text-primary, #f8fafc); margin-bottom: 18px; display: none; padding: 14px; background: var(--dent-bg-canvas-subtle, rgba(255, 255, 255, 0.02)); border-radius: 8px; border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.06)); }
 
 /* Minimal Navigator Bar */
-.dent-nav-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; padding: 8px; background: rgba(0, 0, 0, 0.2); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06); justify-content: center; align-items: center; }
-.dent-nav-pill { width: 11px; height: 11px; min-width: 11px; padding: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.15); cursor: pointer; transition: all 0.2s; position: relative; }
-.dent-nav-pill:hover { background: rgba(255, 255, 255, 0.3); border-color: rgba(255, 255, 255, 0.35); }
-.dent-nav-pill.answered { background: #475569 !important; border-color: #64748b !important; }
-.dent-nav-pill.correct { background: rgba(34, 197, 94, 0.4) !important; border-color: rgba(34, 197, 94, 0.5) !important; }
-.dent-nav-pill.wrong { background: rgba(239, 68, 68, 0.4) !important; border-color: rgba(239, 68, 68, 0.5) !important; }
-.dent-nav-pill.active-focused { background: #f8fafc !important; border-color: #ffffff !important; box-shadow: 0 0 6px rgba(255, 255, 255, 0.5); transform: scale(1.25); }
+.dent-nav-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; padding: 8px; background: var(--dent-bg-card-subtle, rgba(0, 0, 0, 0.2)); border-radius: 8px; border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.06)); justify-content: center; align-items: center; }
+.dent-nav-pill { width: 11px; height: 11px; min-width: 11px; padding: 0; border-radius: 50%; background: var(--dent-bg-pill-hover, rgba(255, 255, 255, 0.12)); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.15)); cursor: pointer; transition: all 0.2s; position: relative; }
+.dent-nav-pill:hover { background: var(--dent-bg-button-hover, rgba(255, 255, 255, 0.3)); border-color: var(--dent-border-focus, rgba(255, 255, 255, 0.35)); }
+.dent-nav-pill.answered { background: var(--dent-text-dim, #475569) !important; border-color: var(--dent-text-muted, #64748b) !important; }
+.dent-nav-pill.correct { background: var(--dent-accent-success-border, rgba(34, 197, 94, 0.4)) !important; border-color: var(--dent-accent-success, rgba(34, 197, 94, 0.5)) !important; }
+.dent-nav-pill.wrong { background: var(--dent-accent-danger-border, rgba(239, 68, 68, 0.4)) !important; border-color: var(--dent-accent-danger, rgba(239, 68, 68, 0.5)) !important; }
+.dent-nav-pill.active-focused { background: var(--dent-text-primary, #f8fafc) !important; border-color: var(--dent-text-light, #ffffff) !important; box-shadow: 0 0 6px rgba(255, 255, 255, 0.5); transform: scale(1.25); }
 .dent-nav-pill.is-card-pill { border-radius: 2px; }
 .dent-q-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 
 /* Saved Exams Bank Section */
-.dent-bank-header { font-size: 1.05rem; font-weight: 700; color: #f8fafc; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+.dent-bank-header { font-size: 1.05rem; font-weight: 700; color: var(--dent-text-primary, #f8fafc); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
 .dent-bank-filters { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
 .dent-bank-filters select, .dent-bank-filters input { flex: 1; min-width: 140px; }
 
 .dent-bank-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
-.dent-bank-card { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s, border-color 0.2s; }
-.dent-bank-card:hover { border-color: rgba(255, 255, 255, 0.18); transform: translateY(-2px); }
+.dent-bank-card { background: var(--dent-bg-card-subtle, rgba(0, 0, 0, 0.2)); border: 1px solid var(--dent-border-subtle, rgba(255,255,255,0.06)); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s, border-color 0.2s; }
+.dent-bank-card:hover { border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.18)); transform: translateY(-2px); }
 .dent-bank-card-top { display: flex; flex-direction: column; flex: 1; }
 .dent-bank-card-bottom { display: flex; flex-direction: column; }
-.dent-bank-title { font-weight: 700; font-size: 0.92rem; color: #f8fafc; margin-bottom: 4px; line-height: 1.4; }
-.dent-bank-sub { font-size: 0.76rem; color: #94a3b8; margin-bottom: 6px; font-weight: 500; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.dent-bank-title { font-weight: 700; font-size: 0.92rem; color: var(--dent-text-primary, #f8fafc); margin-bottom: 4px; line-height: 1.4; }
+.dent-bank-sub { font-size: 0.76rem; color: var(--dent-text-secondary, #94a3b8); margin-bottom: 6px; font-weight: 500; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .dent-bank-tag { font-size: 0.68rem; padding: 1px 6px; border-radius: 4px; font-weight: 500; }
-.dent-tag-pastexam { background: rgba(245, 158, 11, 0.1); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.2); }
-.dent-tag-ai { background: rgba(59, 130, 246, 0.1); color: #bfdbfe; border: 1px solid rgba(59, 130, 246, 0.2); }
-.dent-tag-diff-easy { background: rgba(34, 197, 94, 0.08); color: #a7f3d0; }
-.dent-tag-diff-med { background: rgba(59, 130, 246, 0.08); color: #bfdbfe; }
-.dent-tag-diff-hard { background: rgba(239, 68, 68, 0.08); color: #fecaca; }
-.dent-q-converted-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #94a3b8; font-size: 0.72rem; font-weight: 500; border-radius: 4px; }
+.dent-tag-pastexam { background: var(--dent-accent-warning-bg, rgba(245, 158, 11, 0.1)); color: var(--dent-accent-warning-bright, #fcd34d); border: 1px solid var(--dent-accent-warning-border, rgba(245, 158, 11, 0.2)); }
+.dent-tag-ai { background: var(--dent-accent-primary-bg, rgba(59, 130, 246, 0.1)); color: var(--dent-accent-primary-hover, #bfdbfe); border: 1px solid var(--dent-accent-primary-border, rgba(59, 130, 246, 0.2)); }
+.dent-tag-diff-easy { background: var(--dent-accent-success-bg, rgba(34, 197, 94, 0.08)); color: var(--dent-accent-success-bright, #a7f3d0); }
+.dent-tag-diff-med { background: var(--dent-accent-primary-bg, rgba(59, 130, 246, 0.08)); color: var(--dent-accent-primary-hover, #bfdbfe); }
+.dent-tag-diff-hard { background: var(--dent-accent-danger-bg, rgba(239, 68, 68, 0.08)); color: var(--dent-accent-danger-bright, #fecaca); }
+.dent-q-converted-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; background: var(--dent-bg-pill, rgba(255, 255, 255, 0.05)); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1)); color: var(--dent-text-secondary, #94a3b8); font-size: 0.72rem; font-weight: 500; border-radius: 4px; }
 
-.dent-bank-meta { display: flex; align-items: center; justify-content: space-between; font-size: 0.74rem; color: #64748b; margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.04); }
+.dent-bank-meta { display: flex; align-items: center; justify-content: space-between; font-size: 0.74rem; color: var(--dent-text-muted, #64748b); margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--dent-border-subtle, rgba(255,255,255,0.04)); }
 .dent-bank-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 .dent-bank-actions button { padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; }
 
 /* Enhanced Chapters Dropdown Trigger */
-details.dent-chapters-details { margin-top: auto; margin-bottom: 4px; background: #18181b; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; overflow: hidden; }
-details.dent-chapters-details summary { padding: 6px 10px; font-size: 0.76rem; font-weight: 500; color: #cbd5e1; cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; background: rgba(255, 255, 255, 0.02); transition: background 0.2s, border-color 0.2s; list-style: none; }
-details.dent-chapters-details summary:hover { background: rgba(255, 255, 255, 0.05); color: #ffffff; }
-details.dent-chapters-details[open] summary { border-bottom: 1px solid rgba(255, 255, 255, 0.06); background: rgba(255, 255, 255, 0.04); }
+details.dent-chapters-details { margin-top: auto; margin-bottom: 4px; background: var(--dent-bg-modal, #18181b); border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08)); border-radius: 6px; overflow: hidden; }
+details.dent-chapters-details summary { padding: 6px 10px; font-size: 0.76rem; font-weight: 500; color: var(--dent-text-secondary, #cbd5e1); cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; background: var(--dent-bg-canvas-subtle, rgba(255, 255, 255, 0.02)); transition: background 0.2s, border-color 0.2s; list-style: none; }
+details.dent-chapters-details summary:hover { background: var(--dent-bg-pill, rgba(255, 255, 255, 0.05)); color: var(--dent-text-light, #ffffff); }
+details.dent-chapters-details[open] summary { border-bottom: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.06)); background: var(--dent-bg-card-hover, rgba(255, 255, 255, 0.04)); }
 details.dent-chapters-details[open] summary .dent-arrow { transform: rotate(180deg); }
 details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
@@ -184,51 +184,51 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
     width: 4px;
 }
 .dent-chapters-details div::-webkit-scrollbar-track, #dq-chapters-container::-webkit-scrollbar-track, #dq-target-chaps-container::-webkit-scrollbar-track, #dq-pastexam-drive-container::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--dent-bg-card-subtle, rgba(0, 0, 0, 0.2));
     border-radius: 4px;
 }
 .dent-chapters-details div::-webkit-scrollbar-thumb, #dq-chapters-container::-webkit-scrollbar-thumb, #dq-target-chaps-container::-webkit-scrollbar-thumb, #dq-pastexam-drive-container::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--dent-border-dashed, rgba(255, 255, 255, 0.15));
     border-radius: 4px;
 }
 .dent-chapters-details div, #dq-chapters-container, #dq-target-chaps-container, #dq-pastexam-drive-container {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.15) rgba(0, 0, 0, 0.2);
+    scrollbar-color: var(--dent-border-dashed, rgba(255, 255, 255, 0.15)) var(--dent-bg-card-subtle, rgba(0, 0, 0, 0.2));
 }
 
 /* Wizard Stepper System - Strictly Contained, Monochromatic with Faint Glow (No Colors) */
 .dent-wizard-tracker { display: flex; align-items: flex-start; justify-content: space-between; position: relative; margin-bottom: 20px; padding: 0 4px; width: 100%; box-sizing: border-box; }
 .dent-step-node { display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; z-index: 3; cursor: pointer; user-select: none; flex-shrink: 0; min-width: 60px; max-width: 105px; text-align: center; }
-.dent-step-circle { width: 28px; height: 28px; border-radius: 50%; background: #18181b; border: 1px solid rgba(255, 255, 255, 0.12); color: #71717a; font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all 0.25s ease; box-shadow: none; }
-.dent-step-label { font-size: 0.74rem; font-weight: 600; color: #71717a; transition: color 0.25s ease; line-height: 1.3; word-break: break-word; }
+.dent-step-circle { width: 28px; height: 28px; border-radius: 50%; background: var(--dent-bg-modal, #18181b); border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.12)); color: var(--dent-text-muted, #71717a); font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all 0.25s ease; box-shadow: none; }
+.dent-step-label { font-size: 0.74rem; font-weight: 600; color: var(--dent-text-muted, #71717a); transition: color 0.25s ease; line-height: 1.3; word-break: break-word; }
 
 /* Active Step: Faint clean silver/white glow, NO colors */
-.dent-step-node.active .dent-step-circle { background: #27272a; border-color: rgba(255, 255, 255, 0.5); color: #ffffff; box-shadow: 0 0 12px rgba(255, 255, 255, 0.16); }
-.dent-step-node.active .dent-step-label { color: #f8fafc; font-weight: 700; }
+.dent-step-node.active .dent-step-circle { background: var(--dent-bg-button, #27272a); border-color: var(--dent-border-focus, rgba(255, 255, 255, 0.5)); color: var(--dent-text-light, #ffffff); box-shadow: 0 0 12px rgba(255, 255, 255, 0.16); }
+.dent-step-node.active .dent-step-label { color: var(--dent-text-primary, #f8fafc); font-weight: 700; }
 
 /* Completed Step: Neutral silver, NO green/colors, faint subtle glow */
-.dent-step-node.completed .dent-step-circle { background: #222226; border-color: rgba(255, 255, 255, 0.3); color: #e2e8f0; box-shadow: 0 0 6px rgba(255, 255, 255, 0.08); }
-.dent-step-node.completed .dent-step-label { color: #94a3b8; }
+.dent-step-node.completed .dent-step-circle { background: var(--dent-bg-button, #222226); border-color: var(--dent-border-card, rgba(255, 255, 255, 0.3)); color: var(--dent-text-primary, #e2e8f0); box-shadow: 0 0 6px rgba(255, 255, 255, 0.08); }
+.dent-step-node.completed .dent-step-label { color: var(--dent-text-secondary, #94a3b8); }
 
 /* Connecting Line Segments (Bounded strictly between nodes - cannot overflow or bleed) */
-.dent-step-line { flex: 1; height: 2px; background: rgba(255, 255, 255, 0.08); margin-top: 13px; position: relative; border-radius: 1px; min-width: 15px; overflow: hidden; }
-.dent-step-line-fill { height: 100%; width: 0%; background: #cbd5e1; transition: width 0.3s ease; }
+.dent-step-line { flex: 1; height: 2px; background: var(--dent-border-subtle, rgba(255, 255, 255, 0.08)); margin-top: 13px; position: relative; border-radius: 1px; min-width: 15px; overflow: hidden; }
+.dent-step-line-fill { height: 100%; width: 0%; background: var(--dent-text-secondary, #cbd5e1); transition: width 0.3s ease; }
 
 .dent-step-panel { display: none; }
 .dent-step-panel.active { display: block; animation: dentFade 0.2s ease forwards; }
 @keyframes dentFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-.dent-step-intro { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 6px; }
-.dent-step-title { font-size: 0.92rem; font-weight: 700; color: #f8fafc; }
-.dent-step-desc { font-size: 0.74rem; color: #64748b; }
+.dent-step-intro { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.05)); padding-bottom: 6px; }
+.dent-step-title { font-size: 0.92rem; font-weight: 700; color: var(--dent-text-primary, #f8fafc); }
+.dent-step-desc { font-size: 0.74rem; color: var(--dent-text-muted, #64748b); }
 
-.dent-summary-box { background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
-.dent-summary-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; padding: 5px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+.dent-summary-box { background: var(--dent-bg-card-subtle, rgba(0, 0, 0, 0.25)); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1)); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+.dent-summary-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; padding: 5px 0; border-bottom: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.04)); }
 .dent-summary-row:last-child { border-bottom: none; }
-.dent-summary-key { color: #94a3b8; }
-.dent-summary-val { color: #ffffff; font-weight: 600; text-align: left; }
+.dent-summary-key { color: var(--dent-text-secondary, #94a3b8); }
+.dent-summary-val { color: var(--dent-text-light, #ffffff); font-weight: 600; text-align: left; }
 
-.dent-wizard-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.dent-wizard-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.06)); }
 .dent-wizard-actions .dent-btn-prev { flex: 1; max-width: 130px; height: 38px; margin-top: 0; }
 .dent-wizard-actions .dent-btn-next { flex: 2; height: 38px; margin-top: 0; }
 
