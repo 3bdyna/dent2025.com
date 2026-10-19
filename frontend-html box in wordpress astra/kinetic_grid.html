@@ -78,6 +78,64 @@
         transform: translateY(-4px) !important;
     }
 
+    /* ── Bottom Front Page Meme Photo Diffused Blur Aura ── */
+    #features,
+    .wp-block-group#features,
+    #features .wp-block-columns,
+    #features .wp-block-column {
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    #features figure.wp-block-image,
+    #features .wp-block-image {
+        position: relative !important;
+        overflow: visible !important;
+        display: table !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    #features figure.wp-block-image::before,
+    #features .wp-block-image::before {
+        content: '' !important;
+        position: absolute !important;
+        inset: -30px -25px !important;
+        z-index: 0 !important;
+        pointer-events: none !important;
+        background: radial-gradient(ellipse 95% 95% at 50% 50%, rgba(20, 20, 20, 0.72) 0%, rgba(20, 20, 20, 0.38) 50%, transparent 82%) !important;
+        backdrop-filter: blur(14px) !important;
+        -webkit-backdrop-filter: blur(14px) !important;
+        -webkit-mask-image: radial-gradient(ellipse 95% 95% at 50% 50%, black 45%, transparent 82%) !important;
+        mask-image: radial-gradient(ellipse 95% 95% at 50% 50%, black 45%, transparent 82%) !important;
+        border: none !important;
+        border-radius: 36px !important;
+        box-shadow: none !important;
+    }
+
+    #features figure.wp-block-image > *,
+    #features .wp-block-image > * {
+        position: relative !important;
+        z-index: 1 !important;
+    }
+
+    #features figure.wp-block-image img,
+    #features .wp-block-image img {
+        border-radius: 16px !important;
+        filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.45)) !important;
+        display: block !important;
+        max-width: 100% !important;
+        height: auto !important;
+    }
+
+    #features figure.wp-block-image:hover,
+    #features .wp-block-image:hover {
+        transform: translateY(-4px) !important;
+    }
+
     /* ── 2. Precise, Diffused Glassmorphism & Soft Ambient Shadow across Specific Pages & Banners ── */
     .dent-schedule-container,
     .dent-classes-widget,
