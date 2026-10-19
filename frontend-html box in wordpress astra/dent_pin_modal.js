@@ -42,11 +42,11 @@
             position: relative;
             width: 100%;
             max-width: 340px;
-            background: var(--dent-bg-modal, #181b21);
-            border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.12));
+            background: var(--dent-bg-modal, #121316);
+            border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.14));
             border-radius: 18px;
             padding: 20px 22px 18px;
-            box-shadow: var(--dent-shadow-modal, 0 25px 60px rgba(0, 0, 0, 0.75));
+            box-shadow: var(--dent-shadow-modal, 0 25px 60px rgba(0, 0, 0, 0.85));
             color: var(--dent-text-primary, #f8fafc);
             text-align: right;
             transform: scale(0.96) translateY(8px);
@@ -219,8 +219,8 @@
         .dent-pin-key {
             height: 42px;
             border-radius: 8px;
-            background: var(--dent-bg-button, #27272a);
-            border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1));
+            background: var(--dent-bg-button, #1f222a);
+            border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.12));
             font-size: 1.2rem;
             font-weight: 600;
             font-family: 'Outfit', sans-serif;
@@ -235,13 +235,13 @@
             padding: 0;
         }
         .dent-pin-key:hover {
-            background: var(--dent-bg-button-hover, #3f3f46);
-            border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.2));
+            background: var(--dent-bg-button-hover, #2b2e39);
+            border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.22));
             transform: translateY(-1px);
         }
         .dent-pin-key:active {
             transform: translateY(0);
-            background: var(--dent-bg-button-active, #52525b);
+            background: var(--dent-bg-button-active, #353947);
         }
         .dent-pin-key.action-key {
             font-size: 0.8rem;

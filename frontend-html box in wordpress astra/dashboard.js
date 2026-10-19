@@ -478,17 +478,18 @@ function dentEnsureBaseStyles() {
             border-color: var(--dent-accent-danger-bright, #f87171); box-shadow: 0 0 0 3px var(--dent-accent-danger-bg, rgba(239,68,68,0.15));
         }
         .dent-modal-btn-cancel {
-            background: var(--dent-bg-pill, rgba(255,255,255,0.05)); border: 1px solid var(--dent-border-card, rgba(255,255,255,0.1));
+            background: var(--dent-bg-pill, rgba(255,255,255,0.06)); border: 1px solid var(--dent-border-card, rgba(255,255,255,0.12));
             padding: 10px 18px; border-radius: 10px; color: var(--dent-text-secondary, #cbd5e1); font-weight: 500;
             font-size: 0.9rem; cursor: pointer; transition: all 0.2s; font-family: inherit;
         }
-        .dent-modal-btn-cancel:hover { background: var(--dent-bg-pill-hover, rgba(255,255,255,0.1)); color: var(--dent-text-light, #fff); }
+        .dent-modal-btn-cancel:hover { background: var(--dent-bg-pill-hover, rgba(255,255,255,0.12)); color: var(--dent-text-light, #fff); }
         .dent-modal-btn-save {
-            background: var(--dent-bg-button, #27272a); color: var(--dent-text-primary, #f8fafc); border: 1px solid var(--dent-border-card, rgba(255,255,255,0.15));
+            background: var(--dent-accent-primary, #3b82f6); color: #ffffff; border: 1px solid var(--dent-accent-primary-border, rgba(59,130,246,0.35));
             padding: 10px 22px; border-radius: 10px; font-weight: 600; font-size: 0.9rem;
             cursor: pointer; transition: all 0.2s; font-family: inherit;
+            box-shadow: 0 2px 10px rgba(59, 130, 246, 0.25);
         }
-        .dent-modal-btn-save:hover { background: var(--dent-bg-button-hover, #3f3f46); border-color: var(--dent-border-hover, rgba(255,255,255,0.25)); }
+        .dent-modal-btn-save:hover { background: var(--dent-accent-primary-hover, #60a5fa); border-color: rgba(59,130,246,0.5); box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35); }
     `);
 }
 
@@ -792,11 +793,11 @@ window.editSubject = function(id) {
     `;
 
     const modalHTML = `
-    <div id="dent-admin-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,10,15,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:99999; align-items:center; justify-content:center; font-family:'Outfit', 'Noto Kufi Arabic', sans-serif; direction:rtl;">
-        <div style="background: #18181b; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 28px; width: 90%; max-width: 420px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); color: #fff;">
+    <div id="dent-admin-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--dent-bg-overlay, rgba(0,0,0,0.85)); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:99999; align-items:center; justify-content:center; font-family:'Outfit', 'Noto Kufi Arabic', sans-serif; direction:rtl;">
+        <div style="background: var(--dent-bg-modal, #121316); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.14)); border-radius: 16px; padding: 28px; width: 90%; max-width: 420px; box-shadow: var(--dent-shadow-modal, 0 25px 60px rgba(0,0,0,0.85)); color: #fff;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 22px;">
                 <h3 style="margin:0; font-size:1.15rem; font-weight:600; color:#f8fafc;">تعديل بيانات المادة</h3>
-                <button type="button" onclick="document.getElementById('dent-admin-modal').style.display='none'" style="background:rgba(255,255,255,0.06); border:none; color:#9ca3af; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;" title="إغلاق">×</button>
+                <button type="button" onclick="document.getElementById('dent-admin-modal').style.display='none'" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#cbd5e1; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;" title="إغلاق">×</button>
             </div>
             <input type="hidden" id="dent-modal-id">
             
@@ -2042,12 +2043,12 @@ function openAddLinkModal(subjectId) {
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'add-link-modal';
-        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:var(--dent-bg-overlay, rgba(0,0,0,0.82)); backdrop-filter:var(--dent-backdrop-blur, blur(10px)); -webkit-backdrop-filter:var(--dent-backdrop-blur, blur(10px)); z-index:99999; display:flex; justify-content:center; align-items:center; direction:rtl; font-family:\'Outfit\', \'Noto Kufi Arabic\', sans-serif;';
+        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:var(--dent-bg-overlay, rgba(0,0,0,0.85)); backdrop-filter:var(--dent-backdrop-blur, blur(12px)); -webkit-backdrop-filter:var(--dent-backdrop-blur, blur(12px)); z-index:99999; display:flex; justify-content:center; align-items:center; direction:rtl; font-family:\'Outfit\', \'Noto Kufi Arabic\', sans-serif;';
         modal.innerHTML = `
-            <div style="background: var(--dent-bg-modal, #18181b); border: 1px solid var(--dent-border-card, rgba(255,255,255,0.1)); border-radius: 16px; padding: 28px; width: 90%; max-width: 420px; box-shadow: var(--dent-shadow-modal, 0 25px 60px rgba(0,0,0,0.75)); color: var(--dent-text-primary, #fff);">
+            <div style="background: var(--dent-bg-modal, #121316); border: 1px solid var(--dent-border-card, rgba(255,255,255,0.14)); border-radius: 16px; padding: 28px; width: 90%; max-width: 420px; box-shadow: var(--dent-shadow-modal, 0 25px 60px rgba(0,0,0,0.85)); color: var(--dent-text-primary, #fff);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
                     <h3 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--dent-text-primary, #f8fafc);">إضافة رابط مساعد</h3>
-                    <button type="button" onclick="document.getElementById('add-link-modal').style.display='none'" style="background:var(--dent-bg-pill, rgba(255,255,255,0.06)); border:1px solid var(--dent-border-subtle, rgba(255,255,255,0.08)); color:var(--dent-text-secondary, #9ca3af); width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;" title="إغلاق">×</button>
+                    <button type="button" onclick="document.getElementById('add-link-modal').style.display='none'" style="background:var(--dent-bg-pill, rgba(255,255,255,0.06)); border:1px solid var(--dent-border-subtle, rgba(255,255,255,0.12)); color:var(--dent-text-secondary, #cbd5e1); width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer;" title="إغلاق">×</button>
                 </div>
                 <input type="hidden" id="link-sub-id">
                 
