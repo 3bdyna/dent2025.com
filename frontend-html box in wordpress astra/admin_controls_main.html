@@ -143,7 +143,7 @@
 <!-- ========================================== -->
 <!-- OIIA SPINNING CAT (STAR EASTER EGG) -->
 <!-- ========================================== -->
-<div id="magic-star-wrapper" style="position: relative; width: 0; height: 0; z-index: 50; overflow: visible;">
+<div id="magic-star-wrapper">
     <button id="magic-star-btn" style="opacity:0; pointer-events:none;" aria-label="Secret GIF Star">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
@@ -154,12 +154,40 @@
 <div id="magic-overlay"></div>
 
 <style>
+#magic-star-wrapper {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    height: 0 !important;
+    z-index: 50 !important;
+    overflow: visible !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    pointer-events: none !important;
+}
+
+@media (min-width: 1440px) {
+    #magic-star-wrapper {
+        max-width: 1550px !important;
+    }
+}
+
 #magic-star-btn {
-    position: absolute; top: -10px; left: 0; background: transparent; border: none; cursor: pointer;
-    padding: 10px; outline: none; 
+    position: relative !important;
+    top: -10px;
+    left: auto !important;
+    right: auto !important;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    outline: none; 
     -webkit-tap-highlight-color: transparent;
     opacity: 0; 
-    pointer-events: none; 
+    pointer-events: none;
+    margin: 0 auto !important;
 }
 
 #magic-star-btn svg {
@@ -188,10 +216,10 @@
 }
 @keyframes wanderAndSpin {
     0%   { transform: translate(0px, 0px) rotate(0deg); }
-    25%  { transform: translate(40px, -30px) rotate(15deg); }
-    50%  { transform: translate(60px, 20px) rotate(-10deg); }
-    75%  { transform: translate(20px, 45px) rotate(20deg); }
-    100% { transform: translate(-20px, -15px) rotate(-5deg); }
+    25%  { transform: translate(25px, -15px) rotate(15deg); }
+    50%  { transform: translate(-25px, 15px) rotate(-10deg); }
+    75%  { transform: translate(15px, 20px) rotate(18deg); }
+    100% { transform: translate(-20px, -10px) rotate(-5deg); }
 }
 @keyframes pulseGlow {
     from { filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5)); }
