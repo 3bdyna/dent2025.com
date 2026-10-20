@@ -41,26 +41,19 @@
         transition: transform 0.25s ease !important;
     }
 
-    /* Soft, feathered diffused blur aura wrapping BOTH photo and text seamlessly (Zero hard lines / Zero card box) */
+    /* Soft, feathered diffused blur aura wrapping BOTH photo and text seamlessly (Zero hard lines / Zero rigid card box) */
     #resources .wp-block-column > .wp-block-group::before {
         content: '' !important;
         position: absolute !important;
-        inset: -30px -20px !important;
+        inset: -45px -32px !important;
         z-index: 0 !important;
         pointer-events: none !important;
-        background: 
-            radial-gradient(ellipse 95% 65% at 50% 30%, rgba(20, 20, 20, 0.72) 0%, rgba(20, 20, 20, 0.38) 50%, transparent 82%),
-            radial-gradient(ellipse 95% 55% at 50% 76%, rgba(20, 20, 20, 0.68) 0%, rgba(20, 20, 20, 0.32) 50%, transparent 82%) !important;
+        background: radial-gradient(ellipse 100% 100% at 50% 50%, rgba(20, 20, 20, 0.75) 0%, rgba(20, 20, 20, 0.42) 50%, rgba(18, 18, 18, 0.12) 75%, transparent 96%) !important;
         backdrop-filter: blur(14px) !important;
         -webkit-backdrop-filter: blur(14px) !important;
-        -webkit-mask-image: 
-            radial-gradient(ellipse 95% 65% at 50% 30%, black 45%, transparent 82%),
-            radial-gradient(ellipse 95% 55% at 50% 76%, black 40%, transparent 82%) !important;
-        mask-image: 
-            radial-gradient(ellipse 95% 65% at 50% 30%, black 45%, transparent 82%),
-            radial-gradient(ellipse 95% 55% at 50% 76%, black 40%, transparent 82%) !important;
+        -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 25%, rgba(0, 0, 0, 0.7) 48%, rgba(0, 0, 0, 0.25) 72%, transparent 95%) !important;
+        mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 25%, rgba(0, 0, 0, 0.7) 48%, rgba(0, 0, 0, 0.25) 72%, transparent 95%) !important;
         border: none !important;
-        border-radius: 36px !important;
         box-shadow: none !important;
     }
 
@@ -70,8 +63,9 @@
     }
 
     #resources figure.wp-block-image img {
-        border-radius: 16px !important;
-        filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.45)) !important;
+        border-radius: 20px !important;
+        box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.55), 0 0 20px 2px rgba(255, 255, 255, 0.02) !important;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease !important;
     }
 
     #resources .wp-block-column > .wp-block-group:hover {
@@ -103,16 +97,15 @@
     #features .wp-block-image::before {
         content: '' !important;
         position: absolute !important;
-        inset: -30px -25px !important;
+        inset: -45px -35px !important;
         z-index: 0 !important;
         pointer-events: none !important;
-        background: radial-gradient(ellipse 95% 95% at 50% 50%, rgba(20, 20, 20, 0.72) 0%, rgba(20, 20, 20, 0.38) 50%, transparent 82%) !important;
+        background: radial-gradient(ellipse 100% 100% at 50% 50%, rgba(20, 20, 20, 0.75) 0%, rgba(20, 20, 20, 0.42) 50%, rgba(18, 18, 18, 0.12) 75%, transparent 96%) !important;
         backdrop-filter: blur(14px) !important;
         -webkit-backdrop-filter: blur(14px) !important;
-        -webkit-mask-image: radial-gradient(ellipse 95% 95% at 50% 50%, black 45%, transparent 82%) !important;
-        mask-image: radial-gradient(ellipse 95% 95% at 50% 50%, black 45%, transparent 82%) !important;
+        -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 25%, rgba(0, 0, 0, 0.7) 48%, rgba(0, 0, 0, 0.25) 72%, transparent 95%) !important;
+        mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 25%, rgba(0, 0, 0, 0.7) 48%, rgba(0, 0, 0, 0.25) 72%, transparent 95%) !important;
         border: none !important;
-        border-radius: 36px !important;
         box-shadow: none !important;
     }
 
@@ -124,8 +117,8 @@
 
     #features figure.wp-block-image img,
     #features .wp-block-image img {
-        border-radius: 16px !important;
-        filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.45)) !important;
+        border-radius: 20px !important;
+        box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.55), 0 0 20px 2px rgba(255, 255, 255, 0.02) !important;
         display: block !important;
         max-width: 100% !important;
         height: auto !important;
@@ -149,22 +142,26 @@
     details.wp-block-details,
     .dent-chapter-details,
     .dent-quiz-card {
-        background-color: rgba(30, 30, 30, 0.72) !important;
-        backdrop-filter: blur(8px) !important;
-        -webkit-backdrop-filter: blur(8px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.07) !important;
-        border-radius: 16px !important;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.38) !important;
-        transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease !important;
+        background: linear-gradient(145deg, rgba(32, 32, 35, 0.75) 0%, rgba(20, 20, 23, 0.62) 100%) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.04) !important;
+        border-radius: 18px !important;
+        box-shadow: 
+            0 12px 36px -6px rgba(0, 0, 0, 0.65),
+            0 0 25px 2px rgba(255, 255, 255, 0.015),
+            inset 0 1px 1px 0 rgba(255, 255, 255, 0.05) !important;
+        transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease !important;
     }
 
     /* Sub-cards inside Schedule Container */
     .dent-schedule-container .stat-card {
-        background: rgba(255, 255, 255, 0.035) !important;
-        border: 1px solid rgba(255, 255, 255, 0.06) !important;
-        backdrop-filter: blur(4px) !important;
-        -webkit-backdrop-filter: blur(4px) !important;
-        border-radius: 12px !important;
+        background: rgba(255, 255, 255, 0.025) !important;
+        border: 1px solid rgba(255, 255, 255, 0.04) !important;
+        backdrop-filter: blur(6px) !important;
+        -webkit-backdrop-filter: blur(6px) !important;
+        border-radius: 14px !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
     }
 
     /* ── 3. Subtle Diffused Hover States ── */
@@ -175,10 +172,13 @@
     .dent-timer-banner-override:hover,
     .dent-chapter-details:hover,
     .dent-quiz-card:hover {
-        background-color: rgba(38, 38, 38, 0.85) !important;
-        border-color: rgba(255, 255, 255, 0.14) !important;
+        background: linear-gradient(145deg, rgba(40, 40, 44, 0.85) 0%, rgba(26, 26, 30, 0.72) 100%) !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
         transform: translateY(-2px) !important;
-        box-shadow: 0 14px 38px rgba(0, 0, 0, 0.55) !important;
+        box-shadow: 
+            0 18px 45px -6px rgba(0, 0, 0, 0.75),
+            0 0 35px 3px rgba(255, 255, 255, 0.03),
+            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08) !important;
     }
 
     /* Solid White Section Titles matching 'الجدول الدراسي' exactly */
@@ -242,15 +242,19 @@
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Exact site color match (#121212) + Monochrome White tokens
+    // Exact site color match (#121212) + Monochrome White tokens + Golden Star Cosmic Wake
     const THEME = {
         bg: "#121212",
         lineBase: { r: 255, g: 255, b: 255, a: 0.05 },
         lineActive: { r: 255, g: 255, b: 255, a: 0.85 },
+        lineStar: { r: 255, g: 215, b: 0, a: 0.78 },
         nodeBase: { r: 255, g: 255, b: 255, a: 0.14 },
         nodeActive: { r: 255, g: 255, b: 255, a: 1.0 },
+        nodeStar: { r: 255, g: 228, b: 92, a: 1.0 },
         glow: "255, 255, 255",
-        ripple: "255, 255, 255"
+        glowStar: "255, 215, 0",
+        ripple: "255, 255, 255",
+        rippleStar: "255, 215, 0"
     };
 
     // Responsive configuration
@@ -258,6 +262,8 @@
     const CELL_SIZE = isMobile ? 66 : 52;
     const INFLUENCE_RADIUS = isMobile ? 220 : 280;
     const MAX_WARP = isMobile ? 20 : 28;
+    const STAR_INFLUENCE_RADIUS = isMobile ? 130 : 165;
+    const STAR_MAX_WARP = isMobile ? 12 : 18;
     const LERP_SPEED = 0.085;
     const NODE_BASE_RADIUS = 1.6;
     const NODE_ACTIVE_RADIUS = 3.2;
@@ -272,6 +278,30 @@
     const ripples = [];
     let rafId = 0;
     let isDirty = true; // High-efficiency render flag (0% idle CPU without ever freezing)
+
+    // Star tracking state (Cosmic Wake)
+    let starElem = null;
+    const starState = {
+        x: -9999,
+        y: -9999,
+        active: false,
+        strength: 0,
+        pulse: 1
+    };
+
+    window.addEventListener('dent:star-burst', function(e) {
+        if (e.detail && typeof e.detail.x === 'number') {
+            ripples.push({
+                x: e.detail.x,
+                y: e.detail.y,
+                radius: 0,
+                opacity: 1,
+                color: THEME.rippleStar,
+                born: performance.now()
+            });
+            isDirty = true;
+        }
+    }, { passive: true });
 
     function resize() {
         W = window.innerWidth;
@@ -361,9 +391,9 @@
         return 'rgba(' + r + ',' + g + ',' + b + ',' + a.toFixed(3) + ')';
     }
 
-    function getWarpedPoint(gx, gy) {
-        if (mouseStrength <= 0.0001 && ripples.length === 0) {
-            return { x: gx, y: gy, proximity: 0 };
+    function getWarpedPoint(gx, gy, now) {
+        if (mouseStrength <= 0.0001 && ripples.length === 0 && (!starState.active || starState.strength <= 0.0001)) {
+            return { x: gx, y: gy, proximity: 0, starProximity: 0 };
         }
 
         let rx = 0, ry = 0;
@@ -383,34 +413,70 @@
             }
         }
 
+        let mouseWarpX = 0, mouseWarpY = 0, proximity = 0;
         if (mouseStrength > 0.0001) {
             const dx = gx - mouse.x;
             const dy = gy - mouse.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
 
             if (dist < INFLUENCE_RADIUS && dist > 0) {
-                const proximity = Math.max(0, 1 - dist / INFLUENCE_RADIUS) * mouseStrength;
+                proximity = Math.max(0, 1 - dist / INFLUENCE_RADIUS) * mouseStrength;
                 const t = dist / INFLUENCE_RADIUS;
                 const eased = t < 0.01 ? 0 : (1 - t) * (1 - t) * Math.min(1, dist / 60);
                 const warpAmt = eased * MAX_WARP * mouseStrength;
                 const angle = Math.atan2(dy, dx);
-                return {
-                    x: gx - Math.cos(angle) * warpAmt + rx,
-                    y: gy - Math.sin(angle) * warpAmt + ry,
-                    proximity: proximity
-                };
+                mouseWarpX = -Math.cos(angle) * warpAmt;
+                mouseWarpY = -Math.sin(angle) * warpAmt;
+            }
+        }
+
+        // Star Gravitational Pull (Cosmic Wake)
+        let starWarpX = 0, starWarpY = 0, starProximity = 0;
+        if (starState.active && starState.strength > 0.001) {
+            const sdx = gx - starState.x;
+            const sdy = gy - starState.y;
+            const sdist = Math.sqrt(sdx * sdx + sdy * sdy);
+            if (sdist < STAR_INFLUENCE_RADIUS && sdist > 0) {
+                starProximity = Math.max(0, 1 - sdist / STAR_INFLUENCE_RADIUS) * starState.strength;
+                const st = sdist / STAR_INFLUENCE_RADIUS;
+                const sEased = (1 - st) * Math.sin(st * Math.PI);
+                const sWarpAmt = sEased * STAR_MAX_WARP * starState.strength * starState.pulse;
+                const sAngle = Math.atan2(sdy, sdx);
+                starWarpX = -Math.cos(sAngle) * sWarpAmt;
+                starWarpY = -Math.sin(sAngle) * sWarpAmt;
             }
         }
 
         return {
-            x: gx + rx,
-            y: gy + ry,
-            proximity: 0
+            x: gx + mouseWarpX + starWarpX + rx,
+            y: gy + mouseWarpY + starWarpY + ry,
+            proximity: proximity,
+            starProximity: starProximity
         };
     }
 
     // Main 60 FPS Render Loop with Zero-Lag Dirty Checking & Smooth Unwind Fade
     function draw(now) {
+        // Track live star position (Cosmic Wake)
+        if (!starElem || !starElem.isConnected) {
+            starElem = document.getElementById('magic-star-btn');
+        }
+        if (starElem) {
+            const rect = starElem.getBoundingClientRect();
+            if (rect.width > 0 && rect.bottom > 0 && rect.top < H && rect.right > 0 && rect.left < W) {
+                starState.x = rect.left + rect.width / 2;
+                starState.y = rect.top + rect.height / 2;
+                starState.active = true;
+                starState.strength = lerp(starState.strength, 1.0, 0.08);
+                starState.pulse = 1.0 + 0.18 * Math.sin(now * 0.0035);
+                isDirty = true;
+            } else {
+                starState.active = false;
+                starState.strength = lerp(starState.strength, 0, 0.05);
+                if (starState.strength > 0.001) isDirty = true;
+            }
+        }
+
         // Smoothly lerp mouse strength (fade in/out over ~350ms)
         const FADE_SPEED = 0.065;
         mouseStrength = lerp(mouseStrength, targetStrength, FADE_SPEED);
@@ -425,8 +491,9 @@
         const isConverging = (dmx > 0.1 || dmy > 0.1) && mouseStrength > 0;
         const isFading = Math.abs(targetStrength - mouseStrength) > 0.0005;
         const hasRipples = ripples.length > 0;
+        const isStarMoving = starState.active && starState.strength > 0.01;
 
-        if (isConverging || isFading || hasRipples) {
+        if (isConverging || isFading || hasRipples || isStarMoving) {
             isDirty = true;
         }
 
@@ -459,19 +526,29 @@
         for (let r = 0; r < rows; r++) {
             grid[r] = [];
             for (let c = 0; c < cols; c++) {
-                grid[r][c] = getWarpedPoint(c * cellW, r * cellH);
+                grid[r][c] = getWarpedPoint(c * cellW, r * cellH, now);
             }
         }
 
         // Draw line segments
         const drawSegment = function(p1, p2) {
-            const avg = (p1.proximity + p2.proximity) * 0.5;
-            const t = avg * avg * (3 - 2 * avg);
+            const avgMouse = (p1.proximity + p2.proximity) * 0.5;
+            const avgStar = (p1.starProximity + p2.starProximity) * 0.5;
+            const tm = avgMouse * avgMouse * (3 - 2 * avgMouse);
+            const ts = avgStar * avgStar * (3 - 2 * avgStar);
+
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = lerpColor(THEME.lineBase, THEME.lineActive, t);
-            ctx.lineWidth = lerp(0.85, 1.6, t);
+
+            if (ts > tm && ts > 0.02) {
+                // Golden star line glow
+                ctx.strokeStyle = lerpColor(THEME.lineBase, THEME.lineStar, ts);
+                ctx.lineWidth = lerp(0.85, 2.0, ts);
+            } else {
+                ctx.strokeStyle = lerpColor(THEME.lineBase, THEME.lineActive, tm);
+                ctx.lineWidth = lerp(0.85, 1.6, tm);
+            }
             ctx.stroke();
         };
 
@@ -492,25 +569,45 @@
             for (let c = 0; c < cols; c++) {
                 const pt = grid[r][c];
                 const pr = pt.proximity;
-                const t = pr * pr * (3 - 2 * pr);
-                const radius = lerp(NODE_BASE_RADIUS, NODE_ACTIVE_RADIUS, t);
+                const sp = pt.starProximity;
+                const tm = pr * pr * (3 - 2 * pr);
+                const ts = sp * sp * (3 - 2 * sp);
+                const tMax = Math.max(tm, ts);
+                const radius = lerp(NODE_BASE_RADIUS, NODE_ACTIVE_RADIUS, tMax);
 
-                // Halo glow for nodes near cursor
-                if (t > 0.25) {
-                    const glowRadius = radius + lerp(0, 7, (t - 0.25) / 0.75);
-                    const grad = ctx.createRadialGradient(pt.x, pt.y, radius * 0.5, pt.x, pt.y, glowRadius);
-                    grad.addColorStop(0, 'rgba(' + THEME.glow + ', ' + (t * 0.45).toFixed(3) + ')');
-                    grad.addColorStop(1, 'rgba(' + THEME.glow + ', 0)');
+                if (ts > tm && ts > 0.12) {
+                    // Golden star aura on node
+                    const glowRadius = radius + lerp(0, 10, ts);
+                    const grad = ctx.createRadialGradient(pt.x, pt.y, radius * 0.4, pt.x, pt.y, glowRadius);
+                    grad.addColorStop(0, 'rgba(' + THEME.glowStar + ', ' + (ts * 0.75).toFixed(3) + ')');
+                    grad.addColorStop(1, 'rgba(' + THEME.glowStar + ', 0)');
                     ctx.beginPath();
                     ctx.arc(pt.x, pt.y, glowRadius, 0, Math.PI * 2);
                     ctx.fillStyle = grad;
                     ctx.fill();
-                }
 
-                ctx.beginPath();
-                ctx.arc(pt.x, pt.y, radius, 0, Math.PI * 2);
-                ctx.fillStyle = lerpColor(THEME.nodeBase, THEME.nodeActive, t);
-                ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, radius * 1.15, 0, Math.PI * 2);
+                    ctx.fillStyle = lerpColor(THEME.nodeBase, THEME.nodeStar, ts);
+                    ctx.fill();
+                } else {
+                    // Standard cursor halo glow
+                    if (tm > 0.25) {
+                        const glowRadius = radius + lerp(0, 7, (tm - 0.25) / 0.75);
+                        const grad = ctx.createRadialGradient(pt.x, pt.y, radius * 0.5, pt.x, pt.y, glowRadius);
+                        grad.addColorStop(0, 'rgba(' + THEME.glow + ', ' + (tm * 0.45).toFixed(3) + ')');
+                        grad.addColorStop(1, 'rgba(' + THEME.glow + ', 0)');
+                        ctx.beginPath();
+                        ctx.arc(pt.x, pt.y, glowRadius, 0, Math.PI * 2);
+                        ctx.fillStyle = grad;
+                        ctx.fill();
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = lerpColor(THEME.nodeBase, THEME.nodeActive, tm);
+                    ctx.fill();
+                }
             }
         }
 
@@ -520,14 +617,15 @@
             if (r.radius > 0) {
                 ctx.beginPath();
                 ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(' + THEME.ripple + ', ' + (r.opacity * 0.35).toFixed(3) + ')';
-                ctx.lineWidth = 1.6;
+                const colorStr = r.color || THEME.ripple;
+                ctx.strokeStyle = 'rgba(' + colorStr + ', ' + (r.opacity * 0.45).toFixed(3) + ')';
+                ctx.lineWidth = r.color ? 2.2 : 1.6;
                 ctx.stroke();
             }
         }
 
-        // If no movement and no ripples, mark clean until next interaction
-        if (!isConverging && !isFading && !hasRipples) {
+        // If no movement, no star active, and no ripples, mark clean until next interaction
+        if (!isConverging && !isFading && !hasRipples && !isStarMoving) {
             isDirty = false;
         }
 

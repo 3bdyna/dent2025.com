@@ -305,6 +305,14 @@
             e.preventDefault();
             e.stopPropagation();
             
+            // Dispatch star-burst cosmic shockwave ripple on kinetic grid
+            try {
+                const rect = starBtn.getBoundingClientRect();
+                window.dispatchEvent(new CustomEvent('dent:star-burst', {
+                    detail: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+                }));
+            } catch(burstErr) {}
+
             let currentUrl = gifUrl;
             if (cachedGifBlob) {
                 try {
