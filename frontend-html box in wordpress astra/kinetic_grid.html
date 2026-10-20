@@ -10,8 +10,10 @@
         pointer-events: none !important;
         background-color: #121212 !important;
     }
-    /* Minimal container transparency so canvas shines through without touching any site layout/components */
-    html, body, #page, .site-content, .ast-plain-container, .site, #primary {
+    /* Minimal container transparency so canvas shines through on ALL Astra page layouts & templates */
+    html, body, #page, .site-content, .ast-plain-container, .ast-separate-container,
+    .ast-container, .site, #primary, #content, #main, .site-main, .ast-article-single,
+    .ast-article-inner, .entry-content, .ast-page-builder-template, .ast-single-post {
         background-color: transparent !important;
         background-image: none !important;
     }
@@ -423,14 +425,33 @@
         }
     }, { passive: true });
 
+    let dirtyFrames = 15;
+
+    function checkResize() {
+        const newW = window.innerWidth;
+        const newH = window.innerHeight;
+        if (newW > 10 && newH > 10 && (canvas.width !== newW || canvas.height !== newH || W !== newW || H !== newH)) {
+            W = newW;
+            H = newH;
+            canvas.width = W;
+            canvas.height = H;
+            isDirty = true;
+            dirtyFrames = 15;
+            return true;
+        }
+        return false;
+    }
+
     function resize() {
-        W = window.innerWidth;
-        H = window.innerHeight;
-        canvas.width = W;
-        canvas.height = H;
+        checkResize();
         isDirty = true;
+        dirtyFrames = 15;
+        if (!rafId && !prefersReducedMotion) {
+            rafId = requestAnimationFrame(draw);
+        }
     }
     window.addEventListener('resize', resize, { passive: true });
+    window.addEventListener('orientationchange', resize, { passive: true });
     resize();
 
     // Interaction Listeners (Window & Document level for 100% reliable tracking)
@@ -493,7 +514,35 @@
         isDirty = true;
     }, { passive: true });
 
-    // Page Visibility Freeze (Stops RAF when hidden, resumes instantly when visible)
+    // Robust Alt-Tab, Focus, PageShow and Tab Visibility Restoration
+    window.addEventListener('focus', function() {
+        checkResize();
+        isDirty = true;
+        dirtyFrames = 15;
+        if (!rafId && !prefersReducedMotion) {
+            rafId = requestAnimationFrame(draw);
+        }
+    });
+
+    window.addEventListener('pageshow', function() {
+        checkResize();
+        isDirty = true;
+        dirtyFrames = 15;
+        if (!rafId && !prefersReducedMotion) {
+            rafId = requestAnimationFrame(draw);
+        }
+    });
+
+    canvas.addEventListener('contextrestored', function() {
+        ctx = canvas.getContext('2d');
+        checkResize();
+        isDirty = true;
+        dirtyFrames = 15;
+        if (!rafId && !prefersReducedMotion) {
+            rafId = requestAnimationFrame(draw);
+        }
+    });
+
     document.addEventListener('visibilitychange', function() {
         if (document.hidden) {
             if (rafId) {
@@ -501,7 +550,9 @@
                 rafId = 0;
             }
         } else {
+            checkResize();
             isDirty = true;
+            dirtyFrames = 15;
             if (!rafId && !prefersReducedMotion) {
                 rafId = requestAnimationFrame(draw);
             }
@@ -587,6 +638,8 @@
 
     // Main 60 FPS Render Loop with Zero-Lag Dirty Checking & Smooth Unwind Fade
     function draw(now) {
+        checkResize();
+
         // Track live star position (Cosmic Wake)
         if (!starElem || !starElem.isConnected) {
             starElem = document.getElementById('magic-star-btn');
@@ -630,11 +683,11 @@
             isDirty = true;
         }
 
-        if (!isDirty) {
-            // Screen is completely still — idle loop checks next frame without drawing (0% CPU)
+                if (!isDirty && dirtyFrames <= 0) {
             rafId = requestAnimationFrame(draw);
             return;
         }
+        if (dirtyFrames > 0) dirtyFrames--;
 
         ctx.clearRect(0, 0, W, H);
         ctx.fillStyle = THEME.bg;
@@ -757,13 +810,27 @@
             }
         }
 
-        // If no movement, no star active, and no ripples, mark clean until next interaction
-        if (!isConverging && !isFading && !hasRipples && !isStarMoving) {
+        // Mark clean only when converged, no star active, no ripples, and dirty frames expired
+        if (!isConverging && !isFading && !hasRipples && !isStarMoving && dirtyFrames <= 0) {
             isDirty = false;
         }
 
         rafId = requestAnimationFrame(draw);
     }
+
+    // Failsafe heartbeat: revives canvas if GPU buffer dropped during idle or Alt-Tab
+    setInterval(function() {
+        if (!document.hidden) {
+            const resized = checkResize();
+            if (resized || (!isDirty && dirtyFrames <= 0 && (canvas.width <= 0 || canvas.height <= 0))) {
+                isDirty = true;
+                dirtyFrames = 5;
+                if (!rafId && !prefersReducedMotion) {
+                    rafId = requestAnimationFrame(draw);
+                }
+            }
+        }
+    }, 1000);
 
     if (prefersReducedMotion) {
         draw(performance.now());
