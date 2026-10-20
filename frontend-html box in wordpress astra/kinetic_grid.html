@@ -53,32 +53,35 @@
         z-index: 1 !important;
     }
 
-    /* Part 1: Individual Photo with Sand Diffusion (Zero Rigid Edges) + Dark Slight Shadow & Blur a Bit Outside */
+    /* Part 1: Individual Photo with Real Dark Sand Diffusion (No Straight Lines / No Rigid Box Cuts) */
     #resources figure.wp-block-image {
         position: relative !important;
         overflow: visible !important;
         border: none !important;
         box-shadow: none !important;
-        filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.65)) !important;
+        filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.75)) !important;
         transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), filter 0.28s ease !important;
     }
 
-    /* Diffused sand blur aura extending slightly outside the photo (inset: -14px) */
+    /* Rich, dark sand diffused backing extending slightly outside the photo (fades 100% -> 0% continuously) */
     #resources figure.wp-block-image::before {
         content: '' !important;
         position: absolute !important;
-        inset: -14px !important;
+        inset: -22px -18px !important;
         z-index: 0 !important;
         pointer-events: none !important;
-        border-radius: 28px !important;
-        background: radial-gradient(ellipse 100% 100% at 50% 50%, rgba(20, 20, 23, 0.90) 0%, rgba(18, 18, 20, 0.60) 55%, rgba(15, 15, 17, 0.20) 80%, transparent 98%) !important;
-        backdrop-filter: blur(14px) !important;
-        -webkit-backdrop-filter: blur(14px) !important;
-        mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 50%, rgba(0, 0, 0, 0.75) 72%, rgba(0, 0, 0, 0.2) 88%, transparent 100%) !important;
-        -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 50%, rgba(0, 0, 0, 0.75) 72%, rgba(0, 0, 0, 0.2) 88%, transparent 100%) !important;
         border: none !important;
         box-shadow: none !important;
-        transition: background 0.3s ease, backdrop-filter 0.3s ease !important;
+        border-radius: 36px !important;
+        background: radial-gradient(ellipse 100% 100% at 50% 50%, 
+            rgba(8, 8, 10, 0.98) 0%, 
+            rgba(10, 10, 12, 0.92) 42%, 
+            rgba(14, 14, 16, 0.65) 68%, 
+            rgba(18, 18, 18, 0.22) 86%, 
+            rgba(18, 18, 18, 0.05) 94%, 
+            transparent 100%
+        ) !important;
+        transition: background 0.3s ease !important;
     }
 
     #resources figure.wp-block-image > *,
@@ -91,57 +94,87 @@
         width: 100% !important;
         max-width: 100% !important;
         height: auto !important;
-        mask-image: radial-gradient(ellipse 92% 86% at 50% 50%, black 65%, rgba(0, 0, 0, 0.92) 76%, rgba(0, 0, 0, 0.50) 88%, rgba(0, 0, 0, 0.12) 96%, transparent 100%) !important;
-        -webkit-mask-image: radial-gradient(ellipse 92% 86% at 50% 50%, black 65%, rgba(0, 0, 0, 0.92) 76%, rgba(0, 0, 0, 0.50) 88%, rgba(0, 0, 0, 0.12) 96%, transparent 100%) !important;
+        mask-image: radial-gradient(ellipse 92% 86% at 50% 50%, 
+            black 65%, 
+            rgba(0, 0, 0, 0.92) 76%, 
+            rgba(0, 0, 0, 0.50) 88%, 
+            rgba(0, 0, 0, 0.12) 96%, 
+            transparent 100%
+        ) !important;
+        -webkit-mask-image: radial-gradient(ellipse 92% 86% at 50% 50%, 
+            black 65%, 
+            rgba(0, 0, 0, 0.92) 76%, 
+            rgba(0, 0, 0, 0.50) 88%, 
+            rgba(0, 0, 0, 0.12) 96%, 
+            transparent 100%
+        ) !important;
         transition: filter 0.3s ease !important;
     }
 
     #resources .wp-block-column > .wp-block-group:hover figure.wp-block-image {
-        filter: drop-shadow(0 16px 32px rgba(0, 0, 0, 0.80)) !important;
+        filter: drop-shadow(0 18px 36px rgba(0, 0, 0, 0.90)) !important;
     }
 
-    /* Part 2: Individual Page Title Outline */
+    /* Part 2: Individual Page Title Outline with Dedicated Dark Sand Diffusion */
     #resources h3.wp-block-heading {
-        color: #f8fafc !important;
+        position: relative !important;
+        display: table !important;
+        margin: 14px auto 10px auto !important;
+        padding: 8px 24px !important;
+        color: #ffffff !important;
         border: none !important;
-        margin: 14px 0 12px 0 !important;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6) !important;
-        transition: transform 0.28s ease, color 0.28s ease !important;
+        box-shadow: none !important;
+        border-radius: 9999px !important;
+        background: radial-gradient(ellipse 100% 100% at 50% 50%, 
+            rgba(8, 8, 10, 0.96) 0%, 
+            rgba(10, 10, 12, 0.88) 45%, 
+            rgba(14, 14, 16, 0.50) 72%, 
+            rgba(18, 18, 18, 0.15) 88%, 
+            transparent 100%
+        ) !important;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8) !important;
+        transition: transform 0.28s ease, color 0.28s ease, background 0.28s ease !important;
     }
 
-    /* Part 3: Individual Link 'Go' Button Pill Outline */
+    /* Part 3: Individual Link 'Go' Button Pill Outline with Dedicated Dark Sand Diffusion */
     #resources .wp-block-buttons {
         margin-top: 4px !important;
     }
 
     #resources .wp-block-button__link {
-        background: rgba(36, 36, 40, 0.82) !important;
-        backdrop-filter: blur(8px) !important;
-        -webkit-backdrop-filter: blur(8px) !important;
+        position: relative !important;
+        display: inline-block !important;
+        background: radial-gradient(ellipse 100% 100% at 50% 50%, 
+            rgba(20, 20, 26, 0.98) 0%, 
+            rgba(24, 24, 30, 0.90) 50%, 
+            rgba(28, 28, 36, 0.50) 78%, 
+            rgba(20, 20, 24, 0.12) 92%, 
+            transparent 100%
+        ) !important;
         border: none !important;
         border-radius: 9999px !important;
-        padding: 8px 26px !important;
-        color: #f8fafc !important;
+        padding: 10px 32px !important;
+        color: #ffffff !important;
         font-weight: 600 !important;
         font-size: 0.95rem !important;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+        box-shadow: none !important;
         transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        display: inline-block !important;
     }
 
     #resources .wp-block-button__link:hover {
-        background: rgba(48, 48, 54, 0.95) !important;
-        transform: translateY(-2px) scale(1.02) !important;
-        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55) !important;
+        background: radial-gradient(ellipse 100% 100% at 50% 50%, 
+            rgba(32, 32, 40, 1.0) 0%, 
+            rgba(36, 36, 44, 0.95) 50%, 
+            rgba(40, 40, 48, 0.65) 78%, 
+            rgba(24, 24, 28, 0.20) 92%, 
+            transparent 100%
+        ) !important;
+        transform: translateY(-2px) scale(1.03) !important;
         color: #ffffff !important;
     }
 
     #resources .wp-block-column > .wp-block-group:hover {
         transform: translateY(-4px) !important;
-    }
-
-    #resources .wp-block-column > .wp-block-group:hover figure.wp-block-image {
-        box-shadow: 0 18px 42px -4px rgba(0, 0, 0, 0.75) !important;
     }
 
     #resources .wp-block-column > .wp-block-group:hover h3.wp-block-heading {
@@ -169,27 +202,30 @@
         margin-right: auto !important;
         border: none !important;
         box-shadow: none !important;
-        filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.65)) !important;
+        filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.75)) !important;
         transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), filter 0.28s ease !important;
     }
 
-    /* Diffused sand blur aura extending slightly outside the meme photo (inset: -14px) */
+    /* Rich, dark sand diffused backing extending slightly outside the meme photo */
     #features figure.wp-block-image::before,
     #features .wp-block-image::before {
         content: '' !important;
         position: absolute !important;
-        inset: -14px !important;
+        inset: -22px -18px !important;
         z-index: 0 !important;
         pointer-events: none !important;
-        border-radius: 28px !important;
-        background: radial-gradient(ellipse 100% 100% at 50% 50%, rgba(20, 20, 23, 0.90) 0%, rgba(18, 18, 20, 0.60) 55%, rgba(15, 15, 17, 0.20) 80%, transparent 98%) !important;
-        backdrop-filter: blur(14px) !important;
-        -webkit-backdrop-filter: blur(14px) !important;
-        mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 50%, rgba(0, 0, 0, 0.75) 72%, rgba(0, 0, 0, 0.2) 88%, transparent 100%) !important;
-        -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 50%, rgba(0, 0, 0, 0.75) 72%, rgba(0, 0, 0, 0.2) 88%, transparent 100%) !important;
         border: none !important;
         box-shadow: none !important;
-        transition: background 0.3s ease, backdrop-filter 0.3s ease !important;
+        border-radius: 36px !important;
+        background: radial-gradient(ellipse 100% 100% at 50% 50%, 
+            rgba(8, 8, 10, 0.98) 0%, 
+            rgba(10, 10, 12, 0.92) 42%, 
+            rgba(14, 14, 16, 0.65) 68%, 
+            rgba(18, 18, 18, 0.22) 86%, 
+            rgba(18, 18, 18, 0.05) 94%, 
+            transparent 100%
+        ) !important;
+        transition: background 0.3s ease !important;
     }
 
     #features figure.wp-block-image > *,
