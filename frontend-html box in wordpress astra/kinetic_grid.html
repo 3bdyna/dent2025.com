@@ -21,7 +21,7 @@
         background-color: #121212 !important;
     }
 
-    /* ── 1. Deconstructed Multi-Part Outlines in #resources (Photo, Title, Button) ── */
+    /* ── 1. Clean Deconstructed Nav Cards in #resources (No Boxes / No Blurs) ── */
     #resources,
     .wp-block-group#resources,
     .wp-block-columns,
@@ -44,101 +44,71 @@
         transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
 
-    /* Disintegrate monolithic card-level blur box */
-    #resources .wp-block-column > .wp-block-group::before {
+    /* Kill all card-level pseudo-element auras */
+    #resources .wp-block-column > .wp-block-group::before,
+    #resources .wp-block-column > .wp-block-group::after {
         display: none !important;
         content: none !important;
     }
 
-    #resources .wp-block-column > .wp-block-group > * {
-        position: relative !important;
-        z-index: 1 !important;
-    }
-
-    /* Part 1: Individual Photo with Real Dark Sand Diffusion (No Straight Lines / No Rigid Box Cuts) */
+    /* Part 1: Clean Rounded Photo with Tailwind-style Diffused Shadow */
     #resources figure.wp-block-image {
         position: relative !important;
         overflow: visible !important;
         border: none !important;
-        box-shadow: none !important;
-        filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.75)) !important;
-        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), filter 0.28s ease !important;
+        background: none !important;
+        filter: none !important;
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
 
-    /* Rich, dark sand diffused backing extending slightly outside the photo (fades 100% -> 0% continuously) */
-    #resources figure.wp-block-image::before {
-        content: '' !important;
-        position: absolute !important;
-        inset: -22px -18px !important;
-        z-index: 0 !important;
-        pointer-events: none !important;
-        border: none !important;
-        box-shadow: none !important;
-        border-radius: 36px !important;
-        background: radial-gradient(ellipse 100% 100% at 50% 50%, 
-            rgba(8, 8, 10, 0.98) 0%, 
-            rgba(10, 10, 12, 0.92) 42%, 
-            rgba(14, 14, 16, 0.65) 68%, 
-            rgba(18, 18, 18, 0.22) 86%, 
-            rgba(18, 18, 18, 0.05) 94%, 
-            transparent 100%
-        ) !important;
-        transition: background 0.3s ease !important;
+    /* No pseudo-element backing on photos */
+    #resources figure.wp-block-image::before,
+    #resources figure.wp-block-image::after {
+        display: none !important;
+        content: none !important;
     }
 
     #resources figure.wp-block-image > *,
     #resources figure.wp-block-image img {
         position: relative !important;
         z-index: 1 !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
+        border-radius: 20px !important;
         display: block !important;
         width: 100% !important;
         max-width: 100% !important;
         height: auto !important;
-        mask-image: radial-gradient(ellipse 92% 86% at 50% 50%, 
-            black 65%, 
-            rgba(0, 0, 0, 0.92) 76%, 
-            rgba(0, 0, 0, 0.50) 88%, 
-            rgba(0, 0, 0, 0.12) 96%, 
-            transparent 100%
-        ) !important;
-        -webkit-mask-image: radial-gradient(ellipse 92% 86% at 50% 50%, 
-            black 65%, 
-            rgba(0, 0, 0, 0.92) 76%, 
-            rgba(0, 0, 0, 0.50) 88%, 
-            rgba(0, 0, 0, 0.12) 96%, 
-            transparent 100%
-        ) !important;
-        transition: filter 0.3s ease !important;
+        mask-image: none !important;
+        -webkit-mask-image: none !important;
+        box-shadow:
+            0 20px 25px -5px rgba(0, 0, 0, 0.7),
+            0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+        transition: box-shadow 0.28s ease, transform 0.28s ease !important;
     }
 
-    #resources .wp-block-column > .wp-block-group:hover figure.wp-block-image {
-        filter: drop-shadow(0 18px 36px rgba(0, 0, 0, 0.90)) !important;
+    #resources .wp-block-column > .wp-block-group:hover figure.wp-block-image img {
+        box-shadow:
+            0 25px 50px -12px rgba(0, 0, 0, 0.85),
+            0 12px 16px -8px rgba(0, 0, 0, 0.6) !important;
     }
 
-    /* Part 2: Individual Page Title Outline with Dedicated Dark Sand Diffusion */
+    /* Part 2: Clean Floating White Title — No Background Wrapper */
     #resources h3.wp-block-heading {
         position: relative !important;
         display: table !important;
         margin: 14px auto 10px auto !important;
-        padding: 8px 24px !important;
+        padding: 4px 0 !important;
         color: #ffffff !important;
         border: none !important;
         box-shadow: none !important;
-        border-radius: 9999px !important;
-        background: radial-gradient(ellipse 100% 100% at 50% 50%, 
-            rgba(8, 8, 10, 0.96) 0%, 
-            rgba(10, 10, 12, 0.88) 45%, 
-            rgba(14, 14, 16, 0.50) 72%, 
-            rgba(18, 18, 18, 0.15) 88%, 
-            transparent 100%
-        ) !important;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8) !important;
-        transition: transform 0.28s ease, color 0.28s ease, background 0.28s ease !important;
+        border-radius: 0 !important;
+        background: none !important;
+        text-shadow:
+            0 2px 8px rgba(0, 0, 0, 0.7),
+            0 0 20px rgba(0, 0, 0, 0.4) !important;
+        transition: transform 0.28s ease, color 0.28s ease !important;
     }
 
-    /* Part 3: Individual Link 'Go' Button Pill Outline with Dedicated Dark Sand Diffusion */
+    /* Part 3: Standalone Dark Pill "Go" Button with Clear Outline */
     #resources .wp-block-buttons {
         margin-top: 4px !important;
     }
@@ -146,33 +116,27 @@
     #resources .wp-block-button__link {
         position: relative !important;
         display: inline-block !important;
-        background: radial-gradient(ellipse 100% 100% at 50% 50%, 
-            rgba(20, 20, 26, 0.98) 0%, 
-            rgba(24, 24, 30, 0.90) 50%, 
-            rgba(28, 28, 36, 0.50) 78%, 
-            rgba(20, 20, 24, 0.12) 92%, 
-            transparent 100%
-        ) !important;
-        border: none !important;
+        background: #1a1a1e !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 9999px !important;
         padding: 10px 32px !important;
         color: #ffffff !important;
         font-weight: 600 !important;
         font-size: 0.95rem !important;
-        box-shadow: none !important;
+        box-shadow:
+            0 10px 15px -3px rgba(0, 0, 0, 0.6),
+            0 4px 6px -4px rgba(0, 0, 0, 0.4) !important;
         transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
 
     #resources .wp-block-button__link:hover {
-        background: radial-gradient(ellipse 100% 100% at 50% 50%, 
-            rgba(32, 32, 40, 1.0) 0%, 
-            rgba(36, 36, 44, 0.95) 50%, 
-            rgba(40, 40, 48, 0.65) 78%, 
-            rgba(24, 24, 28, 0.20) 92%, 
-            transparent 100%
-        ) !important;
+        background: #2a2a30 !important;
+        border-color: rgba(255, 255, 255, 0.28) !important;
         transform: translateY(-2px) scale(1.03) !important;
         color: #ffffff !important;
+        box-shadow:
+            0 20px 25px -5px rgba(0, 0, 0, 0.7),
+            0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
     }
 
     #resources .wp-block-column > .wp-block-group:hover {
@@ -183,7 +147,7 @@
         color: #ffffff !important;
     }
 
-    /* ── Bottom Front Page Meme Photo Diffused Sand-Corner Outline ── */
+    /* ── Bottom Front Page Photo — Clean Rounded with Diffused Shadow ── */
     #features,
     .wp-block-group#features,
     #features .wp-block-columns,
@@ -203,31 +167,18 @@
         margin-left: auto !important;
         margin-right: auto !important;
         border: none !important;
-        box-shadow: none !important;
-        filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.75)) !important;
-        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), filter 0.28s ease !important;
+        background: none !important;
+        filter: none !important;
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
 
-    /* Rich, dark sand diffused backing extending slightly outside the meme photo */
+    /* No pseudo-element backing on bottom photo */
     #features figure.wp-block-image::before,
-    #features .wp-block-image::before {
-        content: '' !important;
-        position: absolute !important;
-        inset: -22px -18px !important;
-        z-index: 0 !important;
-        pointer-events: none !important;
-        border: none !important;
-        box-shadow: none !important;
-        border-radius: 36px !important;
-        background: radial-gradient(ellipse 100% 100% at 50% 50%, 
-            rgba(8, 8, 10, 0.98) 0%, 
-            rgba(10, 10, 12, 0.92) 42%, 
-            rgba(14, 14, 16, 0.65) 68%, 
-            rgba(18, 18, 18, 0.22) 86%, 
-            rgba(18, 18, 18, 0.05) 94%, 
-            transparent 100%
-        ) !important;
-        transition: background 0.3s ease !important;
+    #features figure.wp-block-image::after,
+    #features .wp-block-image::before,
+    #features .wp-block-image::after {
+        display: none !important;
+        content: none !important;
     }
 
     #features figure.wp-block-image > *,
@@ -238,20 +189,28 @@
 
     #features figure.wp-block-image img,
     #features .wp-block-image img {
-        border-radius: 0 !important;
-        box-shadow: none !important;
+        border-radius: 20px !important;
         display: block !important;
         max-width: 100% !important;
         height: auto !important;
-        mask-image: radial-gradient(ellipse 92% 86% at 50% 50%, black 65%, rgba(0, 0, 0, 0.92) 76%, rgba(0, 0, 0, 0.50) 88%, rgba(0, 0, 0, 0.12) 96%, transparent 100%) !important;
-        -webkit-mask-image: radial-gradient(ellipse 92% 86% at 50% 50%, black 65%, rgba(0, 0, 0, 0.92) 76%, rgba(0, 0, 0, 0.50) 88%, rgba(0, 0, 0, 0.12) 96%, transparent 100%) !important;
-        transition: filter 0.3s ease !important;
+        mask-image: none !important;
+        -webkit-mask-image: none !important;
+        box-shadow:
+            0 20px 25px -5px rgba(0, 0, 0, 0.7),
+            0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+        transition: box-shadow 0.28s ease, transform 0.28s ease !important;
     }
 
     #features figure.wp-block-image:hover,
     #features .wp-block-image:hover {
         transform: translateY(-4px) !important;
-        filter: drop-shadow(0 16px 32px rgba(0, 0, 0, 0.80)) !important;
+    }
+
+    #features figure.wp-block-image:hover img,
+    #features .wp-block-image:hover img {
+        box-shadow:
+            0 25px 50px -12px rgba(0, 0, 0, 0.85),
+            0 12px 16px -8px rgba(0, 0, 0, 0.6) !important;
     }
 
     /* ── 2. Precise, Borderless Diffused Glassmorphism & Sand-Diffused Corners Across All Elements & Banners ── */
