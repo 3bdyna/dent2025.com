@@ -19,7 +19,7 @@
         background-color: #121212 !important;
     }
 
-    /* ── 1. Seamless Floating Items in #resources with Soft Diffused Blur Behind Them ── */
+    /* ── 1. Deconstructed Multi-Part Outlines in #resources (Photo, Title, Button) ── */
     #resources,
     .wp-block-group#resources,
     .wp-block-columns,
@@ -42,21 +42,10 @@
         transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
 
-    /* Soft, feathered diffused blur aura wrapping BOTH photo and text seamlessly (Zero hard lines / Zero rigid card box) */
+    /* Disintegrate monolithic card-level blur box */
     #resources .wp-block-column > .wp-block-group::before {
-        content: '' !important;
-        position: absolute !important;
-        inset: -45px -32px !important;
-        z-index: 0 !important;
-        pointer-events: none !important;
-        background: radial-gradient(ellipse 100% 100% at 50% 50%, rgba(20, 20, 20, 0.75) 0%, rgba(20, 20, 20, 0.42) 50%, rgba(18, 18, 18, 0.12) 75%, transparent 96%) !important;
-        backdrop-filter: blur(14px) !important;
-        -webkit-backdrop-filter: blur(14px) !important;
-        -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 25%, rgba(0, 0, 0, 0.7) 48%, rgba(0, 0, 0, 0.25) 72%, transparent 95%) !important;
-        mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 25%, rgba(0, 0, 0, 0.7) 48%, rgba(0, 0, 0, 0.25) 72%, transparent 95%) !important;
-        border: none !important;
-        box-shadow: none !important;
-        transition: background 0.3s ease, backdrop-filter 0.3s ease !important;
+        display: none !important;
+        content: none !important;
     }
 
     #resources .wp-block-column > .wp-block-group > * {
@@ -64,12 +53,15 @@
         z-index: 1 !important;
     }
 
-    /* Target the figure container for shadow so img aspect-ratio does NOT trigger Skia tile clipping */
+    /* Part 1: Individual Photo with Tight Bounds & Sand-Diffused Corners (100% -> 0%) */
     #resources figure.wp-block-image {
         position: relative !important;
         overflow: visible !important;
+        border: none !important;
         border-radius: 20px !important;
-        box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.60), 0 0 20px 2px rgba(255, 255, 255, 0.02) !important;
+        mask-image: radial-gradient(ellipse 96% 92% at 50% 50%, black 50%, rgba(0, 0, 0, 0.85) 70%, rgba(0, 0, 0, 0.3) 88%, transparent 100%) !important;
+        -webkit-mask-image: radial-gradient(ellipse 96% 92% at 50% 50%, black 50%, rgba(0, 0, 0, 0.85) 70%, rgba(0, 0, 0, 0.3) 88%, transparent 100%) !important;
+        box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.60) !important;
         transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease !important;
     }
 
@@ -83,21 +75,55 @@
         transition: filter 0.3s ease !important;
     }
 
+    /* Part 2: Individual Page Title Outline */
+    #resources h3.wp-block-heading {
+        color: #f8fafc !important;
+        border: none !important;
+        margin: 14px 0 12px 0 !important;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6) !important;
+        transition: transform 0.28s ease, color 0.28s ease !important;
+    }
+
+    /* Part 3: Individual Link 'Go' Button Pill Outline */
+    #resources .wp-block-buttons {
+        margin-top: 4px !important;
+    }
+
+    #resources .wp-block-button__link {
+        background: rgba(36, 36, 40, 0.82) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        border: none !important;
+        border-radius: 9999px !important;
+        padding: 8px 26px !important;
+        color: #f8fafc !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        display: inline-block !important;
+    }
+
+    #resources .wp-block-button__link:hover {
+        background: rgba(48, 48, 54, 0.95) !important;
+        transform: translateY(-2px) scale(1.02) !important;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55) !important;
+        color: #ffffff !important;
+    }
+
     #resources .wp-block-column > .wp-block-group:hover {
         transform: translateY(-4px) !important;
     }
 
     #resources .wp-block-column > .wp-block-group:hover figure.wp-block-image {
-        box-shadow: 0 22px 50px -6px rgba(0, 0, 0, 0.78), 0 0 32px 4px rgba(255, 255, 255, 0.035) !important;
+        box-shadow: 0 18px 42px -4px rgba(0, 0, 0, 0.75) !important;
     }
 
-    #resources .wp-block-column > .wp-block-group:hover::before {
-        background: radial-gradient(ellipse 100% 100% at 50% 50%, rgba(26, 26, 26, 0.85) 0%, rgba(22, 22, 22, 0.48) 50%, rgba(18, 18, 18, 0.14) 75%, transparent 96%) !important;
-        backdrop-filter: blur(16px) !important;
-        -webkit-backdrop-filter: blur(16px) !important;
+    #resources .wp-block-column > .wp-block-group:hover h3.wp-block-heading {
+        color: #ffffff !important;
     }
 
-    /* ── Bottom Front Page Meme Photo Diffused Blur Aura ── */
+    /* ── Bottom Front Page Meme Photo Diffused Sand-Corner Outline ── */
     #features,
     .wp-block-group#features,
     #features .wp-block-columns,
@@ -116,26 +142,19 @@
         display: table !important;
         margin-left: auto !important;
         margin-right: auto !important;
+        border: none !important;
         border-radius: 20px !important;
-        box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.60), 0 0 20px 2px rgba(255, 255, 255, 0.02) !important;
+        mask-image: radial-gradient(ellipse 96% 92% at 50% 50%, black 50%, rgba(0, 0, 0, 0.85) 70%, rgba(0, 0, 0, 0.3) 88%, transparent 100%) !important;
+        -webkit-mask-image: radial-gradient(ellipse 96% 92% at 50% 50%, black 50%, rgba(0, 0, 0, 0.85) 70%, rgba(0, 0, 0, 0.3) 88%, transparent 100%) !important;
+        box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.60) !important;
         transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease !important;
     }
 
+    /* Disintegrate overextending aura box */
     #features figure.wp-block-image::before,
     #features .wp-block-image::before {
-        content: '' !important;
-        position: absolute !important;
-        inset: -45px -35px !important;
-        z-index: 0 !important;
-        pointer-events: none !important;
-        background: radial-gradient(ellipse 100% 100% at 50% 50%, rgba(20, 20, 20, 0.75) 0%, rgba(20, 20, 20, 0.42) 50%, rgba(18, 18, 18, 0.12) 75%, transparent 96%) !important;
-        backdrop-filter: blur(14px) !important;
-        -webkit-backdrop-filter: blur(14px) !important;
-        -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 25%, rgba(0, 0, 0, 0.7) 48%, rgba(0, 0, 0, 0.25) 72%, transparent 95%) !important;
-        mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 25%, rgba(0, 0, 0, 0.7) 48%, rgba(0, 0, 0, 0.25) 72%, transparent 95%) !important;
-        border: none !important;
-        box-shadow: none !important;
-        transition: background 0.3s ease, backdrop-filter 0.3s ease !important;
+        display: none !important;
+        content: none !important;
     }
 
     #features figure.wp-block-image > *,
@@ -157,17 +176,10 @@
     #features figure.wp-block-image:hover,
     #features .wp-block-image:hover {
         transform: translateY(-4px) !important;
-        box-shadow: 0 22px 50px -6px rgba(0, 0, 0, 0.78), 0 0 32px 4px rgba(255, 255, 255, 0.035) !important;
+        box-shadow: 0 18px 42px -4px rgba(0, 0, 0, 0.75) !important;
     }
 
-    #features figure.wp-block-image:hover::before,
-    #features .wp-block-image:hover::before {
-        background: radial-gradient(ellipse 100% 100% at 50% 50%, rgba(26, 26, 26, 0.85) 0%, rgba(22, 22, 22, 0.48) 50%, rgba(18, 18, 18, 0.14) 75%, transparent 96%) !important;
-        backdrop-filter: blur(16px) !important;
-        -webkit-backdrop-filter: blur(16px) !important;
-    }
-
-    /* ── 2. Precise, Diffused Glassmorphism & Soft Ambient Shadow across Specific Pages & Banners ── */
+    /* ── 2. Precise, Borderless Diffused Glassmorphism & Sand-Diffused Corners Across All Elements & Banners ── */
     .dent-schedule-container,
     .dent-classes-widget,
     .dent-spotlight-bar,
@@ -180,29 +192,29 @@
     details.wp-block-details,
     .dent-chapter-details,
     .dent-quiz-card {
-        background: linear-gradient(145deg, rgba(32, 32, 35, 0.75) 0%, rgba(20, 20, 23, 0.62) 100%) !important;
+        background: linear-gradient(145deg, rgba(32, 32, 35, 0.78) 0%, rgba(20, 20, 23, 0.65) 100%) !important;
         backdrop-filter: blur(10px) !important;
         -webkit-backdrop-filter: blur(10px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.04) !important;
+        border: none !important;
+        border-width: 0 !important;
         border-radius: 18px !important;
-        box-shadow: 
-            0 12px 36px -6px rgba(0, 0, 0, 0.65),
-            0 0 25px 2px rgba(255, 255, 255, 0.015),
-            inset 0 1px 1px 0 rgba(255, 255, 255, 0.05) !important;
-        transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease !important;
+        mask-image: radial-gradient(ellipse 98% 94% at 50% 50%, black 55%, rgba(0, 0, 0, 0.9) 72%, rgba(0, 0, 0, 0.35) 88%, transparent 100%) !important;
+        -webkit-mask-image: radial-gradient(ellipse 98% 94% at 50% 50%, black 55%, rgba(0, 0, 0, 0.9) 72%, rgba(0, 0, 0, 0.35) 88%, transparent 100%) !important;
+        box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.55) !important;
+        transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease !important;
     }
 
     /* Sub-cards inside Schedule Container */
     .dent-schedule-container .stat-card {
-        background: rgba(255, 255, 255, 0.025) !important;
-        border: 1px solid rgba(255, 255, 255, 0.04) !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: none !important;
         backdrop-filter: blur(6px) !important;
         -webkit-backdrop-filter: blur(6px) !important;
         border-radius: 14px !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
     }
 
-    /* ── 3. Subtle Diffused Hover States ── */
+    /* ── 3. Subtle Diffused Hover States (Zero Hard Borders) ── */
     .dent-tomorrow-calendar-alert:hover,
     .dent-announcements-simple:hover,
     .gpa-banner:hover,
@@ -210,13 +222,10 @@
     .dent-timer-banner-override:hover,
     .dent-chapter-details:hover,
     .dent-quiz-card:hover {
-        background: linear-gradient(145deg, rgba(40, 40, 44, 0.85) 0%, rgba(26, 26, 30, 0.72) 100%) !important;
-        border-color: rgba(255, 255, 255, 0.08) !important;
+        background: linear-gradient(145deg, rgba(42, 42, 46, 0.88) 0%, rgba(26, 26, 30, 0.76) 100%) !important;
+        border: none !important;
         transform: translateY(-2px) !important;
-        box-shadow: 
-            0 18px 45px -6px rgba(0, 0, 0, 0.75),
-            0 0 35px 3px rgba(255, 255, 255, 0.03),
-            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 16px 42px -4px rgba(0, 0, 0, 0.70) !important;
     }
 
     /* Solid White Section Titles matching 'الجدول الدراسي' exactly */
