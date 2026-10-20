@@ -33,12 +33,13 @@
         box-shadow: none !important;
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
+        overflow: visible !important;
     }
 
     #resources .wp-block-column > .wp-block-group {
         position: relative !important;
         overflow: visible !important;
-        transition: transform 0.25s ease !important;
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
 
     /* Soft, feathered diffused blur aura wrapping BOTH photo and text seamlessly (Zero hard lines / Zero rigid card box) */
@@ -55,6 +56,7 @@
         mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 25%, rgba(0, 0, 0, 0.7) 48%, rgba(0, 0, 0, 0.25) 72%, transparent 95%) !important;
         border: none !important;
         box-shadow: none !important;
+        transition: background 0.3s ease, backdrop-filter 0.3s ease !important;
     }
 
     #resources .wp-block-column > .wp-block-group > * {
@@ -62,14 +64,37 @@
         z-index: 1 !important;
     }
 
+    /* Target the figure container for shadow so img aspect-ratio does NOT trigger Skia tile clipping */
+    #resources figure.wp-block-image {
+        position: relative !important;
+        overflow: visible !important;
+        border-radius: 20px !important;
+        box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.60), 0 0 20px 2px rgba(255, 255, 255, 0.02) !important;
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease !important;
+    }
+
     #resources figure.wp-block-image img {
         border-radius: 20px !important;
-        box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.55), 0 0 20px 2px rgba(255, 255, 255, 0.02) !important;
-        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease !important;
+        box-shadow: none !important;
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        transition: filter 0.3s ease !important;
     }
 
     #resources .wp-block-column > .wp-block-group:hover {
         transform: translateY(-4px) !important;
+    }
+
+    #resources .wp-block-column > .wp-block-group:hover figure.wp-block-image {
+        box-shadow: 0 22px 50px -6px rgba(0, 0, 0, 0.78), 0 0 32px 4px rgba(255, 255, 255, 0.035) !important;
+    }
+
+    #resources .wp-block-column > .wp-block-group:hover::before {
+        background: radial-gradient(ellipse 100% 100% at 50% 50%, rgba(26, 26, 26, 0.85) 0%, rgba(22, 22, 22, 0.48) 50%, rgba(18, 18, 18, 0.14) 75%, transparent 96%) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
     }
 
     /* ── Bottom Front Page Meme Photo Diffused Blur Aura ── */
@@ -81,6 +106,7 @@
         background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
+        overflow: visible !important;
     }
 
     #features figure.wp-block-image,
@@ -90,7 +116,9 @@
         display: table !important;
         margin-left: auto !important;
         margin-right: auto !important;
-        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        border-radius: 20px !important;
+        box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.60), 0 0 20px 2px rgba(255, 255, 255, 0.02) !important;
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease !important;
     }
 
     #features figure.wp-block-image::before,
@@ -107,6 +135,7 @@
         mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 25%, rgba(0, 0, 0, 0.7) 48%, rgba(0, 0, 0, 0.25) 72%, transparent 95%) !important;
         border: none !important;
         box-shadow: none !important;
+        transition: background 0.3s ease, backdrop-filter 0.3s ease !important;
     }
 
     #features figure.wp-block-image > *,
@@ -118,15 +147,24 @@
     #features figure.wp-block-image img,
     #features .wp-block-image img {
         border-radius: 20px !important;
-        box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.55), 0 0 20px 2px rgba(255, 255, 255, 0.02) !important;
+        box-shadow: none !important;
         display: block !important;
         max-width: 100% !important;
         height: auto !important;
+        transition: filter 0.3s ease !important;
     }
 
     #features figure.wp-block-image:hover,
     #features .wp-block-image:hover {
         transform: translateY(-4px) !important;
+        box-shadow: 0 22px 50px -6px rgba(0, 0, 0, 0.78), 0 0 32px 4px rgba(255, 255, 255, 0.035) !important;
+    }
+
+    #features figure.wp-block-image:hover::before,
+    #features .wp-block-image:hover::before {
+        background: radial-gradient(ellipse 100% 100% at 50% 50%, rgba(26, 26, 26, 0.85) 0%, rgba(22, 22, 22, 0.48) 50%, rgba(18, 18, 18, 0.14) 75%, transparent 96%) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
     }
 
     /* ── 2. Precise, Diffused Glassmorphism & Soft Ambient Shadow across Specific Pages & Banners ── */
