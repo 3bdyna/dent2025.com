@@ -349,6 +349,111 @@
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
         transform: translateY(-1px) !important;
     }
+
+    /* ── 4. Desktop Widening & Proportionate Scaling (Fills PC Screen Naturally) ── */
+    @media (min-width: 1024px) {
+        .ast-container,
+        .entry-content[data-ast-blocks-layout] > *,
+        .is-layout-constrained > :where(:not(.alignleft):not(.alignright):not(.alignfull)),
+        #resources,
+        #resources.wp-block-group,
+        #resources .wp-block-columns,
+        #dynamic-announcements-container,
+        .gpa-banner,
+        .dent-absence-banner,
+        .dent-timer-banner-override,
+        #features,
+        #features.wp-block-group {
+            max-width: 1240px !important;
+            width: 100% !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+
+        /* Enlarge #resources cards on PC */
+        #resources .wp-block-columns {
+            gap: 32px !important;
+            justify-content: center !important;
+        }
+
+        #resources .wp-block-column {
+            flex-basis: calc(33.333% - 22px) !important;
+            max-width: calc(33.333% - 22px) !important;
+        }
+
+        #resources figure.wp-block-image {
+            max-width: 340px !important;
+            margin: 0 auto !important;
+        }
+
+        #resources figure.wp-block-image img {
+            max-height: 260px !important;
+            object-fit: cover !important;
+            width: 100% !important;
+        }
+
+        #resources h3.wp-block-heading {
+            font-size: 1.35rem !important;
+            padding: 10px 30px !important;
+            margin: 18px auto 10px auto !important;
+        }
+
+        #resources .wp-block-button__link {
+            font-size: 1.05rem !important;
+            padding: 11px 42px !important;
+        }
+
+        /* Enlarge banners on PC */
+        .gpa-banner,
+        .dent-absence-banner,
+        .dent-timer-banner-override {
+            padding: 20px 30px !important;
+            margin: 16px auto !important;
+            border-radius: 20px !important;
+        }
+
+        .gpa-banner h3,
+        .dent-absence-banner h3,
+        .gpa-banner-text-timer h3 {
+            font-size: 1.25rem !important;
+        }
+
+        .gpa-banner p,
+        .dent-absence-banner p,
+        .gpa-banner-text-timer p {
+            font-size: 0.95rem !important;
+        }
+
+        /* Meme section widening */
+        #features figure.wp-block-image img {
+            max-width: 600px !important;
+        }
+    }
+
+    @media (min-width: 1440px) {
+        .ast-container,
+        .entry-content[data-ast-blocks-layout] > *,
+        .is-layout-constrained > :where(:not(.alignleft):not(.alignright):not(.alignfull)),
+        #resources,
+        #resources.wp-block-group,
+        #resources .wp-block-columns,
+        #dynamic-announcements-container,
+        .gpa-banner,
+        .dent-absence-banner,
+        .dent-timer-banner-override,
+        #features,
+        #features.wp-block-group {
+            max-width: 1360px !important;
+        }
+
+        #resources figure.wp-block-image {
+            max-width: 380px !important;
+        }
+
+        #resources figure.wp-block-image img {
+            max-height: 290px !important;
+        }
+    }
 </style>
 
 <canvas id="dent-kinetic-canvas" aria-hidden="true"></canvas>
@@ -361,8 +466,19 @@
 
     const canvas = document.getElementById('dent-kinetic-canvas');
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    let ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    canvas.addEventListener('contextlost', function(e) {
+        e.preventDefault();
+    });
+    canvas.addEventListener('contextrestored', function() {
+        ctx = canvas.getContext('2d');
+        checkResize();
+        if (!rafId && !prefersReducedMotion) {
+            rafId = requestAnimationFrame(draw);
+        }
+    });
 
     // Exact site color match (#121212) + Monochrome White tokens + Golden Star Cosmic Wake
     const THEME = {
@@ -638,6 +754,13 @@
 
     // Main 60 FPS Render Loop with Zero-Lag Dirty Checking & Smooth Unwind Fade
     function draw(now) {
+        if (!ctx || (ctx.isContextLost && ctx.isContextLost())) {
+            ctx = canvas.getContext('2d');
+            if (!ctx) {
+                rafId = requestAnimationFrame(draw);
+                return;
+            }
+        }
         checkResize();
 
         // Track live star position (Cosmic Wake)
@@ -683,11 +806,7 @@
             isDirty = true;
         }
 
-                if (!isDirty && dirtyFrames <= 0) {
-            rafId = requestAnimationFrame(draw);
-            return;
-        }
-        if (dirtyFrames > 0) dirtyFrames--;
+        // Continuously draw while visible so buffer is never lost after fullscreen/glitches
 
         ctx.clearRect(0, 0, W, H);
         ctx.fillStyle = THEME.bg;
