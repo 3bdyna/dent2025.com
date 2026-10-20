@@ -506,6 +506,41 @@ assert_test("Restored quiz has deleted_at stripped and restored_at set", !isset(
 @rmdir($mock_quizzes_dir);
 
 // -----------------------------------------------------------------------------
+echo "\n10. Testing AI Exam Prompt & Non-Exam Content Filtering Logic...\n";
+if (!defined('DENT2025_TEST_MODE')) {
+    define('DENT2025_TEST_MODE', true);
+}
+require_once __DIR__ . '/../backend/api_ai_exam.php';
+
+assert_test("isAdministrativeOrPlanNonExamQuestion function exists", function_exists('isAdministrativeOrPlanNonExamQuestion'));
+
+// 1. Course specifications & descriptions
+assert_test("Filters out course specifications question", isAdministrativeOrPlanNonExamQuestion("According to the course specifications, what is the prerequisite?") === true);
+assert_test("Filters out Arabic course specification (توصيف المقرر)", isAdministrativeOrPlanNonExamQuestion("ما هي أهداف المقرر المحددة في توصيف المقرر؟") === true);
+
+// 2. Course plans & study plans
+assert_test("Filters out course plan question", isAdministrativeOrPlanNonExamQuestion("What is the course plan for week 4 in this semester?") === true);
+assert_test("Filters out study plan & CLO question", isAdministrativeOrPlanNonExamQuestion("Which topic is listed under CLO 1.2 in the study plan?") === true);
+assert_test("Filters out lecture outline question", isAdministrativeOrPlanNonExamQuestion("What is outlined in the lecture outline for session 2?") === true);
+assert_test("Filters out Arabic study plan (الخطة الدراسية)", isAdministrativeOrPlanNonExamQuestion("ما هي المواضيع المقررة في الخطة الدراسية للأسبوع الثالث؟") === true);
+
+// 3. Grading & attendance / DN rules
+assert_test("Filters out grade distribution question", isAdministrativeOrPlanNonExamQuestion("What is the grade distribution for the final exam (percentage of the final exam)?") === true);
+assert_test("Filters out attendance policy and DN limit", isAdministrativeOrPlanNonExamQuestion("What is the attendance policy and DN limit for this course?") === true);
+assert_test("Filters out Arabic absence & denial (حرمان)", isAdministrativeOrPlanNonExamQuestion("ما هي نسبة الغياب التي تؤدي إلى الحرمان من الاختبار؟") === true);
+
+// 4. Professor contacts & recommended textbooks
+assert_test("Filters out course coordinator & office hours", isAdministrativeOrPlanNonExamQuestion("Who is the course coordinator and what are the office hours?") === true);
+assert_test("Filters out recommended textbook question", isAdministrativeOrPlanNonExamQuestion("What is the recommended textbook according to the syllabus?") === true);
+
+// 5. Preserves legitimate clinical/medical plans and academic questions
+assert_test("Preserves clinical dental treatment plan", isAdministrativeOrPlanNonExamQuestion("What is the primary treatment plan for a patient presenting with irreversible pulpitis?") === false);
+assert_test("Preserves clinical medical management plan", isAdministrativeOrPlanNonExamQuestion("What is the initial management plan for an acute asthma exacerbation?") === false);
+assert_test("Preserves Arabic dental treatment plan (خطة علاجية)", isAdministrativeOrPlanNonExamQuestion("ما هي الخطة العلاجية المتبعة في علاج جذور الأسنان؟") === false);
+assert_test("Preserves standard cranial nerve anatomy question", isAdministrativeOrPlanNonExamQuestion("Which cranial nerve provides sensory innervation to the anterior two-thirds of the tongue?") === false);
+assert_test("Preserves biochemistry pathway question", isAdministrativeOrPlanNonExamQuestion("What is the rate-limiting enzyme of the glycolytic pathway in cellular respiration?") === false);
+
+// -----------------------------------------------------------------------------
 // SUMMARY REPORT
 // -----------------------------------------------------------------------------
 echo "\n=======================================================\n";
