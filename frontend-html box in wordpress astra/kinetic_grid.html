@@ -501,17 +501,19 @@
         }
         if (starElem) {
             const isFloating = starElem.classList.contains('star-floating');
+            const isEntering = starElem.classList.contains('star-entering-left') || starElem.classList.contains('star-entering-right');
+            const isStarActive = isFloating || isEntering;
             const rect = starElem.getBoundingClientRect();
-            if (isFloating && rect.width > 0 && rect.bottom > 0 && rect.top < H && rect.right > 0 && rect.left < W) {
+            if (isStarActive && rect.width > 0 && rect.bottom > 0 && rect.top < H && rect.right > 0 && rect.left < W) {
                 starState.x = rect.left + rect.width / 2;
                 starState.y = rect.top + rect.height / 2;
                 starState.active = true;
-                starState.strength = lerp(starState.strength, 1.0, 0.08);
+                starState.strength = isEntering ? 1.0 : lerp(starState.strength, 1.0, 0.08);
                 starState.pulse = 1.0 + 0.18 * Math.sin(now * 0.0035);
                 isDirty = true;
             } else {
                 starState.active = false;
-                starState.strength = lerp(starState.strength, 0, 0.05);
+                starState.strength = lerp(starState.strength, 0, 0.1);
                 if (starState.strength > 0.001) isDirty = true;
             }
         }
