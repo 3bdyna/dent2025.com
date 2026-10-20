@@ -13,9 +13,9 @@
         --card-hover-bg: var(--dent-bg-card-hover, rgba(255, 255, 255, 0.08));
         --border-color: var(--dent-border-subtle, rgba(255, 255, 255, 0.08));
         --border-hover: var(--dent-border-hover, rgba(255, 255, 255, 0.22));
-        --text-primary: var(--dent-text-primary, #f8fafc);
-        --text-secondary: var(--dent-text-secondary, #94a3b8);
-        --text-muted: var(--dent-text-muted, #64748b);
+        --text-primary: var(--dent-text-primary, #f4f4f5);
+        --text-secondary: var(--dent-text-secondary, #a1a1aa);
+        --text-muted: var(--dent-text-muted, #71717a);
     }
 
     .dent-schedule-container {
@@ -51,7 +51,7 @@
         border-radius: 8px;
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        color: #94a3b8;
+        color: var(--text-secondary, #a1a1aa);
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -370,7 +370,7 @@
         border-radius: 6px;
         background: rgba(255, 255, 255, 0.06);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        color: #cbd5e1;
+        color: var(--text-secondary, #d4d4d8);
         white-space: nowrap;
     }
     .badge.highlight-badge {
@@ -383,14 +383,14 @@
         background: transparent;
         border-style: dashed;
         border-color: rgba(255, 255, 255, 0.08);
-        color: #64748b;
+        color: var(--text-muted, #71717a);
     }
     
     /* Event Type Badges - Clean, Non-Flashy Minimalist Aesthetic */
     .badge[class*="badge-type-"] {
         background: rgba(255, 255, 255, 0.04);
         border: 1px solid rgba(255, 255, 255, 0.09);
-        color: #cbd5e1;
+        color: var(--text-secondary, #d4d4d8);
         font-weight: 500;
     }
     
@@ -410,12 +410,12 @@
         margin: 0;
     }
     .event-edit-btn {
-        background: rgba(59, 130, 246, 0.12);
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        color: #60a5fa;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #ffffff;
     }
     .event-edit-btn:hover {
-        background: rgba(59, 130, 246, 0.25);
+        background: rgba(255, 255, 255, 0.18);
         color: #ffffff;
     }
     .event-delete-btn {

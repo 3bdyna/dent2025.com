@@ -1275,7 +1275,7 @@ const ScheduleApp = {
                     </button>
 
                     <button type="button" id="dent-exec-image-btn" onclick="ScheduleApp.executeSaveAsImage()" style="width: 100%; height: 48px; min-height: 48px; background: var(--dent-bg-button); color: var(--dent-text-primary); border: 1px solid var(--dent-border-card); border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); white-space: nowrap; padding: 0 14px;" onmouseover="this.style.background='var(--dent-border-card)'; this.style.borderColor='var(--dent-border-hover)';" onmouseout="this.style.background='var(--dent-bg-button)'; this.style.borderColor='var(--dent-border-card)';">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="flex-shrink:0;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         <span style="white-space: nowrap;">نسخ كصورة</span>
                     </button>
                 </div>

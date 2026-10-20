@@ -8,26 +8,26 @@
     margin: 20px 0; direction: rtl;
 }
 .dent-chapter-details {
-    background: linear-gradient(145deg, rgba(32, 32, 35, 0.78) 0%, rgba(20, 20, 23, 0.65) 100%);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: #18191d;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     border: none;
     border-radius: 18px;
-    mask-image: radial-gradient(ellipse 98% 94% at 50% 50%, black 55%, rgba(0, 0, 0, 0.9) 72%, rgba(0, 0, 0, 0.35) 88%, transparent 100%);
-    -webkit-mask-image: radial-gradient(ellipse 98% 94% at 50% 50%, black 55%, rgba(0, 0, 0, 0.9) 72%, rgba(0, 0, 0, 0.35) 88%, transparent 100%);
+    mask-image: none;
+    -webkit-mask-image: none;
     overflow: hidden;
     transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-    box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.55);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.65), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
 }
 .dent-chapter-details:hover {
-    background: linear-gradient(145deg, rgba(42, 42, 46, 0.88) 0%, rgba(26, 26, 30, 0.76) 100%);
+    background: #1f2025;
     border: none;
-    box-shadow: 0 16px 42px -4px rgba(0, 0, 0, 0.70);
+    box-shadow: 0 25px 45px -8px rgba(0, 0, 0, 0.75), 0 10px 15px -5px rgba(0, 0, 0, 0.55);
     transform: translateY(-2px);
 }
 .dent-chapter-details[open] {
     border: none;
-    box-shadow: 0 16px 42px -4px rgba(0, 0, 0, 0.70);
+    box-shadow: 0 25px 45px -8px rgba(0, 0, 0, 0.75), 0 10px 15px -5px rgba(0, 0, 0, 0.55);
 }
 .dent-chapter-summary {
     padding: 16px 20px; font-size: 1.05rem; font-weight: 600; color: var(--dent-text-primary, #f8fafc); cursor: pointer;
@@ -93,7 +93,7 @@
     background: transparent;
     border: 1px solid transparent;
     border-radius: 8px;
-    color: var(--dent-text-secondary, #94a3b8);
+    color: var(--dent-text-secondary, #a1a1aa);
     font-size: 0.88rem;
     font-weight: 600;
     cursor: pointer;
@@ -152,19 +152,19 @@
     color: var(--dent-text-light, #ffffff);
 }
 .dent-expand-toggle-btn {
-    background: var(--dent-accent-primary-bg, rgba(59, 130, 246, 0.12));
-    border-color: var(--dent-accent-primary-border, rgba(59, 130, 246, 0.25));
-    color: var(--dent-accent-primary-hover, #93c5fd);
+    background: var(--dent-bg-pill, rgba(255, 255, 255, 0.06));
+    border-color: var(--dent-border-card, rgba(255, 255, 255, 0.14));
+    color: var(--dent-text-primary, #f4f4f5);
 }
 .dent-expand-toggle-btn:hover {
-    background: rgba(59, 130, 246, 0.22);
-    border-color: rgba(59, 130, 246, 0.4);
-    color: #bfdbfe;
+    background: var(--dent-bg-pill-hover, rgba(255, 255, 255, 0.14));
+    border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.25));
+    color: #ffffff;
 }
 .dent-add-link-btn {
     background: var(--dent-bg-pill, rgba(255, 255, 255, 0.05));
     border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1));
-    color: var(--dent-text-secondary, #cbd5e1);
+    color: var(--dent-text-secondary, #d4d4d8);
     padding: 5px 12px;
     border-radius: 6px;
     cursor: pointer;

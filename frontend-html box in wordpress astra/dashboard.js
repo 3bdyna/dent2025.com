@@ -484,12 +484,12 @@ function dentEnsureBaseStyles() {
         }
         .dent-modal-btn-cancel:hover { background: var(--dent-bg-pill-hover, rgba(255,255,255,0.12)); color: var(--dent-text-light, #fff); }
         .dent-modal-btn-save {
-            background: var(--dent-accent-primary, #3b82f6); color: #ffffff; border: 1px solid var(--dent-accent-primary-border, rgba(59,130,246,0.35));
+            background: #262626; color: #ffffff; border: 1px solid rgba(255,255,255,0.2);
             padding: 10px 22px; border-radius: 10px; font-weight: 600; font-size: 0.9rem;
             cursor: pointer; transition: all 0.2s; font-family: inherit;
-            box-shadow: 0 2px 10px rgba(59, 130, 246, 0.25);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
-        .dent-modal-btn-save:hover { background: var(--dent-accent-primary-hover, #60a5fa); border-color: rgba(59,130,246,0.5); box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35); }
+        .dent-modal-btn-save:hover { background: #333333; border-color: rgba(255,255,255,0.35); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); }
     `);
 }
 
@@ -1168,10 +1168,10 @@ function renderAnnouncements(dataObj, selection) {
         .dent-ann-content p:empty,
         .dent-ann-content br:last-child { display: none; }
         .dent-ann-content[contenteditable="true"] {
-            background: var(--dent-bg-card-subtle, rgba(0,0,0,0.3)); border: 1px dashed var(--dent-accent-primary, #3b82f6); padding: 15px; border-radius: 8px; outline: none; min-height: 40px;
+            background: var(--dent-bg-card-subtle, rgba(0,0,0,0.3)); border: 1px dashed var(--dent-border-hover, rgba(255,255,255,0.3)); padding: 15px; border-radius: 8px; outline: none; min-height: 40px;
         }
         .dent-ann-toolbar { display: none; gap: 8px; margin-bottom: 15px; border-bottom: 1px solid var(--dent-border-subtle, rgba(255,255,255,0.1)); padding-bottom: 10px; }
-        .dent-toolbar-btn { background: var(--dent-bg-pill, rgba(255,255,255,0.05)); border: 1px solid var(--dent-border-card, rgba(255,255,255,0.1)); color: var(--dent-text-secondary, #cbd5e1); padding: 5px 10px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; font-family: inherit; font-weight: bold; }
+        .dent-toolbar-btn { background: var(--dent-bg-pill, rgba(255,255,255,0.05)); border: 1px solid var(--dent-border-card, rgba(255,255,255,0.1)); color: var(--dent-text-secondary, #d4d4d8); padding: 5px 10px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; font-family: inherit; font-weight: bold; }
         .dent-toolbar-btn:hover { background: var(--dent-bg-pill-hover, rgba(255,255,255,0.15)); }
         .dent-ann-top-left {
             position: absolute;
@@ -1185,7 +1185,7 @@ function renderAnnouncements(dataObj, selection) {
         .dent-ann-time-badge {
             background: var(--dent-bg-pill, rgba(255, 255, 255, 0.04));
             border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08));
-            color: var(--dent-text-secondary, #94a3b8);
+            color: var(--dent-text-secondary, #a1a1aa);
             padding: 3px 8px;
             border-radius: 6px;
             font-size: 0.75rem;
@@ -1198,7 +1198,7 @@ function renderAnnouncements(dataObj, selection) {
         .dent-ann-edit-btn {
             background: var(--dent-bg-pill, rgba(255,255,255,0.05));
             border: 1px solid var(--dent-border-card, rgba(255,255,255,0.1));
-            color: var(--dent-text-secondary, #cbd5e1);
+            color: var(--dent-text-secondary, #d4d4d8);
             padding: 4px 10px;
             border-radius: 6px;
             font-size: 0.75rem;
@@ -1208,8 +1208,8 @@ function renderAnnouncements(dataObj, selection) {
         }
         .dent-ann-edit-btn:hover { background: var(--dent-bg-pill-hover, rgba(255,255,255,0.1)); }
         .dent-ann-save-btn {
-            background: var(--dent-accent-primary, #3b82f6);
-            border: none;
+            background: #262626;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: var(--dent-text-light, #ffffff);
             padding: 4px 10px;
             border-radius: 6px;
@@ -1480,17 +1480,17 @@ function renderClassesWidget() {
             display: flex; flex-direction: column; gap: 4px;
         }
         .dent-classes-title {
-            font-size: 1.25rem; font-weight: 700; color: var(--dent-text-primary, #f8fafc); margin: 0;
+            font-size: 1.25rem; font-weight: 700; color: var(--dent-text-primary, #f4f4f5); margin: 0;
         }
         .dent-classes-subtitle {
-            font-size: 0.8rem; color: var(--dent-text-secondary, #94a3b8); font-weight: 500;
+            font-size: 0.8rem; color: var(--dent-text-secondary, #a1a1aa); font-weight: 500;
         }
         .dent-classes-controls {
             display: flex; align-items: center; gap: 10px;
         }
         .dent-classes-group-select {
             background: var(--dent-bg-button, #18181b); border: 1px solid var(--dent-border-card, rgba(255,255,255,0.15));
-            color: var(--dent-text-primary, #f8fafc); padding: 6px 12px; border-radius: 8px; font-size: 0.85rem;
+            color: var(--dent-text-primary, #f4f4f5); padding: 6px 12px; border-radius: 8px; font-size: 0.85rem;
             font-family: inherit; outline: none; cursor: pointer; transition: border-color 0.2s;
         }
         .dent-classes-group-select:focus {
@@ -1521,18 +1521,18 @@ function renderClassesWidget() {
             align-items: center; gap: 8px; flex-wrap: wrap;
         }
         .dent-spotlight-count-badge {
-            font-size: 0.75rem; font-weight: 600; color: var(--dent-text-secondary, #cbd5e1); background: var(--dent-bg-pill, rgba(255, 255, 255, 0.1));
+            font-size: 0.75rem; font-weight: 600; color: var(--dent-text-secondary, #d4d4d8); background: var(--dent-bg-pill, rgba(255, 255, 255, 0.1));
             border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.12)); padding: 2px 8px; border-radius: 6px;
         }
         .dent-spotlight-bar-days {
-            font-size: 0.8rem; color: var(--dent-text-secondary, #94a3b8); line-height: 1.45;
+            font-size: 0.8rem; color: var(--dent-text-secondary, #a1a1aa); line-height: 1.45;
         }
         .dent-spotlight-bar-days b {
-            color: var(--dent-text-primary, #f8fafc); font-weight: 600;
+            color: var(--dent-text-primary, #f4f4f5); font-weight: 600;
         }
         .dent-spotlight-clear-btn {
             background: var(--dent-bg-pill, rgba(255, 255, 255, 0.08)); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.15));
-            color: var(--dent-text-primary, #f8fafc); padding: 6px 12px; border-radius: 8px; font-size: 0.78rem;
+            color: var(--dent-text-primary, #f4f4f5); padding: 6px 12px; border-radius: 8px; font-size: 0.78rem;
             font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s; font-family: inherit;
         }
         .dent-spotlight-clear-btn:hover {
@@ -1562,7 +1562,7 @@ function renderClassesWidget() {
             padding: 2px 8px; border-radius: 6px; border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.15));
         }
         .dent-day-count {
-            font-size: 0.75rem; font-weight: 500; color: var(--dent-text-secondary, #94a3b8); background: var(--dent-bg-pill, rgba(255, 255, 255, 0.05));
+            font-size: 0.75rem; font-weight: 500; color: var(--dent-text-secondary, #a1a1aa); background: var(--dent-bg-pill, rgba(255, 255, 255, 0.05));
             border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08)); padding: 2px 8px; border-radius: 6px;
         }
         .dent-class-item {
@@ -1600,11 +1600,11 @@ function renderClassesWidget() {
             display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
         }
         .dent-class-subject {
-            font-size: 0.95rem; font-weight: 600; margin: 0; color: var(--dent-text-primary, #f8fafc);
+            font-size: 0.95rem; font-weight: 600; margin: 0; color: var(--dent-text-primary, #f4f4f5);
         }
         .dent-type-badge {
             font-size: 0.72rem; padding: 2px 8px; border-radius: 5px; font-weight: 500;
-            background: var(--dent-bg-pill, rgba(255, 255, 255, 0.06)); color: var(--dent-text-secondary, #cbd5e1); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1));
+            background: var(--dent-bg-pill, rgba(255, 255, 255, 0.06)); color: var(--dent-text-secondary, #d4d4d8); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1));
             display: inline-block;
         }
         .dent-class-time-wrap {
@@ -1616,14 +1616,14 @@ function renderClassesWidget() {
             display: inline-flex; align-items: center;
         }
         .dent-class-time {
-            font-size: 0.82rem; color: var(--dent-text-secondary, #cbd5e1); direction: ltr; font-weight: 600; font-family: monospace;
+            font-size: 0.82rem; color: var(--dent-text-secondary, #d4d4d8); direction: ltr; font-weight: 600; font-family: monospace;
         }
         .dent-classes-empty-day {
-            color: var(--dent-text-muted, #64748b); font-size: 0.84rem; text-align: center; padding: 14px;
+            color: var(--dent-text-muted, #71717a); font-size: 0.84rem; text-align: center; padding: 14px;
             background: var(--dent-bg-canvas-subtle, rgba(255,255,255,0.015)); border-radius: 8px; border: 1px dashed var(--dent-border-subtle, rgba(255,255,255,0.06));
         }
         .dent-classes-hint {
-            font-size: 0.78rem; color: var(--dent-text-muted, #64748b); margin-top: 18px; text-align: center;
+            font-size: 0.78rem; color: var(--dent-text-muted, #71717a); margin-top: 18px; text-align: center;
             background: var(--dent-bg-canvas-subtle, rgba(255,255,255,0.02)); padding: 8px 12px; border-radius: 8px;
         }
     `);
@@ -1821,12 +1821,12 @@ function buildClassesModals(group) {
                         <div style="flex: 1;"><label style="font-size:0.75rem; color:#9ca3af;">وقت الانتهاء</label><input type="time" id="adm-c-et" style="width: 100%; background: #121212; font-family: inherit; height: 38px; border: 1px solid rgba(255,255,255,0.1); color: #fff; -webkit-text-fill-color: #fff; padding: 8px; border-radius: 6px; box-sizing: border-box; -webkit-appearance: none; appearance: none;"></div>
                     </div>
                     <div style="display: flex; gap: 16px; margin-bottom: 15px; align-items: center;">
-                        <label style="color: #cbd5e1; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;"><input type="radio" name="adm-c-type" value="نظري" checked style="accent-color: #94a3b8 !important; width: 16px; height: 16px; cursor: pointer;"> نظري</label>
-                        <label style="color: #cbd5e1; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;"><input type="radio" name="adm-c-type" value="عملي" style="accent-color: #94a3b8 !important; width: 16px; height: 16px; cursor: pointer;"> عملي</label>
+                        <label style="color: #d4d4d8; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;"><input type="radio" name="adm-c-type" value="نظري" checked style="accent-color: #a1a1aa !important; width: 16px; height: 16px; cursor: pointer;"> نظري</label>
+                        <label style="color: #d4d4d8; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;"><input type="radio" name="adm-c-type" value="عملي" style="accent-color: #a1a1aa !important; width: 16px; height: 16px; cursor: pointer;"> عملي</label>
                     </div>
-                    <button type="button" class="dent-classes-add-submit-btn" style="margin-top:0; width: 100% !important; background: #27272a !important; color: #f8fafc !important; border: 1px solid rgba(255,255,255,0.15) !important; padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 0.9rem; font-family: inherit; cursor: pointer; transition: all 0.2s; box-shadow: none;" onmouseover="this.style.background='#3f3f46'; this.style.borderColor='rgba(255,255,255,0.25)';" onmouseout="this.style.background='#27272a'; this.style.borderColor='rgba(255,255,255,0.15)';" onclick="saveClassEntry()">إضافة الفصل</button>
+                    <button type="button" class="dent-classes-add-submit-btn" style="margin-top:0; width: 100% !important; background: #262626 !important; color: #ffffff !important; border: 1px solid rgba(255,255,255,0.18) !important; padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 0.9rem; font-family: inherit; cursor: pointer; transition: all 0.2s; box-shadow: none;" onmouseover="this.style.background='#333333'; this.style.borderColor='rgba(255,255,255,0.28)';" onmouseout="this.style.background='#262626'; this.style.borderColor='rgba(255,255,255,0.18)';" onclick="saveClassEntry()">إضافة الفصل</button>
                 </div>
-                <div style="font-size: 0.75rem; color: #64748b; text-align: center; margin-bottom: 5px; margin-top: 10px;">(مرر للأسفل لرؤية كل المحاضرات)</div>
+                <div style="font-size: 0.75rem; color: #71717a; text-align: center; margin-bottom: 5px; margin-top: 10px;">(مرر للأسفل لرؤية كل المحاضرات)</div>
                 <div style="max-height:150px; overflow-y:auto; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.2) transparent;">
                     ${adminListHtml}
                 </div>
@@ -1981,8 +1981,8 @@ function generateLinksHtml(links) {
     let html = '<div class="dent-links-grid">';
     sortedLinks.forEach(link => {
         let icon = '';
-        let color = '#3b82f6';
-        let bg = 'rgba(59, 130, 246, 0.1)';
+        let color = '#d4d4d8';
+        let bg = 'rgba(255, 255, 255, 0.08)';
         let cardPadding = '7px 12px';
         let fontSize = '0.8rem';
         let iconSize = '22px';
@@ -2007,8 +2007,8 @@ function generateLinksHtml(links) {
             bg = 'rgba(239, 68, 68, 0.12)';
         } else if (link.type === 'drive') {
             icon = '<svg viewBox="0 0 24 24" fill="currentColor" style="width:13px;height:13px;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>';
-            color = '#60a5fa';
-            bg = 'rgba(59, 130, 246, 0.12)';
+            color = '#ffffff';
+            bg = 'rgba(255, 255, 255, 0.08)';
         } else {
             icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>';
             color = '#34d399';

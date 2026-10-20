@@ -50,6 +50,14 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
   font-family: 'Outfit', 'Noto Kufi Arabic', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
+/* Neutralize WordPress Astra default blue links and focus rings */
+a, a:visited {
+  color: inherit;
+}
+a:hover, a:focus {
+  color: #ffffff;
+}
+
 /* ========================================================
    DENT2025 UNIFIED DESIGN TOKENS (MASTER THEME HUB)
    To change the website theme or palette, edit values HERE.
@@ -127,9 +135,9 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
 .gpa-banner,
 .dent-absence-banner,
 .dent-timer-banner-override {
-  background: linear-gradient(145deg, rgba(32, 32, 35, 0.70) 0%, rgba(20, 20, 23, 0.58) 100%) !important;
-  backdrop-filter: blur(6px) !important;
-  -webkit-backdrop-filter: blur(6px) !important;
+  background: #18191d !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   border: none !important;
   border-width: 0 !important;
   padding: 14px 20px !important;
@@ -145,9 +153,9 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
   width: 100% !important;
   max-width: 100% !important;
   margin: 10px 0 !important;
-  mask-image: radial-gradient(ellipse 98% 94% at 50% 50%, black 55%, rgba(0, 0, 0, 0.9) 72%, rgba(0, 0, 0, 0.35) 88%, transparent 100%) !important;
-  -webkit-mask-image: radial-gradient(ellipse 98% 94% at 50% 50%, black 55%, rgba(0, 0, 0, 0.9) 72%, rgba(0, 0, 0, 0.35) 88%, transparent 100%) !important;
-  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.55) !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.65), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
   user-select: none !important;
@@ -156,9 +164,9 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
 .gpa-banner:hover,
 .dent-absence-banner:hover,
 .dent-timer-banner-override:hover {
-  background: linear-gradient(145deg, rgba(42, 42, 46, 0.88) 0%, rgba(26, 26, 30, 0.76) 100%) !important;
+  background: #1f2025 !important;
   border: none !important;
-  box-shadow: 0 16px 42px -4px rgba(0, 0, 0, 0.70) !important;
+  box-shadow: 0 25px 45px -8px rgba(0, 0, 0, 0.75), 0 10px 15px -5px rgba(0, 0, 0, 0.55) !important;
   transform: translateY(-2px) !important;
 }
 
