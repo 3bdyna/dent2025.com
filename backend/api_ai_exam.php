@@ -1653,6 +1653,60 @@ function summarizeQuizLanguage($questions) {
     return $arabic > $english ? 'ar' : 'en';
 }
 
+/**
+ * Detect questions testing administrative metadata, course specifications, course plans,
+ * CLOs, grading policies, attendance, or non-exam filler.
+ * Note: Clinical/medical plans (e.g. "treatment plan", "management plan") are legitimate academic content and preserved.
+ */
+function isAdministrativeOrPlanNonExamQuestion($questionText, $options = [], $explanation = '') {
+    $sample = (string)$questionText . ' ' . implode(' ', is_array($options) ? $options : []) . ' ' . (string)$explanation;
+
+    // Course specifications & descriptions
+    if (preg_match('/\b(?:course\s+(?:specifications?|specs?|description|syllabus|overview|code|credit\s+hours?))\b/i', $sample) ||
+        preg_match('/(?:توصيف\s+المقرر|مواصفات\s+المقرر|وصف\s+المقرر|رمز\s+المقرر|الساعات\s+المعتمدة)/u', $sample)) {
+        return true;
+    }
+
+    // Learning outcomes (CLOs, ILOs, PLOs)
+    if (preg_match('/\b(?:course\s+learning\s+outcomes?|intended\s+learning\s+outcomes?|program\s+learning\s+outcomes?)\b/i', $sample) ||
+        preg_match('/\b(?:CLO|CLOs|ILO|ILOs|PLO|PLOs)\s*[:#\d\.\-]/i', $sample) ||
+        preg_match('/(?:مخرجات\s+التعلم|أهداف\s+المقرر|الكفايات\s+المستهدفة)/u', $sample) ||
+        preg_match('/\bby\s+the\s+end\s+of\s+this\s+(?:course|lecture|unit)\b/i', $sample)) {
+        return true;
+    }
+
+    // Course / Study / Semester / Lecture Plans & Agendas (protect clinical treatment/management/care plans)
+    if (preg_match('/\b(?:course\s+plan|study\s+plan|lecture\s+plan|lesson\s+plan|semester\s+plan|curriculum\s+plan|syllabus\s+plan|teaching\s+plan|weekly\s+schedule|lecture\s+schedule|course\s+outline|lecture\s+outline)\b/i', $sample) ||
+        preg_match('/(?:خطة\s+المقرر|الخطة\s+الدراسية|خطة\s+المادة|خطة\s+الفصل|الخطة\s+التدريسية|جدول\s+المحاضرات\s+الأسبوعي|مخطط\s+المقرر|مخطط\s+المحاضرة)/u', $sample)) {
+        return true;
+    }
+
+    // Question stem specifically asking about "plan of the course" or "course outline" or "agenda"
+    if (preg_match('/\b(?:in\s+the\s+course\s+outline|according\s+to\s+the\s+course\s+outline|agenda\s+of\s+this\s+lecture)\b/i', (string)$questionText)) {
+        return true;
+    }
+
+    // Grading, exam weighting, marks distribution
+    if (preg_match('/\b(?:grade\s+distribution|grading\s+(?:policy|scale|breakdown|criteria)|weight\s+of\s+the\s+(?:midterm|final)\s+exam|percentage\s+of\s+(?:the\s+)?final\s+exam|percentage\s+of\s+(?:the\s+)?midterm)\b/i', $sample) ||
+        preg_match('/(?:توزيع\s+الدرجات|درجة\s+أعمال\s+السنة|سياسة\s+التقييم)/u', $sample)) {
+        return true;
+    }
+
+    // Attendance, absence, denial (DN)
+    if (preg_match('/\b(?:attendance\s+policy|absence\s+(?:policy|limit|percentage)|denial\s+rules?|DN\s+percentage|DN\s+limit)\b/i', $sample) ||
+        preg_match('/(?:نسبة\s+الغياب|سياسة\s+الحضور|الحرمان\s+من\s+الاختبار|الإنذار\s+الأكاديمي)/u', $sample)) {
+        return true;
+    }
+
+    // Faculty contact info & recommended textbooks
+    if (preg_match('/\b(?:course\s+coordinator|instructor\s+email|office\s+hours|recommended\s+textbooks?|prescribed\s+textbooks?)\b/i', $sample) ||
+        preg_match('/(?:منسق\s+المقرر|أستاذ\s+المقرر|المرجع\s+الرئيسي|الكتاب\s+المقرر)/u', $sample)) {
+        return true;
+    }
+
+    return false;
+}
+
 function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches = 1) {
     global $GEMINI_MODELS;
     $hasFileUri = !empty($data['gemini_file_uri']);
@@ -1713,6 +1767,11 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         $prompt .= "4. OCR & TYPO CLEANING: Intelligently fix scanning artifacts, misread letters, and typographical errors in past exam stems without altering the academic meaning.\n";
         $prompt .= "5. VERIFIED ANSWER DEDUCTION: Ignore any handwritten student scribbles or pencil marks on scanned exams. Scientifically verify the 100% accurate correct answer.\n";
         $prompt .= "6. NON-MCQ CONVERSION & ASTERISK (*) RULE: If a question was fill-in-the-blank, matching, or short-answer, convert it into a standard 4-option MCQ with high-yield, plausible distractors and prefix the question with an asterisk '*'.\n";
+        $prompt .= "7. STRICT EXCLUSION OF COURSE SPECIFICATIONS, SYLLABI, COURSE PLANS, AND ADMINISTRATIVE NON-EXAM CONTENT:\n";
+        $prompt .= "   - COMPLETELY IGNORE AND DISCARD any questions, slides, or notes testing course specifications (توصيف المقرر), course descriptions, course codes, or credit hours.\n";
+        $prompt .= "   - NEVER test course plans (خطة المقرر), study plans, lecture plans, syllabi, weekly timetables, or agendas. Do NOT think of, reference, or formulate questions about plans.\n";
+        $prompt .= "   - NEVER test Course Learning Outcomes (CLOs, ILOs, PLOs), grade distributions, attendance / DN policies, faculty contacts, or recommended textbook lists.\n";
+        $prompt .= "   - DO NOT formulate or output a plan. Immediately output pure questions matching the JSON schema.\n";
         $prompt .= "\nANTI-TEST-WISENESS & RIGOROUS DISTRACTOR ENGINEERING (CRITICAL):\n";
         $prompt .= "- ANTI-LENGTH BIAS: NEVER make the correct answer systematically longer, more detailed, or more qualified than the distractors. All 4 options (A, B, C, D) must be of strictly comparable word count and syntactic complexity. Often make one of the incorrect distractors the longest option so students cannot guess the correct choice by length.\n";
         $prompt .= "- HIGH-DISCRIMINATION DISTRACTORS: Every distractor must be a genuine, highly plausible scientific alternative from the exact same topic/lecture (e.g. real related bacteria, real dental materials, real anatomical landmarks, real pathological stages). NEVER generate obviously fake, silly, or cartoonish distractors that can be easily eliminated by simple common sense.\n";
@@ -1775,8 +1834,17 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         }
 
         $prompt .= "\nDOCUMENT COVERAGE & PROPORTIONAL DISTRIBUTION:\n";
-        $prompt .= "- Systematically traverse the entire source material from beginning, middle, to end.\n";
-        $prompt .= "- Distribute questions evenly across all major units, lectures, or sections. Do NOT cluster questions in the first few pages.\n";
+        $prompt .= "- Systematically traverse the entire substantive academic material from the start of real instructional content to the end.\n";
+        $prompt .= "- Distribute questions evenly across all major units, lectures, or sections. Skip introductory admin/syllabus/plan slides and do NOT cluster questions in the introductory pages.\n";
+
+        $prompt .= "\nCRITICAL EXCLUSION OF COURSE SPECIFICATIONS, SYLLABI, COURSE PLANS & NON-EXAM METADATA (ZERO-TOLERANCE):\n";
+        $prompt .= "- ABSOLUTE BAN ON COURSE SPECIFICATIONS & SYLLABI: NEVER formulate questions about course specifications (توصيف / مواصفات المقرر), course descriptions, course codes, credit hours, department details, or academic regulations.\n";
+        $prompt .= "- NO COURSE PLANS / STUDY PLANS / AGENDAS: NEVER ask questions about the course plan (خطة المقرر / الخطة الدراسية), lecture plan, lesson plan, weekly timetable, semester schedule, or agenda. Do NOT think of, reference, test, or generate questions about plans. (Clinical 'treatment plans' or 'management plans' in patient care are valid academic topics, but administrative course/study plans are strictly forbidden).\n";
+        $prompt .= "- NO COURSE LEARNING OUTCOMES (CLOs / ILOs / PLOs): NEVER test introductory learning outcomes, competencies, or objective slides (e.g. 'By the end of this lecture students will be able to...').\n";
+        $prompt .= "- NO GRADING, EXAM WEIGHTS, OR ATTENDANCE POLICIES: NEVER generate questions asking about grade distributions, exam marks percentages (e.g. midterm 20%, final 50%), attendance requirements, or denial (DN / حرمان) rules.\n";
+        $prompt .= "- NO FACULTY CONTACTS OR TEXTBOOK REFERENCES: NEVER ask about lecturer/professor names, emails, office hours, recommended textbooks, or bibliography lists.\n";
+        $prompt .= "- SKIP INTRODUCTORY SLIDES ENTIRELY: Always skip the introductory slide deck overhead (title slides, faculty logos, table of contents/agenda, course specifications, course plan, learning outcomes, and references). Begin question generation strictly from the actual instructional, medical, dental, and scientific material.\n";
+        $prompt .= "- NO PLANNING PREAMBLE OR PLAN OUTPUT: Do NOT formulate or output a plan. Do not think of a test plan or output any planning thoughts. Immediately produce only pure, high-yield examination questions in the required JSON array.\n";
 
         $prompt .= "\n" . $domainGuidance . "\n";
 
@@ -1787,6 +1855,7 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         $prompt .= "\nCONTENT QUALITY & HIGH-YIELD TARGETING:\n";
         $prompt .= "- Focus on meaningful academic concepts: mechanisms of action, diagnostic criteria, clinical classifications, cause-and-effect relationships, and distinctions.\n";
         $prompt .= "- Avoid trivial filler (e.g. textbook author bios, publication years, or isolated meaningless numbers).\n";
+        $prompt .= "- Strict Exam Authenticity: Questions must resemble genuine university midterm and final examination questions testing scientific mastery, never administrative or organizational metadata.\n";
 
         $prompt .= "\nANTI-TEST-WISENESS & RIGOROUS DISTRACTOR ENGINEERING (CRITICAL):\n";
         $prompt .= "- ANTI-LENGTH BIAS: NEVER make the correct answer systematically longer, more detailed, or more qualified than the distractors. All 4 options (A, B, C, D) must be of strictly comparable word count and syntactic complexity. Often make one of the incorrect distractors the longest option so students cannot guess the correct choice by length.\n";
@@ -1958,6 +2027,11 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         if (!is_array($q)) continue;
         $qText = trim($q['question'] ?? '');
         if (empty($qText)) continue;
+
+        if (isAdministrativeOrPlanNonExamQuestion($qText, $q['options'] ?? [], $q['explanation'] ?? '')) {
+            $invalidQuestions++;
+            continue;
+        }
         
         $opts = $q['options'] ?? [];
         if (!is_array($opts) || count($opts) < 2) {
@@ -2172,6 +2246,10 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
     $stage1Prompt .= "3. VERBATIM LANGUAGE FIDELITY:\n";
     $stage1Prompt .= "   - Maintain 100% exact language of the source exam/slides (English stays English, Arabic stays Arabic).\n";
     $stage1Prompt .= "   - Correct obvious scanning optical artifacts without altering scientific terminology. Ignore student doodles (cartoons, signatures, margins unrelated to the exam).\n\n";
+    $stage1Prompt .= "4. STRICT EXCLUSION OF ADMINISTRATIVE & COURSE SPECIFICATION METADATA:\n";
+    $stage1Prompt .= "   - DO NOT transcribe course specifications (توصيف المقرر), course plans (خطة المقرر), syllabi, course learning outcomes (CLOs), grade distributions, attendance policies, or professor contact details.\n";
+    $stage1Prompt .= "   - If an annotated slide is an administrative course plan or syllabus slide, completely skip and ignore it.\n";
+    $stage1Prompt .= "   - Do not think of or transcribe any plan slides.\n\n";
     $stage1Prompt .= "OUTPUT SCHEMA (Return ONLY a raw JSON array):\n";
     $stage1Prompt .= '[{"rawNumber": 1, "type": "mcq|written|slide_highlight|truefalse", "question": "Exact question stem as printed, OR Slide/Concept Title for highlighted slide points", "options": ["Choice A", "Choice B", "Choice C", "Choice D"], "indicatedAnswer": "Student or printed marked answer if visible, else empty", "highlightedContent": "Exact highlighted text or bullet points if type is slide_highlight, else empty"}]';
 
@@ -2353,6 +2431,12 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         $stage2Prompt .= "1. BE GENEROUS AND HIGHLY INCLUSIVE: You MUST KEEP every question and marked slide point that belongs or relates to the course ({$subjectTitle}) or to any of the student's target chapters.\n";
         $stage2Prompt .= "2. CHAPTER MAPPING: Assign each retained question to the closest matching target chapter in 'assignedChapter'. If a question broadly fits the subject but doesn't explicitly match a specific chapter title, assign it to: '{$firstChapterName}'. DO NOT discard questions simply because the wording differs from the chapter heading!\n";
         $stage2Prompt .= "3. ONLY DISCARD if the item is 100% indisputably from an entirely distinct, completely unrelated medical specialty or academic course. When in doubt, ALWAYS KEEP IT.\n\n";
+        $stage2Prompt .= "CRITICAL DIRECTIVE 6: STRICT EXCLUSION OF COURSE SPECIFICATIONS, COURSE PLANS & NON-EXAM STUFF:\n";
+        $stage2Prompt .= "- NEVER keep, solve, or convert questions regarding course specifications, course descriptions, course codes, or credit hours.\n";
+        $stage2Prompt .= "- NEVER keep, solve, or convert questions regarding course plans, study plans, lecture plans, syllabi, agendas, or weekly timetables. Do not think of or test plans.\n";
+        $stage2Prompt .= "- NEVER keep questions asking about Course Learning Outcomes (CLOs, ILOs), grade distributions, attendance / DN policies, faculty contacts, or recommended textbook lists.\n";
+        $stage2Prompt .= "- DO NOT formulate or output any plan or planning preamble. Output ONLY the final validated questions in JSON.\n";
+        $stage2Prompt .= "- Discard any such non-exam administrative items immediately.\n\n";
 
         $stage2Prompt .= "YOUR TASKS & ACADEMIC STRUCTURING BY ITEM TYPE:\n";
         $stage2Prompt .= "1. MULTIPLE CHOICE QUESTIONS (type 'mcq' or 'truefalse'):\n";
@@ -2440,6 +2524,10 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
             $parsedCur = cleanAndParseGeminiJson($curText);
             if (!empty($parsedCur) && is_array($parsedCur)) {
                 foreach ($parsedCur as $q) {
+                    $curQText = trim($q['question'] ?? '');
+                    if (isAdministrativeOrPlanNonExamQuestion($curQText, $q['options'] ?? [], ($q['answer'] ?? '') . ' ' . ($q['explanation'] ?? ''))) {
+                        continue;
+                    }
                     $qType = strtolower(trim($q['type'] ?? 'mcq'));
                     $itemLang = $isEnglishMedium ? 'en' : ($q['language'] ?? 'ar');
                     if ($qType === 'card' || $qType === 'info') {
@@ -5047,5 +5135,7 @@ if ($action === 'clear_cache' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     ]);
 }
 
-sendResponse(false, "Invalid action");
+if (!defined("DENT2025_TEST_MODE")) {
+    sendResponse(false, "Invalid action");
+}
 ?>
