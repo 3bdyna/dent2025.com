@@ -329,7 +329,7 @@
         .dent-timer-banner-override,
         #features,
         #features.wp-block-group {
-            max-width: 1240px !important;
+            max-width: 1400px !important;
             width: 100% !important;
             margin-left: auto !important;
             margin-right: auto !important;
@@ -337,61 +337,62 @@
 
         /* Enlarge #resources cards on PC */
         #resources .wp-block-columns {
-            gap: 32px !important;
+            gap: 40px !important;
             justify-content: center !important;
         }
 
         #resources .wp-block-column {
-            flex-basis: calc(33.333% - 22px) !important;
-            max-width: calc(33.333% - 22px) !important;
+            flex-basis: calc(33.333% - 28px) !important;
+            max-width: calc(33.333% - 28px) !important;
         }
 
         #resources figure.wp-block-image {
-            max-width: 340px !important;
+            max-width: 380px !important;
             margin: 0 auto !important;
         }
 
         #resources figure.wp-block-image img {
-            max-height: 260px !important;
+            min-height: 250px !important;
+            max-height: 320px !important;
             object-fit: cover !important;
             width: 100% !important;
         }
 
         #resources h3.wp-block-heading {
-            font-size: 1.35rem !important;
-            padding: 10px 30px !important;
-            margin: 18px auto 10px auto !important;
+            font-size: 1.45rem !important;
+            padding: 12px 34px !important;
+            margin: 18px auto 12px auto !important;
         }
 
         #resources .wp-block-button__link {
-            font-size: 1.05rem !important;
-            padding: 11px 42px !important;
+            font-size: 1.15rem !important;
+            padding: 12px 48px !important;
         }
 
         /* Enlarge banners on PC */
         .gpa-banner,
         .dent-absence-banner,
         .dent-timer-banner-override {
-            padding: 20px 30px !important;
-            margin: 16px auto !important;
+            padding: 22px 34px !important;
+            margin: 18px auto !important;
             border-radius: 20px !important;
         }
 
         .gpa-banner h3,
         .dent-absence-banner h3,
         .gpa-banner-text-timer h3 {
-            font-size: 1.25rem !important;
+            font-size: 1.35rem !important;
         }
 
         .gpa-banner p,
         .dent-absence-banner p,
         .gpa-banner-text-timer p {
-            font-size: 0.95rem !important;
+            font-size: 1.05rem !important;
         }
 
         /* Meme section widening */
         #features figure.wp-block-image img {
-            max-width: 600px !important;
+            max-width: 680px !important;
         }
     }
 
@@ -408,15 +409,25 @@
         .dent-timer-banner-override,
         #features,
         #features.wp-block-group {
-            max-width: 1360px !important;
+            max-width: 1550px !important;
         }
 
         #resources figure.wp-block-image {
-            max-width: 380px !important;
+            max-width: 440px !important;
         }
 
         #resources figure.wp-block-image img {
-            max-height: 290px !important;
+            min-height: 280px !important;
+            max-height: 360px !important;
+        }
+
+        #resources h3.wp-block-heading {
+            font-size: 1.55rem !important;
+        }
+
+        #resources .wp-block-button__link {
+            font-size: 1.2rem !important;
+            padding: 14px 54px !important;
         }
     }
 </style>
@@ -471,8 +482,7 @@
     const NODE_BASE_RADIUS = 1.8;
     const NODE_ACTIVE_RADIUS = 3.2;
 
-    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
+    
     let W = 0, H = 0;
     const mouse = { x: -9999, y: -9999 };
     const targetMouse = { x: -9999, y: -9999 };
@@ -506,8 +516,6 @@
         }
     }, { passive: true });
 
-    let dirtyFrames = 15;
-
     function checkResize() {
         const newW = window.innerWidth;
         const newH = window.innerHeight;
@@ -516,18 +524,23 @@
             H = newH;
             canvas.width = W;
             canvas.height = H;
-            isDirty = true;
-            dirtyFrames = 15;
             return true;
         }
         return false;
     }
 
+    function wakeLoop() {
+        checkResize();
+        draw(performance.now());
+        if (!rafId && !document.hidden) {
+            rafId = requestAnimationFrame(draw);
+        }
+    }
+
     function resize() {
         checkResize();
-        isDirty = true;
-        dirtyFrames = 15;
-        if (!rafId && !prefersReducedMotion) {
+        draw(performance.now());
+        if (!rafId && !document.hidden) {
             rafId = requestAnimationFrame(draw);
         }
     }
@@ -544,7 +557,9 @@
         targetMouse.x = clientX;
         targetMouse.y = clientY;
         targetStrength = 1.0;
-        isDirty = true;
+        if (!rafId && !document.hidden) {
+            rafId = requestAnimationFrame(draw);
+        }
     }
 
     window.addEventListener('mousemove', function(e) {
@@ -564,13 +579,14 @@
     }, { passive: true });
 
     window.addEventListener('scroll', function() {
-        isDirty = true;
+        if (!rafId && !document.hidden) {
+            rafId = requestAnimationFrame(draw);
+        }
     }, { passive: true });
 
     // Smoothly unwind & fade out warp when cursor leaves window or tab loses focus
     function handlePointerLeave() {
         targetStrength = 0.0;
-        isDirty = true;
     }
 
     document.addEventListener('mouseleave', handlePointerLeave);
@@ -592,37 +608,14 @@
             opacity: 1,
             born: performance.now()
         });
-        isDirty = true;
+        if (!rafId && !document.hidden) {
+            rafId = requestAnimationFrame(draw);
+        }
     }, { passive: true });
 
     // Robust Alt-Tab, Focus, PageShow and Tab Visibility Restoration
-    window.addEventListener('focus', function() {
-        checkResize();
-        isDirty = true;
-        dirtyFrames = 15;
-        if (!rafId && !prefersReducedMotion) {
-            rafId = requestAnimationFrame(draw);
-        }
-    });
-
-    window.addEventListener('pageshow', function() {
-        checkResize();
-        isDirty = true;
-        dirtyFrames = 15;
-        if (!rafId && !prefersReducedMotion) {
-            rafId = requestAnimationFrame(draw);
-        }
-    });
-
-    canvas.addEventListener('contextrestored', function() {
-        ctx = canvas.getContext('2d');
-        checkResize();
-        isDirty = true;
-        dirtyFrames = 15;
-        if (!rafId && !prefersReducedMotion) {
-            rafId = requestAnimationFrame(draw);
-        }
-    });
+    window.addEventListener('focus', wakeLoop);
+    window.addEventListener('pageshow', wakeLoop);
 
     document.addEventListener('visibilitychange', function() {
         if (document.hidden) {
@@ -631,12 +624,7 @@
                 rafId = 0;
             }
         } else {
-            checkResize();
-            isDirty = true;
-            dirtyFrames = 15;
-            if (!rafId && !prefersReducedMotion) {
-                rafId = requestAnimationFrame(draw);
-            }
+            wakeLoop();
         }
     });
 
@@ -717,7 +705,9 @@
         };
     }
 
-    // Main 60 FPS Render Loop with Zero-Lag Dirty Checking & Smooth Unwind Fade
+    let isDrawing = false;
+
+    // Main 60 FPS Continuous Render Loop
     function draw(now) {
         if (!ctx || (ctx.isContextLost && ctx.isContextLost())) {
             ctx = canvas.getContext('2d');
@@ -894,32 +884,23 @@
             }
         }
 
-        // Mark clean only when converged, no star active, no ripples, and dirty frames expired
-        if (!isConverging && !isFading && !hasRipples && !isStarMoving && dirtyFrames <= 0) {
-            isDirty = false;
+                if (!document.hidden) {
+            rafId = requestAnimationFrame(draw);
+        } else {
+            rafId = 0;
         }
-
-        rafId = requestAnimationFrame(draw);
     }
 
-    // Failsafe heartbeat: revives canvas if GPU buffer dropped during idle or Alt-Tab
+    // Failsafe heartbeat every 1.5s: if browser dropped GPU buffer or window restored silently
     setInterval(function() {
         if (!document.hidden) {
-            const resized = checkResize();
-            if (resized || (!isDirty && dirtyFrames <= 0 && (canvas.width <= 0 || canvas.height <= 0))) {
-                isDirty = true;
-                dirtyFrames = 5;
-                if (!rafId && !prefersReducedMotion) {
-                    rafId = requestAnimationFrame(draw);
-                }
+            checkResize();
+            if (!rafId) {
+                rafId = requestAnimationFrame(draw);
             }
         }
-    }, 1000);
+    }, 1500);
 
-    if (prefersReducedMotion) {
-        draw(performance.now());
-    } else {
-        rafId = requestAnimationFrame(draw);
-    }
+    rafId = requestAnimationFrame(draw);
 })();
 </script>
