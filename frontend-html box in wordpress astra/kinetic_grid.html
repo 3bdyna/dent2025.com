@@ -15,7 +15,7 @@
         background-color: transparent !important;
         background-image: none !important;
     }
-    body {
+    html {
         background-color: #121212 !important;
     }
 
@@ -265,9 +265,9 @@
     details.wp-block-details,
     .dent-chapter-details,
     .dent-quiz-card {
-        background: linear-gradient(145deg, rgba(32, 32, 35, 0.78) 0%, rgba(20, 20, 23, 0.65) 100%) !important;
-        backdrop-filter: blur(10px) !important;
-        -webkit-backdrop-filter: blur(10px) !important;
+        background: linear-gradient(145deg, rgba(32, 32, 35, 0.70) 0%, rgba(20, 20, 23, 0.58) 100%) !important;
+        backdrop-filter: blur(6px) !important;
+        -webkit-backdrop-filter: blur(6px) !important;
         border: none !important;
         border-width: 0 !important;
         border-radius: 18px !important;
@@ -365,10 +365,10 @@
     // Exact site color match (#121212) + Monochrome White tokens + Golden Star Cosmic Wake
     const THEME = {
         bg: "#121212",
-        lineBase: { r: 255, g: 255, b: 255, a: 0.05 },
+        lineBase: { r: 255, g: 255, b: 255, a: 0.13 },
         lineActive: { r: 255, g: 255, b: 255, a: 0.85 },
         lineStar: { r: 255, g: 215, b: 0, a: 0.78 },
-        nodeBase: { r: 255, g: 255, b: 255, a: 0.14 },
+        nodeBase: { r: 255, g: 255, b: 255, a: 0.22 },
         nodeActive: { r: 255, g: 255, b: 255, a: 1.0 },
         nodeStar: { r: 255, g: 228, b: 92, a: 1.0 },
         glow: "255, 255, 255",
@@ -385,7 +385,7 @@
     const STAR_INFLUENCE_RADIUS = isMobile ? 130 : 165;
     const STAR_MAX_WARP = isMobile ? 12 : 18;
     const LERP_SPEED = 0.085;
-    const NODE_BASE_RADIUS = 1.6;
+    const NODE_BASE_RADIUS = 1.8;
     const NODE_ACTIVE_RADIUS = 3.2;
 
     const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -453,6 +453,16 @@
         if (e.touches && e.touches[0]) {
             handlePointerMove(e.touches[0].clientX, e.touches[0].clientY);
         }
+    }, { passive: true });
+
+    window.addEventListener('touchstart', function(e) {
+        if (e.touches && e.touches[0]) {
+            handlePointerMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
+    }, { passive: true });
+
+    window.addEventListener('scroll', function() {
+        isDirty = true;
     }, { passive: true });
 
     // Smoothly unwind & fade out warp when cursor leaves window or tab loses focus
@@ -667,10 +677,10 @@
             if (ts > tm && ts > 0.02) {
                 // Golden star line glow
                 ctx.strokeStyle = lerpColor(THEME.lineBase, THEME.lineStar, ts);
-                ctx.lineWidth = lerp(0.85, 2.0, ts);
+                ctx.lineWidth = lerp(1.1, 2.0, ts);
             } else {
                 ctx.strokeStyle = lerpColor(THEME.lineBase, THEME.lineActive, tm);
-                ctx.lineWidth = lerp(0.85, 1.6, tm);
+                ctx.lineWidth = lerp(1.1, 1.7, tm);
             }
             ctx.stroke();
         };

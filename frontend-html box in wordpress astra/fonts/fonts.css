@@ -84,18 +84,18 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
   --dent-border-focus: rgba(255, 255, 255, 0.35);
   --dent-border-dashed: rgba(255, 255, 255, 0.14);
 
-  /* Typography / Text Colors */
-  --dent-text-primary: #f8fafc;
-  --dent-text-secondary: #cbd5e1;
-  --dent-text-muted: #8b95a8;
-  --dent-text-dim: #5a6477;
+  /* Typography / Text Colors (Pure Neutral Monochrome & Zinc) */
+  --dent-text-primary: #f4f4f5;
+  --dent-text-secondary: #a1a1aa;
+  --dent-text-muted: #71717a;
+  --dent-text-dim: #52525b;
   --dent-text-light: #ffffff;
 
-  /* Semantic Accent - Brand / Action */
-  --dent-accent-primary: #3b82f6;
-  --dent-accent-primary-hover: #60a5fa;
-  --dent-accent-primary-bg: rgba(59, 130, 246, 0.14);
-  --dent-accent-primary-border: rgba(59, 130, 246, 0.35);
+  /* Semantic Accent - Brand / Action (Pure Neutral Glass & White) */
+  --dent-accent-primary: #ffffff;
+  --dent-accent-primary-hover: #e4e4e7;
+  --dent-accent-primary-bg: rgba(255, 255, 255, 0.08);
+  --dent-accent-primary-border: rgba(255, 255, 255, 0.20);
 
   /* Semantic Accent - Success / Safe / Completed */
   --dent-accent-success: #10b981;
@@ -127,9 +127,9 @@ html, body, button, input, select, textarea, .ast-container, .entry-content, h1,
 .gpa-banner,
 .dent-absence-banner,
 .dent-timer-banner-override {
-  background: linear-gradient(145deg, rgba(32, 32, 35, 0.78) 0%, rgba(20, 20, 23, 0.65) 100%) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
+  background: linear-gradient(145deg, rgba(32, 32, 35, 0.70) 0%, rgba(20, 20, 23, 0.58) 100%) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
   border: none !important;
   border-width: 0 !important;
   padding: 14px 20px !important;
