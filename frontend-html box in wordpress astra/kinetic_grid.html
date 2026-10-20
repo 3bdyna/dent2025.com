@@ -566,8 +566,8 @@
     window.addEventListener('orientationchange', resize, { passive: true });
     resize();
 
-    // ── High-Performance Web Audio Micro-Click (Option 1) ──
-    const DENT_CLICK_B64 = "data:audio/mp3;base64,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";
+    // ── High-Performance Web Audio Muted Micro-Click ──
+    const DENT_CLICK_B64 = "data:audio/mp3;base64,SUQzBAAAAAAAIlRTU0UAAAAOAAADTGF2ZjYzLjEuMTAyAAAAAAAAAAAAAAD/+5AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABJbmZvAAAADwAAAAkAABBSADMzMzMzMzMzMzMzTExMTExMTExMTExmZmZmZmZmZmZmZn9/f39/f39/f39/mZmZmZmZmZmZmZmzs7Ozs7Ozs7Ozs8zMzMzMzMzMzMzM5ubm5ubm5ubm5ub//////////////wAAAABMYXZjNjMuMS4AAAAAAAAAAAAAAAAkBmEAAAAAAAAQUmJnNZwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/+5BkAAAC2Qs/FTEgAAAADSCgAAEXrL8Ouf4AAAAANIMAAAABU5A4TGSWCYEwbg3EcRAaA0EgSDBZVeCAoJGHQTB9QIBjE4P5QEDgHB8HwfBwEAxg+//WD4P63wfB8H34IAgGH4Pg4GOJwfP/WCGJwcBAEAQOQfB95cH3/4gOAABkAABgBKXPMIaApDBDQP8x659uPQiuYHvGgAgKAJBgnwHEawoGUGIXBaSgbeGAhAJpgMoBeYcIDamGwgn8lzMfg8CAA3QtDi8pwmKZuaPbFjGxwNkr0yufKff8LoKaRWHzXAqAoCKxQECPX583P5c5tkIkD0cF/oSP/f61z8+87Zm5fYv0nP/+frHev/+/Uqmgg0OK2A7GLUIHPtzwQUCVqDDRMsuVdaIqHheAL0LED3vO2hVjv/3O/+ok5QHAAwO0KOMAZC9zAEgzIxo08QMIfcjTH0BhsxDAJHMDiAEzAfQNwwIIAdMA7AeDApQKQwGEAgMAXAGDADwARd5akwAIAFRWBoxsxGyE5aEktiXJQCrqj6mKAUu6iiy2dyxqymn/+5JkMg3zyh3Gl38gAAAADSDgAAENfEUKD/UkwAAANIAAAARxpbOOOVNTWu//6xq0tnE6KY91c2bMBPB2DEIwrYwWYEhMVrR3DKpeEIyEMDrOSBoNHRNMlBYMOBYMDQ7FAmAQRxuUCIsHx0hJTDDU7VyrlC3CYk/ts3YrRU1CcWReNSodhMkp84bSmSS5hVBWtTWT0+8hp0mexB6tVarzxtjklwEqMbCTrkswGEACMDGJojESLkExPoBIOTg80AAjIIbMGhkwADFU25RGjex3ZJ3O5heqW6md7mXcLnd0kVJta+HQmxUsObOPIIbOzIZKVWUj6EHAylB+cYLWjzhVaMPraYKLWuozYglclxIaLjQRSADEIiZRvkJzyhgWgCOYSCOgGN6SExh4IBSfgEG3hpmAcYELEoWrYtOWR+BoCv3qXvKatyntYcu+KAcKJCNK3CZJrPxFLPFQuGR7kDRz2BtU4BTOgai6xOMQJ4XS1ji7WvQ0OiQvHIaeUl7iaocOE5A6qvQ4H0xBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqq//uSZH4P840RQgN/4BAAAA0gAAABDgw/CA1/YEAAADSAAAAEqqqqqqqqqqqqqqqqqqoCgAA8AcmAfgAZgQAegYfu6nmEyADwDHwcyGMgIKBxQAf2s7csGChChRgNhNrQ26p3bm0ZvedirBGtUSDAfeX32C17nwY0gaFHHZQUuSbONPuMQs+JwcYGmSag2ysUD5wE3w8ttjCTjZFoeUVDowEi4UU1gTjAMBYAGzBDwqgyOJhgAQgeHAcgKAVzACgAQug19mUbjubq3a7qROTuWGW0Vpt6mI6XHVcjEFnEApBUWH3C3Noo9kSBra31H8XX5G68C/6iOhExhiXzcxTj8WrQD/alc+YeZgmvjCKcusOnV+bVp/xyOqouVO70y5ztVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVXuFgGQwFMAxMDoCYjL5570wt4AiOpIQ6gMPERkNAgIh1TuUyibSmtt65T1QiGqsht4UDD21I7dxmeJ5lvyix235pyvzMl2yNbsWQP/7kmS4CPNyEsID+zEwAAANIAAAAQ/8qwks/QHIAAA0gAAABP1De+HdzGLfYzvlQlONvKpA7wtUy0DvE65jY2lzfdFpe3ajcZ+1Rk4RmFu689RaNNUJtxstTXB5YuE7RpkftaQ3bx+h5N7ZjaolXOx6S9nYwwDIANEgGIwGwAtMFZBbDTCJqowskA5I1A10LMaBAEAPCIABoxbh1JxucPOWzuH4vFaaivfFuU9o7EmjJIAqFomhSJ+cEgoMTVaR58mmSbZxxB6MK5xr0skcyBJCpdc6+xpNRxhHlumyELRj62ag2XBO3lYpHMHuRcbNI/Fj0969RPglowkeqhzOWU6eXcq8tZbuYlhBloMiSkvRhbDrf2lr1p+rdBnclcUeL2pMQU1FMy4xMDCqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqlACYAIMAzABRYE0MuLZ1zBeACAJZmgEGJClQCWgZ6o9MPw0BmrNZRKYakNzeeVJnQ6sCgipgMIXsrlRqIdc5tYYVGf/+5Jk5I3012y/g/sxYAAADSAAAAEVkaT8L+zFyAAANIAAAARCoz9f6Ram7JSYITB8kYoFQGbuJrsZUKwIjBqYbUnBmwPAbkuQ5NLUqAmTOmNPNUaDu7mrOdHJzjb54NGMGJEoOiLtLpsiFUEKhJTxSFCBwFYYBWAJmAYALZg6IW6aBk3kGG0gTJ6kp5zZuGQyIQyMcKU+nW01erqzTIYvWko/o8MkhJ1ZkTEYYjOJFYKIk2GFXCVyuJNSfCVylJV8XmayEIYosywWjEyiQ9vCNxIhpVNal7WmhenSBVrqRYuDz70dXLsQRvjKOUrPErkqrhRO0avntz2KmtwjNFBrJrzS9Nulq0I5UbSlmQjCO21s6U2c6dGO3OC77hreycqkTEFNRTMuMTAwqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqCgAMFCIyidTrgxNenZsyTA5DC9AlAwNhgGgKlt0JCNajjBGNwC5thzpb//uSZOCN9IZrQAP6GXIAAA0gAAABFemo/C/pJUgAADSAAAAENv/hKLGAtjVQXRDbFa6hZgwrbg2ipKjBA5AKJQeiODE+fGBlHZXQj1IrAZRMw21lOu6w0UxtWQcetSeEh8LYRQbyvBRYsT1BG8TB3DGwIfJqRHgjdKsRAYCghTcwdD0lMHwizGARx6odko0kUUWUojAmAAMJcN8y0E7DFLBvOxQs2HCIqF51YGdxZrTrwA/zowdIpkHBFhZ3z6w0p2PhXnCnZoVNTSvOELoYtMiWD/JmlwuP7/Qj7cW6sW7GPufLiSsTrbfKSp5Qeqydt9a7ho9ax7d2RnFO8eL5BWGZmWyy6vKkzTnv+vT5rtdOjXWf9mu1Sm06bqcHCCS9VUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQBAJTjaaSbVTQDBZNEGa7prRsYaAoaJhtPlFOhObm7V4Akrec1l3DLeI1dzD27QR7mpAjmEVHLFAo4OQUUOBWB/7v/7kmTUAPSPaUADnhjyAAANIAAAARKRlwbvZMVIAAA0gAAABNqM2Vl7TVjq1vmcnVZQB6fTUVmNRJlD6rS5AlUTSXOgwaPndjg3VGQkBEGL9TWHkVdQyZr7uxWQwpm8wk2AEAEURCDTEhQOL2Q2WqTrEjPQYMSPBBIWEKZs0H45EEDqlll1kkiCIpNPaU1M+SSatW0ZdrLRkIQ7XtvWsdE55d0nRlGcnrRkYuzXvZW0JJNPYmiUJRa3et+nJjFZlaYk0xiOhKEo9xdaWTFbzK1b1rWXPZq05MXVsB9Aut9a1qtehp7K3jo+netdmrJySj76ra5Zdi72VvZjTrRKEpVb1tJhWwCEBIRicZO5ta9pyttq2s67l/05Jp7U5JJiueVMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+5Jk4ADz+WbC02Ya8gAADSAAAAEX7bTqrmmEkAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAclEkeiCJxDKhPIgUgkEoPBaNAdiAJZbRWrm5C0dHJWLpSL6Q7OHNz/+jQUGBRQGIFghNNVOzs5xI0UJAgMwmQUlLOzxbs7Ozs81LO1wskRONKLMPMjf//smnCRQGIFkCaea7Oz1RpxZRZh8Jf/yVlBAwVS2WWOg4oBDBQQMIHCIf/5Kyyyy2WWOhigaqoMVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//uSZIiP9HpoGYmGHeIAAA0gAAABAAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ==";
     let audioCtx = null;
     let clickAudioBuffer = null;
     let audioDecodingStarted = false;
@@ -608,17 +608,26 @@
                 if (clickAudioBuffer) {
                     const source = audioCtx.createBufferSource();
                     source.buffer = clickAudioBuffer;
+
+                    // Muted acoustic lowpass filter (removes sharp treble click)
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 1300;
+
+                    // Soft, subtle volume (less loud)
                     const gainNode = audioCtx.createGain();
-                    gainNode.gain.value = 0.58; // Crisp, balanced micro-click volume
-                    source.connect(gainNode);
+                    gainNode.gain.value = 0.22;
+
+                    source.connect(filter);
+                    filter.connect(gainNode);
                     gainNode.connect(audioCtx.destination);
                     source.start(0);
                     return;
                 }
             }
-            // Instant fallback on very first click if buffer is still decoding
+            // Instant fallback on very first click before decoding finishes
             const fallbackAudio = new Audio(DENT_CLICK_B64);
-            fallbackAudio.volume = 0.58;
+            fallbackAudio.volume = 0.22;
             fallbackAudio.play().catch(function() {});
         } catch(e) {}
     }
@@ -627,7 +636,7 @@
     window.addEventListener('pointerdown', initClickAudio, { passive: true, once: true });
     window.addEventListener('touchstart', initClickAudio, { passive: true, once: true });
 
-    // ── Obstacle Border Caching for Dynamic Wave Reflections (Option A) ──
+    // ── Obstacle Border Caching for Dynamic Wave Diffraction (Option B) ──
     const OBSTACLE_SELECTORS = [
         '#resources .wp-block-column > .wp-block-group',
         '#resources figure.wp-block-image img',
@@ -688,22 +697,6 @@
                 el.classList.remove('dent-wave-struck');
             }, 450);
         } catch(e) {}
-    }
-
-    function spawnEcho(x, y, opacity, bornTime, originType) {
-        if (ripples.length >= 14) return; // Strict budget safeguard
-        ripples.push({
-            x: x,
-            y: y,
-            radius: 0,
-            opacity: Math.min(0.55, opacity * 0.55),
-            born: bornTime,
-            isEcho: true,
-            speed: 380, // slightly slower than primary for natural dissipation
-            decay: 1.6, // faster fade so screen stays clean
-            maxRadius: originType === 'card' ? 220 : 340,
-            color: THEME.ripple
-        });
     }
 
     // Interaction Listeners (Window & Document level for 100% reliable tracking)
@@ -768,9 +761,7 @@
             radius: 0,
             opacity: 1,
             born: performance.now(),
-            isEcho: false,
-            bouncedEdges: { left: false, right: false, top: false, bottom: false },
-            bouncedObstacles: {}
+            struckObstacles: {}
         });
         if (!rafId && !document.hidden) {
             rafId = requestAnimationFrame(draw);
@@ -810,13 +801,11 @@
             return { x: gx, y: gy, proximity: 0, starProximity: 0 };
         }
 
-        // Check if node is inside any card obstacle (Option A boundary solid damping)
-        let damping = 1.0;
+        // Option B: Nodes inside cards are solid islands (zero movement)
         for (let o = 0; o < cachedObstacles.length; o++) {
             const obs = cachedObstacles[o];
             if (gx >= obs.left && gx <= obs.right && gy >= obs.top && gy <= obs.bottom) {
-                damping = 0.18;
-                break;
+                return { x: gx, y: gy, proximity: 0, starProximity: 0 };
             }
         }
 
@@ -826,15 +815,48 @@
             const rdx = gx - r.x;
             const rdy = gy - r.y;
             const rdist = Math.sqrt(rdx * rdx + rdy * rdy);
-            const waveWidth = r.isEcho ? 50 : 65;
+            const waveWidth = 65;
             const diff = rdist - r.radius;
             if (Math.abs(diff) < waveWidth) {
-                const maxStrength = r.isEcho ? 12 : 22;
-                const strength = (1 - Math.abs(diff) / waveWidth) * r.opacity * maxStrength * damping;
+                const strength = (1 - Math.abs(diff) / waveWidth) * r.opacity * 22;
                 const angle = Math.atan2(rdy, rdx);
                 const sign = diff < 0 ? -1 : 1;
-                rx += Math.cos(angle) * strength * sign * -1;
-                ry += Math.sin(angle) * strength * sign * -1;
+                let pushX = Math.cos(angle) * strength * sign * -1;
+                let pushY = Math.sin(angle) * strength * sign * -1;
+
+                // Option B: Contour Warping / Diffraction along card boundaries
+                for (let o = 0; o < cachedObstacles.length; o++) {
+                    const obs = cachedObstacles[o];
+                    if (gx >= obs.left - 40 && gx <= obs.right + 40 &&
+                        gy >= obs.top - 40 && gy <= obs.bottom + 40) {
+                        const cx = Math.max(obs.left, Math.min(gx, obs.right));
+                        const cy = Math.max(obs.top, Math.min(gy, obs.bottom));
+                        const ndx = gx - cx;
+                        const ndy = gy - cy;
+                        const ndist = Math.sqrt(ndx * ndx + ndy * ndy);
+
+                        if (ndist < 40 && ndist > 0.001) {
+                            const nx = ndx / ndist;
+                            const ny = ndy / ndist;
+                            const tx = -ny;
+                            const ty = nx;
+
+                            const dotN = pushX * nx + pushY * ny;
+                            if (dotN < 0) {
+                                pushX -= dotN * nx;
+                                pushY -= dotN * ny;
+                                const dotT = pushX * tx + pushY * ty;
+                                const signT = dotT >= 0 ? 1 : -1;
+                                const deflectAmt = Math.abs(dotN) * 0.85;
+                                pushX += tx * signT * deflectAmt;
+                                pushY += ty * signT * deflectAmt;
+                            }
+                        }
+                    }
+                }
+
+                rx += pushX;
+                ry += pushY;
             }
         }
 
@@ -848,7 +870,7 @@
                 proximity = Math.max(0, 1 - dist / INFLUENCE_RADIUS) * mouseStrength;
                 const t = dist / INFLUENCE_RADIUS;
                 const eased = t < 0.01 ? 0 : (1 - t) * (1 - t) * Math.min(1, dist / 60);
-                const warpAmt = eased * MAX_WARP * mouseStrength * damping;
+                const warpAmt = eased * MAX_WARP * mouseStrength;
                 const angle = Math.atan2(dy, dx);
                 mouseWarpX = -Math.cos(angle) * warpAmt;
                 mouseWarpY = -Math.sin(angle) * warpAmt;
@@ -942,67 +964,32 @@
         ctx.fillStyle = THEME.bg;
         ctx.fillRect(0, 0, W, H);
 
-        // Advance active click ripples & evaluate boundary reflections
+        // Advance active click ripples
         for (let i = ripples.length - 1; i >= 0; i--) {
             const r = ripples[i];
             const age = (now - r.born) / 1000;
-            const speed = r.isEcho ? (r.speed || 380) : 450;
-            const decay = r.isEcho ? (r.decay || 1.6) : 1.35;
-            r.radius = Math.max(0, age * speed);
-            r.opacity = Math.max(0, 1 - age * decay);
-
-            if (r.maxRadius && r.radius >= r.maxRadius) {
-                r.opacity = 0;
-            }
-
+            r.radius = Math.max(0, age * 440);
+            r.opacity = Math.max(0, 1 - age * 1.30);
             if (r.opacity <= 0) {
                 ripples.splice(i, 1);
                 continue;
             }
 
-            // Only primary ripples spawn boundary echoes
-            if (!r.isEcho && r.opacity > 0.15) {
-                if (!r.bouncedEdges) {
-                    r.bouncedEdges = { left: false, right: false, top: false, bottom: false };
-                }
-                if (!r.bouncedObstacles) {
-                    r.bouncedObstacles = {};
-                }
+            // Option B: Trigger subtle kinetic border luminescence when wave contacts card edge
+            if (!r.struckObstacles) r.struckObstacles = {};
+            for (let o = 0; o < cachedObstacles.length; o++) {
+                const obs = cachedObstacles[o];
+                if (r.struckObstacles[obs.id]) continue;
 
-                // 1. Viewport Screen Boundaries
-                if (!r.bouncedEdges.left && (r.x - r.radius <= 0)) {
-                    r.bouncedEdges.left = true;
-                    spawnEcho(0, Math.max(0, Math.min(H, r.y)), r.opacity, now, 'wall');
-                }
-                if (!r.bouncedEdges.right && (r.x + r.radius >= W)) {
-                    r.bouncedEdges.right = true;
-                    spawnEcho(W, Math.max(0, Math.min(H, r.y)), r.opacity, now, 'wall');
-                }
-                if (!r.bouncedEdges.top && (r.y - r.radius <= 0)) {
-                    r.bouncedEdges.top = true;
-                    spawnEcho(Math.max(0, Math.min(W, r.x)), 0, r.opacity, now, 'wall');
-                }
-                if (!r.bouncedEdges.bottom && (r.y + r.radius >= H)) {
-                    r.bouncedEdges.bottom = true;
-                    spawnEcho(Math.max(0, Math.min(W, r.x)), H, r.opacity, now, 'wall');
-                }
+                const cx = Math.max(obs.left, Math.min(r.x, obs.right));
+                const cy = Math.max(obs.top, Math.min(r.y, obs.bottom));
+                const dx = r.x - cx;
+                const dy = r.y - cy;
+                const dist = Math.sqrt(dx * dx + dy * dy);
 
-                // 2. Card Obstacle Boundaries
-                for (let o = 0; o < cachedObstacles.length; o++) {
-                    const obs = cachedObstacles[o];
-                    if (r.bouncedObstacles[obs.id]) continue;
-
-                    const cx = Math.max(obs.left, Math.min(r.x, obs.right));
-                    const cy = Math.max(obs.top, Math.min(r.y, obs.bottom));
-                    const dx = r.x - cx;
-                    const dy = r.y - cy;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-
-                    if (r.radius >= dist) {
-                        r.bouncedObstacles[obs.id] = true;
-                        spawnEcho(cx, cy, r.opacity, now, 'card');
-                        triggerCardWaveStruck(obs.el);
-                    }
+                if (r.radius >= dist) {
+                    r.struckObstacles[obs.id] = true;
+                    triggerCardWaveStruck(obs.el);
                 }
             }
         }
@@ -1102,21 +1089,34 @@
             }
         }
 
-        // Draw ripple shockwave rings
-        for (let i = 0; i < ripples.length; i++) {
-            const r = ripples[i];
-            if (r.radius > 0) {
+        // Draw ripple shockwave rings (Option B: Card Obstacle Hole Occlusion)
+        if (ripples.length > 0) {
+            ctx.save();
+            if (cachedObstacles.length > 0) {
                 ctx.beginPath();
-                ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
-                const colorStr = r.color || THEME.ripple;
-                const alpha = (r.opacity * (r.isEcho ? 0.28 : 0.45)).toFixed(3);
-                ctx.strokeStyle = 'rgba(' + colorStr + ', ' + alpha + ')';
-                ctx.lineWidth = r.isEcho ? 1.2 : (r.color ? 2.2 : 1.6);
-                ctx.stroke();
+                ctx.rect(0, 0, W, H);
+                for (let o = 0; o < cachedObstacles.length; o++) {
+                    const obs = cachedObstacles[o];
+                    ctx.rect(obs.left, obs.top, obs.width, obs.height);
+                }
+                ctx.clip('evenodd');
             }
+
+            for (let i = 0; i < ripples.length; i++) {
+                const r = ripples[i];
+                if (r.radius > 0) {
+                    ctx.beginPath();
+                    ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+                    const colorStr = r.color || THEME.ripple;
+                    ctx.strokeStyle = 'rgba(' + colorStr + ', ' + (r.opacity * 0.42).toFixed(3) + ')';
+                    ctx.lineWidth = r.color ? 2.2 : 1.6;
+                    ctx.stroke();
+                }
+            }
+            ctx.restore();
         }
 
-                if (!document.hidden) {
+        if (!document.hidden) {
             rafId = requestAnimationFrame(draw);
         } else {
             rafId = 0;
