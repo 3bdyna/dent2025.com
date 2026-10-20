@@ -436,17 +436,20 @@
     /* Wave-Struck Kinetic Element Luminance Pulse */
     @keyframes dentWaveBorderPulse {
         0% {
-            box-shadow: 0 0 24px 5px rgba(255, 255, 255, 0.26), 0 16px 36px -4px rgba(0, 0, 0, 0.75) !important;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.45), 0 0 32px 8px rgba(255, 255, 255, 0.35), 0 16px 36px -4px rgba(0, 0, 0, 0.75) !important;
+            transform: scale(1.008) !important;
         }
         50% {
-            box-shadow: 0 0 16px 3px rgba(255, 255, 255, 0.15), 0 14px 34px -4px rgba(0, 0, 0, 0.65) !important;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25), 0 0 20px 4px rgba(255, 255, 255, 0.20), 0 14px 34px -4px rgba(0, 0, 0, 0.65) !important;
+            transform: scale(1.004) !important;
         }
         100% {
             box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.55) !important;
+            transform: scale(1) !important;
         }
     }
     .dent-wave-struck {
-        animation: dentWaveBorderPulse 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        animation: dentWaveBorderPulse 0.50s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
     }
 </style>
 
@@ -616,7 +619,7 @@
 
                     // Soft, subtle volume (less loud)
                     const gainNode = audioCtx.createGain();
-                    gainNode.gain.value = 0.22;
+                    gainNode.gain.value = 0.18;
 
                     source.connect(filter);
                     filter.connect(gainNode);
@@ -627,7 +630,7 @@
             }
             // Instant fallback on very first click before decoding finishes
             const fallbackAudio = new Audio(DENT_CLICK_B64);
-            fallbackAudio.volume = 0.22;
+            fallbackAudio.volume = 0.18;
             fallbackAudio.play().catch(function() {});
         } catch(e) {}
     }
@@ -695,8 +698,24 @@
             el.classList.add('dent-wave-struck');
             setTimeout(function() {
                 el.classList.remove('dent-wave-struck');
-            }, 450);
+            }, 500);
         } catch(e) {}
+    }
+
+    const cardShockwaves = [];
+
+    function drawRoundRect(c, x, y, w, h, r) {
+        if (typeof c.roundRect === 'function') {
+            c.roundRect(x, y, w, h, r);
+        } else {
+            const rad = Math.min(r, w / 2, h / 2);
+            c.moveTo(x + rad, y);
+            c.arcTo(x + w, y, x + w, y + h, rad);
+            c.arcTo(x + w, y + h, x, y + h, rad);
+            c.arcTo(x, y + h, x, y, rad);
+            c.arcTo(x, y, x + w, y, rad);
+            c.closePath();
+        }
     }
 
     // Interaction Listeners (Window & Document level for 100% reliable tracking)
@@ -801,62 +820,20 @@
             return { x: gx, y: gy, proximity: 0, starProximity: 0 };
         }
 
-        // Option B: Nodes inside cards are solid islands (zero movement)
-        for (let o = 0; o < cachedObstacles.length; o++) {
-            const obs = cachedObstacles[o];
-            if (gx >= obs.left && gx <= obs.right && gy >= obs.top && gy <= obs.bottom) {
-                return { x: gx, y: gy, proximity: 0, starProximity: 0 };
-            }
-        }
-
         let rx = 0, ry = 0;
         for (let i = 0; i < ripples.length; i++) {
             const r = ripples[i];
             const rdx = gx - r.x;
             const rdy = gy - r.y;
             const rdist = Math.sqrt(rdx * rdx + rdy * rdy);
-            const waveWidth = 65;
+            const waveWidth = 70;
             const diff = rdist - r.radius;
             if (Math.abs(diff) < waveWidth) {
-                const strength = (1 - Math.abs(diff) / waveWidth) * r.opacity * 22;
+                const strength = (1 - Math.abs(diff) / waveWidth) * r.opacity * 24;
                 const angle = Math.atan2(rdy, rdx);
                 const sign = diff < 0 ? -1 : 1;
-                let pushX = Math.cos(angle) * strength * sign * -1;
-                let pushY = Math.sin(angle) * strength * sign * -1;
-
-                // Option B: Contour Warping / Diffraction along card boundaries
-                for (let o = 0; o < cachedObstacles.length; o++) {
-                    const obs = cachedObstacles[o];
-                    if (gx >= obs.left - 40 && gx <= obs.right + 40 &&
-                        gy >= obs.top - 40 && gy <= obs.bottom + 40) {
-                        const cx = Math.max(obs.left, Math.min(gx, obs.right));
-                        const cy = Math.max(obs.top, Math.min(gy, obs.bottom));
-                        const ndx = gx - cx;
-                        const ndy = gy - cy;
-                        const ndist = Math.sqrt(ndx * ndx + ndy * ndy);
-
-                        if (ndist < 40 && ndist > 0.001) {
-                            const nx = ndx / ndist;
-                            const ny = ndy / ndist;
-                            const tx = -ny;
-                            const ty = nx;
-
-                            const dotN = pushX * nx + pushY * ny;
-                            if (dotN < 0) {
-                                pushX -= dotN * nx;
-                                pushY -= dotN * ny;
-                                const dotT = pushX * tx + pushY * ty;
-                                const signT = dotT >= 0 ? 1 : -1;
-                                const deflectAmt = Math.abs(dotN) * 0.85;
-                                pushX += tx * signT * deflectAmt;
-                                pushY += ty * signT * deflectAmt;
-                            }
-                        }
-                    }
-                }
-
-                rx += pushX;
-                ry += pushY;
+                rx += Math.cos(angle) * strength * sign * -1;
+                ry += Math.sin(angle) * strength * sign * -1;
             }
         }
 
@@ -953,8 +930,9 @@
         const isFading = Math.abs(targetStrength - mouseStrength) > 0.0005;
         const hasRipples = ripples.length > 0;
         const isStarMoving = starState.active && starState.strength > 0.01;
+        const hasCardWaves = cardShockwaves.length > 0;
 
-        if (isConverging || isFading || hasRipples || isStarMoving) {
+        if (isConverging || isFading || hasRipples || isStarMoving || hasCardWaves) {
             isDirty = true;
         }
 
@@ -968,14 +946,14 @@
         for (let i = ripples.length - 1; i >= 0; i--) {
             const r = ripples[i];
             const age = (now - r.born) / 1000;
-            r.radius = Math.max(0, age * 440);
-            r.opacity = Math.max(0, 1 - age * 1.30);
+            r.radius = Math.max(0, age * 460);
+            r.opacity = Math.max(0, 1 - age * 1.35);
             if (r.opacity <= 0) {
                 ripples.splice(i, 1);
                 continue;
             }
 
-            // Option B: Trigger subtle kinetic border luminescence when wave contacts card edge
+            // Trigger card border shockwaves when primary ripple touches card boundaries
             if (!r.struckObstacles) r.struckObstacles = {};
             for (let o = 0; o < cachedObstacles.length; o++) {
                 const obs = cachedObstacles[o];
@@ -989,6 +967,15 @@
 
                 if (r.radius >= dist) {
                     r.struckObstacles[obs.id] = true;
+                    cardShockwaves.push({
+                        left: obs.left,
+                        top: obs.top,
+                        width: obs.width,
+                        height: obs.height,
+                        born: now,
+                        duration: 550,
+                        el: obs.el
+                    });
                     triggerCardWaveStruck(obs.el);
                 }
             }
@@ -1089,30 +1076,41 @@
             }
         }
 
-        // Draw ripple shockwave rings (Option B: Card Obstacle Hole Occlusion)
-        if (ripples.length > 0) {
-            ctx.save();
-            if (cachedObstacles.length > 0) {
+        // Draw primary ripple shockwave rings
+        for (let i = 0; i < ripples.length; i++) {
+            const r = ripples[i];
+            if (r.radius > 0) {
                 ctx.beginPath();
-                ctx.rect(0, 0, W, H);
-                for (let o = 0; o < cachedObstacles.length; o++) {
-                    const obs = cachedObstacles[o];
-                    ctx.rect(obs.left, obs.top, obs.width, obs.height);
-                }
-                ctx.clip('evenodd');
+                ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+                const colorStr = r.color || THEME.ripple;
+                ctx.strokeStyle = 'rgba(' + colorStr + ', ' + (r.opacity * 0.42).toFixed(3) + ')';
+                ctx.lineWidth = r.color ? 2.2 : 1.6;
+                ctx.stroke();
+            }
+        }
+
+        // Draw card border shockwaves (luminous expanding contour directly around card borders)
+        for (let i = cardShockwaves.length - 1; i >= 0; i--) {
+            const cs = cardShockwaves[i];
+            const age = now - cs.born;
+            const progress = age / cs.duration;
+            if (progress >= 1.0) {
+                cardShockwaves.splice(i, 1);
+                continue;
             }
 
-            for (let i = 0; i < ripples.length; i++) {
-                const r = ripples[i];
-                if (r.radius > 0) {
-                    ctx.beginPath();
-                    ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
-                    const colorStr = r.color || THEME.ripple;
-                    ctx.strokeStyle = 'rgba(' + colorStr + ', ' + (r.opacity * 0.42).toFixed(3) + ')';
-                    ctx.lineWidth = r.color ? 2.2 : 1.6;
-                    ctx.stroke();
-                }
-            }
+            const alpha = (1 - progress) * (1 - progress);
+            const expand = progress * 22;
+            const cornerRadius = 18;
+
+            ctx.save();
+            ctx.beginPath();
+            drawRoundRect(ctx, cs.left - expand, cs.top - expand, cs.width + expand * 2, cs.height + expand * 2, cornerRadius + expand * 0.4);
+            ctx.strokeStyle = 'rgba(255, 255, 255, ' + (alpha * 0.72).toFixed(3) + ')';
+            ctx.lineWidth = Math.max(1.0, 2.4 * (1 - progress * 0.6));
+            ctx.shadowColor = 'rgba(255, 255, 255, ' + (alpha * 0.85).toFixed(3) + ')';
+            ctx.shadowBlur = 12 * (1 - progress);
+            ctx.stroke();
             ctx.restore();
         }
 
