@@ -500,8 +500,9 @@
             starElem = document.getElementById('magic-star-btn');
         }
         if (starElem) {
+            const isFloating = starElem.classList.contains('star-floating');
             const rect = starElem.getBoundingClientRect();
-            if (rect.width > 0 && rect.bottom > 0 && rect.top < H && rect.right > 0 && rect.left < W) {
+            if (isFloating && rect.width > 0 && rect.bottom > 0 && rect.top < H && rect.right > 0 && rect.left < W) {
                 starState.x = rect.left + rect.width / 2;
                 starState.y = rect.top + rect.height / 2;
                 starState.active = true;
