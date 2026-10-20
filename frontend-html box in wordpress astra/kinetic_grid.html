@@ -771,6 +771,13 @@
     window.addEventListener('touchcancel', handlePointerLeave, { passive: true });
 
     window.addEventListener('click', function(e) {
+        // Skip background wave & sound when interacting with buttons, links, or form controls
+        if (e.target && typeof e.target.closest === 'function') {
+            if (e.target.closest('button, a, input, select, textarea, label, summary, [role="button"], [role="link"], [role="tab"], [role="menuitem"], .wp-block-button, .wp-block-button__link, [onclick]')) {
+                return;
+            }
+        }
+
         playClickSound();
         updateObstacleCache();
 
