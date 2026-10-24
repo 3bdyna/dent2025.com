@@ -2297,16 +2297,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 }
             }
 
-            let labelText = '';
-            if (countForLabel === 1) {
-                labelText = 'المحاضرة المشمولة (شابتر واحد)';
-            } else if (countForLabel === 2) {
-                labelText = 'المحاضرات المشمولة (شابترين)';
-            } else if (countForLabel >= 3 && countForLabel <= 10) {
-                labelText = `المحاضرات المشمولة (${countForLabel} شابترات)`;
-            } else {
-                labelText = `المحاضرات المشمولة (${countForLabel} شابتر)`;
-            }
+            const labelText = (countForLabel === 1) ? 'المحاضرة المشمولة' : 'المحاضرات المشمولة';
             let chaptersDropdownHTML = `
                 <details class="dent-chapters-details" onclick="event.stopPropagation()">
                     <summary>
