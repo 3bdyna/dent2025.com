@@ -1145,18 +1145,28 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
     function formatNumberRange(nums, isArabic) {
         if (!nums || nums.length === 0) return '';
-        if (nums.length === 1) return String(nums[0]);
-        
-        const sorted = Array.from(new Set(nums)).sort((a,b) => a - b);
-        const isContiguous = (sorted[sorted.length - 1] - sorted[0] === sorted.length - 1);
-        
-        if (isContiguous) {
-            return sorted[0] + '–' + sorted[sorted.length - 1];
+        const sorted = Array.from(new Set(nums)).sort((a, b) => a - b);
+        if (sorted.length === 1) return String(sorted[0]);
+
+        const runs = [];
+        let start = sorted[0];
+        let prev = sorted[0];
+
+        for (let i = 1; i < sorted.length; i++) {
+            const curr = sorted[i];
+            if (curr === prev + 1) {
+                prev = curr;
+            } else {
+                runs.push(start === prev ? String(start) : (start + '–' + prev));
+                start = curr;
+                prev = curr;
+            }
         }
-        if (sorted.length === 2) {
-            return sorted[0] + (isArabic ? ' و ' : ' & ') + sorted[1];
-        }
-        return sorted.slice(0, -1).join(isArabic ? '، ' : ', ') + (isArabic ? ' و ' : ' & ') + sorted[sorted.length - 1];
+        runs.push(start === prev ? String(start) : (start + '–' + prev));
+
+        if (runs.length === 1) return runs[0];
+        if (runs.length === 2) return runs[0] + (isArabic ? ' و ' : ' & ') + runs[1];
+        return runs.slice(0, -1).join(isArabic ? '، ' : ', ') + (isArabic ? ' و ' : ' & ') + runs[runs.length - 1];
     }
 
     function generateSmartQuizName() {
