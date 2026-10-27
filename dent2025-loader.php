@@ -162,6 +162,15 @@ add_action('wp_footer', function() {
     }
 });
 
+// Automatically load First-Party Analytics Tracker sitewide in wp_footer for dwell time & session metrics
+add_action('wp_footer', function() {
+    $tracker_file = ABSPATH . 'frontend_components/analytics_tracker.js';
+    if (file_exists($tracker_file)) {
+        $v = filemtime($tracker_file);
+        echo '<script src="/frontend_components/analytics_tracker.js?v=' . $v . '" defer></script>' . "\n";
+    }
+}, 30);
+
 // Force LiteSpeed Cache purge when requested via ?purge=1 with admin auth
 add_action('init', function() {
     if (isset($_GET['purge']) || isset($_GET['nocache'])) {
