@@ -2563,89 +2563,138 @@ window.AdminApp = {
             this.selectedClassDay = 'الأحد';
         }
 
-        // Sync mobile 5-day tab buttons
-        document.querySelectorAll('#classes-mobile-day-tabs .day-tab-btn').forEach(btn => {
-            if (btn.dataset.day === this.selectedClassDay) {
-                btn.className = 'day-tab-btn py-1.5 rounded-lg text-xs font-semibold bg-white/15 text-white shadow';
+        const isAllWeek = Boolean(this.isAllWeekView);
+
+        // Sync day tab buttons
+        document.querySelectorAll('#classes-day-tabs .day-tab-btn').forEach(btn => {
+            const isSelected = !isAllWeek && (btn.dataset.day === this.selectedClassDay);
+            if (isSelected) {
+                btn.className = 'day-tab-btn py-1.5 px-3 rounded-lg text-xs font-semibold bg-white/20 text-white shadow border border-white/20 transition text-center whitespace-nowrap';
             } else {
-                btn.className = 'day-tab-btn py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white';
+                btn.className = 'day-tab-btn py-1.5 px-3 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition text-center whitespace-nowrap';
             }
         });
 
+        const toggleBtn = document.getElementById('btn-toggle-all-week');
+        const toggleText = document.getElementById('all-week-btn-text');
+        if (toggleBtn && toggleText) {
+            if (isAllWeek) {
+                toggleBtn.classList.add('bg-sky-500/20', 'text-sky-300', 'border-sky-500/30');
+                toggleText.innerText = 'عرض باليوم';
+            } else {
+                toggleBtn.classList.remove('bg-sky-500/20', 'text-sky-300', 'border-sky-500/30');
+                toggleText.innerText = 'عرض كامل الأسبوع';
+            }
+        }
+
         const groupFilter = document.getElementById('cls-group') ? document.getElementById('cls-group').value : 'all';
-
         const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
-        let html = '';
 
-        days.forEach(day => {
+        const renderClassCards = (classes) => {
+            if (!classes || classes.length === 0) {
+                return '<div class="p-8 text-center text-xs text-gray-500 glass rounded-xl border border-white/5">لا توجد محاضرات مسجلة لهذا اليوم</div>';
+            }
+
+            return classes.map(c => {
+                const safeClassId = this.escapeHtml(c.id);
+                const safeStartTime = this.escapeHtml(c.start_time);
+                const safeEndTime = this.escapeHtml(c.end_time);
+                const safeSubject = this.escapeHtml(c.subject);
+                const safeType = this.escapeHtml(c.type || 'نظري');
+                const safeGroupName = this.escapeHtml(c.group_name || 'كل المجموعات');
+
+                const isPractical = (safeType === 'عملي' || safeType === 'إكلينيكي');
+                const typeBadgeClass = isPractical
+                    ? 'bg-amber-500/15 text-amber-300 border border-amber-500/25'
+                    : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25';
+
+                return `
+                    <div class="glass p-3.5 rounded-xl border border-white/10 hover:border-white/25 transition-all duration-200 flex flex-col justify-between gap-2.5 relative group shadow-sm min-w-0">
+                        <div class="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/10 text-gray-200 font-mono text-xs font-semibold" dir="ltr">
+                                <svg class="w-3 h-3 text-sky-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>${safeStartTime} - ${safeEndTime}</span>
+                            </span>
+                            <button onclick="AdminApp.deleteClass('${safeClassId}')" class="text-rose-400 hover:text-rose-300 hover:bg-rose-500/15 border border-rose-500/20 px-2 py-0.5 rounded-md text-xs transition inline-flex items-center gap-1 font-medium" title="حذف الحصة">
+                                <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                <span>حذف</span>
+                            </button>
+                        </div>
+                        <div>
+                            <h5 class="font-bold text-white text-sm sm:text-base leading-snug break-words">${safeSubject}</h5>
+                        </div>
+                        <div class="flex items-center justify-between text-xs pt-1 border-t border-white/5 gap-2">
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-medium ${typeBadgeClass}">
+                                ${safeType}
+                            </span>
+                            <span class="text-gray-400 text-[11px] font-medium truncate" title="${safeGroupName}">${safeGroupName}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        if (isAllWeek) {
+            // Full Week Grid View: horizontal scroll wrapper, min-w-[1050px], each day gets at least 200px
+            let weekColsHtml = days.map(day => {
+                const dayClasses = (this.classesData || []).filter(c => {
+                    if (c.day !== day) return false;
+                    if (groupFilter !== 'all' && c.group_name !== groupFilter && c.group_name !== 'كل المجموعات') return false;
+                    return true;
+                });
+
+                return `
+                    <div class="bg-black/30 rounded-2xl p-3 border border-white/10 flex flex-col min-w-[200px] shrink-0">
+                        <div class="text-sm font-bold text-center text-primary bg-primary/10 py-2 rounded-xl mb-3 border border-primary/20 flex items-center justify-center gap-1.5">
+                            <span>${day}</span>
+                            <span class="bg-black/40 text-xs px-1.5 py-0.2 rounded-full font-mono text-gray-300">(${dayClasses.length})</span>
+                        </div>
+                        <div class="space-y-2.5 flex-1">${renderClassCards(dayClasses)}</div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="overflow-x-auto pb-4 custom-scrollbar">
+                    <div class="grid grid-cols-5 gap-3 min-w-[1050px]">
+                        ${weekColsHtml}
+                    </div>
+                </div>
+            `;
+        } else {
+            // Day View: full spacious width, beautiful responsive grid of cards
+            const targetDay = this.selectedClassDay;
             const dayClasses = (this.classesData || []).filter(c => {
-                if (c.day !== day) return false;
+                if (c.day !== targetDay) return false;
                 if (groupFilter !== 'all' && c.group_name !== groupFilter && c.group_name !== 'كل المجموعات') return false;
                 return true;
             });
 
-            let entriesHtml = '';
-            if (dayClasses.length > 0) {
-                entriesHtml = dayClasses.map(c => {
-                    const safeClassId = this.escapeHtml(c.id);
-                    const safeStartTime = this.escapeHtml(c.start_time);
-                    const safeEndTime = this.escapeHtml(c.end_time);
-                    const safeSubject = this.escapeHtml(c.subject);
-                    const safeType = this.escapeHtml(c.type || 'نظري');
-                    const safeGroupName = this.escapeHtml(c.group_name || '');
-
-                    return `
-                        <div class="bg-black/40 p-3 rounded-lg border border-white/10 relative group hover:border-primary/50 transition">
-                            <div class="flex justify-between items-start mb-1">
-                                <span class="bg-white/10 text-gray-200 text-xs px-1.5 py-0.5 rounded font-mono">${safeStartTime} - ${safeEndTime}</span>
-                                <button onclick="AdminApp.deleteClass('${safeClassId}')" class="text-red-400 hover:text-red-300 text-xs px-2 py-0.5 rounded-md bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 flex items-center gap-1 transition shrink-0 font-medium" title="حذف الحصة"><svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg><span>حذف</span></button>
-                            </div>
-                            <h5 class="font-bold text-white text-sm mb-1 break-words">${safeSubject}</h5>
-                            <div class="flex items-center justify-between text-xs text-gray-400">
-                                <span class="bg-primary/10 text-accent px-1.5 py-0.5 rounded">${safeType}</span>
-                                <span class="text-gray-500">${safeGroupName}</span>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } else {
-                entriesHtml = '<p class="text-xs text-gray-500 text-center py-4">لا يوجد محاضرات</p>';
-            }
-
-            const isDayActive = (day === this.selectedClassDay);
-            const mobileVisibilityClass = isDayActive ? 'flex' : 'hidden md:flex';
-
-            html += `
-                <div class="day-column bg-black/20 rounded-xl p-3 border border-white/5 flex-col ${mobileVisibilityClass}" data-day="${day}">
-                    <h4 class="text-sm font-bold text-center text-primary bg-primary/10 py-2 rounded-lg mb-3 border border-primary/20">${day}</h4>
-                    <div class="space-y-3 flex-1">${entriesHtml}</div>
+            container.innerHTML = `
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
+                        <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                            <span>محاضرات يوم ${targetDay}</span>
+                            <span class="bg-primary/20 text-accent text-xs px-2.5 py-0.5 rounded-full font-mono font-bold">${dayClasses.length} حصص</span>
+                        </h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                        ${renderClassCards(dayClasses)}
+                    </div>
                 </div>
             `;
-        });
-
-        container.innerHTML = html;
+        }
     },
 
     switchClassDay(day) {
         this.selectedClassDay = day;
-        document.querySelectorAll('#classes-mobile-day-tabs .day-tab-btn').forEach(btn => {
-            if (btn.dataset.day === day) {
-                btn.className = 'day-tab-btn py-1.5 rounded-lg text-xs font-semibold bg-white/15 text-white shadow';
-            } else {
-                btn.className = 'day-tab-btn py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white';
-            }
-        });
+        this.isAllWeekView = false;
+        this.renderClasses();
+    },
 
-        const dayColumns = document.querySelectorAll('#classes-timetable .day-column');
-        dayColumns.forEach(col => {
-            if (col.dataset.day === day) {
-                col.classList.remove('hidden');
-                col.classList.add('flex');
-            } else {
-                col.classList.remove('flex');
-                col.classList.add('hidden', 'md:flex');
-            }
-        });
+    toggleAllWeekView() {
+        this.isAllWeekView = !this.isAllWeekView;
+        this.renderClasses();
     },
 
     openClassModal() {

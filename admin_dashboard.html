@@ -791,16 +791,22 @@
  </div>
 
  <!-- Timetable View Container by Days -->
-  <!-- Mobile 5-Day Segmented Tab Selector -->
-  <div id="classes-mobile-day-tabs" class="grid grid-cols-5 gap-1 p-1 bg-black/40 border border-white/10 rounded-xl select-none md:hidden shrink-0">
-    <button type="button" onclick="AdminApp.switchClassDay('الأحد')" class="day-tab-btn py-1.5 rounded-lg text-xs font-semibold bg-white/15 text-white shadow" data-day="الأحد">الأحد</button>
-    <button type="button" onclick="AdminApp.switchClassDay('الإثنين')" class="day-tab-btn py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white" data-day="الإثنين">الإثنين</button>
-    <button type="button" onclick="AdminApp.switchClassDay('الثلاثاء')" class="day-tab-btn py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white" data-day="الثلاثاء">الثلاثاء</button>
-    <button type="button" onclick="AdminApp.switchClassDay('الأربعاء')" class="day-tab-btn py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white" data-day="الأربعاء">الأربعاء</button>
-    <button type="button" onclick="AdminApp.switchClassDay('الخميس')" class="day-tab-btn py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white" data-day="الخميس">الخميس</button>
-  </div>
+ <!-- Segmented Day Tabs & View Switcher (Visible on ALL devices) -->
+ <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 shrink-0">
+   <div id="classes-day-tabs" class="grid grid-cols-5 sm:flex sm:items-center gap-1 p-1 bg-black/40 border border-white/10 rounded-xl select-none flex-1 max-w-full overflow-x-auto">
+     <button type="button" onclick="AdminApp.switchClassDay('الأحد')" class="day-tab-btn py-1.5 px-3 rounded-lg text-xs font-semibold bg-white/20 text-white shadow border border-white/20 transition text-center whitespace-nowrap" data-day="الأحد">الأحد</button>
+     <button type="button" onclick="AdminApp.switchClassDay('الإثنين')" class="day-tab-btn py-1.5 px-3 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition text-center whitespace-nowrap" data-day="الإثنين">الإثنين</button>
+     <button type="button" onclick="AdminApp.switchClassDay('الثلاثاء')" class="day-tab-btn py-1.5 px-3 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition text-center whitespace-nowrap" data-day="الثلاثاء">الثلاثاء</button>
+     <button type="button" onclick="AdminApp.switchClassDay('الأربعاء')" class="day-tab-btn py-1.5 px-3 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition text-center whitespace-nowrap" data-day="الأربعاء">الأربعاء</button>
+     <button type="button" onclick="AdminApp.switchClassDay('الخميس')" class="day-tab-btn py-1.5 px-3 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition text-center whitespace-nowrap" data-day="الخميس">الخميس</button>
+   </div>
+   <button type="button" id="btn-toggle-all-week" onclick="AdminApp.toggleAllWeekView()" class="btn btn-secondary !min-h-0 !h-9 !py-0 !px-3 text-xs flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap font-medium" title="عرض أو إخفاء كامل أيام الأسبوع في شبكة متجاورة">
+     <svg class="w-3.5 h-3.5 text-sky-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+     <span id="all-week-btn-text">عرض كامل الأسبوع</span>
+   </button>
+ </div>
 
- <div id="classes-timetable" class="grid grid-cols-1 md:grid-cols-5 gap-2.5 sm:gap-4">
+ <div id="classes-timetable" class="w-full">
  <!-- Populated by JS for Sun to Thu -->
  </div>
  </div>
