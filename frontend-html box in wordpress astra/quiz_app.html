@@ -1159,31 +1159,6 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         return sorted.slice(0, -1).join(isArabic ? '، ' : ', ') + (isArabic ? ' و ' : ' & ') + sorted[sorted.length - 1];
     }
 
-    function extractShortChapterBadge(name) {
-        if (!name) return '';
-        let s = String(name).trim().replace(/\.(pdf|pptx|ppt|docx|doc|txt|png|jpg|jpeg|webp)$/i, '');
-        
-        let m = s.match(/(?:^|[\s_\-\.\(\[])(?:lec|lecture|l)[\s._\-]*0*(\d+)/i);
-        if (m) return 'Lec ' + parseInt(m[1], 10);
-        
-        m = s.match(/(?:^|[\s_\-\.\(\[])(?:ch|chapter|c)[\s._\-]*0*(\d+)/i);
-        if (m) return 'Ch ' + parseInt(m[1], 10);
-        
-        m = s.match(/(?:^|[\s_\-\.\(\[])(?:محاضرة|محاضره)[\s._\-]*0*(\d+)/i);
-        if (m) return 'محاضرة ' + parseInt(m[1], 10);
-        
-        m = s.match(/(?:^|[\s_\-\.\(\[])(?:شابتر|فصل|الوحدة|الوحده)[\s._\-]*0*(\d+)/i);
-        if (m) return 'شابتر ' + parseInt(m[1], 10);
-        
-        m = s.match(/^(?:0*(\d{1,2}))(?:[\.\-_\s]|\))/);
-        if (m) return 'Lec ' + parseInt(m[1], 10);
-        
-        s = s.replace(/[\[\(]\s*\d+\s*[\]\)]/g, ' ').replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim();
-        const words = s.split(' ');
-        if (words.length > 2) return words.slice(0, 2).join(' ') + '...';
-        return s;
-    }
-
     function generateSmartQuizName() {
         const subjectSelect = document.getElementById('dq-subject');
         const rawSubName = subjectSelect?.options[subjectSelect.selectedIndex]?.text || '';
@@ -2448,21 +2423,6 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 </details>
             `;
 
-            let chapterBadgesHTML = '';
-            if (chapList.length > 1) {
-                const badges = chapList.map(c => extractShortChapterBadge(c)).filter(Boolean);
-                if (badges.length > 0) {
-                    const visibleBadges = badges.slice(0, 5);
-                    const remainingCount = badges.length - visibleBadges.length;
-                    chapterBadgesHTML = `
-                        <div class="dent-bank-chapter-badges" style="display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 6px 0;">
-                            ${visibleBadges.map(b => `<span style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px; padding: 2px 7px; font-size: 0.72rem; color: #94a3b8; font-weight: 500; font-family: inherit;">${escapeHtml(b)}</span>`).join('')}
-                            ${remainingCount > 0 ? `<span style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; color: #64748b;">+${remainingCount}</span>` : ''}
-                        </div>
-                    `;
-                }
-            }
-
             const isPastExam = (q.creation_mode === 'past_exam_filter');
             const typeBadge = isPastExam 
                 ? `<span class="dent-bank-tag dent-tag-pastexam">تجميعات سنوات</span>`
@@ -2489,7 +2449,6 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                         ${typeBadge}
                         ${diffBadge}
                     </div>
-                    ${chapterBadgesHTML}
                     ${chaptersDropdownHTML}
                 </div>
                 <div class="dent-bank-card-bottom">
