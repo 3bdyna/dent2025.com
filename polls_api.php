@@ -94,7 +94,7 @@ function dent_format_public_poll($poll, $voterHash = '') {
         'status' => $poll['status'] ?? 'published',
         'has_voted' => $hasVoted,
         'created_at' => $poll['created_at'] ?? time(),
-        'expires_at' => $poll['expires_at'] ?? (time() + 86400)
+        'expires_at' => isset($poll['expires_at']) ? (int)$poll['expires_at'] : 0
     ];
 }
 
@@ -129,7 +129,8 @@ if ($method === 'GET') {
         $activePoll = null;
         $now = time();
 
-        // Search for relevant active poll (newest first)
+        // Expiration check (0 means never expires)
+        $now = time();
         $polls = array_reverse($data['polls']);
         foreach ($polls as $poll) {
             $status = $poll['status'] ?? 'published';
@@ -137,8 +138,8 @@ if ($method === 'GET') {
                 continue;
             }
 
-            // Expiration check
-            if (!empty($poll['expires_at']) && $now > (int)$poll['expires_at']) {
+            // Expiration check (expires_at = 0 or empty means permanent)
+            if (!empty($poll['expires_at']) && (int)$poll['expires_at'] > 0 && $now > (int)$poll['expires_at']) {
                 continue;
             }
 
@@ -334,8 +335,8 @@ if ($method === 'POST') {
             $pollId = 'poll_' . date('Ymd_His') . '_' . substr(md5(uniqid('', true)), 0, 5);
         }
 
-        $durationHours = (int)($body['duration_hours'] ?? 24);
-        if ($durationHours <= 0) $durationHours = 24;
+        $durationHours = isset($body['duration_hours']) ? (int)$body['duration_hours'] : 24;
+        $expiresAt = ($durationHours > 0) ? (time() + ($durationHours * 3600)) : 0;
 
         $status = in_array($body['status'] ?? '', ['testing', 'published', 'archived'], true) ? $body['status'] : 'testing';
 
@@ -365,7 +366,7 @@ if ($method === 'POST') {
             'semester' => $semester,
             'status' => $status,
             'created_at' => $existing['created_at'] ?? time(),
-            'expires_at' => time() + ($durationHours * 3600)
+            'expires_at' => $expiresAt
         ];
 
         dent_save_polls_data($pollsFile, $data);
