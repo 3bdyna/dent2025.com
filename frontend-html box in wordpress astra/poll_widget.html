@@ -11,8 +11,11 @@
     display: none; /* Initially hidden until active poll is loaded and verified */
   }
 
+  /* Glassmorphic translucent card matching website grid */
   .dent-poll-widget-card {
-    background: #18191d;
+    background: rgba(24, 25, 29, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 18px;
     padding: 18px 22px;
@@ -38,32 +41,18 @@
     flex-wrap: wrap;
   }
 
+  /* Neutral, elegant monochromatic pills (No neon green, no yellow) */
   .dent-poll-pill {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #94a3b8;
+    color: #cbd5e1;
     padding: 3px 10px;
-    border-radius: 999px;
+    border-radius: 8px;
     font-size: 0.74rem;
     font-weight: 500;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-  }
-
-  .dent-poll-pill.testing-mode {
-    background: rgba(234, 179, 8, 0.1);
-    border-color: rgba(234, 179, 8, 0.3);
-    color: #fde047;
-  }
-
-  .dent-poll-live-indicator {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #22c55e;
-    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
   }
 
   .dent-poll-dismiss-btn {
@@ -77,6 +66,7 @@
     align-items: center;
     justify-content: center;
     transition: color 0.2s, background 0.2s;
+    outline: none !important;
   }
   .dent-poll-dismiss-btn:hover {
     color: #e2e8f0;
@@ -95,14 +85,14 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.85rem;
   }
 
   .dent-poll-opt-btn {
     position: relative;
     overflow: hidden;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 12px;
     padding: 12px 16px;
     color: #e2e8f0;
@@ -115,15 +105,17 @@
     align-items: center;
     transition: border-color 0.2s, background 0.2s, transform 0.15s;
     user-select: none;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
   }
 
   .dent-poll-opt-btn:hover:not(.dent-voted) {
     background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.18);
     transform: translateY(-1px);
   }
 
-  /* Monochrome / Neutral Progress Bar Fill (NO BLUE) */
+  /* Monochrome Progress Bar Fill (Zero Blue Colors) */
   .dent-poll-progress-fill {
     position: absolute;
     top: 0;
@@ -193,22 +185,25 @@
     font-weight: 600;
   }
 
-  /* Peek Results Button */
+  /* Discreet Button for Peeking Results (Zero Blue, Pill styling) */
   .dent-poll-peek-btn {
-    background: transparent;
-    border: none;
-    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
     font-size: 0.76rem;
     font-family: inherit;
     cursor: pointer;
-    padding: 3px 6px;
-    border-radius: 6px;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    transition: color 0.2s;
+    padding: 4px 12px;
+    border-radius: 8px;
+    text-decoration: none !important;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    transition: all 0.2s ease;
   }
   .dent-poll-peek-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.2);
   }
 
   .dent-poll-footer {
@@ -234,13 +229,10 @@
   <div class="dent-poll-widget-card" id="dentPollCard">
     <div class="dent-poll-header">
       <div class="dent-poll-badge-row">
-        <span class="dent-poll-pill">
-          <span class="dent-poll-live-indicator"></span>
-          استطلاع
-        </span>
+        <span class="dent-poll-pill">استطلاع</span>
         <span class="dent-poll-pill" id="dentPollBadge" style="display:none;"></span>
         <span class="dent-poll-pill" id="dentPollSubBadge" style="display:none;"></span>
-        <span class="dent-poll-pill testing-mode" id="dentPollTestingBadge" style="display:none;">معاينة تجريبية</span>
+        <span class="dent-poll-pill" id="dentPollTestingBadge" style="display:none;">تجريبي</span>
       </div>
       <button class="dent-poll-dismiss-btn" onclick="dentDismissCurrentPoll()" title="إخفاء الاستطلاع" aria-label="إخفاء">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -257,7 +249,7 @@
     </div>
 
     <div class="dent-poll-footer">
-      <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
         <span class="dent-poll-meta-item">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>

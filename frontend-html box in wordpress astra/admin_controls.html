@@ -206,19 +206,18 @@
             <div class="dent-form-row">
                 <div class="dent-form-col" style="flex: 1.2;">
                     <label>المدة الزمنية (Duration)</label>
-                    <div style="display: flex; gap: 6px; align-items: center;">
-                        <input type="number" id="poll-inp-duration-val" class="dent-admin-input" value="24" min="1" style="width: 70px; text-align: center; padding: 0 6px;">
-                        <select id="poll-inp-duration-unit" class="dent-admin-input" style="flex: 1;" onchange="onPollDurationUnitChange()">
-                            <option value="hours" selected>ساعة</option>
-                            <option value="days">يوم</option>
-                            <option value="weeks">أسبوع</option>
-                            <option value="forever">دائم (بدون انتهاء)</option>
-                        </select>
-                    </div>
+                    <select id="poll-inp-duration" class="dent-admin-input">
+                        <option value="24" selected>24 ساعة (يوم واحد)</option>
+                        <option value="48">48 ساعة (يومان)</option>
+                        <option value="72">3 أيام</option>
+                        <option value="168">أسبوع كامل (7 أيام)</option>
+                        <option value="720">شهر كامل (30 يوماً)</option>
+                        <option value="0">دائم — يظل مفتوحاً دائماً بدون انتهاء</option>
+                    </select>
                 </div>
                 <div class="dent-form-col" style="flex: 1.5;">
                     <label>حالة الظهور (Stealth Gate)</label>
-                    <select id="poll-inp-status" class="dent-admin-input" style="border-color: rgba(234, 179, 8, 0.4); color: #fde047;">
+                    <select id="poll-inp-status" class="dent-admin-input" style="border-color: rgba(255, 255, 255, 0.2); color: #f8fafc;">
                         <option value="testing" selected>🔒 وضع التجربة (مخفي تماماً عن الطلاب)</option>
                         <option value="published">🌐 منشور ومتاح للجميع</option>
                     </select>
@@ -518,14 +517,6 @@
             });
     }
 
-    function onPollDurationUnitChange() {
-        const u = document.getElementById('poll-inp-duration-unit').value;
-        const inp = document.getElementById('poll-inp-duration-val');
-        if (inp) {
-            inp.style.display = (u === 'forever') ? 'none' : 'block';
-        }
-    }
-
     function saveAdminPoll() {
         const pass = sessionStorage.getItem('dent2025_admin_pass') || '';
         const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
@@ -539,13 +530,7 @@
         const opt1 = (document.getElementById('poll-inp-opt-1').value || '').trim();
         const opt2 = (document.getElementById('poll-inp-opt-2').value || '').trim();
 
-        const unit = document.getElementById('poll-inp-duration-unit').value;
-        const val = parseInt(document.getElementById('poll-inp-duration-val').value, 10) || 24;
-        let duration = val;
-        if (unit === 'days') duration = val * 24;
-        else if (unit === 'weeks') duration = val * 168;
-        else if (unit === 'forever') duration = 0; // 0 = permanent/no expiry
-
+        const duration = parseInt(document.getElementById('poll-inp-duration').value, 10);
         const status = document.getElementById('poll-inp-status').value || 'testing';
 
         const options = [opt0, opt1, opt2].filter(o => o.length > 0);
