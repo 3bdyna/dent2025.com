@@ -59,6 +59,26 @@ function dent_get_auth_pass($body = []) {
     return '';
 }
 
+// Check if passkey belongs to Master or a Cohort Leader, and get allowed contexts
+function dent_get_caller_auth_scope($pass) {
+    if (empty($pass)) return null;
+    $info = dent2025_get_passkey_info($pass);
+    if (!$info) return null;
+
+    $perms = $info['permissions'] ?? [];
+    $allowed = $info['allowed_contexts'] ?? [];
+
+    $isMaster = !empty($perms['manage_passwords']) || !empty($perms['global_announcements']) || in_array('*', $allowed, true);
+    $isLeader = !empty($perms['semester_announcements']) || !empty($perms['edit_basic_subject']);
+
+    if (!$isMaster && !$isLeader) return null;
+
+    return [
+        'is_master' => $isMaster,
+        'allowed_contexts' => $allowed
+    ];
+}
+
 // Client IP resolver
 function dent_get_client_ip() {
     if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
@@ -192,7 +212,9 @@ if ($method === 'GET') {
     // 1B. Get all polls for admin dashboard
     if ($action === 'get_all_polls') {
         $pass = dent_get_auth_pass();
-        if (!dent2025_check_rbac_permission($pass, 'semester_announcements') && !dent2025_check_rbac_permission($pass, 'global_announcements')) {
+        $authScope = dent_get_caller_auth_scope($pass);
+
+        if (!$authScope) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'Unauthorized passkey'], JSON_UNESCAPED_UNICODE);
             exit;
@@ -201,21 +223,24 @@ if ($method === 'GET') {
         $data = dent_load_polls_data($pollsFile);
         $list = [];
         foreach ($data['polls'] as $p) {
-            $list[] = [
-                'id' => $p['id'],
-                'question' => $p['question'],
-                'badge' => $p['badge'] ?? '',
-                'sub_badge' => $p['sub_badge'] ?? '',
-                'options' => $p['options'] ?? [],
-                'votes' => $p['votes'] ?? [],
-                'total_votes' => $p['total_votes'] ?? 0,
-                'specialty' => $p['specialty'] ?? 'dentistry',
-                'year' => $p['year'] ?? 0,
-                'semester' => $p['semester'] ?? 1,
-                'status' => $p['status'] ?? 'published',
-                'created_at' => $p['created_at'] ?? 0,
-                'expires_at' => $p['expires_at'] ?? 0
-            ];
+            $pollContext = ($p['specialty'] ?? '') . '_' . ($p['year'] ?? 0) . '_' . ($p['semester'] ?? 1);
+            if ($authScope['is_master'] || in_array('*', $authScope['allowed_contexts'], true) || in_array($pollContext, $authScope['allowed_contexts'], true) || empty($p['year'])) {
+                $list[] = [
+                    'id' => $p['id'],
+                    'question' => $p['question'],
+                    'badge' => $p['badge'] ?? '',
+                    'sub_badge' => $p['sub_badge'] ?? '',
+                    'options' => $p['options'] ?? [],
+                    'votes' => $p['votes'] ?? [],
+                    'total_votes' => $p['total_votes'] ?? 0,
+                    'specialty' => $p['specialty'] ?? 'dentistry',
+                    'year' => $p['year'] ?? 0,
+                    'semester' => $p['semester'] ?? 1,
+                    'status' => $p['status'] ?? 'published',
+                    'created_at' => $p['created_at'] ?? 0,
+                    'expires_at' => $p['expires_at'] ?? 0
+                ];
+            }
         }
 
         echo json_encode(['success' => true, 'data' => array_reverse($list)], JSON_UNESCAPED_UNICODE);
@@ -315,11 +340,18 @@ if ($method === 'POST') {
         $specialty = strtolower(trim((string)($body['specialty'] ?? 'dentistry')));
         $year = (int)($body['year'] ?? 3);
         $semester = (int)($body['semester'] ?? 1);
+        $authScope = dent_get_caller_auth_scope($pass);
 
-        if (!dent2025_check_rbac_permission($pass, 'semester_announcements', $specialty, $year, $semester) &&
-            !dent2025_check_rbac_permission($pass, 'global_announcements')) {
+        if (!$authScope) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'صلاحية غير كافية لحفظ الاستطلاع'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        $targetContext = "{$specialty}_{$year}_{$semester}";
+        if (!$authScope['is_master'] && !in_array('*', $authScope['allowed_contexts'], true) && !in_array($targetContext, $authScope['allowed_contexts'], true)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'لا يمكنك إنشاء استطلاع لدفعة غير مسموح لك بإدارتها'], JSON_UNESCAPED_UNICODE);
             exit;
         }
 
@@ -395,23 +427,32 @@ if ($method === 'POST') {
     if ($action === 'delete_poll') {
         $pass = dent_get_auth_pass($body);
         $pollId = trim((string)($body['id'] ?? ''));
+        $authScope = dent_get_caller_auth_scope($pass);
 
-        if (!dent2025_check_rbac_permission($pass, 'semester_announcements') &&
-            !dent2025_check_rbac_permission($pass, 'global_announcements')) {
+        if (!$authScope) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'صلاحية غير كافية لحذف الاستطلاع'], JSON_UNESCAPED_UNICODE);
             exit;
         }
 
         $data = dent_load_polls_data($pollsFile);
-        if (isset($data['polls'][$pollId])) {
-            unset($data['polls'][$pollId]);
-            dent_save_polls_data($pollsFile, $data);
-            echo json_encode(['success' => true, 'message' => 'تم حذف الاستطلاع بنجاح'], JSON_UNESCAPED_UNICODE);
-        } else {
+        if (!isset($data['polls'][$pollId])) {
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'الاستطلاع غير موجود'], JSON_UNESCAPED_UNICODE);
+            exit;
         }
+
+        $poll = $data['polls'][$pollId];
+        $pollContext = ($poll['specialty'] ?? '') . '_' . ($poll['year'] ?? 0) . '_' . ($poll['semester'] ?? 1);
+        if (!$authScope['is_master'] && !in_array('*', $authScope['allowed_contexts'], true) && !in_array($pollContext, $authScope['allowed_contexts'], true)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'لا يمكنك حذف استطلاع تابع لدفعة أخرى'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        unset($data['polls'][$pollId]);
+        dent_save_polls_data($pollsFile, $data);
+        echo json_encode(['success' => true, 'message' => 'تم حذف الاستطلاع بنجاح'], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
@@ -420,9 +461,9 @@ if ($method === 'POST') {
         $pass = dent_get_auth_pass($body);
         $pollId = trim((string)($body['id'] ?? ''));
         $newStatus = trim((string)($body['status'] ?? ''));
+        $authScope = dent_get_caller_auth_scope($pass);
 
-        if (!dent2025_check_rbac_permission($pass, 'semester_announcements') &&
-            !dent2025_check_rbac_permission($pass, 'global_announcements')) {
+        if (!$authScope) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'صلاحية غير كافية لتعديل حالة الاستطلاع'], JSON_UNESCAPED_UNICODE);
             exit;
@@ -435,18 +476,27 @@ if ($method === 'POST') {
         }
 
         $data = dent_load_polls_data($pollsFile);
-        if (isset($data['polls'][$pollId])) {
-            $data['polls'][$pollId]['status'] = $newStatus;
-            dent_save_polls_data($pollsFile, $data);
-            echo json_encode([
-                'success' => true,
-                'message' => 'تم تغيير حالة الاستطلاع إلى ' . ($newStatus === 'published' ? 'منشور للطلاب' : ($newStatus === 'testing' ? 'وضع التجربة' : 'مؤرشف')),
-                'data' => $data['polls'][$pollId]
-            ], JSON_UNESCAPED_UNICODE);
-        } else {
+        if (!isset($data['polls'][$pollId])) {
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'الاستطلاع غير موجود'], JSON_UNESCAPED_UNICODE);
+            exit;
         }
+
+        $poll = $data['polls'][$pollId];
+        $pollContext = ($poll['specialty'] ?? '') . '_' . ($poll['year'] ?? 0) . '_' . ($poll['semester'] ?? 1);
+        if (!$authScope['is_master'] && !in_array('*', $authScope['allowed_contexts'], true) && !in_array($pollContext, $authScope['allowed_contexts'], true)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'لا يمكنك تعديل استطلاع تابع لدفعة أخرى'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        $data['polls'][$pollId]['status'] = $newStatus;
+        dent_save_polls_data($pollsFile, $data);
+        echo json_encode([
+            'success' => true,
+            'message' => 'تم تغيير حالة الاستطلاع إلى ' . ($newStatus === 'published' ? 'منشور للطلاب' : ($newStatus === 'testing' ? 'وضع التجربة' : 'مؤرشف')),
+            'data' => $data['polls'][$pollId]
+        ], JSON_UNESCAPED_UNICODE);
         exit;
     }
 }
