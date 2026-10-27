@@ -188,18 +188,15 @@
                 </div>
             </div>
 
-            <div class="dent-form-row" style="margin-bottom: 8px;">
-                <div class="dent-form-col" style="flex: 1;">
-                    <label>الخيار 1</label>
-                    <input type="text" id="poll-inp-opt-0" class="dent-admin-input" placeholder="سهل ومباشر" value="سهل ومباشر من السلايدات">
+            <div style="margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label style="font-size: 0.8rem; color: #9ca3af; font-weight: 500;">خيارات الاستطلاع (يمكنك إضافة أو حذف أي خيار)</label>
+                    <button type="button" class="dent-admin-btn secondary" onclick="addPollOptionRow()" style="padding: 2px 10px; font-size: 0.75rem;">
+                        + إضافة خيار إضافي
+                    </button>
                 </div>
-                <div class="dent-form-col" style="flex: 1;">
-                    <label>الخيار 2</label>
-                    <input type="text" id="poll-inp-opt-1" class="dent-admin-input" placeholder="متوسط" value="متوسط وفيه أفكار تحتاج تركيز">
-                </div>
-                <div class="dent-form-col" style="flex: 1;">
-                    <label>الخيار 3 (اختياري)</label>
-                    <input type="text" id="poll-inp-opt-2" class="dent-admin-input" placeholder="صعب" value="صعب وفيه أسئلة غير متوقعة">
+                <div id="dent-poll-options-wrapper" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Injected dynamically -->
                 </div>
             </div>
 
@@ -464,10 +461,76 @@
     // ==========================================
     let currentAdminPollId = null;
 
+    function reindexPollOptionRows() {
+        const rows = document.querySelectorAll('.dent-poll-option-row');
+        rows.forEach((row, i) => {
+            const numEl = row.querySelector('.dent-poll-opt-num');
+            if (numEl) numEl.textContent = `خيار ${i + 1}:`;
+            const inp = row.querySelector('.dent-poll-opt-input');
+            if (inp) inp.placeholder = `نص الخيار ${i + 1}...`;
+            const delBtn = row.querySelector('.dent-poll-del-btn');
+            if (delBtn) {
+                delBtn.style.opacity = (rows.length <= 2) ? '0.3' : '1';
+                delBtn.disabled = (rows.length <= 2);
+            }
+        });
+    }
+
+    function addPollOptionRow(val) {
+        val = (val !== undefined && val !== null) ? String(val) : '';
+        const wrapper = document.getElementById('dent-poll-options-wrapper');
+        if (!wrapper) return;
+        const currentCount = wrapper.querySelectorAll('.dent-poll-option-row').length;
+        if (currentCount >= 6) {
+            alert("الحد الأقصى للاستطلاع هو 6 خيارات.");
+            return;
+        }
+
+        const row = document.createElement('div');
+        row.className = 'dent-poll-option-row';
+        row.style.cssText = 'display: flex; gap: 8px; align-items: center; width: 100%;';
+        
+        const safeVal = val.replace(/"/g, '&quot;');
+        row.innerHTML = `
+            <span class="dent-poll-opt-num" style="font-size: 0.8rem; color: #9ca3af; min-width: 55px; white-space: nowrap;">خيار ${currentCount + 1}:</span>
+            <input type="text" class="dent-admin-input dent-poll-opt-input" style="flex: 1;" value="${safeVal}" placeholder="نص الخيار ${currentCount + 1}...">
+            <button type="button" class="dent-admin-btn danger dent-poll-del-btn" onclick="removePollOptionRow(this)" style="padding: 0 12px; height: 42px; min-width: 38px; border-radius: 8px;" title="حذف هذا الخيار">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        `;
+        wrapper.appendChild(row);
+        reindexPollOptionRows();
+    }
+
+    function removePollOptionRow(btn) {
+        const wrapper = document.getElementById('dent-poll-options-wrapper');
+        if (!wrapper) return;
+        const rows = wrapper.querySelectorAll('.dent-poll-option-row');
+        if (rows.length <= 2) {
+            alert("يجب أن يحتوي الاستطلاع على خيارين على الأقل.");
+            return;
+        }
+        const row = btn.closest('.dent-poll-option-row');
+        if (row) {
+            row.remove();
+            reindexPollOptionRows();
+        }
+    }
+
+    function initPollOptionRows() {
+        const wrapper = document.getElementById('dent-poll-options-wrapper');
+        if (!wrapper || wrapper.children.length > 0) return;
+        addPollOptionRow('سهل ومباشر من السلايدات');
+        addPollOptionRow('متوسط وفيه أفكار تحتاج تركيز');
+        addPollOptionRow('صعب وفيه أسئلة غير متوقعة');
+    }
+
     function toggleAdminPollForm() {
         const f = document.getElementById('dent-admin-poll-form');
         if (!f) return;
-        f.style.display = (f.style.display === 'none' || !f.style.display) ? 'block' : 'none';
+        const isHidden = (f.style.display === 'none' || !f.style.display);
+        f.style.display = isHidden ? 'block' : 'none';
+        if (isHidden) initPollOptionRows();
     }
 
     function loadAdminPollStatus() {
@@ -526,14 +589,14 @@
 
         const q = (document.getElementById('poll-inp-question').value || '').trim();
         const badge = (document.getElementById('poll-inp-badge').value || '').trim();
-        const opt0 = (document.getElementById('poll-inp-opt-0').value || '').trim();
-        const opt1 = (document.getElementById('poll-inp-opt-1').value || '').trim();
-        const opt2 = (document.getElementById('poll-inp-opt-2').value || '').trim();
 
         const duration = parseInt(document.getElementById('poll-inp-duration').value, 10);
         const status = document.getElementById('poll-inp-status').value || 'testing';
 
-        const options = [opt0, opt1, opt2].filter(o => o.length > 0);
+        const optionInputs = document.querySelectorAll('.dent-poll-opt-input');
+        const options = Array.from(optionInputs)
+            .map(inp => (inp.value || '').trim())
+            .filter(val => val.length > 0);
 
         if (!q) return alert("الرجاء إدخال سؤال الاستطلاع");
         if (options.length < 2) return alert("الرجاء إدخال خيارين على الأقل");
@@ -608,6 +671,7 @@
         setTimeout(repositionAdminPanel, 400);
         setTimeout(repositionAdminPanel, 1200);
 
+        initPollOptionRows();
         if (sessionStorage.getItem('dent2025_admin_pass')) {
             activateAdminMode();
         }
