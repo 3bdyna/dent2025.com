@@ -3892,13 +3892,13 @@ window.AdminApp = {
 
     getGeminiStatusBadge(status) {
         if (status === 'active') {
-            return '<span class="px-2.5 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">نشط</span>';
+            return '<span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 whitespace-nowrap">نشط</span>';
         } else if (status === 'quota_exhausted') {
-            return '<span class="px-2.5 py-1 text-xs rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">متجاوز للكوتا (429)</span>';
+            return '<span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25 whitespace-nowrap">تجاوز الكوتا (429)</span>';
         } else if (status === 'invalid') {
-            return '<span class="px-2.5 py-1 text-xs rounded-full bg-red-500/10 text-red-400 border border-red-500/20">غير صالح</span>';
+            return '<span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-red-500/15 text-red-400 border border-red-500/25 whitespace-nowrap">غير صالح</span>';
         }
-        return '<span class="px-2.5 py-1 text-xs rounded-full bg-gray-500/10 text-gray-400 border border-gray-500/20">غير معروف</span>';
+        return '<span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-gray-500/15 text-gray-400 border border-gray-500/25 whitespace-nowrap">غير معروف</span>';
     },
 
     updateGeminiSummaryCounters() {
@@ -3948,49 +3948,56 @@ window.AdminApp = {
                     const latencyText = k.latency_ms ? (k.latency_ms + ' ms') : 'غير مختبر';
 
                     return `
-                        <div id="gemini-key-card-${k.index}" class="glass p-5 rounded-2xl border border-white/10 space-y-3 relative flex flex-col justify-between transition-all duration-300">
+                        <div id="gemini-key-card-${k.index}" class="glass p-4 sm:p-5 rounded-2xl border border-white/10 relative flex flex-col justify-between transition-all duration-300 hover:border-white/20 min-w-0 overflow-hidden shadow-lg shadow-black/20">
                             <div>
-                                <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-start justify-between gap-3 mb-2.5">
                                     <div class="min-w-0 flex-1">
-                                        <h4 class="font-bold text-white text-base truncate">${this.escapeHtml(k.label)}</h4>
-                                        <div class="flex items-center gap-2 mt-1">
-                                            <span id="gemini-key-display-${k.index}" class="text-xs font-mono text-gray-400 select-all">${k.key_masked}</span>
-                                            <button onclick="AdminApp.toggleGeminiKeyMask(${k.index})" class="text-gray-400 hover:text-white text-xs p-1 rounded transition" title="إظهار / إخفاء المفتاح">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                            </button>
-                                            <button onclick="AdminApp.copyGeminiKey(${k.index})" class="text-gray-400 hover:text-white text-xs p-1 rounded transition" title="نسخ المفتاح">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                                            </button>
+                                        <h4 class="font-bold text-white text-sm sm:text-base leading-snug break-words" title="${this.escapeHtml(k.label)}">${this.escapeHtml(k.label)}</h4>
+                                        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 mt-1.5 rounded-lg bg-black/40 border border-white/5 max-w-full">
+                                            <span id="gemini-key-display-${k.index}" class="text-[11px] sm:text-xs font-mono text-gray-300 select-all truncate" dir="ltr">${k.key_masked}</span>
+                                            <div class="flex items-center gap-0.5 shrink-0" dir="ltr">
+                                                <button onclick="AdminApp.toggleGeminiKeyMask(${k.index})" class="text-gray-400 hover:text-white p-1 rounded hover:bg-white/10 transition" title="إظهار / إخفاء المفتاح">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                </button>
+                                                <button onclick="AdminApp.copyGeminiKey(${k.index})" class="text-gray-400 hover:text-white p-1 rounded hover:bg-white/10 transition" title="نسخ المفتاح">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div id="gemini-key-status-${k.index}" class="shrink-0 mr-2">${statusBadge}</div>
+                                    <div id="gemini-key-status-${k.index}" class="shrink-0 pt-0.5">${statusBadge}</div>
                                 </div>
 
-                                <div class="mt-3">
-                                    <div class="flex justify-between text-xs text-gray-400 mb-1">
-                                        <span>الطلبات اليوم</span>
-                                        <span class="font-mono text-white">${k.requests_today} / ${k.rpd_limit} RPD</span>
+                                <div class="mt-3.5 pt-2.5 border-t border-white/5">
+                                    <div class="flex justify-between items-center text-xs text-gray-400 mb-1.5 gap-2">
+                                        <span class="whitespace-nowrap font-medium">الطلبات اليوم</span>
+                                        <span class="font-mono text-white whitespace-nowrap text-xs sm:text-sm font-semibold" dir="ltr">${k.requests_today} / ${k.rpd_limit} RPD</span>
                                     </div>
-                                    <div class="w-full bg-black/40 h-2 rounded-full overflow-hidden border border-white/5">
-                                        <div class="${barColor} h-full transition-all duration-500" style="width: ${rpdPct}%"></div>
+                                    <div class="w-full bg-black/50 h-2 rounded-full overflow-hidden border border-white/5">
+                                        <div class="${barColor} h-full transition-all duration-500 rounded-full" style="width: ${rpdPct}%"></div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="pt-3 border-t border-white/5 flex flex-col gap-2">
-                                <div class="flex justify-between items-center text-xs text-gray-400">
-                                    <span>الاستجابة: <strong id="gemini-key-latency-${k.index}" class="font-mono text-white">${latencyText}</strong></span>
-                                    <span id="gemini-key-tested-${k.index}" class="text-[10px] text-gray-500">${k.last_tested ? k.last_tested.split(' ')[1] : ''}</span>
+                            <div class="pt-3 border-t border-white/5 space-y-2.5">
+                                <div class="flex justify-between items-center text-xs text-gray-400 min-w-0">
+                                    <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
+                                        <span>الاستجابة:</span>
+                                        <strong id="gemini-key-latency-${k.index}" class="font-mono text-emerald-400 font-bold" dir="ltr">${latencyText}</strong>
+                                    </span>
+                                    <span id="gemini-key-tested-${k.index}" class="text-[11px] font-mono text-gray-500 whitespace-nowrap" dir="ltr">${k.last_tested ? k.last_tested.split(' ')[1] : ''}</span>
                                 </div>
-                                <div class="flex gap-1.5 pt-1">
-                                    <button id="gemini-key-test-btn-${k.index}" onclick="AdminApp.testGeminiKeys(${k.index})" class="btn btn-secondary text-xs px-2.5 py-1 flex-1 flex items-center justify-center gap-1 transition">
+                                <div class="grid grid-cols-3 gap-2 w-full pt-1">
+                                    <button id="gemini-key-test-btn-${k.index}" onclick="AdminApp.testGeminiKeys(${k.index})" class="btn btn-secondary !min-h-0 !h-8 !py-0 !px-1.5 text-xs flex items-center justify-center gap-1 transition w-full whitespace-nowrap font-medium">
+                                        <svg class="w-3.5 h-3.5 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                         <span>فحص</span>
                                     </button>
-                                    <button onclick="AdminApp.openEditGeminiKeyModal(${k.index})" class="btn btn-secondary text-xs px-2.5 py-1 flex-1 flex items-center justify-center gap-1 border-white/10 hover:border-white/30 text-white">
+                                    <button onclick="AdminApp.openEditGeminiKeyModal(${k.index})" class="btn btn-secondary !min-h-0 !h-8 !py-0 !px-1.5 text-xs flex items-center justify-center gap-1 border-white/10 hover:border-white/30 text-white w-full whitespace-nowrap font-medium">
+                                        <svg class="w-3.5 h-3.5 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         <span>تعديل</span>
                                     </button>
-                                    <button onclick="AdminApp.deleteGeminiKey(${k.index})" class="btn btn-danger text-xs px-2.5 py-1 flex items-center justify-center gap-1" title="حذف المفتاح">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    <button onclick="AdminApp.deleteGeminiKey(${k.index})" class="btn btn-danger !min-h-0 !h-8 !py-0 !px-1.5 text-xs flex items-center justify-center gap-1 w-full whitespace-nowrap font-medium" title="حذف المفتاح">
+                                        <svg class="w-3.5 h-3.5 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                         <span>حذف</span>
                                     </button>
                                 </div>
@@ -4065,7 +4072,7 @@ window.AdminApp = {
                 if (btnEl) {
                     btnEl.disabled = false;
                     btnEl.classList.remove('opacity-60', 'cursor-not-allowed');
-                    btnEl.innerHTML = '<span>فحص</span>';
+                    btnEl.innerHTML = '<svg class="w-3.5 h-3.5 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg><span>فحص</span>';
                 }
             }
         };
