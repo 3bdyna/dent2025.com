@@ -1335,45 +1335,64 @@ window.AdminApp = {
             
             let permBadges = '';
             const perms = p.permissions || {};
-            for (let [k, label] of Object.entries(permLabels)) {
-                const active = !!perms[k];
-                const safePermLabel = this.escapeHtml(label);
-                if (active) {
-                    permBadges += `<span class="bg-gray-500/20 text-gray-300 border border-gray-500/30 px-2 py-0.5 rounded text-xs">${safePermLabel}</span> `;
-                } else {
-                    permBadges += `<span class="bg-gray-800/50 text-gray-500 border border-gray-700 px-2 py-0.5 rounded text-xs opacity-50">${safePermLabel}</span> `;
+            const isFullMaster = perms.manage_passwords || (allowedCtx === '*');
+            
+            if (isFullMaster) {
+                permBadges = `<span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-0.5 rounded-md text-xs font-semibold inline-flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg><span>كامل الصلاحيات (Full Master Access)</span></span>`;
+            } else {
+                let grantedCount = 0;
+                for (let [k, label] of Object.entries(permLabels)) {
+                    if (perms[k]) {
+                        grantedCount++;
+                        permBadges += `<span class="bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 px-2 py-0.5 rounded text-xs font-medium">${this.escapeHtml(label)}</span> `;
+                    }
+                }
+                if (grantedCount === 0) {
+                    permBadges = '<span class="text-gray-500 text-xs">لا توجد صلاحيات ممنوحة</span>';
                 }
             }
 
             html += `
-                <div class="bg-black/30 p-5 rounded-xl border border-white/10 relative hover:border-white/20 transition">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-3 border-b border-white/5 pb-3">
-                        <div>
-                            <div class="flex items-center gap-3">
-                                <h3 class="text-lg font-bold text-white">${safeLabel}</h3>
-                                <span class="bg-primary/20 text-accent font-mono text-xs px-2 py-0.5 rounded border border-primary/30">${safeId}</span>
+                <div class="glass p-4 sm:p-5 rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-300 relative shadow-lg shadow-black/20 min-w-0 overflow-hidden">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3.5 mb-3.5 border-b border-white/5 pb-3.5">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2.5 flex-wrap">
+                                <h3 class="text-base sm:text-lg font-bold text-white break-words">${safeLabel}</h3>
+                                <span class="bg-primary/20 text-accent font-mono text-xs px-2.5 py-0.5 rounded-lg border border-primary/30 select-all">${safeId}</span>
+                                ${isFullMaster ? '<span class="bg-purple-500/20 text-purple-300 text-[11px] px-2 py-0.5 rounded-full border border-purple-500/30 font-semibold">مفتاح إشراف رئيسي</span>' : '<span class="bg-sky-500/15 text-sky-300 text-[11px] px-2 py-0.5 rounded-full border border-sky-500/25">مشرف مسار محدد</span>'}
                             </div>
-                            <div class="flex items-center gap-2 mt-2">
+                            <div class="flex items-center gap-2 mt-2.5 flex-wrap">
                                 <span class="text-xs text-gray-400">كلمة المرور:</span>
-                                <code class="bg-black/50 text-gray-300 px-3 py-1 rounded text-sm font-mono tracking-widest border border-white/10">${safePassDisplay}</code>
-                                <button onclick="AdminApp.toggleKeyVisibility('${safeId}')" class="text-xs text-gray-300 hover:text-white px-2 py-1 bg-white/5 rounded border border-white/10">
-                                    ${isVisible ? 'إخفاء' : 'إظهار'}
-                                </button>
+                                <div class="inline-flex items-center gap-1.5 bg-black/50 px-2.5 py-1 rounded-lg border border-white/10" dir="ltr">
+                                    <code class="text-gray-200 text-sm font-mono tracking-wider font-semibold select-all">${safePassDisplay}</code>
+                                    <button onclick="AdminApp.toggleKeyVisibility('${safeId}')" class="text-gray-400 hover:text-white p-1 rounded hover:bg-white/10 transition" title="${isVisible ? 'إخفاء' : 'إظهار'}">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    </button>
+                                    <button onclick="AdminApp.copyToClipboard('${this.escapeHtml(p.passkey)}', 'تم نسخ كلمة المرور')" class="text-gray-400 hover:text-white p-1 rounded hover:bg-white/10 transition" title="نسخ كلمة المرور">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="AdminApp.editPassword('${safeId}')" class="btn btn-secondary text-xs py-1 px-3">تعديل</button>
-                            <button onclick="AdminApp.deletePassword('${safeId}')" class="btn btn-danger text-xs py-1 px-3">حذف</button>
+                        <div class="flex items-center gap-2 self-start md:self-center shrink-0 pt-1 md:pt-0">
+                            <button onclick="AdminApp.editPassword('${safeId}')" class="btn btn-secondary !min-h-0 !h-8 !py-0 !px-3 text-xs flex items-center gap-1.5 transition">
+                                <svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                <span>تعديل</span>
+                            </button>
+                            <button onclick="AdminApp.deletePassword('${safeId}')" class="btn btn-danger !min-h-0 !h-8 !py-0 !px-3 text-xs flex items-center gap-1.5 transition">
+                                <svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                <span>حذف</span>
+                            </button>
                         </div>
                     </div>
                     
-                    <div class="space-y-2 text-xs">
-                        <div class="flex items-center gap-2">
-                            <span class="text-gray-400">السياقات المسموحة:</span>
-                            <span class="bg-white/10 text-gray-200 px-2 py-0.5 rounded font-mono border border-white/20">${safeAllowedCtx}</span>
+                    <div class="space-y-2.5 text-xs">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-gray-400 font-medium shrink-0">السياقات المسموحة:</span>
+                            <span class="bg-white/10 text-gray-200 px-2.5 py-0.5 rounded-md font-mono border border-white/15 select-all" dir="ltr">${safeAllowedCtx}</span>
                         </div>
                         <div>
-                            <span class="text-gray-400 block mb-1">الصلاحيات الممنوحة:</span>
+                            <span class="text-gray-400 block mb-1.5 font-medium">الصلاحيات الممنوحة:</span>
                             <div class="flex flex-wrap gap-1.5">${permBadges}</div>
                         </div>
                     </div>
@@ -1812,7 +1831,7 @@ window.AdminApp = {
                 const safeHijri = ev.hijri ? this.escapeHtml(ev.hijri) : '';
 
                 html += `
-                    <div class="bg-black/30 p-4 rounded-xl border border-white/10 flex flex-col justify-between hover:border-white/20 transition">
+                    <div class="glass p-4 rounded-2xl border border-white/10 flex flex-col justify-between hover:border-white/20 transition-all duration-300 min-w-0 overflow-hidden shadow-lg shadow-black/20">
                         <div>
                             <div class="flex justify-between items-start mb-2 gap-2 flex-wrap">
                                 ${typeBadges[ev.type] || typeBadges['other']}
@@ -1827,9 +1846,15 @@ window.AdminApp = {
                                 ${safeHijri ? `<div> الهجري: <span class="text-gray-300 font-mono">${safeHijri}</span></div>` : ''}
                             </div>
                         </div>
-                        <div class="flex justify-end gap-2 border-t border-white/5 pt-3">
-                            <button onclick="AdminApp.editEvent('${safeEvId}')" class="text-xs text-gray-300 hover:text-white px-2.5 py-1 bg-white/5 rounded border border-white/10">تعديل</button>
-                            <button onclick="AdminApp.deleteEvent('${safeEvId}', '${safeSchedId}')" class="text-xs text-gray-400 hover:text-gray-300 px-2.5 py-1 bg-white/5 rounded border border-white/10">حذف</button>
+                        <div class="grid grid-cols-2 gap-2 border-t border-white/5 pt-2.5 w-full">
+                            <button onclick="AdminApp.editEvent('${safeEvId}')" class="btn btn-secondary !min-h-0 !h-8 !py-0 !px-2 text-xs flex items-center justify-center gap-1.5 transition text-gray-300 hover:text-white font-medium">
+                                <svg class="w-3.5 h-3.5 opacity-80 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                <span>تعديل</span>
+                            </button>
+                            <button onclick="AdminApp.deleteEvent('${safeEvId}', '${safeSchedId}')" class="btn btn-danger !min-h-0 !h-8 !py-0 !px-2 text-xs flex items-center justify-center gap-1.5 transition font-medium">
+                                <svg class="w-3.5 h-3.5 opacity-80 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                <span>حذف</span>
+                            </button>
                         </div>
                     </div>
                 `;
@@ -2573,7 +2598,7 @@ window.AdminApp = {
                         <div class="bg-black/40 p-3 rounded-lg border border-white/10 relative group hover:border-primary/50 transition">
                             <div class="flex justify-between items-start mb-1">
                                 <span class="bg-white/10 text-gray-200 text-xs px-1.5 py-0.5 rounded font-mono">${safeStartTime} - ${safeEndTime}</span>
-                                <button onclick="AdminApp.deleteClass('${safeClassId}')" class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20" title="حذف الحصة">حذف</button>
+                                <button onclick="AdminApp.deleteClass('${safeClassId}')" class="text-red-400 hover:text-red-300 text-xs px-2 py-0.5 rounded-md bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 flex items-center gap-1 transition shrink-0 font-medium" title="حذف الحصة"><svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg><span>حذف</span></button>
                             </div>
                             <h5 class="font-bold text-white text-sm mb-1 break-words">${safeSubject}</h5>
                             <div class="flex items-center justify-between text-xs text-gray-400">
@@ -2855,11 +2880,17 @@ window.AdminApp = {
                         <span class="bg-primary/20 text-accent px-3 py-1 rounded text-xs sm:text-sm font-semibold flex items-center gap-2 border border-primary/30 break-words">
                             ${safeSpecLabel} | سنة ${safeYear} | ترم ${safeSem}
                         </span>
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2.5 flex-wrap">
                             <span class="text-xs text-gray-500 font-mono">${safeDateStr}</span>
-                            <div class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition flex gap-1.5 sm:gap-2">
-                                <button onclick="AdminApp.editAnnouncement(${safeIndex})" class="btn btn-secondary text-xs px-2.5 py-1">تعديل</button>
-                                <button onclick="AdminApp.deleteAnnouncement('${safeSpec}', ${safeYear}, ${safeSem})" class="btn btn-danger text-xs px-2.5 py-1">حذف</button>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <button onclick="AdminApp.editAnnouncement(${safeIndex})" class="btn btn-secondary !min-h-0 !h-8 !py-0 !px-2.5 text-xs flex items-center gap-1 font-medium">
+                                    <svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                    <span>تعديل</span>
+                                </button>
+                                <button onclick="AdminApp.deleteAnnouncement('${safeSpec}', ${safeYear}, ${safeSem})" class="btn btn-danger !min-h-0 !h-8 !py-0 !px-2.5 text-xs flex items-center gap-1 font-medium">
+                                    <svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    <span>حذف</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -3313,7 +3344,15 @@ window.AdminApp = {
             manual_save: { label: 'حفظ مرجعي', class: 'bg-purple-500/15 text-purple-300 border border-purple-500/30 font-bold' }
         };
 
-        const catIcons = { subjects: '', classes: '', announcements: '', events: '', passkeys: '', rollback: '', manual: '' };
+        const catIcons = {
+            subjects: '<svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>',
+            classes: '<svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+            announcements: '<svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>',
+            events: '<svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>',
+            passkeys: '<svg class="w-5 h-5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>',
+            rollback: '<svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>',
+            manual: '<svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>'
+        };
 
         let html = '';
         items.forEach((item) => {
@@ -3363,11 +3402,13 @@ window.AdminApp = {
                         </div>
                         <!-- Action Buttons -->
                         <div class="flex items-center gap-2 self-end md:self-center shrink-0">
-                            <button onclick="AdminApp.copyAuditItemSummary(${JSON.stringify(item).replace(/"/g, '&quot;')})" class="btn bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white text-xs py-1.5 px-2.5 rounded-lg border border-white/10" title="نسخ ملخص السجل">
-                                 نسخ
+                            <button onclick="AdminApp.copyAuditItemSummary(${JSON.stringify(item).replace(/"/g, '&quot;')})" class="btn btn-secondary !min-h-0 !h-8 !py-0 !px-2.5 text-xs flex items-center gap-1.5" title="نسخ ملخص السجل">
+                                <svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>نسخ</span>
                             </button>
-                            <button onclick="AdminApp.previewSnapshot('${item.snapshot_id}')" class="btn btn-secondary text-xs py-2 px-3.5 flex items-center gap-1.5 border-sky-500/30 text-sky-300 hover:bg-sky-500/15 font-semibold">
-                                 عرض ومقارنة حية
+                            <button onclick="AdminApp.previewSnapshot('${item.snapshot_id}')" class="btn btn-primary !min-h-0 !h-8 !py-0 !px-3 text-xs flex items-center gap-1.5 border-sky-500/40 text-sky-200 bg-sky-600/25 hover:bg-sky-600/40 font-semibold shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                <span>عرض ومقارنة</span>
                             </button>
                         </div>
                     </div>
@@ -4494,12 +4535,12 @@ window.AdminApp = {
                 : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>مرئي</span>`;
 
             const hideShowBtn = isHidden
-                ? `<button onclick="AdminApp.toggleQuizVisibility('${q.id}', false)" class="btn btn-secondary text-xs px-2.5 py-1.5 font-medium text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10" title="إظهار الاختبار للطلاب">إظهار</button>`
-                : `<button onclick="AdminApp.toggleQuizVisibility('${q.id}', true)" class="btn btn-secondary text-xs px-2.5 py-1.5 font-medium text-amber-400 border-amber-500/30 hover:bg-amber-500/10" title="إخفاء الاختبار عن الطلاب">إخفاء</button>`;
+                ? `<button onclick="AdminApp.toggleQuizVisibility('${q.id}', false)" class="btn btn-secondary !min-h-0 !h-8 !py-0 !px-2 text-xs font-medium text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 flex items-center gap-1" title="إظهار الاختبار للطلاب"><svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg><span>إظهار</span></button>`
+                : `<button onclick="AdminApp.toggleQuizVisibility('${q.id}', true)" class="btn btn-secondary !min-h-0 !h-8 !py-0 !px-2 text-xs font-medium text-amber-400 border-amber-500/30 hover:bg-amber-500/10 flex items-center gap-1" title="إخفاء الاختبار عن الطلاب"><svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/></svg><span>إخفاء</span></button>`;
 
             const mobileHideShowBtn = isHidden
-                ? `<button onclick="AdminApp.toggleQuizVisibility('${q.id}', false)" class="btn btn-secondary text-xs px-2.5 py-1 text-emerald-400 border-emerald-500/30">إظهار</button>`
-                : `<button onclick="AdminApp.toggleQuizVisibility('${q.id}', true)" class="btn btn-secondary text-xs px-2.5 py-1 text-amber-400 border-amber-500/30">إخفاء</button>`;
+                ? `<button onclick="AdminApp.toggleQuizVisibility('${q.id}', false)" class="btn btn-secondary !min-h-0 !h-8 !py-0 !px-1.5 text-xs text-emerald-400 border-emerald-500/30 flex items-center justify-center gap-1 w-full font-medium"><span>إظهار</span></button>`
+                : `<button onclick="AdminApp.toggleQuizVisibility('${q.id}', true)" class="btn btn-secondary !min-h-0 !h-8 !py-0 !px-1.5 text-xs text-amber-400 border-amber-500/30 flex items-center justify-center gap-1 w-full font-medium"><span>إخفاء</span></button>`;
 
             html += `
                 <tr class="hover:bg-white/5 transition ${isHidden ? 'bg-amber-500/[0.02]' : ''}">
@@ -4511,22 +4552,24 @@ window.AdminApp = {
                     <td class="p-4 text-center">${statusBadge}</td>
                     <td class="p-4 text-center text-xs text-gray-400 font-mono">${q.created_at || 'N/A'}</td>
                     <td class="p-4 text-center">
-                        <div class="flex items-center justify-center gap-1.5">
-                            <button onclick="AdminApp.takeQuiz('${q.id}')" class="btn btn-primary text-xs px-2.5 py-1.5 font-semibold flex items-center gap-1.5 bg-emerald-600/25 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-500/35 shadow-sm" title="خوض / تجربة الاختبار الآن">
-                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                                <span>بدء الاختبار</span>
+                        <div class="flex items-center justify-center gap-1.5 whitespace-nowrap">
+                            <button onclick="AdminApp.takeQuiz('${q.id}')" class="btn btn-primary !min-h-0 !h-8 !py-0 !px-2.5 text-xs font-semibold flex items-center gap-1 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/40 shadow-sm" title="خوض / تجربة الاختبار الآن">
+                                <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                <span>بدء</span>
                             </button>
-                            <button onclick="AdminApp.exportQuizBooklet('${q.id}')" class="btn btn-secondary text-xs px-2.5 py-1.5 font-medium flex items-center gap-1 text-sky-400 border-sky-500/30 hover:bg-sky-500/10" title="تصدير الاختبار (PDF / طباعة)">
-                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            <button onclick="AdminApp.exportQuizBooklet('${q.id}')" class="btn btn-secondary !min-h-0 !h-8 !py-0 !px-2 text-xs font-medium flex items-center gap-1 text-sky-400 border-sky-500/30 hover:bg-sky-500/10" title="تصدير الاختبار (PDF / طباعة)">
+                                <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                 <span>تصدير</span>
                             </button>
-                            <button onclick="AdminApp.openRenameQuizModal('${q.id}')" class="btn btn-secondary text-xs px-2.5 py-1.5 font-medium">
-                                تعديل الاسم
+                            <button onclick="AdminApp.openRenameQuizModal('${q.id}')" class="btn btn-secondary !min-h-0 !h-8 !py-0 !px-2 text-xs font-medium flex items-center gap-1" title="تعديل اسم الاختبار">
+                                <svg class="w-3.5 h-3.5 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                <span>تعديل الاسم</span>
                             </button>
                             ${hideShowBtn}
                             ${canDeleteQuiz ? `
-                            <button onclick="AdminApp.deleteQuiz('${q.id}')" class="btn btn-danger text-xs px-2.5 py-1.5 font-medium">
-                                حذف
+                            <button onclick="AdminApp.deleteQuiz('${q.id}')" class="btn btn-danger !min-h-0 !h-8 !py-0 !px-2 text-xs font-medium flex items-center gap-1" title="نقل إلى سلة المحذوفات">
+                                <svg class="w-3.5 h-3.5 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                <span>حذف</span>
                             </button>
                             ` : ''}
                         </div>
@@ -4562,17 +4605,24 @@ window.AdminApp = {
                                </details>`
                         }
                     </div>
-                    <div class="pt-1.5 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
-                        <span class="text-gray-500 font-mono text-[11px]">${q.created_at || ''}</span>
-                        <div class="flex items-center gap-1.5">
-                            <button onclick="AdminApp.takeQuiz('${q.id}')" class="btn btn-primary text-xs px-2.5 py-1 font-semibold flex items-center gap-1 bg-emerald-600/25 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-500/35">
-                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                                <span>بدء</span>
+                    <div class="pt-2 border-t border-white/5 space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-gray-500 font-mono text-[11px]">${q.created_at || ''}</span>
+                            <button onclick="AdminApp.takeQuiz('${q.id}')" class="btn btn-primary !min-h-0 !h-8 !py-0 !px-3 font-semibold flex items-center gap-1.5 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/40 text-xs shadow-sm">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                <span>بدء الاختبار</span>
                             </button>
-                            <button onclick="AdminApp.exportQuizBooklet('${q.id}')" class="btn btn-secondary text-xs px-2 py-1 text-sky-400 border-sky-500/30">تصدير</button>
-                            <button onclick="AdminApp.openRenameQuizModal('${q.id}')" class="btn btn-secondary text-xs px-2.5 py-1">تعديل الاسم</button>
+                        </div>
+                        <div class="grid grid-cols-${canDeleteQuiz ? '4' : '3'} gap-1.5 w-full">
+                            <button onclick="AdminApp.exportQuizBooklet('${q.id}')" class="btn btn-secondary !min-h-0 !h-8 !py-0 !px-1 text-xs text-sky-400 border-sky-500/25 flex items-center justify-center gap-1 w-full font-medium" title="تصدير">
+                                <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                <span>تصدير</span>
+                            </button>
+                            <button onclick="AdminApp.openRenameQuizModal('${q.id}')" class="btn btn-secondary !min-h-0 !h-8 !py-0 !px-1 text-xs flex items-center justify-center gap-1 w-full font-medium" title="تعديل الاسم">
+                                <span>تعديل</span>
+                            </button>
                             ${mobileHideShowBtn}
-                            ${canDeleteQuiz ? `<button onclick="AdminApp.deleteQuiz('${q.id}')" class="btn btn-danger text-xs px-2.5 py-1">حذف</button>` : ''}
+                            ${canDeleteQuiz ? `<button onclick="AdminApp.deleteQuiz('${q.id}')" class="btn btn-danger !min-h-0 !h-8 !py-0 !px-1 text-xs flex items-center justify-center gap-1 w-full font-medium">حذف</button>` : ''}
                         </div>
                     </div>
                 </div>
