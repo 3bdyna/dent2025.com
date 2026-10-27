@@ -114,6 +114,11 @@ function dent2025_load_component_shortcode($atts) {
 
 add_shortcode('dent_component', 'dent2025_load_component_shortcode');
 
+// Universal shortcode for inline polls [dent_poll] anywhere on site
+add_shortcode('dent_poll', function($atts) {
+    return dent2025_load_component_shortcode(['file' => 'poll_widget.html']);
+});
+
 // Filter the_content to remove any <p> or <br> wrappers inserted around <style> and <script> tags
 add_filter('the_content', function($content) {
     $content = preg_replace('/<p>\s*(<style\b[^>]*>.*?<\/style>)\s*<\/p>/is', '$1', $content);

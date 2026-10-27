@@ -1104,6 +1104,11 @@
        <span>سلة المحذوفات</span>
        <span id="quizzes-trash-count" class="bg-rose-500/20 text-rose-300 border border-rose-500/30 px-1.5 py-0.2 rounded-full font-mono text-[10px]">0</span>
      </button>
+      <button id="btn-quiz-subtab-polls" type="button" onclick="AdminApp.switchQuizSubTab('polls')" class="text-xs px-3 py-1.5 rounded-lg transition font-medium text-gray-400 hover:text-white flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        <span>استطلاعات الرأي</span>
+        <span id="quizzes-polls-count" class="bg-black/40 text-gray-300 px-1.5 py-0.2 rounded-full font-mono text-[10px]">0</span>
+      </button>
    </div>
  </div>
  </div>
@@ -1218,6 +1223,54 @@
        <p class="p-6 text-center text-xs text-gray-400">سلة المحذوفات فارغة.</p>
      </div>
    </div>
+
+    <!-- Polls Management Sub-Tab -->
+    <div id="quizzes-polls-container" class="space-y-3 sm:space-y-4 hidden">
+      <!-- Info and Permissions Banner -->
+      <div class="glass p-3 rounded-xl border border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-white/10 text-gray-200 border border-white/15">صلاحيات الاستطلاع</span>
+            <span class="text-xs text-gray-300 font-semibold">متاح لقادة الدفعات (لمقررات ودفعات تخصصهم) والمشرف العام (لكافة الدفعات)</span>
+          </div>
+          <p class="text-[11px] text-gray-400">
+            لوضع الاستطلاع في أي مكان بالموقع استخدم الكود المختصر: <code class="bg-black/60 px-1.5 py-0.5 rounded text-gray-200 font-mono text-[11px] select-all">[dent_poll]</code> أو <code class="bg-black/60 px-1.5 py-0.5 rounded text-gray-300 font-mono text-[11px] select-all">[dent_component file="poll_widget.html"]</code>
+          </p>
+        </div>
+        <div class="flex items-center gap-2 self-stretch md:self-auto justify-end shrink-0">
+          <button onclick="AdminApp.loadAdminPolls()" class="btn btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+            <span>تحديث القائمة</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Polls Table (Desktop View) -->
+      <div class="glass rounded-xl overflow-x-auto border border-white/10 hidden md:block">
+        <table class="w-full text-right text-xs">
+          <thead class="bg-white/5 text-gray-300 border-b border-white/10">
+            <tr>
+              <th class="p-3 font-semibold">السؤال / العنوان</th>
+              <th class="p-3 font-semibold text-center">الدفعة المستهدفة</th>
+              <th class="p-3 font-semibold text-center">الأصوات</th>
+              <th class="p-3 font-semibold text-center">الحالة</th>
+              <th class="p-3 font-semibold text-center">تاريخ الانتهاء</th>
+              <th class="p-3 font-semibold text-center">الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="quizzes-polls-table-body" class="divide-y divide-white/5">
+            <tr>
+              <td colspan="6" class="p-6 text-center text-gray-400">جارٍ جلب استطلاعات الرأي...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Polls Mobile Cards View -->
+      <div id="quizzes-polls-mobile-cards" class="block md:hidden space-y-2.5">
+        <p class="p-6 text-center text-xs text-gray-400">جارٍ جلب استطلاعات الرأي...</p>
+      </div>
+    </div>
  </div>
  </div>
  </template>

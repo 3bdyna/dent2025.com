@@ -4455,6 +4455,7 @@ window.AdminApp = {
         }
 
         this.loadTrashedQuizzesCount();
+        this.loadAdminPollsCount();
 
         let params = new URLSearchParams({ action: 'list_quizzes', include_hidden: '1' });
         if (this.pass) params.append('password', this.pass);
@@ -4854,6 +4855,7 @@ window.AdminApp = {
                 this.showToast(`تم نقل الاختبار "${quizName}" إلى سلة المحذوفات بنجاح`);
                 this.loadQuizzes();
                 this.loadTrashedQuizzesCount();
+        this.loadAdminPollsCount();
             } else {
                 this.showToast(res.message || 'فشل نقل الاختبار إلى سلة المحذوفات', true);
             }
@@ -4876,34 +4878,266 @@ window.AdminApp = {
         this.quizSubTab = tab;
         const btnActive = document.getElementById('btn-quiz-subtab-active');
         const btnTrash = document.getElementById('btn-quiz-subtab-trash');
+        const btnPolls = document.getElementById('btn-quiz-subtab-polls');
         const activeContainer = document.getElementById('quizzes-active-container');
         const trashContainer = document.getElementById('quizzes-trash-container');
+        const pollsContainer = document.getElementById('quizzes-polls-container');
+
+        // Reset all buttons
+        if (btnActive) btnActive.className = 'text-xs px-3 py-1.5 rounded-lg transition font-medium text-gray-400 hover:text-white flex items-center gap-1.5';
+        if (btnTrash) btnTrash.className = 'text-xs px-3 py-1.5 rounded-lg transition font-medium text-gray-400 hover:text-white flex items-center gap-1.5';
+        if (btnPolls) btnPolls.className = 'text-xs px-3 py-1.5 rounded-lg transition font-medium text-gray-400 hover:text-white flex items-center gap-1.5';
+
+        // Hide all containers
+        if (activeContainer) activeContainer.classList.add('hidden');
+        if (trashContainer) trashContainer.classList.add('hidden');
+        if (pollsContainer) pollsContainer.classList.add('hidden');
 
         if (tab === 'trash') {
-            if (btnActive) {
-                btnActive.className = 'text-xs px-3 py-1.5 rounded-lg transition font-medium text-gray-400 hover:text-white flex items-center gap-1.5';
-            }
-            if (btnTrash) {
-                btnTrash.className = 'text-xs px-3 py-1.5 rounded-lg transition font-medium bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1.5';
-            }
-            if (activeContainer) activeContainer.classList.add('hidden');
+            if (btnTrash) btnTrash.className = 'text-xs px-3 py-1.5 rounded-lg transition font-medium bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1.5';
             if (trashContainer) trashContainer.classList.remove('hidden');
             this.loadTrashedQuizzes();
+        } else if (tab === 'polls') {
+            if (btnPolls) btnPolls.className = 'text-xs px-3 py-1.5 rounded-lg transition font-medium bg-white/10 text-gray-200 border border-white/20 flex items-center gap-1.5';
+            if (pollsContainer) pollsContainer.classList.remove('hidden');
+            this.loadAdminPolls();
         } else {
-            if (btnActive) {
-                btnActive.className = 'text-xs px-3 py-1.5 rounded-lg transition font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5';
-            }
-            if (btnTrash) {
-                btnTrash.className = 'text-xs px-3 py-1.5 rounded-lg transition font-medium text-gray-400 hover:text-white flex items-center gap-1.5';
-            }
+            if (btnActive) btnActive.className = 'text-xs px-3 py-1.5 rounded-lg transition font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5';
             if (activeContainer) activeContainer.classList.remove('hidden');
-            if (trashContainer) trashContainer.classList.add('hidden');
             if (Array.isArray(this.quizzesData) && this.quizzesData.length > 0) {
                 this.renderQuizzesTable(this.quizzesData);
             } else {
                 this.loadQuizzes();
             }
         }
+    },
+
+    loadAdminPollsCount() {
+        let params = new URLSearchParams({ action: 'get_all_polls' });
+        if (this.pass) params.append('pass', this.pass);
+
+        fetch(API_BASE + '/polls_api.php?' + params.toString(), {
+            headers: { 'X-Admin-Pass': this.pass || '' }
+        })
+        .then(r => r.ok ? r.json() : null)
+        .then(res => {
+            if (res && res.success && Array.isArray(res.data)) {
+                const countBadge = document.getElementById('quizzes-polls-count');
+                if (countBadge) countBadge.innerText = res.data.length;
+            }
+        })
+        .catch(() => {});
+    },
+
+    adminPollsData: [],
+
+    loadAdminPolls() {
+        this.showLoading(true);
+        let params = new URLSearchParams({ action: 'get_all_polls' });
+        if (this.pass) params.append('pass', this.pass);
+
+        fetch(API_BASE + '/polls_api.php?' + params.toString(), {
+            headers: { 'X-Admin-Pass': this.pass || '' }
+        })
+        .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+            return r.json();
+        })
+        .then(res => {
+            this.showLoading(false);
+            if (res && res.success && Array.isArray(res.data)) {
+                this.adminPollsData = res.data;
+                const countBadge = document.getElementById('quizzes-polls-count');
+                if (countBadge) countBadge.innerText = res.data.length;
+                this.renderAdminPollsTable(res.data);
+            } else {
+                this.showToast(res && res.error ? res.error : 'تعذر تحميل استطلاعات الرأي', true);
+            }
+        })
+        .catch(err => {
+            this.showLoading(false);
+            this.showToast('فشل الاتصال بخادم الاستطلاعات', true);
+            console.error('loadAdminPolls error:', err);
+        });
+    },
+
+    renderAdminPollsTable(polls) {
+        const tbody = document.getElementById('quizzes-polls-table-body');
+        const mobileContainer = document.getElementById('quizzes-polls-mobile-cards');
+        if (!tbody || !mobileContainer) return;
+
+        if (!Array.isArray(polls) || polls.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-gray-400">لا توجد استطلاعات رأي مسجلة.</td></tr>';
+            mobileContainer.innerHTML = '<p class="p-6 text-center text-xs text-gray-400">لا توجد استطلاعات رأي مسجلة.</p>';
+            return;
+        }
+
+        const esc = (s) => this.escapeHtml(s || '');
+
+        const formatCohort = (spec, y, s) => {
+            const specMap = { dentistry: 'طب الأسنان', medicine: 'الطب البشري', 'pre-med': 'مسار صحي' };
+            const sName = specMap[spec] || spec;
+            if (!y && !s) return 'كافة الدفعات (عام)';
+            return `${sName} - س${y} ف${s}`;
+        };
+
+        const getStatusBadge = (status, expiresAt) => {
+            const isExpired = expiresAt > 0 && Math.floor(Date.now() / 1000) > expiresAt;
+            if (status === 'archived' || isExpired) {
+                return '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-500/10 text-red-400 border border-red-500/20">مؤرشف / منتهي</span>';
+            }
+            if (status === 'testing') {
+                return '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">وضع التجربة (مخفي)</span>';
+            }
+            return '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">منشور للطلاب</span>';
+        };
+
+        const formatExpiry = (expiresAt) => {
+            if (!expiresAt || expiresAt === 0) return 'دائم';
+            const now = Math.floor(Date.now() / 1000);
+            const diff = expiresAt - now;
+            if (diff <= 0) return 'منتهي';
+            const hours = Math.floor(diff / 3600);
+            const days = Math.floor(hours / 24);
+            if (days > 0) return `${days} يوم و ${hours % 24} س`;
+            return `${hours} ساعة`;
+        };
+
+        let desktopHtml = '';
+        let mobileHtml = '';
+
+        polls.forEach(p => {
+            const total = p.total_votes || 0;
+            const cohortStr = formatCohort(p.specialty, p.year, p.semester);
+            const statusBadge = getStatusBadge(p.status, p.expires_at);
+            const expiryStr = formatExpiry(p.expires_at);
+            const optionsSummary = Array.isArray(p.options) ? p.options.map((opt, i) => {
+                const count = (p.votes && p.votes[i]) ? p.votes[i] : 0;
+                const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                return `${esc(opt)}: ${count} (${pct}%)`;
+            }).join(' | ') : '';
+
+            desktopHtml += `
+            <tr class="hover:bg-white/[0.02] transition border-b border-white/5">
+              <td class="p-3">
+                <div class="font-semibold text-white max-w-[280px] truncate" title="${esc(p.question)}">${esc(p.question)}</div>
+                <div class="text-[10px] text-gray-400 mt-0.5 max-w-[280px] truncate" title="${esc(optionsSummary)}">${esc(optionsSummary)}</div>
+              </td>
+              <td class="p-3 text-center text-gray-300 font-mono text-[11px]">${esc(cohortStr)}</td>
+              <td class="p-3 text-center">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white font-mono text-xs">
+                  ${total}
+                </span>
+              </td>
+              <td class="p-3 text-center">${statusBadge}</td>
+              <td class="p-3 text-center text-gray-400 text-[11px] font-mono">${expiryStr}</td>
+              <td class="p-3 text-center">
+                <div class="inline-flex items-center gap-1.5 justify-center">
+                  <button type="button" onclick="AdminApp.toggleAdminPollStatus('${p.id}', '${p.status || 'published'}')" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px]" title="تبديل الحالة بين منشور ومخفي">
+                    ${p.status === 'testing' ? 'تفعيل للطلاب' : 'جعله تجريبي'}
+                  </button>
+                  <button type="button" onclick="AdminApp.deleteAdminPoll('${p.id}', '${esc(p.question)}')" class="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition" title="حذف الاستطلاع">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>`;
+
+            mobileHtml += `
+            <div class="glass p-3 rounded-xl border border-white/10 space-y-2">
+              <div class="flex items-start justify-between gap-2">
+                <div class="font-semibold text-white text-xs">${esc(p.question)}</div>
+                ${statusBadge}
+              </div>
+              <div class="text-[11px] text-gray-400">${esc(optionsSummary)}</div>
+              <div class="flex items-center justify-between text-[11px] text-gray-300 pt-2 border-t border-white/5">
+                <span>${esc(cohortStr)}</span>
+                <span class="font-mono text-white">${total} أصوات</span>
+              </div>
+              <div class="flex items-center justify-between gap-2 pt-1">
+                <span class="text-[10px] text-gray-400 font-mono">${expiryStr}</span>
+                <div class="flex items-center gap-1.5">
+                  <button type="button" onclick="AdminApp.toggleAdminPollStatus('${p.id}', '${p.status || 'published'}')" class="text-xs px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition">
+                    ${p.status === 'testing' ? 'تفعيل للطلاب' : 'جعله تجريبي'}
+                  </button>
+                  <button type="button" onclick="AdminApp.deleteAdminPoll('${p.id}', '${esc(p.question)}')" class="text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition">
+                    حذف
+                  </button>
+                </div>
+              </div>
+            </div>`;
+        });
+
+        tbody.innerHTML = desktopHtml;
+        mobileContainer.innerHTML = mobileHtml;
+    },
+
+    deleteAdminPoll(pollId, question) {
+        if (!confirm(`هل أنت متأكد من حذف هذا الاستطلاع نهائياً؟\n\n${question}`)) {
+            return;
+        }
+
+        this.showLoading(true);
+        fetch(API_BASE + '/polls_api.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Pass': this.pass || ''
+            },
+            body: JSON.stringify({
+                action: 'delete_poll',
+                id: pollId,
+                pass: this.pass || ''
+            })
+        })
+        .then(r => r.json())
+        .then(res => {
+            this.showLoading(false);
+            if (res && res.success) {
+                this.showToast('تم حذف الاستطلاع بنجاح');
+                this.loadAdminPolls();
+            } else {
+                this.showToast(res && res.error ? res.error : 'فشل حذف الاستطلاع', true);
+            }
+        })
+        .catch(err => {
+            this.showLoading(false);
+            this.showToast('حدث خطأ أثناء حذف الاستطلاع', true);
+            console.error('deleteAdminPoll error:', err);
+        });
+    },
+
+    toggleAdminPollStatus(pollId, currentStatus) {
+        const nextStatus = currentStatus === 'testing' ? 'published' : 'testing';
+        this.showLoading(true);
+        fetch(API_BASE + '/polls_api.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Pass': this.pass || ''
+            },
+            body: JSON.stringify({
+                action: 'set_poll_status',
+                id: pollId,
+                status: nextStatus,
+                pass: this.pass || ''
+            })
+        })
+        .then(r => r.json())
+        .then(res => {
+            this.showLoading(false);
+            if (res && res.success) {
+                this.showToast(res.message || 'تم تحديث حالة الاستطلاع');
+                this.loadAdminPolls();
+            } else {
+                this.showToast(res && res.error ? res.error : 'فشل تغيير حالة الاستطلاع', true);
+            }
+        })
+        .catch(err => {
+            this.showLoading(false);
+            this.showToast('حدث خطأ أثناء تحديث حالة الاستطلاع', true);
+            console.error('toggleAdminPollStatus error:', err);
+        });
     },
 
     loadTrashedQuizzesCount() {
@@ -5100,6 +5334,7 @@ window.AdminApp = {
                 // Invalidate cached quizzes so when user switches back they see fresh list
                 this.quizzesData = null;
                 this.loadTrashedQuizzesCount();
+        this.loadAdminPollsCount();
             } else {
                 this.showToast(res.message || 'فشل استعادة الاختبار', true);
             }
@@ -5139,6 +5374,7 @@ window.AdminApp = {
                 this.showToast(`تم حذف الاختبار "${quizName}" نهائياً وبلا رجعة`);
                 this.loadTrashedQuizzes();
                 this.loadTrashedQuizzesCount();
+        this.loadAdminPollsCount();
             } else {
                 this.showToast(res.message || 'فشل الحذف النهائي', true);
             }
@@ -5182,6 +5418,7 @@ window.AdminApp = {
                 this.showToast(`تم تفريغ سلة المحذوفات بنجاح (حُذف ${res.purged_count || count} اختبار)`);
                 this.loadTrashedQuizzes();
                 this.loadTrashedQuizzesCount();
+        this.loadAdminPollsCount();
             } else {
                 this.showToast(res.message || 'فشل تفريغ السلة', true);
             }

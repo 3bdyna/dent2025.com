@@ -47,6 +47,18 @@ function dent_save_polls_data($pollsFile, $data) {
     return file_put_contents($pollsFile, $json, LOCK_EX) !== false;
 }
 
+// Passkey extractor from request body, query, or standard headers
+function dent_get_auth_pass($body = []) {
+    if (!empty($body['pass'])) return trim((string)$body['pass']);
+    if (!empty($_POST['pass'])) return trim((string)$_POST['pass']);
+    if (!empty($_GET['pass'])) return trim((string)$_GET['pass']);
+    if (!empty($_SERVER['HTTP_X_ADMIN_PASS'])) return trim((string)$_SERVER['HTTP_X_ADMIN_PASS']);
+    if (!empty($_SERVER['HTTP_AUTHORIZATION'])) {
+        return trim(str_replace('Bearer ', '', (string)$_SERVER['HTTP_AUTHORIZATION']));
+    }
+    return '';
+}
+
 // Client IP resolver
 function dent_get_client_ip() {
     if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
@@ -179,7 +191,7 @@ if ($method === 'GET') {
 
     // 1B. Get all polls for admin dashboard
     if ($action === 'get_all_polls') {
-        $pass = trim((string)($_GET['pass'] ?? ''));
+        $pass = dent_get_auth_pass();
         if (!dent2025_check_rbac_permission($pass, 'semester_announcements') && !dent2025_check_rbac_permission($pass, 'global_announcements')) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'Unauthorized passkey'], JSON_UNESCAPED_UNICODE);
@@ -299,7 +311,7 @@ if ($method === 'POST') {
 
     // 2B. Admin Save/Update Poll
     if ($action === 'save_poll') {
-        $pass = trim((string)($body['pass'] ?? ''));
+        $pass = dent_get_auth_pass($body);
         $specialty = strtolower(trim((string)($body['specialty'] ?? 'dentistry')));
         $year = (int)($body['year'] ?? 3);
         $semester = (int)($body['semester'] ?? 1);
@@ -381,7 +393,7 @@ if ($method === 'POST') {
 
     // 2C. Admin Delete Poll
     if ($action === 'delete_poll') {
-        $pass = trim((string)($body['pass'] ?? ''));
+        $pass = dent_get_auth_pass($body);
         $pollId = trim((string)($body['id'] ?? ''));
 
         if (!dent2025_check_rbac_permission($pass, 'semester_announcements') &&
@@ -396,6 +408,41 @@ if ($method === 'POST') {
             unset($data['polls'][$pollId]);
             dent_save_polls_data($pollsFile, $data);
             echo json_encode(['success' => true, 'message' => 'تم حذف الاستطلاع بنجاح'], JSON_UNESCAPED_UNICODE);
+        } else {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'الاستطلاع غير موجود'], JSON_UNESCAPED_UNICODE);
+        }
+        exit;
+    }
+
+    // 2D. Admin Toggle/Update Poll Status
+    if ($action === 'set_poll_status') {
+        $pass = dent_get_auth_pass($body);
+        $pollId = trim((string)($body['id'] ?? ''));
+        $newStatus = trim((string)($body['status'] ?? ''));
+
+        if (!dent2025_check_rbac_permission($pass, 'semester_announcements') &&
+            !dent2025_check_rbac_permission($pass, 'global_announcements')) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'صلاحية غير كافية لتعديل حالة الاستطلاع'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        if (!in_array($newStatus, ['testing', 'published', 'archived'], true)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'حالة غير صالحة'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        $data = dent_load_polls_data($pollsFile);
+        if (isset($data['polls'][$pollId])) {
+            $data['polls'][$pollId]['status'] = $newStatus;
+            dent_save_polls_data($pollsFile, $data);
+            echo json_encode([
+                'success' => true,
+                'message' => 'تم تغيير حالة الاستطلاع إلى ' . ($newStatus === 'published' ? 'منشور للطلاب' : ($newStatus === 'testing' ? 'وضع التجربة' : 'مؤرشف')),
+                'data' => $data['polls'][$pollId]
+            ], JSON_UNESCAPED_UNICODE);
         } else {
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'الاستطلاع غير موجود'], JSON_UNESCAPED_UNICODE);
