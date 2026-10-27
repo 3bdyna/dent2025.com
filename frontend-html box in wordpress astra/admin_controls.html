@@ -159,7 +159,7 @@
             </div>
         </div>
         <div style="font-size: 0.73rem; color: #94a3b8; margin-top: -4px;">
-            💡 (إذا كانت المادة نظرية فقط بدون معمل، أدخل الساعات كاملة في النظري والعملي 0)
+            (ملاحظة: إذا كانت المادة نظرية فقط بدون معمل، أدخل الساعات كاملة في النظري والعملي 0)
         </div>
     </div>
 
@@ -218,8 +218,8 @@
                 <div class="dent-form-col" style="flex: 1.5;">
                     <label>حالة الظهور (Stealth Gate)</label>
                     <select id="poll-inp-status" class="dent-admin-input" style="border-color: rgba(255, 255, 255, 0.2); color: #f8fafc;">
-                        <option value="testing" selected>🔒 وضع التجربة (مخفي تماماً عن الطلاب)</option>
-                        <option value="published">🌐 منشور ومتاح للجميع</option>
+                        <option value="testing" selected>وضع التجربة (مخفي تماماً عن الطلاب)</option>
+                        <option value="published">منشور ومتاح للجميع</option>
                     </select>
                 </div>
                 <div class="dent-form-col" style="flex: 1; display: flex; align-items: flex-end;">
@@ -488,8 +488,8 @@
                     currentAdminPollId = p.id;
                     const isTesting = (p.status === 'testing');
                     const badgeHtml = isTesting 
-                        ? `<span style="background: rgba(234, 179, 8, 0.15); color: #fde047; border: 1px solid rgba(234, 179, 8, 0.3); padding: 2px 8px; border-radius: 6px; font-size: 0.72rem;">🔒 وضع التجربة (مخفي عن الطلاب)</span>`
-                        : `<span style="background: rgba(34, 197, 94, 0.15); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); padding: 2px 8px; border-radius: 6px; font-size: 0.72rem;">🌐 منشور ومتاح للجميع</span>`;
+                        ? `<span style="background: rgba(255, 255, 255, 0.08); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.12); padding: 2px 8px; border-radius: 6px; font-size: 0.72rem;">وضع التجربة (مخفي عن الطلاب)</span>`
+                        : `<span style="background: rgba(255, 255, 255, 0.08); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.12); padding: 2px 8px; border-radius: 6px; font-size: 0.72rem;">منشور ومتاح للجميع</span>`;
 
                     statusEl.innerHTML = `
                         <div style="display: flex; flex-direction: column; gap: 4px; max-width: 65%;">
@@ -500,7 +500,7 @@
                             <span style="font-size: 0.74rem; color: #71717a;">${p.total_votes || 0} مصوّت • ينتهي: ${new Date(p.expires_at * 1000).toLocaleDateString('ar-SA')}</span>
                         </div>
                         <div style="display: flex; gap: 8px; align-items: center;">
-                            <a href="?test_poll=1" target="_blank" class="dent-admin-btn secondary" style="padding: 5px 10px; font-size: 0.78rem; text-decoration: none;">معاينة ↗</a>
+                            <a href="?test_poll=1" target="_blank" class="dent-admin-btn secondary" style="padding: 5px 10px; font-size: 0.78rem; text-decoration: none;">معاينة</a>
                             <button class="dent-admin-btn danger" onclick="deleteAdminPoll('${p.id}')" style="padding: 5px 10px; font-size: 0.78rem;">إلغاء/حذف</button>
                         </div>
                     `;
@@ -508,7 +508,7 @@
                     currentAdminPollId = null;
                     statusEl.innerHTML = `
                         <span style="color: #64748b;">لا يوجد استطلاع رأي نشط حالياً لهذه الدفعة.</span>
-                        <a href="?test_poll=1" target="_blank" style="color: #60a5fa; font-size: 0.76rem; text-decoration: none;">فتح وضع التجربة (?test_poll=1)</a>
+                        <a href="?test_poll=1" target="_blank" style="color: #cbd5e1; font-size: 0.76rem; text-decoration: none;">فتح وضع التجربة (?test_poll=1)</a>
                     `;
                 }
             })
