@@ -1,18 +1,5 @@
 [
   {
-    "id": "evt_6ac75f306b674",
-    "date": "2026-10-20",
-    "hijri": "1448/05/09",
-    "title": "ميد باثولوجي عملي (OSPE)",
-    "type": "midterm",
-    "schedule_id": "dentistry_y3_s1",
-    "is_global": false,
-    "type_label": "اختبار نصفي",
-    "specialty": "dentistry",
-    "year": 3,
-    "semester": 1
-  },
-  {
     "id": "evt_6ad32cb6e15e8",
     "date": "2026-10-22",
     "hijri": "1448/05/11",
@@ -42,8 +29,8 @@
     "id": "evt_dent_y3_s1_biom_midterm",
     "date": "2026-10-29",
     "hijri": "1448/05/18",
-    "title": "ميد بايوماتيريل",
-    "type": "midterm",
+    "title": "ميد بايوماتيريل مع عملي",
+    "type": "custom",
     "type_label": "اختبار نصفي",
     "schedule_id": "dentistry_y3_s1",
     "is_global": false,
