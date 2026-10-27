@@ -1100,17 +1100,105 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         return clean;
     }
 
+    function cleanSubjectForTitle(subName, isArabic) {
+        if (!subName) return '';
+        let clean = String(subName).replace(/^[📌📁📚\s\-\-]+/, '').trim();
+        if (clean.includes('│')) {
+            const parts = clean.split('│').map(s => s.trim()).filter(Boolean);
+            if (parts.length >= 2) {
+                clean = isArabic ? (parts.find(p => /[\u0600-\u06FF]/.test(p)) || parts[0]) 
+                                 : (parts.find(p => /[a-zA-Z]/.test(p)) || parts[1] || parts[0]);
+            }
+        } else if (clean.includes('|')) {
+            const parts = clean.split('|').map(s => s.trim()).filter(Boolean);
+            if (parts.length >= 2) {
+                clean = isArabic ? (parts.find(p => /[\u0600-\u06FF]/.test(p)) || parts[0]) 
+                                 : (parts.find(p => /[a-zA-Z]/.test(p)) || parts[1] || parts[0]);
+            }
+        }
+        clean = clean.replace(/^(مادة|مقرر)\s+/i, '').trim();
+        return (clean === 'مادة دراسية' || clean.startsWith('--')) ? '' : clean;
+    }
+
+    function parseLectureNumber(name) {
+        if (!name) return null;
+        let s = String(name).trim();
+        s = s.replace(/\.(pdf|pptx|ppt|docx|doc|txt|png|jpg|jpeg|webp)$/i, '');
+        
+        let m = s.match(/(?:^|[\s_\-\.\(\[])(?:lec|lecture|l)[\s._\-]*0*(\d+)/i);
+        if (m) return { type: 'lec', num: parseInt(m[1], 10) };
+        
+        m = s.match(/(?:^|[\s_\-\.\(\[])(?:ch|chapter|c)[\s._\-]*0*(\d+)/i);
+        if (m) return { type: 'ch', num: parseInt(m[1], 10) };
+        
+        m = s.match(/(?:^|[\s_\-\.\(\[])(?:محاضرة|محاضره)[\s._\-]*0*(\d+)/i);
+        if (m) return { type: 'ar_lec', num: parseInt(m[1], 10) };
+        
+        m = s.match(/(?:^|[\s_\-\.\(\[])(?:شابتر|فصل|الوحدة|الوحده)[\s._\-]*0*(\d+)/i);
+        if (m) return { type: 'ar_ch', num: parseInt(m[1], 10) };
+        
+        m = s.match(/^(?:0*(\d{1,2}))(?:[\.\-_\s]|\))/);
+        if (m) return { type: 'num', num: parseInt(m[1], 10) };
+
+        return null;
+    }
+
+    function formatNumberRange(nums, isArabic) {
+        if (!nums || nums.length === 0) return '';
+        if (nums.length === 1) return String(nums[0]);
+        
+        const sorted = Array.from(new Set(nums)).sort((a,b) => a - b);
+        const isContiguous = (sorted[sorted.length - 1] - sorted[0] === sorted.length - 1);
+        
+        if (isContiguous) {
+            return sorted[0] + '–' + sorted[sorted.length - 1];
+        }
+        if (sorted.length === 2) {
+            return sorted[0] + (isArabic ? ' و ' : ' & ') + sorted[1];
+        }
+        return sorted.slice(0, -1).join(isArabic ? '، ' : ', ') + (isArabic ? ' و ' : ' & ') + sorted[sorted.length - 1];
+    }
+
+    function extractShortChapterBadge(name) {
+        if (!name) return '';
+        let s = String(name).trim().replace(/\.(pdf|pptx|ppt|docx|doc|txt|png|jpg|jpeg|webp)$/i, '');
+        
+        let m = s.match(/(?:^|[\s_\-\.\(\[])(?:lec|lecture|l)[\s._\-]*0*(\d+)/i);
+        if (m) return 'Lec ' + parseInt(m[1], 10);
+        
+        m = s.match(/(?:^|[\s_\-\.\(\[])(?:ch|chapter|c)[\s._\-]*0*(\d+)/i);
+        if (m) return 'Ch ' + parseInt(m[1], 10);
+        
+        m = s.match(/(?:^|[\s_\-\.\(\[])(?:محاضرة|محاضره)[\s._\-]*0*(\d+)/i);
+        if (m) return 'محاضرة ' + parseInt(m[1], 10);
+        
+        m = s.match(/(?:^|[\s_\-\.\(\[])(?:شابتر|فصل|الوحدة|الوحده)[\s._\-]*0*(\d+)/i);
+        if (m) return 'شابتر ' + parseInt(m[1], 10);
+        
+        m = s.match(/^(?:0*(\d{1,2}))(?:[\.\-_\s]|\))/);
+        if (m) return 'Lec ' + parseInt(m[1], 10);
+        
+        s = s.replace(/[\[\(]\s*\d+\s*[\]\)]/g, ' ').replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim();
+        const words = s.split(' ');
+        if (words.length > 2) return words.slice(0, 2).join(' ') + '...';
+        return s;
+    }
+
     function generateSmartQuizName() {
         const subjectSelect = document.getElementById('dq-subject');
-        const subName = subjectSelect?.options[subjectSelect.selectedIndex]?.text || '';
-        const isArabicSubject = /[\u0600-\u06FF]{3,}/.test(subName);
+        const rawSubName = subjectSelect?.options[subjectSelect.selectedIndex]?.text || '';
 
         if (currentCreationMode === 'ai_generation') {
             const driveFiles = Array.from(selectedDriveFilesMap.values());
             const allFiles = [...driveFiles, ...aiUploadedFiles];
 
+            const isArabicFiles = allFiles.some(f => /[\u0600-\u06FF]{3,}/.test(f.name));
+            const isArabicSub = /[\u0600-\u06FF]{3,}/.test(rawSubName) && !/[a-zA-Z]{3,}/.test(rawSubName);
+            const isArabic = isArabicFiles || isArabicSub;
+            const cleanSub = cleanSubjectForTitle(rawSubName, isArabic);
+
             if (allFiles.length === 0) {
-                return isArabicSubject ? `اختبار مادة ${subName || 'العامة'}` : `Quiz — ${subName || 'General'}`;
+                return cleanSub ? (isArabic ? `اختبار مادة ${cleanSub}` : `${cleanSub} • Quiz`) : (isArabic ? 'اختبار تجريبي' : 'General Quiz');
             }
 
             const pageRange = document.getElementById('dq-page-range')?.value.trim() || '';
@@ -1118,24 +1206,69 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
             let baseName = '';
             if (allFiles.length === 1) {
-                baseName = cleanFileNameForTitle(allFiles[0].name);
-            } else if (allFiles.length <= 3) {
-                baseName = allFiles.map(f => cleanFileNameForTitle(f.name)).join(' + ');
+                const singleClean = cleanFileNameForTitle(allFiles[0].name);
+                if (cleanSub && !singleClean.toLowerCase().includes(cleanSub.toLowerCase())) {
+                    baseName = `${cleanSub} • ${singleClean}`;
+                } else {
+                    baseName = singleClean;
+                }
             } else {
-                baseName = isArabicSubject ? `اختبار شامل (${allFiles.length} محاضرات)` : `Comprehensive Review (${allFiles.length} Lectures)`;
+                // Multiple files (couple of chapters): Compact "Badge + Range" format
+                const parsed = allFiles.map(f => parseLectureNumber(f.name)).filter(Boolean);
+                if (parsed.length === allFiles.length) {
+                    const nums = parsed.map(p => p.num);
+                    const rangeStr = formatNumberRange(nums, isArabic);
+                    const hasCh = parsed.some(p => p.type === 'ch' || p.type === 'ar_ch');
+
+                    let prefix = '';
+                    if (isArabic) {
+                        prefix = hasCh ? `شابتر ${rangeStr}` : `المحاضرات ${rangeStr}`;
+                    } else {
+                        prefix = hasCh ? `Ch ${rangeStr}` : `Lec ${rangeStr}`;
+                    }
+                    baseName = cleanSub ? `${cleanSub} • ${prefix}` : prefix;
+                } else {
+                    let countLabel = '';
+                    if (isArabic) {
+                        countLabel = (allFiles.length === 2) ? 'محاضرتان' : `${allFiles.length} محاضرات`;
+                    } else {
+                        countLabel = `${allFiles.length} Lectures`;
+                    }
+                    baseName = cleanSub ? `${cleanSub} • ${countLabel}` : countLabel;
+                }
             }
 
             if (pageRange) {
-                baseName += isArabicSubject ? ` (ص ${pageRange})` : ` (pp. ${pageRange})`;
+                baseName += isArabic ? ` (ص ${pageRange})` : ` (pp. ${pageRange})`;
             } else if (focusArea) {
                 const shortFocus = focusArea.length > 25 ? focusArea.slice(0, 25) + '...' : focusArea;
-                baseName += isArabicSubject ? ` [تركيز: ${shortFocus}]` : ` [Focus: ${shortFocus}]`;
+                baseName += isArabic ? ` [تركيز: ${shortFocus}]` : ` [Focus: ${shortFocus}]`;
             }
 
             return baseName;
         } else {
-            // Mode 2: Past Exam Filter (Standardized title matching all cohort exam banks)
-            return 'تجميعات أسئلة السنوات السابقة';
+            // Mode 2: Past Exam Filter
+            const driveTargets = Array.from(document.querySelectorAll('.dq-target-chap-checkbox:checked')).map(cb => cb.value.trim()).filter(Boolean);
+            const uploadedTargets = targetChapterUploadedFiles.map(f => f.name).filter(Boolean);
+            const customTargets = targetCustomChapters.map(c => c.trim()).filter(Boolean);
+            const checkedTargets = Array.from(new Set([...driveTargets, ...uploadedTargets, ...customTargets]));
+
+            const isArabic = true;
+            const cleanSub = cleanSubjectForTitle(rawSubName, isArabic);
+
+            if (checkedTargets.length > 0) {
+                const parsed = checkedTargets.map(t => parseLectureNumber(t)).filter(Boolean);
+                if (parsed.length === checkedTargets.length) {
+                    const nums = parsed.map(p => p.num);
+                    const rangeStr = formatNumberRange(nums, isArabic);
+                    const hasCh = parsed.some(p => p.type === 'ch' || p.type === 'ar_ch');
+                    const chapPrefix = hasCh ? `شابتر ${rangeStr}` : `المحاضرات ${rangeStr}`;
+                    return cleanSub ? `تجميعات • ${cleanSub} • ${chapPrefix}` : `تجميعات • ${chapPrefix}`;
+                }
+                return cleanSub ? `تجميعات • ${cleanSub} (${checkedTargets.length} محاضرات)` : `تجميعات (${checkedTargets.length} محاضرات)`;
+            }
+
+            return cleanSub ? `تجميعات مادة ${cleanSub}` : 'تجميعات أسئلة السنوات السابقة';
         }
     }
 
@@ -2315,6 +2448,21 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 </details>
             `;
 
+            let chapterBadgesHTML = '';
+            if (chapList.length > 1) {
+                const badges = chapList.map(c => extractShortChapterBadge(c)).filter(Boolean);
+                if (badges.length > 0) {
+                    const visibleBadges = badges.slice(0, 5);
+                    const remainingCount = badges.length - visibleBadges.length;
+                    chapterBadgesHTML = `
+                        <div class="dent-bank-chapter-badges" style="display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 6px 0;">
+                            ${visibleBadges.map(b => `<span style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px; padding: 2px 7px; font-size: 0.72rem; color: #94a3b8; font-weight: 500; font-family: inherit;">${escapeHtml(b)}</span>`).join('')}
+                            ${remainingCount > 0 ? `<span style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; color: #64748b;">+${remainingCount}</span>` : ''}
+                        </div>
+                    `;
+                }
+            }
+
             const isPastExam = (q.creation_mode === 'past_exam_filter');
             const typeBadge = isPastExam 
                 ? `<span class="dent-bank-tag dent-tag-pastexam">تجميعات سنوات</span>`
@@ -2341,6 +2489,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                         ${typeBadge}
                         ${diffBadge}
                     </div>
+                    ${chapterBadgesHTML}
                     ${chaptersDropdownHTML}
                 </div>
                 <div class="dent-bank-card-bottom">
