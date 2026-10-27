@@ -142,6 +142,76 @@
             💡 (إذا كانت المادة نظرية فقط بدون معمل، أدخل الساعات كاملة في النظري والعملي 0)
         </div>
     </div>
+
+    <!-- Poll Management Section -->
+    <div class="dent-admin-poll-section" style="margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <label style="font-weight: 600; color: #f1f5f9; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #60a5fa;"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                استطلاع الرأي الأكاديمي (Inline Poll)
+            </label>
+            <button class="dent-admin-btn secondary" onclick="toggleAdminPollForm()" style="padding: 4px 10px; font-size: 0.78rem;">
+                + إنشاء استطلاع جديد
+            </button>
+        </div>
+
+        <!-- Poll Creation Form (collapsible) -->
+        <div id="dent-admin-poll-form" style="display: none; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+            <div class="dent-form-row" style="margin-bottom: 8px;">
+                <div class="dent-form-col" style="flex: 2;">
+                    <label>السؤال الرئيسي (Question)</label>
+                    <input type="text" id="poll-inp-question" class="dent-admin-input" placeholder="مثال: كيف كان مستوى اختبار الباثولوجي اليوم؟">
+                </div>
+                <div class="dent-form-col" style="flex: 1;">
+                    <label>وسم المادة (Badge)</label>
+                    <input type="text" id="poll-inp-badge" class="dent-admin-input" placeholder="مثال: علم الأمراض">
+                </div>
+            </div>
+
+            <div class="dent-form-row" style="margin-bottom: 8px;">
+                <div class="dent-form-col" style="flex: 1;">
+                    <label>الخيار 1</label>
+                    <input type="text" id="poll-inp-opt-0" class="dent-admin-input" placeholder="سهل ومباشر" value="سهل ومباشر من السلايدات">
+                </div>
+                <div class="dent-form-col" style="flex: 1;">
+                    <label>الخيار 2</label>
+                    <input type="text" id="poll-inp-opt-1" class="dent-admin-input" placeholder="متوسط" value="متوسط وفيه أفكار تحتاج تركيز">
+                </div>
+                <div class="dent-form-col" style="flex: 1;">
+                    <label>الخيار 3 (اختياري)</label>
+                    <input type="text" id="poll-inp-opt-2" class="dent-admin-input" placeholder="صعب" value="صعب وفيه أسئلة غير متوقعة">
+                </div>
+            </div>
+
+            <div class="dent-form-row">
+                <div class="dent-form-col" style="flex: 1;">
+                    <label>المدة الزمنية</label>
+                    <select id="poll-inp-duration" class="dent-admin-input" style="height: 42px;">
+                        <option value="24" selected>24 ساعة</option>
+                        <option value="48">48 ساعة</option>
+                        <option value="72">3 أيام</option>
+                        <option value="168">أسبوع كامل</option>
+                    </select>
+                </div>
+                <div class="dent-form-col" style="flex: 1.5;">
+                    <label>حالة الظهور (Stealth Gate)</label>
+                    <select id="poll-inp-status" class="dent-admin-input" style="height: 42px; border-color: #eab308; color: #fde047;">
+                        <option value="testing" selected>🔒 وضع التجربة (مخفي تماماً عن الطلاب)</option>
+                        <option value="published">🌐 منشور ومتاح للجميع</option>
+                    </select>
+                </div>
+                <div class="dent-form-col" style="flex: 1; display: flex; align-items: flex-end;">
+                    <button class="dent-admin-btn" onclick="saveAdminPoll()" style="height: 42px; width: 100%; white-space: nowrap;">
+                        حفظ وإطلاق
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="dent-admin-active-poll-status" style="font-size: 0.82rem; color: #94a3b8; display: flex; align-items: center; justify-content: space-between;">
+            <span>جاري فحص الاستطلاع الحالي...</span>
+        </div>
+    </div>
 </div>
 
 <script src="/frontend_components/dent_pin_modal.js"></script>
@@ -239,6 +309,9 @@
         if (typeof window.dentReloadQuizBank === 'function') {
             try { window.dentReloadQuizBank(); } catch(e) {}
         }
+        if (typeof loadAdminPollStatus === 'function') {
+            loadAdminPollStatus();
+        }
         try {
             window.dispatchEvent(new CustomEvent('dent2025:auth-changed', {
                 detail: { authenticated: true }
@@ -262,6 +335,9 @@
         }
         if (typeof window.dentReloadQuizBank === 'function') {
             try { window.dentReloadQuizBank(); } catch(e) {}
+        }
+        if (typeof loadAdminPollStatus === 'function') {
+            loadAdminPollStatus();
         }
         try {
             window.dispatchEvent(new CustomEvent('dent2025:auth-changed', {
@@ -358,6 +434,143 @@
             btn.innerHTML = oldText;
             btn.disabled = false;
             alert("Connection error");
+        });
+    }
+
+    // ==========================================
+    // INLINE POLL MANAGEMENT HANDLERS
+    // ==========================================
+    let currentAdminPollId = null;
+
+    function toggleAdminPollForm() {
+        const f = document.getElementById('dent-admin-poll-form');
+        if (!f) return;
+        f.style.display = (f.style.display === 'none' || !f.style.display) ? 'block' : 'none';
+    }
+
+    function loadAdminPollStatus() {
+        const pass = sessionStorage.getItem('dent2025_admin_pass') || '';
+        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        const spec = sel.specialty || 'dentistry';
+        const year = sel.year !== undefined ? sel.year : 3;
+        const sem = sel.semester !== undefined ? sel.semester : 1;
+
+        const statusEl = document.getElementById('dent-admin-active-poll-status');
+        if (!statusEl) return;
+
+        fetch(`/polls_api.php?action=get_active_poll&specialty=${encodeURIComponent(spec)}&year=${year}&semester=${sem}&test=1&pass=${encodeURIComponent(pass)}`)
+            .then(r => r.json())
+            .then(res => {
+                if (res.success && res.data) {
+                    const p = res.data;
+                    currentAdminPollId = p.id;
+                    const isTesting = (p.status === 'testing');
+                    const badgeHtml = isTesting 
+                        ? `<span style="background: rgba(234, 179, 8, 0.15); color: #fde047; border: 1px solid rgba(234, 179, 8, 0.3); padding: 2px 8px; border-radius: 6px; font-size: 0.72rem;">🔒 وضع التجربة (مخفي عن الطلاب)</span>`
+                        : `<span style="background: rgba(34, 197, 94, 0.15); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); padding: 2px 8px; border-radius: 6px; font-size: 0.72rem;">🌐 منشور ومتاح للجميع</span>`;
+
+                    statusEl.innerHTML = `
+                        <div style="display: flex; flex-direction: column; gap: 4px; max-width: 65%;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <strong style="color: #f8fafc;">${p.question}</strong>
+                                ${badgeHtml}
+                            </div>
+                            <span style="font-size: 0.74rem; color: #71717a;">${p.total_votes || 0} مصوّت • ينتهي: ${new Date(p.expires_at * 1000).toLocaleDateString('ar-SA')}</span>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <a href="?test_poll=1" target="_blank" class="dent-admin-btn secondary" style="padding: 5px 10px; font-size: 0.78rem; text-decoration: none;">معاينة ↗</a>
+                            <button class="dent-admin-btn danger" onclick="deleteAdminPoll('${p.id}')" style="padding: 5px 10px; font-size: 0.78rem;">إلغاء/حذف</button>
+                        </div>
+                    `;
+                } else {
+                    currentAdminPollId = null;
+                    statusEl.innerHTML = `
+                        <span style="color: #64748b;">لا يوجد استطلاع رأي نشط حالياً لهذه الدفعة.</span>
+                        <a href="?test_poll=1" target="_blank" style="color: #60a5fa; font-size: 0.76rem; text-decoration: none;">فتح وضع التجربة (?test_poll=1)</a>
+                    `;
+                }
+            })
+            .catch(() => {
+                statusEl.innerHTML = `<span style="color: #ef4444;">تعذر فحص حالة الاستطلاع</span>`;
+            });
+    }
+
+    function saveAdminPoll() {
+        const pass = sessionStorage.getItem('dent2025_admin_pass') || '';
+        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        const spec = sel.specialty || 'dentistry';
+        const year = sel.year !== undefined ? sel.year : 3;
+        const sem = sel.semester !== undefined ? sel.semester : 1;
+
+        const q = (document.getElementById('poll-inp-question').value || '').trim();
+        const badge = (document.getElementById('poll-inp-badge').value || '').trim();
+        const opt0 = (document.getElementById('poll-inp-opt-0').value || '').trim();
+        const opt1 = (document.getElementById('poll-inp-opt-1').value || '').trim();
+        const opt2 = (document.getElementById('poll-inp-opt-2').value || '').trim();
+        const duration = parseInt(document.getElementById('poll-inp-duration').value, 10) || 24;
+        const status = document.getElementById('poll-inp-status').value || 'testing';
+
+        const options = [opt0, opt1, opt2].filter(o => o.length > 0);
+
+        if (!q) return alert("الرجاء إدخال سؤال الاستطلاع");
+        if (options.length < 2) return alert("الرجاء إدخال خيارين على الأقل");
+
+        fetch('/polls_api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'save_poll',
+                pass: pass,
+                specialty: spec,
+                year: year,
+                semester: sem,
+                question: q,
+                badge: badge,
+                options: options,
+                duration_hours: duration,
+                status: status
+            })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                alert(res.message || "تم حفظ الاستطلاع بنجاح!");
+                toggleAdminPollForm();
+                loadAdminPollStatus();
+                // If poll widget exists on page, refresh it
+                if (typeof loadActivePoll === 'function') loadActivePoll();
+            } else {
+                alert("خطأ: " + (res.error || "تعذر الحفظ"));
+            }
+        })
+        .catch(err => {
+            alert("حدث خطأ أثناء الاتصال بالخادم");
+        });
+    }
+
+    function deleteAdminPoll(pollId) {
+        if (!confirm("هل أنت متأكد من حذف هذا الاستطلاع؟")) return;
+        const pass = sessionStorage.getItem('dent2025_admin_pass') || '';
+
+        fetch('/polls_api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'delete_poll',
+                pass: pass,
+                id: pollId
+            })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                alert("تم حذف الاستطلاع");
+                loadAdminPollStatus();
+                const pollCont = document.getElementById('dentPollContainer');
+                if (pollCont) pollCont.style.display = 'none';
+            } else {
+                alert("خطأ: " + (res.error || "تعذر الحذف"));
+            }
         });
     }
 

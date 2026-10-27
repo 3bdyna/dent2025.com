@@ -225,6 +225,24 @@
 }
 </style>
 
+<!-- Inline Poll Slot (Loads seamlessly above course chapters) -->
+<div id="dent-poll-widget-slot"></div>
+<script>
+  (function() {
+    fetch('/frontend_components/poll_widget.html')
+      .then(function(r) { return r.ok ? r.text() : ''; })
+      .then(function(html) {
+        if (!html) return;
+        var slot = document.getElementById('dent-poll-widget-slot');
+        if (slot) {
+          var range = document.createRange();
+          var frag = range.createContextualFragment(html);
+          slot.appendChild(frag);
+        }
+      }).catch(function() {});
+  })();
+</script>
+
 <!-- This container will be populated by dashboard.js -->
 <div id="dynamic-chapters-container" style="opacity:0; transition: opacity 0.3s ease;"></div>
 

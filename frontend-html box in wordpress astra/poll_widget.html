@@ -1,0 +1,496 @@
+<!-- poll_widget.html -->
+<!-- Dent2025 Inline Academic Poll & Feedback Component -->
+<style>
+  .dent-poll-widget-container {
+    width: 100%;
+    max-width: 680px;
+    margin: 14px auto;
+    font-family: 'Outfit', 'Noto Kufi Arabic', -apple-system, BlinkMacSystemFont, sans-serif;
+    direction: rtl;
+    box-sizing: border-box;
+    display: none; /* Initially hidden until active poll is loaded and verified */
+  }
+
+  .dent-poll-widget-card {
+    background: #1e1e1e;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    color: #f8fafc;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    position: relative;
+    box-sizing: border-box;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    overflow: hidden;
+  }
+
+  .dent-poll-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.85rem;
+  }
+
+  .dent-poll-badge-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .dent-poll-pill {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dent-poll-pill.testing-mode {
+    background: rgba(234, 179, 8, 0.1);
+    border-color: rgba(234, 179, 8, 0.3);
+    color: #fde047;
+  }
+
+  .dent-poll-live-indicator {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+  }
+
+  .dent-poll-dismiss-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, background 0.2s;
+  }
+  .dent-poll-dismiss-btn:hover {
+    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .dent-poll-question {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.5;
+    margin: 0 0 1rem;
+    color: #f1f5f9;
+  }
+
+  .dent-poll-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .dent-poll-opt-btn {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: #e2e8f0;
+    font-size: 0.92rem;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: right;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    user-select: none;
+  }
+
+  .dent-poll-opt-btn:hover:not(.dent-voted) {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
+  }
+
+  .dent-poll-progress-fill {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 0%;
+    background: rgba(96, 165, 250, 0.14);
+    border-left: 2px solid #60a5fa;
+    border-radius: 12px;
+    transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .dent-poll-opt-btn.user-picked .dent-poll-progress-fill {
+    background: rgba(96, 165, 250, 0.24);
+    border-left: 2px solid #93c5fd;
+  }
+
+  .dent-poll-opt-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dent-poll-check-icon {
+    width: 14px;
+    height: 14px;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    transform: scale(0.6);
+    flex-shrink: 0;
+    stroke: #60a5fa;
+  }
+
+  .dent-poll-opt-btn.user-picked .dent-poll-check-icon {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .dent-poll-pct {
+    position: relative;
+    z-index: 2;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: #94a3b8;
+    display: none;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .dent-poll-options.is-resolved .dent-poll-opt-btn {
+    cursor: default;
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+  .dent-poll-options.is-resolved .dent-poll-pct {
+    display: block;
+  }
+  .dent-poll-options.is-resolved .dent-poll-opt-btn.user-picked {
+    border-color: rgba(96, 165, 250, 0.4);
+  }
+  .dent-poll-options.is-resolved .dent-poll-opt-btn.user-picked span.dent-opt-text {
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  .dent-poll-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: #64748b;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 0.75rem;
+  }
+
+  .dent-poll-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+</style>
+
+<div class="dent-poll-widget-container" id="dentPollContainer">
+  <div class="dent-poll-widget-card" id="dentPollCard">
+    <div class="dent-poll-header">
+      <div class="dent-poll-badge-row">
+        <span class="dent-poll-pill">
+          <span class="dent-poll-live-indicator"></span>
+          استطلاع
+        </span>
+        <span class="dent-poll-pill" id="dentPollBadge" style="display:none;"></span>
+        <span class="dent-poll-pill" id="dentPollSubBadge" style="display:none;"></span>
+        <span class="dent-poll-pill testing-mode" id="dentPollTestingBadge" style="display:none;">معاينة تجريبية</span>
+      </div>
+      <button class="dent-poll-dismiss-btn" onclick="dentDismissCurrentPoll()" title="إخفاء الاستطلاع" aria-label="إخفاء">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <h3 class="dent-poll-question" id="dentPollQuestion">...</h3>
+
+    <div class="dent-poll-options" id="dentPollOptionsContainer">
+      <!-- Options injected dynamically by JS -->
+    </div>
+
+    <div class="dent-poll-footer">
+      <span class="dent-poll-meta-item">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span id="dentPollTotalCount">0 مصوّت</span>
+      </span>
+      <span class="dent-poll-meta-item">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span id="dentPollExpiryText">ينتهي قريباً</span>
+      </span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  if (window.dentPollWidgetLoaded) return;
+  window.dentPollWidgetLoaded = true;
+
+  const POLL_API_URL = '/polls_api.php';
+  let currentActivePoll = null;
+
+  // Retrieve current student context from localStorage or fallback to dentistry Year 3 Sem 1
+  function getStudentContext() {
+    let spec = 'dentistry', year = 3, sem = 1;
+    try {
+      const saved = localStorage.getItem('dent2025_selection');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.specialty) spec = parsed.specialty;
+        if (parsed.year !== undefined) year = parsed.year;
+        if (parsed.semester !== undefined) sem = parsed.semester;
+      }
+    } catch (e) {}
+    return { spec, year, sem };
+  }
+
+  // Check if testing gate is active (hidden for regular visitors)
+  function isStealthTestActive() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasTestParam = urlParams.has('test_poll') || urlParams.has('preview_poll') || urlParams.has('test');
+    const hasAdminSession = !!sessionStorage.getItem('dent2025_admin_pass');
+    return hasTestParam || hasAdminSession;
+  }
+
+  async function loadActivePoll() {
+    const ctx = getStudentContext();
+    const isTestGate = isStealthTestActive();
+    const adminPass = sessionStorage.getItem('dent2025_admin_pass') || '';
+
+    let url = `${POLL_API_URL}?action=get_active_poll&specialty=${encodeURIComponent(ctx.spec)}&year=${ctx.year}&semester=${ctx.sem}`;
+    if (isTestGate) {
+      url += '&test=1';
+      if (adminPass) url += `&pass=${encodeURIComponent(adminPass)}`;
+    }
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const json = await res.json();
+      if (!json || !json.success || !json.data) return;
+
+      const poll = json.data;
+
+      // Stealth Safeguard: If poll is in testing mode and current visitor has NO test gate, KEEP HIDDEN!
+      if (poll.status === 'testing' && !isTestGate) {
+        return;
+      }
+
+      // Check if student dismissed this specific poll on this browser
+      if (localStorage.getItem('dent2025_poll_dismissed_' + poll.id)) {
+        return;
+      }
+
+      currentActivePoll = poll;
+      renderPollCard(poll);
+    } catch (err) {
+      console.warn('Poll fetch error:', err);
+    }
+  }
+
+  function renderPollCard(poll) {
+    const container = document.getElementById('dentPollContainer');
+    if (!container) return;
+
+    // Badges
+    const badgeEl = document.getElementById('dentPollBadge');
+    if (poll.badge) {
+      badgeEl.textContent = poll.badge;
+      badgeEl.style.display = 'inline-flex';
+    } else {
+      badgeEl.style.display = 'none';
+    }
+
+    const subBadgeEl = document.getElementById('dentPollSubBadge');
+    if (poll.sub_badge) {
+      subBadgeEl.textContent = poll.sub_badge;
+      subBadgeEl.style.display = 'inline-flex';
+    } else {
+      subBadgeEl.style.display = 'none';
+    }
+
+    const testBadgeEl = document.getElementById('dentPollTestingBadge');
+    if (poll.status === 'testing') {
+      testBadgeEl.style.display = 'inline-flex';
+    } else {
+      testBadgeEl.style.display = 'none';
+    }
+
+    // Question & Total Count
+    document.getElementById('dentPollQuestion').textContent = poll.question;
+    document.getElementById('dentPollTotalCount').textContent = (poll.total_votes || 0) + ' مصوّت';
+
+    // Expiry Text
+    if (poll.expires_at) {
+      const diffSec = Math.max(0, poll.expires_at - Math.floor(Date.now() / 1000));
+      const hours = Math.floor(diffSec / 3600);
+      if (hours > 24) {
+        const days = Math.floor(hours / 24);
+        document.getElementById('dentPollExpiryText').textContent = `ينتهي خلال ${days} يوم`;
+      } else if (hours > 0) {
+        document.getElementById('dentPollExpiryText').textContent = `ينتهي خلال ${hours} ساعة`;
+      } else {
+        document.getElementById('dentPollExpiryText').textContent = 'ينتهي قريباً';
+      }
+    }
+
+    // Options Rendering
+    const optionsContainer = document.getElementById('dentPollOptionsContainer');
+    optionsContainer.innerHTML = '';
+
+    const savedLocalChoice = localStorage.getItem('dent2025_poll_vote_' + poll.id);
+    const hasVoted = poll.has_voted || savedLocalChoice !== null;
+    const votedIndex = savedLocalChoice !== null ? parseInt(savedLocalChoice, 10) : -1;
+
+    if (hasVoted) {
+      optionsContainer.classList.add('is-resolved');
+    } else {
+      optionsContainer.classList.remove('is-resolved');
+    }
+
+    poll.options.forEach((optText, idx) => {
+      const pct = poll.percentages && poll.percentages[idx] !== undefined ? poll.percentages[idx] : 0;
+      const isUserPicked = (votedIndex === idx);
+
+      const btn = document.createElement('div');
+      btn.className = 'dent-poll-opt-btn' + (isUserPicked ? ' user-picked' : '') + (hasVoted ? ' dent-voted' : '');
+      btn.id = `dentPollOpt_${idx}`;
+
+      btn.innerHTML = `
+        <div class="dent-poll-progress-fill" id="dentPollFill_${idx}" style="width: ${hasVoted ? pct : 0}%"></div>
+        <div class="dent-poll-opt-content">
+          <svg class="dent-poll-check-icon" viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span class="dent-opt-text">${escapeHtml(optText)}</span>
+        </div>
+        <span class="dent-poll-pct" id="dentPollPct_${idx}">${pct}%</span>
+      `;
+
+      if (!hasVoted) {
+        btn.addEventListener('click', () => handleVoteClick(idx));
+      }
+
+      optionsContainer.appendChild(btn);
+    });
+
+    // Make container visible smoothly
+    container.style.display = 'block';
+  }
+
+  async function handleVoteClick(optIdx) {
+    if (!currentActivePoll) return;
+    const pollId = currentActivePoll.id;
+
+    if (localStorage.getItem('dent2025_poll_vote_' + pollId) !== null) return;
+
+    // Immediately resolve UI locally for snappy responsiveness
+    localStorage.setItem('dent2025_poll_vote_' + pollId, optIdx);
+
+    const container = document.getElementById('dentPollOptionsContainer');
+    container.classList.add('is-resolved');
+
+    const optBtn = document.getElementById(`dentPollOpt_${optIdx}`);
+    if (optBtn) optBtn.classList.add('user-picked');
+
+    // Post to API
+    try {
+      const res = await fetch(POLL_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'vote',
+          poll_id: pollId,
+          option_index: optIdx
+        })
+      });
+
+      const json = await res.json();
+      if (json && json.data) {
+        updateResultsUI(json.data, optIdx);
+      }
+    } catch (err) {
+      console.warn('Vote submission error:', err);
+    }
+  }
+
+  function updateResultsUI(poll, userPickedIdx) {
+    currentActivePoll = poll;
+    document.getElementById('dentPollTotalCount').textContent = (poll.total_votes || 0) + ' مصوّت';
+
+    poll.options.forEach((_, idx) => {
+      const pct = poll.percentages[idx] || 0;
+      const fill = document.getElementById(`dentPollFill_${idx}`);
+      const pctLabel = document.getElementById(`dentPollPct_${idx}`);
+      const optBtn = document.getElementById(`dentPollOpt_${idx}`);
+
+      if (fill) fill.style.width = pct + '%';
+      if (pctLabel) pctLabel.textContent = pct + '%';
+      if (optBtn) {
+        optBtn.classList.add('dent-voted');
+        if (idx === userPickedIdx) optBtn.classList.add('user-picked');
+      }
+    });
+  }
+
+  window.dentDismissCurrentPoll = function() {
+    if (!currentActivePoll) return;
+    const container = document.getElementById('dentPollContainer');
+    const card = document.getElementById('dentPollCard');
+    if (!card || !container) return;
+
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(-8px)';
+    setTimeout(() => {
+      container.style.display = 'none';
+      localStorage.setItem('dent2025_poll_dismissed_' + currentActivePoll.id, '1');
+    }, 250);
+  };
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  // Load when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadActivePoll);
+  } else {
+    loadActivePoll();
+  }
+})();
+</script>
