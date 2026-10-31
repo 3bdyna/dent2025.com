@@ -2625,7 +2625,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         let prev = '';
         while (text !== prev) {
             prev = text;
-            text = text.replace(/^\s*(?:[\([（{]\s*(?:[A-Za-z]|[0-9]{1,2}|[أإآابجدههـوزحطيكلمنسعفصقرشتثخﺬضظغ]|ح[A-Za-z]?)\s*[\)\]）}]:?\s*|\s*(?:[A-Za-z]|[0-9]{1,2}|[أإآابجدههـوزحطيكلمنسعفصقرشتثخﺬضظغ]|ح[A-Za-z]?)\s*[\)\]）.:\-–—]+\s*)+/u, '').trim();
+            if (/^\d+\.\d+/.test(text)) {
+                break;
+            }
+            text = text.replace(/^\s*[\([（{]\s*(?:[A-Za-z]|[0-9]{1,2}|[أإآابجدههـوزحطيكلمنسعفصقرشتثخﺬضظغ]|ح[A-Za-z]?)\s*[\)\]）}]:?\s*/u, '').trim();
+            text = text.replace(/^\s*(?:[A-Za-z]|[0-9]{1,2}|[أإآابجدههـوزحطيكلمنسعفصقرشتثخﺬضظغ]|ح[A-Za-z]?)\s*(?:[\)\]）:\-–—]|\.(?!\d))\s*/u, '').trim();
         }
         return text;
     }
@@ -2635,7 +2639,10 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         let prev = '';
         while (text !== prev) {
             prev = text;
-            text = text.replace(/^(?:(?:Q(?:uestion)?|س(?:ؤال)?)\s*\.?\s*\d+\s*(?:[:.)\-–—]\s*|\s+)|\(\d+\)\s*[:.)\-–—\s]*|\d+\s*[:.)\-–—]\s*)/iu, '').trim();
+            if (/^\d+\.\d+/.test(text)) {
+                break;
+            }
+            text = text.replace(/^(?:(?:Q(?:uestion)?|س(?:ؤال)?)\s*\.?\s*\d+\s*(?:[:.)\-–—]\s*|\s+)|\(\d+\)\s*[:.)\-–—\s]*|\d+\s*(?:[:)\-–—]|\.(?!\d))\s*)/iu, '').trim();
         }
         return text;
     }
