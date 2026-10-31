@@ -2683,16 +2683,101 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         return selectedIndex === correctIndex;
     }
 
+    // --- SMART SHUFFLING HELPERS ---
+    function fisherYatesShuffle(arr) {
+        if (!Array.isArray(arr) || arr.length <= 1) return arr ? arr.slice() : [];
+        const copy = arr.slice();
+        for (let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const temp = copy[i];
+            copy[i] = copy[j];
+            copy[j] = temp;
+        }
+        return copy;
+    }
+
+    function shuffleSingleQuestionOptions(q) {
+        if (!q || !Array.isArray(q.options) || q.options.length <= 1) {
+            return q;
+        }
+
+        // True/False or boolean style: do not shuffle True/False semantic order
+        const isTrueFalse = q.type === 'tf' || q.type === 'truefalse' ||
+            (q.options.length === 2 && (
+                (q.options.includes('صحيح') && q.options.includes('خاطئ')) ||
+                (q.options.some(o => String(o).trim().toLowerCase() === 'true') && q.options.some(o => String(o).trim().toLowerCase() === 'false'))
+            ));
+        if (isTrueFalse) {
+            return q;
+        }
+
+        // Identify current authoritative correct answer text BEFORE shuffling
+        const oldCorrectIdx = getCorrectOptionIndex(q, q.options);
+        const correctText = (oldCorrectIdx >= 0 && oldCorrectIdx < q.options.length)
+            ? q.options[oldCorrectIdx]
+            : (q.correctAnswer || '');
+
+        // Map options with isCorrect flag
+        const mapped = q.options.map((opt, idx) => ({
+            text: opt,
+            isCorrect: (idx === oldCorrectIdx) || (String(opt).trim().toLowerCase() === String(correctText).trim().toLowerCase())
+        }));
+
+        const shuffled = fisherYatesShuffle(mapped);
+        const newOptions = shuffled.map(item => item.text);
+        const newCorrectIdx = shuffled.findIndex(item => item.isCorrect);
+
+        q.options = newOptions;
+        if (newCorrectIdx >= 0) {
+            q.correctIndex = newCorrectIdx;
+            q.correctAnswer = newOptions[newCorrectIdx];
+        }
+        return q;
+    }
+
     // --- PLAYER LOGIC ---
     function openPlayer(title, metaSub, questions, metaObj = {}) {
-        generatedQuestions = questions;
+        const rawSourceQuestions = questions || [];
         const activeQid = metaObj.id || metaObj.quiz_id || '';
+
+        const isPastExamQuiz = (metaObj?.creation_mode === 'past_exam_filter') || 
+                               (typeof title === 'string' && (
+                                   title.includes('تجميعات') || 
+                                   title.includes('تسريبات') || 
+                                   title.toLowerCase().includes('past') || 
+                                   title.toLowerCase().includes('leak') ||
+                                   title.toLowerCase().includes('old')
+                               ));
+
+        // Deep-clone raw questions so master cache/source is never corrupted
+        const clonedQuestions = rawSourceQuestions.map(q => ({
+            ...q,
+            options: Array.isArray(q.options) ? [...q.options] : []
+        }));
+
+        // Mode-Aware Dynamic Shuffling:
+        // - AI-Generated Exams: Shuffle BOTH questions sequence AND options within each question
+        // - Leaks / Past Papers: Preserve questions order 1..N strictly, shuffle ONLY options within each question
+        let preparedQuestions = [];
+        if (!isPastExamQuiz) {
+            clonedQuestions.forEach(q => shuffleSingleQuestionOptions(q));
+            preparedQuestions = fisherYatesShuffle(clonedQuestions);
+        } else {
+            clonedQuestions.forEach(q => shuffleSingleQuestionOptions(q));
+            preparedQuestions = clonedQuestions;
+        }
+
+        questions = preparedQuestions;
+        generatedQuestions = preparedQuestions;
+
         currentActiveQuiz = {
             id: activeQid,
             quiz_name: title,
             subject_name: (metaSub || '').split(' — ')[0].trim(),
-            questions: questions,
-            metaObj: metaObj
+            questions: preparedQuestions,
+            rawQuestions: rawSourceQuestions,
+            metaObj: metaObj,
+            isPastExamQuiz: isPastExamQuiz
         };
 
         if (activeQid && window.history && window.history.replaceState) {
@@ -2714,7 +2799,13 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         
         const playerView = document.getElementById('dent-player-view');
         document.getElementById('dp-title').innerText = title;
-        document.getElementById('dp-meta-sub').innerText = (metaSub || '').split(' — ')[0].trim();
+
+        const metaSubClean = (metaSub || '').split(' — ')[0].trim();
+        const shuffleBadgeHTML = isPastExamQuiz
+            ? `<span class="dent-shuffle-badge" style="display:inline-flex; align-items:center; gap:4px; font-size:0.72rem; background:rgba(16,185,129,0.12); color:#6ee7b7; border:1px solid rgba(16,185,129,0.25); padding:2px 8px; border-radius:999px; margin-right:6px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg> خيارات عشوائية • ترتيب الأسئلة ثابت (1..N)</span>`
+            : `<span class="dent-shuffle-badge" style="display:inline-flex; align-items:center; gap:4px; font-size:0.72rem; background:rgba(59,130,246,0.12); color:#93c5fd; border:1px solid rgba(59,130,246,0.25); padding:2px 8px; border-radius:999px; margin-right:6px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg> أسئلة وخيارات عشوائية</span>`;
+
+        document.getElementById('dp-meta-sub').innerHTML = `${escapeHtml(metaSubClean)} ${shuffleBadgeHTML}`;
         document.getElementById('dp-score').style.display = 'none';
 
         let noticeBanner = document.getElementById('dp-notice-banner');
@@ -3030,8 +3121,9 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
         let retryBtnHTML = '';
         if (missedQuestions.length > 0) {
-            retryBtnHTML = `<button id="dp-retry-missed-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 12px; width: auto; display: inline-block; padding: 8px 16px; font-size: 0.84rem; border-color: rgba(245, 158, 11, 0.3); color: #fcd34d;">إعادة الأسئلة الخاطئة فقط (${missedQuestions.length} أسئلة)</button>`;
+            retryBtnHTML += `<button id="dp-retry-missed-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 12px; margin-left: 8px; width: auto; display: inline-block; padding: 8px 16px; font-size: 0.84rem; border-color: rgba(245, 158, 11, 0.3); color: #fcd34d;">إعادة الأسئلة الخاطئة فقط (${missedQuestions.length} أسئلة)</button>`;
         }
+        retryBtnHTML += `<button id="dp-restart-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 12px; width: auto; display: inline-block; padding: 8px 16px; font-size: 0.84rem; border-color: rgba(59, 130, 246, 0.3); color: #93c5fd;">إعادة الاختبار كاملاً بخلط جديد 🔄</button>`;
 
         let breakdownHTML = '';
         const chKeys = Object.keys(breakdown);
@@ -3068,10 +3160,18 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             if (retryBtn) {
                 retryBtn.addEventListener('click', () => {
                     const currentTitle = document.getElementById('dp-title').innerText;
-                    const currentMeta = document.getElementById('dp-meta-sub').innerText;
-                    openPlayer(`${currentTitle} (مراجعة الأخطاء)`, currentMeta, missedQuestions);
+                    const currentMeta = (currentActiveQuiz?.subject_name || '');
+                    openPlayer(`${currentTitle} (مراجعة الأخطاء)`, currentMeta, missedQuestions, currentActiveQuiz?.metaObj || {});
                 });
             }
+        }
+
+        const restartAllBtn = document.getElementById('dp-restart-all-btn');
+        if (restartAllBtn) {
+            restartAllBtn.addEventListener('click', () => {
+                const origQuestions = currentActiveQuiz?.rawQuestions || currentActiveQuiz?.questions || [];
+                openPlayer(currentActiveQuiz?.quiz_name || 'اختبار', currentActiveQuiz?.subject_name || '', origQuestions, currentActiveQuiz?.metaObj || {});
+            });
         }
         
         document.getElementById('dp-submit-btn').style.display = 'none';

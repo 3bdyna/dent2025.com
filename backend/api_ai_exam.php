@@ -1772,12 +1772,24 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         $prompt .= "   - NEVER test course plans (خطة المقرر), study plans, lecture plans, syllabi, weekly timetables, or agendas. Do NOT think of, reference, or formulate questions about plans.\n";
         $prompt .= "   - NEVER test Course Learning Outcomes (CLOs, ILOs, PLOs), grade distributions, attendance / DN policies, faculty contacts, or recommended textbook lists.\n";
         $prompt .= "   - DO NOT formulate or output a plan. Immediately output pure questions matching the JSON schema.\n";
-        $prompt .= "\nANTI-TEST-WISENESS & RIGOROUS DISTRACTOR ENGINEERING (CRITICAL):\n";
-        $prompt .= "- ANTI-LENGTH BIAS: NEVER make the correct answer systematically longer, more detailed, or more qualified than the distractors. All 4 options (A, B, C, D) must be of strictly comparable word count and syntactic complexity. Often make one of the incorrect distractors the longest option so students cannot guess the correct choice by length.\n";
-        $prompt .= "- HIGH-DISCRIMINATION DISTRACTORS: Every distractor must be a genuine, highly plausible scientific alternative from the exact same topic/lecture (e.g. real related bacteria, real dental materials, real anatomical landmarks, real pathological stages). NEVER generate obviously fake, silly, or cartoonish distractors that can be easily eliminated by simple common sense.\n";
-        $prompt .= "- CATEGORY HOMOGENEITY: All 4 options must belong to the exact same conceptual class (e.g. if the correct answer is a specific enzyme, ALL 4 choices must be real, relevant enzymes; if the answer is a treatment protocol, ALL choices must be real treatment protocols).\n";
-        $prompt .= "- ELIMINATE 'CLANG ASSOCIATIONS' & VOCABULARY ECHOING: Do not repeat unique keywords or distinctive phrases from the question stem solely in the correct option. Distractors must also contain relevant subject vocabulary so students cannot guess by word-matching.\n";
-        $prompt .= "- NO LAZY ABSOLUTE GIVEAWAYS: Avoid using obvious giveaway qualifiers like 'always', 'never', 'all', or 'completely' in distractors. Distractors must sound just as balanced, authoritative, and professionally nuanced as the correct choice.\n";
+        $prompt .= "\n========================================================================\n";
+        $prompt .= "MANDATORY DISTRACTOR ENGINEERING & ANTI-LENGTH BIAS RULES (ZERO TOLERANCE):\n";
+        $prompt .= "1. STRICT WORD-COUNT & LENGTH PARITY:\n";
+        $prompt .= "   - ALL 4 OPTIONS (A, B, C, D) MUST BE OF STRICTLY EQUAL LENGTH (within ±25% word count of each other).\n";
+        $prompt .= "   - NEVER produce a long, elaborate, highly detailed correct answer while making the 3 distractors short, generic words or fragments.\n";
+        $prompt .= "   - REVERSE LENGTH BIAS: In at least 40% to 50% of the questions, intentionally make an INCORRECT DISTRACTOR the longest and most detailed option. This completely eliminates the giveaway where students pick the longest option.\n";
+        $prompt .= "2. HIGH-DISCRIMINATION, LECTURE-SPECIFIC DISTRACTORS (NO EASY GIVEAWAYS):\n";
+        $prompt .= "   - Every single distractor must be a real, academically accurate scientific concept, clinical entity, or anatomical structure directly mentioned in the SAME lecture deck or topic.\n";
+        $prompt .= "   - Distractors MUST NOT be silly, fabricated, or absurdly incorrect choices that anyone can easily eliminate without studying.\n";
+        $prompt .= "   - For anatomical questions: distractors must be other real anatomical structures in the exact same region.\n";
+        $prompt .= "   - For disease/pathology questions: distractors must be real differential diagnoses, other stages, or related clinical conditions.\n";
+        $prompt .= "   - For dental materials/pharmacology: distractors must be real materials, real drug classes, or real mechanisms from the same subject.\n";
+        $prompt .= "3. SYNTACTIC & GRAMMATICAL PARALLELISM:\n";
+        $prompt .= "   - All 4 options must share identical grammatical form (e.g., all 4 start with an action verb, or all 4 are noun phrases, or all 4 are complete clinical sentences).\n";
+        $prompt .= "   - Never use absolute giveaway words ('always', 'never', 'all of the above', 'none of the above') in distractors.\n";
+        $prompt .= "4. RANDOMIZED INITIAL ANSWER POSITION:\n";
+        $prompt .= "   - Evenly distribute the correct answer across option positions (A, B, C, D) so there is zero position bias.\n";
+        $prompt .= "========================================================================\n";
         $prompt .= $languageRules . "\n";
         if ($pageRange) $prompt .= "PAGE / UNIT CONSTRAINT: Focus questions strictly on pages / unit: " . $pageRange . ".\n";
         if ($focusArea) $prompt .= "Additional student focus: " . $focusArea . "\n";
@@ -1857,14 +1869,24 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         $prompt .= "- Avoid trivial filler (e.g. textbook author bios, publication years, or isolated meaningless numbers).\n";
         $prompt .= "- Strict Exam Authenticity: Questions must resemble genuine university midterm and final examination questions testing scientific mastery, never administrative or organizational metadata.\n";
 
-        $prompt .= "\nANTI-TEST-WISENESS & RIGOROUS DISTRACTOR ENGINEERING (CRITICAL):\n";
-        $prompt .= "- ANTI-LENGTH BIAS: NEVER make the correct answer systematically longer, more detailed, or more qualified than the distractors. All 4 options (A, B, C, D) must be of strictly comparable word count and syntactic complexity. Often make one of the incorrect distractors the longest option so students cannot guess the correct choice by length.\n";
-        $prompt .= "- HIGH-DISCRIMINATION DISTRACTORS: Every distractor must be a genuine, highly plausible scientific alternative from the exact same topic/lecture (e.g. real related bacteria, real dental materials, real anatomical landmarks, real pathological stages). NEVER generate obviously fake, silly, or cartoonish distractors that can be easily eliminated by simple common sense.\n";
-        $prompt .= "- CATEGORY HOMOGENEITY: All 4 options must belong to the exact same conceptual class (e.g. if the correct answer is a specific enzyme, ALL 4 choices must be real, relevant enzymes; if the answer is a treatment protocol, ALL choices must be real treatment protocols).\n";
-        $prompt .= "- ELIMINATE 'CLANG ASSOCIATIONS' & VOCABULARY ECHOING: Do not repeat unique keywords or distinctive phrases from the question stem solely in the correct option. Distractors must also contain relevant subject vocabulary so students cannot guess by word-matching.\n";
-        $prompt .= "- NO LAZY ABSOLUTE GIVEAWAYS: Avoid using obvious giveaway qualifiers like 'always', 'never', 'all', or 'completely' in distractors. Distractors must sound just as balanced, authoritative, and professionally nuanced as the correct choice.\n";
-        $prompt .= "- EXPLOIT COMMON MISCONCEPTIONS: Base distractors on common student errors (e.g. confusing reciprocal terms, swapping early vs. late disease stages, inverting physiological feedback loops, or mixing up similar-sounding anatomical structures).\n";
-        $prompt .= "- UNIFORM ANSWER DISTRIBUTION: Distribute the correct answer evenly across A, B, C, and D across the exam.\n";
+        $prompt .= "\n========================================================================\n";
+        $prompt .= "MANDATORY DISTRACTOR ENGINEERING & ANTI-LENGTH BIAS RULES (ZERO TOLERANCE):\n";
+        $prompt .= "1. STRICT WORD-COUNT & LENGTH PARITY:\n";
+        $prompt .= "   - ALL 4 OPTIONS (A, B, C, D) MUST BE OF STRICTLY EQUAL LENGTH (within ±25% word count of each other).\n";
+        $prompt .= "   - NEVER produce a long, elaborate, highly detailed correct answer while making the 3 distractors short, generic words or fragments.\n";
+        $prompt .= "   - REVERSE LENGTH BIAS: In at least 40% to 50% of the questions, intentionally make an INCORRECT DISTRACTOR the longest and most detailed option. This completely eliminates the giveaway where students pick the longest option.\n";
+        $prompt .= "2. HIGH-DISCRIMINATION, LECTURE-SPECIFIC DISTRACTORS (NO EASY GIVEAWAYS):\n";
+        $prompt .= "   - Every single distractor must be a real, academically accurate scientific concept, clinical entity, or anatomical structure directly mentioned in the SAME lecture deck or topic.\n";
+        $prompt .= "   - Distractors MUST NOT be silly, fabricated, or absurdly incorrect choices that anyone can easily eliminate without studying.\n";
+        $prompt .= "   - For anatomical questions: distractors must be other real anatomical structures in the exact same region.\n";
+        $prompt .= "   - For disease/pathology questions: distractors must be real differential diagnoses, other stages, or related clinical conditions.\n";
+        $prompt .= "   - For dental materials/pharmacology: distractors must be real materials, real drug classes, or real mechanisms from the same subject.\n";
+        $prompt .= "3. SYNTACTIC & GRAMMATICAL PARALLELISM:\n";
+        $prompt .= "   - All 4 options must share identical grammatical form (e.g., all 4 start with an action verb, or all 4 are noun phrases, or all 4 are complete clinical sentences).\n";
+        $prompt .= "   - Never use absolute giveaway words ('always', 'never', 'all of the above', 'none of the above') in distractors.\n";
+        $prompt .= "4. RANDOMIZED INITIAL ANSWER POSITION:\n";
+        $prompt .= "   - Evenly distribute the correct answer across option positions (A, B, C, D) so there is zero position bias.\n";
+        $prompt .= "========================================================================\n";
 
         $prompt .= "\nSTRICT FIELD ISOLATION & PURITY:\n";
         $prompt .= "- The 'question' string and 'options' array must contain ONLY the question stem and the 4 choices.\n";
@@ -2122,6 +2144,30 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         }
         if (!empty($leakedArabicNotes)) {
             $explanation = implode(" - ", $leakedArabicNotes) . "\n" . $explanation;
+        }
+
+        // Randomize initial option placement on backend so stored questions have a uniform 25% distribution across A, B, C, D
+        $isTf = ($q['type'] ?? '') === 'tf' || ($q['type'] ?? '') === 'truefalse' || (count($opts) === 2 && (in_array('صحيح', $opts) || in_array('True', $opts)));
+        if (!$isTf && count($opts) > 1) {
+            $mappedOpts = [];
+            foreach ($opts as $optIdx => $optText) {
+                $mappedOpts[] = [
+                    'text' => $optText,
+                    'isCorrect' => ($optIdx === $resolvedIndex)
+                ];
+            }
+            shuffle($mappedOpts);
+            $newOpts = [];
+            $newCorrectIdx = 0;
+            foreach ($mappedOpts as $optIdx => $item) {
+                $newOpts[] = $item['text'];
+                if ($item['isCorrect']) {
+                    $newCorrectIdx = $optIdx;
+                }
+            }
+            $opts = $newOpts;
+            $resolvedIndex = $newCorrectIdx;
+            $correct = $opts[$resolvedIndex];
         }
 
         $validated[] = [
