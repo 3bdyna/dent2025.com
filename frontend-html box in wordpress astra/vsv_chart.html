@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dent2025 — Verified Student Visits (Full History)</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent-blue: #2563eb;
+      --accent-light: #eff6ff;
+      --accent-active: #0ea5e9;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 32px 16px;
+    }
+
+    .chart-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 4px 24px -2px rgba(15, 23, 42, 0.05);
+      width: 100%;
+      max-width: 980px;
+      padding: 32px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .title-group h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .title-group p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .controls-and-stats {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 18px;
+    }
+
+    .stat-item {
+      text-align: right;
+    }
+
+    .stat-num {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .stat-num.highlight {
+      color: var(--accent-blue);
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .toggle-group {
+      display: inline-flex;
+      background: #f1f5f9;
+      border-radius: 10px;
+      padding: 3px;
+    }
+
+    .toggle-btn {
+      border: none;
+      background: none;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .toggle-btn.active {
+      background: #ffffff;
+      color: var(--text-main);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 320px;
+      margin-top: 10px;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .grid-line {
+      stroke: #f1f5f9;
+      stroke-width: 1;
+      stroke-dasharray: 4 4;
+    }
+
+    .axis-label {
+      font-size: 11px;
+      fill: var(--text-muted);
+      font-weight: 500;
+      text-anchor: middle;
+    }
+
+    .y-label {
+      font-size: 10px;
+      fill: #94a3b8;
+      text-anchor: end;
+      dominant-baseline: middle;
+    }
+
+    .chart-area {
+      fill: url(#area-gradient);
+    }
+
+    .chart-line {
+      fill: none;
+      stroke: var(--accent-blue);
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .data-dot {
+      fill: #ffffff;
+      stroke: var(--accent-blue);
+      stroke-width: 2;
+      transition: r 0.15s ease, fill 0.15s ease;
+      cursor: pointer;
+    }
+
+    .data-dot:hover, .data-dot.active {
+      r: 6;
+      fill: var(--accent-blue);
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate(-50%, -120%);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+    .tooltip-date {
+      color: #94a3b8;
+      font-size: 0.7rem;
+      margin-bottom: 2px;
+    }
+
+    .tooltip-value {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .tooltip-sub {
+      color: #cbd5e1;
+      font-size: 0.72rem;
+    }
+
+    .cursor-line {
+      stroke: #cbd5e1;
+      stroke-width: 1;
+      stroke-dasharray: 3 3;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .footer-note {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .cohort-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    .cohort-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+  </style>
+</head>
+<body>
+
+<div class="chart-card">
+  <div class="header">
+    <div class="title-group">
+      <h2>Verified Student Visits (VSV)</h2>
+      <p>Cloudflare RUM telemetry across the academic semester</p>
+    </div>
+    
+    <div class="controls-and-stats">
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="btn-all" onclick="renderChart('all')">Full History (7 Wks)</button>
+        <button class="toggle-btn" id="btn-recent" onclick="renderChart('recent')">Last 14 Days</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-num highlight" id="stat-peak">31</div>
+          <div class="stat-label">Peak Daily</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="stat-total">483</div>
+          <div class="stat-label">Total Visits</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="stat-avg">9.9</div>
+          <div class="stat-label">Daily Avg</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-container" id="container">
+    <div class="tooltip" id="tooltip">
+      <div class="tooltip-date" id="tt-date">Thu, Oct 29</div>
+      <div class="tooltip-value" id="tt-vsv">31 VSV</div>
+      <div class="tooltip-sub" id="tt-views">85 Pageviews</div>
+    </div>
+    <svg id="chart-svg" viewBox="0 0 900 280">
+      <defs>
+        <linearGradient id="area-gradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2563eb" stop-opacity="0.22" />
+          <stop offset="100%" stop-color="#2563eb" stop-opacity="0.0" />
+        </linearGradient>
+      </defs>
+
+      <!-- Y-Axis Grid Lines -->
+      <g id="grid-lines"></g>
+
+      <!-- Area & Line Path -->
+      <path id="area-path" class="chart-area" d="" />
+      <path id="line-path" class="chart-line" d="" />
+
+      <!-- Cursor Line -->
+      <line id="cursor-line" class="cursor-line" x1="0" y1="20" x2="0" y2="230" />
+
+      <!-- Data Dots -->
+      <g id="dots-group"></g>
+
+      <!-- X-Axis Labels -->
+      <g id="x-labels"></g>
+    </svg>
+  </div>
+
+  <div class="footer-note">
+    <div class="cohort-badge">
+      <div class="cohort-dot"></div>
+      Target Cohort: Year 3 Semester 1 Dentistry (~30–60 students)
+    </div>
+    <div>Strict RUM human browser sessions &middot; Excludes carrier NAT IP noise</div>
+  </div>
+</div>
+
+<script>
+  // All 49 calendar days from Sep 15 to Nov 02, 2026
+  const fullData = [
+    {"date":"2026-09-15","short":"Sep 15","day":"Tue","visits":20,"views":20},
+    {"date":"2026-09-16","short":"Sep 16","day":"Wed","visits":0,"views":0},
+    {"date":"2026-09-17","short":"Sep 17","day":"Thu","visits":20,"views":70},
+    {"date":"2026-09-18","short":"Sep 18","day":"Fri","visits":0,"views":10},
+    {"date":"2026-09-19","short":"Sep 19","day":"Sat","visits":10,"views":30},
+    {"date":"2026-09-20","short":"Sep 20","day":"Sun","visits":0,"views":10},
+    {"date":"2026-09-21","short":"Sep 21","day":"Mon","visits":20,"views":30},
+    {"date":"2026-09-22","short":"Sep 22","day":"Tue","visits":0,"views":10},
+    {"date":"2026-09-23","short":"Sep 23","day":"Wed","visits":10,"views":10},
+    {"date":"2026-09-24","short":"Sep 24","day":"Thu","visits":10,"views":10},
+    {"date":"2026-09-25","short":"Sep 25","day":"Fri","visits":10,"views":20},
+    {"date":"2026-09-26","short":"Sep 26","day":"Sat","visits":10,"views":40},
+    {"date":"2026-09-27","short":"Sep 27","day":"Sun","visits":0,"views":0},
+    {"date":"2026-09-28","short":"Sep 28","day":"Mon","visits":0,"views":0},
+    {"date":"2026-09-29","short":"Sep 29","day":"Tue","visits":10,"views":10},
+    {"date":"2026-09-30","short":"Sep 30","day":"Wed","visits":20,"views":70},
+    {"date":"2026-10-01","short":"Oct 01","day":"Thu","visits":0,"views":30},
+    {"date":"2026-10-02","short":"Oct 02","day":"Fri","visits":0,"views":0},
+    {"date":"2026-10-03","short":"Oct 03","day":"Sat","visits":20,"views":90},
+    {"date":"2026-10-04","short":"Oct 04","day":"Sun","visits":0,"views":0},
+    {"date":"2026-10-05","short":"Oct 05","day":"Mon","visits":10,"views":180},
+    {"date":"2026-10-06","short":"Oct 06","day":"Tue","visits":20,"views":40},
+    {"date":"2026-10-07","short":"Oct 07","day":"Wed","visits":0,"views":20},
+    {"date":"2026-10-08","short":"Oct 08","day":"Thu","visits":0,"views":0},
+    {"date":"2026-10-09","short":"Oct 09","day":"Fri","visits":20,"views":80},
+    {"date":"2026-10-10","short":"Oct 10","day":"Sat","visits":20,"views":70},
+    {"date":"2026-10-11","short":"Oct 11","day":"Sun","visits":10,"views":70},
+    {"date":"2026-10-12","short":"Oct 12","day":"Mon","visits":25,"views":140},
+    {"date":"2026-10-13","short":"Oct 13","day":"Tue","visits":10,"views":50},
+    {"date":"2026-10-14","short":"Oct 14","day":"Wed","visits":0,"views":30},
+    {"date":"2026-10-15","short":"Oct 15","day":"Thu","visits":0,"views":20},
+    {"date":"2026-10-16","short":"Oct 16","day":"Fri","visits":10,"views":70},
+    {"date":"2026-10-17","short":"Oct 17","day":"Sat","visits":0,"views":90},
+    {"date":"2026-10-18","short":"Oct 18","day":"Sun","visits":22,"views":50},
+    {"date":"2026-10-19","short":"Oct 19","day":"Mon","visits":18,"views":50},
+    {"date":"2026-10-20","short":"Oct 20","day":"Tue","visits":8,"views":40},
+    {"date":"2026-10-21","short":"Oct 21","day":"Wed","visits":3,"views":20},
+    {"date":"2026-10-22","short":"Oct 22","day":"Thu","visits":6,"views":40},
+    {"date":"2026-10-23","short":"Oct 23","day":"Fri","visits":3,"views":10},
+    {"date":"2026-10-24","short":"Oct 24","day":"Sat","visits":10,"views":69},
+    {"date":"2026-10-25","short":"Oct 25","day":"Sun","visits":19,"views":45},
+    {"date":"2026-10-26","short":"Oct 26","day":"Mon","visits":8,"views":39},
+    {"date":"2026-10-27","short":"Oct 27","day":"Tue","visits":12,"views":31},
+    {"date":"2026-10-28","short":"Oct 28","day":"Wed","visits":21,"views":73},
+    {"date":"2026-10-29","short":"Oct 29","day":"Thu","visits":31,"views":85},
+    {"date":"2026-10-30","short":"Oct 30","day":"Fri","visits":5,"views":30},
+    {"date":"2026-10-31","short":"Oct 31","day":"Sat","visits":14,"views":26},
+    {"date":"2026-11-01","short":"Nov 01","day":"Sun","visits":24,"views":54},
+    {"date":"2026-11-02","short":"Nov 02","day":"Mon","visits":6,"views":35}
+  ];
+
+  let currentMode = 'all';
+
+  function renderChart(mode) {
+    currentMode = mode;
+    document.getElementById('btn-all').classList.toggle('active', mode === 'all');
+    document.getElementById('btn-recent').classList.toggle('active', mode === 'recent');
+
+    const data = mode === 'recent' ? fullData.slice(-14) : fullData;
+
+    // Calculate Summary Stats
+    const totalVisits = data.reduce((acc, d) => acc + d.visits, 0);
+    const peakVisits = Math.max(...data.map(d => d.visits));
+    const avgVisits = (totalVisits / data.length).toFixed(1);
+
+    document.getElementById('stat-peak').textContent = peakVisits;
+    document.getElementById('stat-total').textContent = totalVisits;
+    document.getElementById('stat-avg').textContent = avgVisits;
+
+    const svgWidth = 900;
+    const svgHeight = 280;
+    const padLeft = 45;
+    const padRight = 30;
+    const padTop = 30;
+    const padBottom = 50;
+
+    const graphWidth = svgWidth - padLeft - padRight;
+    const graphHeight = svgHeight - padTop - padBottom;
+    const baselineY = padTop + graphHeight;
+
+    const maxY = Math.ceil((peakVisits + 4) / 5) * 5;
+
+    // Render Grid Lines
+    const gridGroup = document.getElementById('grid-lines');
+    gridGroup.innerHTML = '';
+    const steps = 4;
+    for (let i = 0; i <= steps; i++) {
+      const val = Math.round((maxY / steps) * i);
+      const y = baselineY - (val / maxY) * graphHeight;
+      const line = `<line x1="${padLeft}" y1="${y}" x2="${svgWidth - padRight}" y2="${y}" class="grid-line" />`;
+      const label = `<text x="${padLeft - 10}" y="${y}" class="y-label">${val}</text>`;
+      gridGroup.innerHTML += line + label;
+    }
+
+    // Compute Coordinates
+    const points = data.map((d, i) => {
+      const x = padLeft + (i / (data.length - 1)) * graphWidth;
+      const y = baselineY - (d.visits / maxY) * graphHeight;
+      return { x, y, data: d };
+    });
+
+    // Create Smooth Bezier Spline
+    function getBezierPath(pts) {
+      if (pts.length < 2) return '';
+      let path = `M ${pts[0].x} ${pts[0].y}`;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[i === 0 ? 0 : i - 1];
+        const p1 = pts[i];
+        const p2 = pts[i + 1];
+        const p3 = pts[i + 2 > pts.length - 1 ? pts.length - 1 : i + 2];
+
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+        path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+      }
+      return path;
+    }
+
+    const lineD = getBezierPath(points);
+    document.getElementById('line-path').setAttribute('d', lineD);
+
+    const areaD = lineD + ` L ${points[points.length - 1].x} ${baselineY} L ${points[0].x} ${baselineY} Z`;
+    document.getElementById('area-path').setAttribute('d', areaD);
+
+    // Render Data Dots
+    const dotsGroup = document.getElementById('dots-group');
+    dotsGroup.innerHTML = '';
+    points.forEach((pt, index) => {
+      const isPeak = pt.data.visits === peakVisits;
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', pt.x);
+      circle.setAttribute('cy', pt.y);
+      circle.setAttribute('r', isPeak ? 4.5 : (data.length > 20 ? 3 : 4));
+      circle.setAttribute('class', 'data-dot');
+      if (isPeak) {
+        circle.setAttribute('style', 'stroke: #1d4ed8; stroke-width: 2.5;');
+      }
+      circle.dataset.index = index;
+      dotsGroup.appendChild(circle);
+    });
+
+    // Render X-Axis Labels
+    const labelsGroup = document.getElementById('x-labels');
+    labelsGroup.innerHTML = '';
+    const labelInterval = mode === 'recent' ? 1 : Math.ceil(data.length / 8);
+    points.forEach((pt, i) => {
+      if (i % labelInterval === 0 || i === data.length - 1) {
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', pt.x);
+        text.setAttribute('y', baselineY + 22);
+        text.setAttribute('class', 'axis-label');
+        text.textContent = pt.data.short;
+        labelsGroup.appendChild(text);
+      }
+    });
+
+    // Interaction handling
+    setupInteraction(points, graphWidth, padLeft);
+  }
+
+  function setupInteraction(points, graphWidth, padLeft) {
+    const container = document.getElementById('container');
+    const tooltip = document.getElementById('tooltip');
+    const cursorLine = document.getElementById('cursor-line');
+    const svg = document.getElementById('chart-svg');
+
+    function onPointerMove(e) {
+      const rect = svg.getBoundingClientRect();
+      const scaleX = 900 / rect.width;
+      const mouseX = (e.clientX - rect.left) * scaleX;
+
+      // Find closest point
+      let closest = points[0];
+      let minDiff = Infinity;
+      points.forEach(pt => {
+        const diff = Math.abs(pt.x - mouseX);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closest = pt;
+        }
+      });
+
+      // Update Cursor Line
+      cursorLine.setAttribute('x1', closest.x);
+      cursorLine.setAttribute('x2', closest.x);
+      cursorLine.style.opacity = '1';
+
+      // Update Tooltip
+      document.getElementById('tt-date').textContent = `${closest.data.day}, ${closest.data.short}`;
+      document.getElementById('tt-vsv').textContent = `${closest.data.visits} VSV`;
+      document.getElementById('tt-views').textContent = `${closest.data.views} Pageviews`;
+
+      // Position Tooltip
+      const pixelX = (closest.x / 900) * rect.width;
+      const pixelY = (closest.y / 280) * rect.height;
+      tooltip.style.left = `${pixelX}px`;
+      tooltip.style.top = `${pixelY}px`;
+      tooltip.style.opacity = '1';
+    }
+
+    function onPointerLeave() {
+      tooltip.style.opacity = '0';
+      cursorLine.style.opacity = '0';
+    }
+
+    container.onmousemove = onPointerMove;
+    container.ontouchmove = (e) => {
+      if (e.touches.length > 0) onPointerMove(e.touches[0]);
+    };
+    container.onmouseleave = onPointerLeave;
+    container.ontouchend = onPointerLeave;
+  }
+
+  // Initial render
+  renderChart('all');
+</script>
+
+</body>
+</html>
