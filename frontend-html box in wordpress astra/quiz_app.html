@@ -2596,14 +2596,33 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 
     async function playSavedQuiz(quizId) {
         try {
-            const res = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?action=get` + String.fromCharCode(38) + `id=${quizId}`);
+            const adminPass = sessionStorage.getItem('dent2025_admin_pass') || localStorage.getItem('dent2025_admin_pass') || '';
+            let sel = {};
+            try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
+            
+            const params = new URLSearchParams({
+                action: 'get',
+                id: String(quizId)
+            });
+            if (adminPass) {
+                params.append('password', adminPass);
+            }
+            if (sel.specialty) params.append('specialty', sel.specialty);
+            if (sel.year !== undefined && sel.year !== null && sel.year !== '') params.append('year', sel.year);
+            if (sel.semester !== undefined && sel.semester !== null && sel.semester !== '') params.append('semester', sel.semester);
+            params.append('_t', String(Date.now()));
+
+            const res = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?${params.toString()}`, {
+                cache: 'no-store',
+                headers: adminPass ? { 'X-Admin-Pass': adminPass } : {}
+            });
             const json = await res.json();
             
             if (json.success && json.data) {
                 const qData = json.data;
                 openPlayer(qData.quiz_name, qData.subject_name || '', qData.questions, qData);
             } else {
-                alert("تعذر تحميل الاختبار.");
+                alert(json.message || "تعذر تحميل الاختبار.");
             }
         } catch (err) {
             alert("خطأ أثناء الاتصال بالخادم.");
@@ -4068,12 +4087,31 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         let quizData = null;
         if (typeof quizOrId === 'string' || typeof quizOrId === 'number') {
             try {
-                const res = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?action=get` + String.fromCharCode(38) + `id=${quizOrId}`);
+                const adminPass = sessionStorage.getItem('dent2025_admin_pass') || localStorage.getItem('dent2025_admin_pass') || '';
+                let sel = {};
+                try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
+
+                const params = new URLSearchParams({
+                    action: 'get',
+                    id: String(quizOrId)
+                });
+                if (adminPass) {
+                    params.append('password', adminPass);
+                }
+                if (sel.specialty) params.append('specialty', sel.specialty);
+                if (sel.year !== undefined && sel.year !== null && sel.year !== '') params.append('year', sel.year);
+                if (sel.semester !== undefined && sel.semester !== null && sel.semester !== '') params.append('semester', sel.semester);
+                params.append('_t', String(Date.now()));
+
+                const res = await fetch(`${QUIZ_API_BASE}/api_ai_exam.php?${params.toString()}`, {
+                    cache: 'no-store',
+                    headers: adminPass ? { 'X-Admin-Pass': adminPass } : {}
+                });
                 const json = await res.json();
                 if (json && json.success && json.data) {
                     quizData = json.data;
                 } else {
-                    alert('تعذر تحميل بيانات الاختبار.');
+                    alert(json?.message || 'تعذر تحميل بيانات الاختبار.');
                     return;
                 }
             } catch(e) {

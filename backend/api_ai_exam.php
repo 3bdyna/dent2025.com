@@ -3419,8 +3419,29 @@ if ($action === 'get') {
     $isHidden = !empty($quizData['is_hidden']) || !empty($quizData['hidden']);
     if ($isHidden) {
         $pass = ai_exam_read_passkey();
-        $isAuthorized = dent2025_check_rbac_permission($pass, 'edit_basic_subject') ||
-                        dent2025_check_rbac_permission($pass, 'edit_core_subject') ||
+        
+        $qSpec = $quizData['specialty'] ?? ($_GET['specialty'] ?? null);
+        $qYear = (isset($quizData['year']) && $quizData['year'] !== '') ? intval($quizData['year']) : (isset($_GET['year']) && $_GET['year'] !== '' ? intval($_GET['year']) : null);
+        $qSem = (isset($quizData['semester']) && $quizData['semester'] !== '') ? intval($quizData['semester']) : (isset($_GET['semester']) && $_GET['semester'] !== '' ? intval($_GET['semester']) : null);
+
+        // Fallback resolve from subject if needed
+        $dataSubjectId = (string)($quizData['subject_id'] ?? ($_GET['subject_id'] ?? ''));
+        if (($qSpec === null || $qYear === null || $qSem === null) && $dataSubjectId !== '' && isset($pdo) && $pdo !== null) {
+            try {
+                $tableSubs = getAiExamSubjectsTable($pdo);
+                $stmt = $pdo->prepare("SELECT specialty, year, semester FROM {$tableSubs} WHERE id = ? LIMIT 1");
+                $stmt->execute([$dataSubjectId]);
+                $subRow = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($subRow) {
+                    if ($qSpec === null) $qSpec = $subRow['specialty'] ?? '';
+                    if ($qYear === null && isset($subRow['year'])) $qYear = intval($subRow['year']);
+                    if ($qSem === null && isset($subRow['semester'])) $qSem = intval($subRow['semester']);
+                }
+            } catch (Throwable $e) {}
+        }
+
+        $isAuthorized = dent2025_check_rbac_permission($pass, 'edit_basic_subject', $qSpec, $qYear, $qSem) ||
+                        dent2025_check_rbac_permission($pass, 'edit_core_subject', $qSpec, $qYear, $qSem) ||
                         dent2025_check_rbac_permission($pass, 'manage_passwords');
         if (!$isAuthorized) {
             sendResponse(false, "هذا الاختبار غير متاح حالياً للطلاب (تم إخفاؤه من قبل المشرف).");
@@ -3447,8 +3468,8 @@ if ($action === 'list_quizzes') {
         $includeHidden = (!empty($_GET['include_hidden']) || !empty($_POST['include_hidden']) || !empty($JSON_INPUT['include_hidden']));
         $canSeeHidden = false;
         if ($includeHidden && !empty($pass)) {
-            $canSeeHidden = dent2025_check_rbac_permission($pass, 'edit_basic_subject') ||
-                            dent2025_check_rbac_permission($pass, 'edit_core_subject') ||
+            $canSeeHidden = dent2025_check_rbac_permission($pass, 'edit_basic_subject', $specialty, $year, $semester) ||
+                            dent2025_check_rbac_permission($pass, 'edit_core_subject', $specialty, $year, $semester) ||
                             dent2025_check_rbac_permission($pass, 'manage_passwords');
         }
 
