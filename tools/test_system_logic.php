@@ -588,6 +588,14 @@ assert_test("Success clears lockout on IP", dent2025_is_ip_locked_out($test_ip) 
 $check_restored = dent2025_check_auth_rate_limit($test_ip);
 assert_test("Restored IP has allowed=true and 5 attempts remaining", $check_restored['allowed'] === true && $check_restored['remaining_attempts'] === 5);
 
+// Test 7: Direct RBAC invalid passkey records failure
+dent2025_reset_auth_rate_limits($test_ip);
+$_SERVER['REMOTE_ADDR'] = $test_ip;
+$rbac_res = dent2025_check_rbac_permission('invalid_guessing_key', 'manage_passwords');
+assert_test("Direct RBAC invalid passkey denied", $rbac_res === false);
+$check_after_rbac = dent2025_check_auth_rate_limit($test_ip);
+assert_test("Direct RBAC invalid passkey recorded failure", $check_after_rbac['remaining_attempts'] === 4);
+
 // Clean up test IP and restore environment
 dent2025_reset_auth_rate_limits($test_ip);
 if ($prev_remote !== null) {

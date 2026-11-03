@@ -189,6 +189,11 @@ if (!function_exists('dent2025_check_rbac_permission')) {
 
         $entry = dent2025_get_passkey_info($passkey);
         if (!$entry) {
+            static $last_failed_passkey = null;
+            if ($last_failed_passkey !== $passkey && !empty($passkey) && function_exists('dent2025_record_auth_failure')) {
+                $last_failed_passkey = $passkey;
+                dent2025_record_auth_failure();
+            }
             return false;
         }
 
@@ -227,13 +232,15 @@ if (!function_exists('dent2025_check_rbac_permission')) {
 if (!function_exists('dent2025_get_client_ip')) {
     /**
      * Resolve the authentic client IP address, supporting Cloudflare Tunnel securely
-     * without allowing untrusted X-Forwarded-For header spoofing.
+     * without allowing untrusted X-Forwarded-For or CF-Connecting-IP header spoofing.
      * @return string
      */
     function dent2025_get_client_ip() {
-        // 1. Cloudflare Connecting IP (used on dent2025.com via Cloudflare Tunnel)
-        // Cloudflare edge strictly sets/overwrites this header so it cannot be spoofed by clients.
-        if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+        $remote_addr = $_SERVER['REMOTE_ADDR'] ?? '';
+        $is_loopback = in_array($remote_addr, ['127.0.0.1', '::1', 'localhost'], true);
+
+        // 1. Cloudflare Connecting IP: only trust when request originated from local Cloudflare tunnel / loopback proxy
+        if (!empty($_SERVER['HTTP_CF_CONNECTING_IP']) && ($is_loopback || empty($remote_addr))) {
             $ip = trim($_SERVER['HTTP_CF_CONNECTING_IP']);
             if (filter_var($ip, FILTER_VALIDATE_IP)) {
                 return $ip;
@@ -241,8 +248,7 @@ if (!function_exists('dent2025_get_client_ip')) {
         }
 
         // 2. Only trust X-Forwarded-For if REMOTE_ADDR is an internal loopback proxy (127.0.0.1, ::1)
-        $remote_addr = $_SERVER['REMOTE_ADDR'] ?? '';
-        if (in_array($remote_addr, ['127.0.0.1', '::1'], true) && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        if ($is_loopback && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
             $parts = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
             $first = trim($parts[0] ?? '');
             if (filter_var($first, FILTER_VALIDATE_IP)) {
@@ -276,7 +282,7 @@ if (!function_exists('dent2025_get_rate_limit_file')) {
 if (!function_exists('dent2025_modify_rate_limit_data')) {
     /**
      * Atomically read, modify, and save rate-limit data under exclusive lock (flock).
-     * Prevents race conditions during concurrent brute-force attacks.
+     * Uses stream_get_contents() to eliminate PHP stat cache discrepancy.
      *
      * @param callable $callback function(&$data): mixed
      * @return mixed Returns callback result
@@ -295,9 +301,9 @@ if (!function_exists('dent2025_modify_rate_limit_data')) {
             return $callback($data);
         }
 
-        $size = filesize($file);
-        $content = ($size > 0) ? fread($fp, $size) : '';
-        $data = json_decode($content, true);
+        rewind($fp);
+        $content = stream_get_contents($fp);
+        $data = !empty($content) ? json_decode($content, true) : null;
         if (!is_array($data) || !isset($data['ips']) || !is_array($data['ips'])) {
             $data = ['ips' => [], 'last_cleanup' => time()];
         }
@@ -321,7 +327,7 @@ if (!function_exists('dent2025_modify_rate_limit_data')) {
 
 if (!function_exists('dent2025_load_rate_limit_data')) {
     /**
-     * Read rate-limiting store with shared lock.
+     * Read rate-limiting store with shared lock without stat cache pitfalls.
      * @return array
      */
     function dent2025_load_rate_limit_data() {
@@ -334,8 +340,8 @@ if (!function_exists('dent2025_load_rate_limit_data')) {
             return ['ips' => [], 'last_cleanup' => time()];
         }
         flock($fp, LOCK_SH);
-        $size = filesize($file);
-        $content = ($size > 0) ? fread($fp, $size) : '';
+        rewind($fp);
+        $content = stream_get_contents($fp);
         flock($fp, LOCK_UN);
         fclose($fp);
 
@@ -434,6 +440,25 @@ if (!function_exists('dent2025_record_auth_failure')) {
                 'lockout_until' => 0,
                 'lockout_level' => 0
             ];
+
+            // If already locked out, immediately return active lockout response
+            if (isset($entry['lockout_until']) && $entry['lockout_until'] > $now) {
+                $retry_after = $entry['lockout_until'] - $now;
+                $mins = max(1, (int) ceil($retry_after / 60));
+                $min_text = ($mins === 1) ? 'دقيقة واحدة' : (($mins === 2) ? 'دقيقتين' : "{$mins} دقائق");
+                return [
+                    'allowed' => false,
+                    'locked' => true,
+                    'remaining_attempts' => 0,
+                    'retry_after' => $retry_after,
+                    'message' => "تم حظر محاولات الدخول مؤقتاً لحماية الحساب من التخمين. يرجى الانتظار {$min_text} قبل المحاولة مجدداً."
+                ];
+            }
+
+            // Decay lockout escalation level if > 1 hour has elapsed since last lockout
+            if (($now - ($entry['lockout_until'] ?? 0)) > 3600) {
+                $entry['lockout_level'] = 0;
+            }
 
             // Filter recent attempts within 10-minute window
             $recent = array_filter($entry['attempts'] ?? [], function($t) use ($now) {

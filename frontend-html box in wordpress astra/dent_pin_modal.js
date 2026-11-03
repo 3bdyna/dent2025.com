@@ -731,7 +731,16 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
-        .then(r => r.json())
+        .then(async r => {
+            const res = await r.json().catch(() => null);
+            if (!res) {
+                if (r.status === 429) {
+                    return { success: false, locked: true, retry_after: 300, message: 'تم حظر محاولات الدخول مؤقتاً لتكرار المحاولات الخاطئة.' };
+                }
+                throw new Error('Invalid server response');
+            }
+            return res;
+        })
         .then(res => {
             // Check for server-enforced lockout (HTTP 429 or locked payload)
             if (res.locked || (res.retry_after && res.retry_after > 0)) {

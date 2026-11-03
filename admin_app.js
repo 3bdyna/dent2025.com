@@ -132,6 +132,14 @@ window.AdminApp = {
                 if (err) err.classList.add('hidden');
                 this.applyPermissionsUI();
             } else {
+                if (res && res.locked) {
+                    const err = document.getElementById('login-error');
+                    if (err) {
+                        err.innerText = res.message || 'تم حظر محاولات الدخول مؤقتاً. يرجى الانتظار قبل إعادة المحاولة.';
+                        err.classList.remove('hidden');
+                    }
+                    return;
+                }
                 this.logout();
                 const err = document.getElementById('login-error');
                 if (err) {
