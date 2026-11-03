@@ -45,6 +45,35 @@ def check_syntax(file_path):
             if len(content.strip()) == 0:
                 return False, f"Empty file detected: {file_path}"
 
+        # Validate JavaScript syntax with node if available
+        try:
+            if ext == '.js':
+                res = subprocess.run(['node', '--check', abs_path], capture_output=True, text=True, timeout=5)
+                if res.returncode != 0:
+                    return False, f"JS Syntax Error in {file_path}: {res.stderr.strip()}"
+            elif ext == '.html':
+                import re, tempfile
+                # Find script tags that do not have non-JS types like application/json or text/template
+                scripts = re.findall(r'<script(?:\s+[^>]*)?>(.*?)</script>', content, re.DOTALL)
+                for idx, sc in enumerate(scripts):
+                    if not sc.strip():
+                        continue
+                    with tempfile.NamedTemporaryFile('w', suffix='.js', delete=False, encoding='utf-8') as tf:
+                        tf.write(sc)
+                        tf_path = tf.name
+                    try:
+                        res = subprocess.run(['node', '--check', tf_path], capture_output=True, text=True, timeout=5)
+                        if res.returncode != 0:
+                            return False, f"JS Syntax Error in {file_path} (script block {idx+1}): {res.stderr.strip()}"
+                    finally:
+                        if os.path.exists(tf_path):
+                            try:
+                                os.remove(tf_path)
+                            except OSError:
+                                pass
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            pass
+
     return True, "OK"
 
 def is_forbidden_path(path):
