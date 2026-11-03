@@ -2350,9 +2350,17 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 renderBankGrid();
             } else {
                 if (countSpan) countSpan.innerText = '(لا توجد اختبارات محفوظة)';
+                const grid = document.getElementById('dent-bank-list');
+                if (grid) {
+                    grid.innerHTML = '<div style="text-align: center; color: #64748b; grid-column: 1/-1; padding: 25px; background: rgba(0,0,0,0.15); border-radius: 8px;">لا توجد اختبارات متوفرة حالياً.</div>';
+                }
             }
         } catch (err) {
             if (countSpan) countSpan.innerText = '(خطأ في الاتصال)';
+            const grid = document.getElementById('dent-bank-list');
+            if (grid) {
+                grid.innerHTML = '<div style="text-align: center; color: #ef4444; grid-column: 1/-1; padding: 20px;">تعذر تحميل بنك الأسئلة، يرجى المحاولة لاحقاً.</div>';
+            }
         }
     }
 
@@ -2818,7 +2826,6 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             }
         }
 
-        const isPastExamQuiz = (metaObj?.creation_mode === 'past_exam_filter');
         const hasAsteriskQuestions = questions.some(q => typeof q.question === 'string' && q.question.trim().startsWith('*'));
         let defaultNotice = '';
         if (hasAsteriskQuestions) {
