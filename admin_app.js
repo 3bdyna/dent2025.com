@@ -104,9 +104,10 @@ window.AdminApp = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password: pass })
-            }).then(r => {
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                return r.json();
+            }).then(async r => {
+                const data = await r.json().catch(() => null);
+                if (!r.ok && r.status !== 429) throw new Error('HTTP ' + r.status);
+                return data || {};
             });
         };
 
@@ -173,9 +174,10 @@ window.AdminApp = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password: pass })
-            }).then(r => {
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                return r.json();
+            }).then(async r => {
+                const data = await r.json().catch(() => null);
+                if (!r.ok && r.status !== 429) throw new Error('HTTP ' + r.status);
+                return data || {};
             });
         };
 

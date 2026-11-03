@@ -319,6 +319,34 @@
         @keyframes dentPinSpin {
             to { transform: rotate(360deg); }
         }
+
+        /* Lockout & Brute-Force Shield States */
+        .dent-pin-card.dent-pin-locked .dent-pin-keypad {
+            opacity: 0.35;
+            pointer-events: none !important;
+            filter: grayscale(0.6);
+        }
+        .dent-pin-card.dent-pin-locked .dent-pin-cells-wrapper {
+            opacity: 0.6;
+        }
+        .dent-pin-card.dent-pin-locked .dent-pin-cell {
+            border-color: rgba(239, 68, 68, 0.4) !important;
+            background: rgba(239, 68, 68, 0.05) !important;
+        }
+        .dent-pin-timer-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            letter-spacing: 0.5px;
+        }
     `;
 
     function injectStyles() {
@@ -329,9 +357,100 @@
         document.head.appendChild(style);
     }
 
+    const STORAGE_LOCKOUT_KEY = 'dent2025_pin_lockout_until';
     let activeModal = null;
     let currentDigits = [];
     let isVerifying = false;
+    let isCoolingDown = false;
+    let lockoutTimerInterval = null;
+
+    function isLockedOut() {
+        try {
+            const until = parseInt(localStorage.getItem(STORAGE_LOCKOUT_KEY) || '0', 10);
+            return until > Date.now();
+        } catch(e) {
+            return false;
+        }
+    }
+
+    function checkAndApplyLockout() {
+        if (!activeModal) return false;
+        const card = activeModal.overlay.querySelector('.dent-pin-card');
+        const keypad = activeModal.overlay.querySelector('#dent-pin-keypad');
+        const submitBtn = activeModal.overlay.querySelector('#dent-pin-submit-btn');
+        const hiddenInput = activeModal.overlay.querySelector('#dent-pin-hidden');
+
+        let until = 0;
+        try {
+            until = parseInt(localStorage.getItem(STORAGE_LOCKOUT_KEY) || '0', 10);
+        } catch(e) {}
+
+        const now = Date.now();
+        if (until <= now) {
+            if (lockoutTimerInterval) {
+                clearInterval(lockoutTimerInterval);
+                lockoutTimerInterval = null;
+            }
+            try { localStorage.removeItem(STORAGE_LOCKOUT_KEY); } catch(e) {}
+            if (card) card.classList.remove('dent-pin-locked');
+            if (keypad) keypad.style.pointerEvents = '';
+            if (submitBtn) submitBtn.disabled = false;
+            if (hiddenInput) {
+                hiddenInput.disabled = false;
+                try { hiddenInput.focus(); } catch(e) {}
+            }
+            return false;
+        }
+
+        // Active Lockout State
+        if (card) card.classList.add('dent-pin-locked');
+        if (keypad) keypad.style.pointerEvents = 'none';
+        if (submitBtn) submitBtn.disabled = true;
+        if (hiddenInput) {
+            hiddenInput.disabled = true;
+            hiddenInput.blur();
+        }
+
+        const updateTimerDisplay = () => {
+            if (!activeModal) return;
+            const currentNow = Date.now();
+            const remSec = Math.max(0, Math.ceil((until - currentNow) / 1000));
+            if (remSec <= 0) {
+                if (lockoutTimerInterval) {
+                    clearInterval(lockoutTimerInterval);
+                    lockoutTimerInterval = null;
+                }
+                try { localStorage.removeItem(STORAGE_LOCKOUT_KEY); } catch(e) {}
+                if (card) card.classList.remove('dent-pin-locked');
+                if (keypad) keypad.style.pointerEvents = '';
+                if (submitBtn) submitBtn.disabled = false;
+                if (hiddenInput) {
+                    hiddenInput.disabled = false;
+                    try { hiddenInput.focus(); } catch(e) {}
+                }
+                setStatus('تم انتهاء الحظر المؤقت، يمكنك المحاولة الآن.', 'success');
+                setTimeout(() => {
+                    if (activeModal && !isLockedOut()) setStatus('', '');
+                }, 2500);
+                return;
+            }
+
+            const mins = Math.floor(remSec / 60);
+            const secs = remSec % 60;
+            const padTime = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+
+            const statusEl = activeModal.overlay.querySelector('#dent-pin-status');
+            if (statusEl) {
+                statusEl.className = 'dent-pin-status error';
+                statusEl.innerHTML = `<span class="dent-pin-timer-badge">⏳ محظور مؤقتاً (${padTime})</span>`;
+            }
+        };
+
+        updateTimerDisplay();
+        if (lockoutTimerInterval) clearInterval(lockoutTimerInterval);
+        lockoutTimerInterval = setInterval(updateTimerDisplay, 1000);
+        return true;
+    }
 
     function showPinModal(opts) {
         opts = opts || {};
@@ -412,8 +531,11 @@
 
         updateCells();
 
+        // Check if currently locked out and apply timer countdown if active
+        const isLocked = checkAndApplyLockout();
+
         const hiddenInput = overlay.querySelector('#dent-pin-hidden');
-        if (hiddenInput) {
+        if (hiddenInput && !isLocked) {
             setTimeout(() => {
                 try { hiddenInput.focus(); } catch(e) {}
             }, 60);
@@ -431,6 +553,7 @@
 
         // Submit button
         overlay.querySelector('#dent-pin-submit-btn').onclick = () => {
+            if (isVerifying || isCoolingDown || isLockedOut()) return;
             if (currentDigits.length === PIN_LENGTH) {
                 submitPin();
             } else {
@@ -441,7 +564,7 @@
 
         // Keypad buttons
         overlay.querySelector('#dent-pin-keypad').onclick = (e) => {
-            if (isVerifying) return;
+            if (isVerifying || isCoolingDown || isLockedOut()) return;
             const btn = e.target.closest('.dent-pin-key');
             if (!btn) return;
             const digit = btn.getAttribute('data-digit');
@@ -460,14 +583,16 @@
         const cellsWrap = overlay.querySelector('#dent-pin-cells-wrap');
         if (cellsWrap && hiddenInput) {
             cellsWrap.onclick = () => {
-                try { hiddenInput.focus(); } catch(e) {}
+                if (!isLockedOut() && !isCoolingDown) {
+                    try { hiddenInput.focus(); } catch(e) {}
+                }
             };
         }
 
         // Hidden input typing
         if (hiddenInput) {
             hiddenInput.addEventListener('input', () => {
-                if (isVerifying) return;
+                if (isVerifying || isCoolingDown || isLockedOut()) return;
                 const val = hiddenInput.value.replace(/\D/g, '');
                 currentDigits = val.slice(0, PIN_LENGTH).split('');
                 updateCells();
@@ -485,7 +610,7 @@
                 closePinModal(true);
                 return;
             }
-            if (isVerifying) return;
+            if (isVerifying || isCoolingDown || isLockedOut()) return;
 
             if (e.key >= '0' && e.key <= '9') {
                 e.preventDefault();
@@ -507,7 +632,7 @@
 
         // Clipboard paste
         activeModal.pasteHandler = (e) => {
-            if (!activeModal || isVerifying) return;
+            if (!activeModal || isVerifying || isCoolingDown || isLockedOut()) return;
             const pasteData = (e.clipboardData || window.clipboardData)?.getData('text');
             if (!pasteData) return;
             const cleanDigits = pasteData.replace(/\D/g, '').slice(0, PIN_LENGTH);
@@ -524,7 +649,7 @@
     }
 
     function appendDigit(digit) {
-        if (currentDigits.length >= PIN_LENGTH || isVerifying) return;
+        if (currentDigits.length >= PIN_LENGTH || isVerifying || isCoolingDown || isLockedOut()) return;
         currentDigits.push(digit);
         updateCells();
         if (currentDigits.length === PIN_LENGTH) {
@@ -533,7 +658,7 @@
     }
 
     function removeDigit() {
-        if (currentDigits.length === 0 || isVerifying) return;
+        if (currentDigits.length === 0 || isVerifying || isCoolingDown || isLockedOut()) return;
         currentDigits.pop();
         updateCells();
     }
@@ -583,7 +708,7 @@
 
     function submitPin() {
         const pin = currentDigits.join('');
-        if (pin.length !== PIN_LENGTH || isVerifying || !activeModal) return;
+        if (pin.length !== PIN_LENGTH || isVerifying || isCoolingDown || isLockedOut() || !activeModal) return;
 
         isVerifying = true;
         setStatus('جاري التحقق من الصلاحيات...', 'loading');
@@ -608,7 +733,25 @@
         })
         .then(r => r.json())
         .then(res => {
+            // Check for server-enforced lockout (HTTP 429 or locked payload)
+            if (res.locked || (res.retry_after && res.retry_after > 0)) {
+                isVerifying = false;
+                isCoolingDown = false;
+                currentDigits = [];
+                updateCells();
+                const duration = res.retry_after || 300;
+                try {
+                    localStorage.setItem(STORAGE_LOCKOUT_KEY, (Date.now() + (duration * 1000)).toString());
+                } catch(e) {}
+                triggerShake();
+                checkAndApplyLockout();
+                return;
+            }
+
             if (res.success && res.data) {
+                try {
+                    localStorage.removeItem(STORAGE_LOCKOUT_KEY);
+                } catch(e) {}
                 const allowedContexts = res.data.allowed_contexts || [];
                 const isUniversal = allowedContexts.includes('*');
                 const currentContextKey = `${payload.specialty}_${payload.year}_${payload.semester}`;
@@ -662,21 +805,29 @@
                 }, 350);
             } else {
                 isVerifying = false;
-                if (submitBtn) submitBtn.disabled = false;
+                isCoolingDown = true;
                 triggerShake();
                 setStatus(res.message || 'رمز PIN غير صحيح.', 'error');
-                currentDigits = [];
-                updateCells();
-                const hiddenInput = activeModal?.overlay?.querySelector('#dent-pin-hidden');
-                if (hiddenInput) {
-                    hiddenInput.value = '';
-                    try { hiddenInput.focus(); } catch(e) {}
-                }
+
+                // Enforce 1.2s rapid-entry throttle so brute-force clickers are slowed down
+                setTimeout(() => {
+                    isCoolingDown = false;
+                    if (!activeModal || isLockedOut()) return;
+                    currentDigits = [];
+                    updateCells();
+                    if (submitBtn) submitBtn.disabled = false;
+                    const hiddenInput = activeModal?.overlay?.querySelector('#dent-pin-hidden');
+                    if (hiddenInput) {
+                        hiddenInput.value = '';
+                        try { hiddenInput.focus(); } catch(e) {}
+                    }
+                }, 1200);
             }
         })
         .catch(err => {
             console.error('PIN Auth error:', err);
             isVerifying = false;
+            isCoolingDown = false;
             if (submitBtn) submitBtn.disabled = false;
             triggerShake();
             setStatus('حدث خطأ في الاتصال بالخادم.', 'error');
@@ -689,6 +840,11 @@
         if (!activeModal) return;
         const { overlay, opts, keyHandler, pasteHandler } = activeModal;
 
+        if (lockoutTimerInterval) {
+            clearInterval(lockoutTimerInterval);
+            lockoutTimerInterval = null;
+        }
+
         if (keyHandler) window.removeEventListener('keydown', keyHandler);
         if (pasteHandler) window.removeEventListener('paste', pasteHandler);
 
@@ -700,6 +856,7 @@
         activeModal = null;
         currentDigits = [];
         isVerifying = false;
+        isCoolingDown = false;
 
         if (triggerCancel && typeof opts?.onCancel === 'function') {
             opts.onCancel();

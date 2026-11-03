@@ -392,22 +392,58 @@ $input = json_decode($raw_input, true) ?: [];
 $password = $input['password'] ?? ($_POST['password'] ?? '');
 
 if ($action === 'check_auth') {
-    // Clear any leftover auth rate limits file so nobody is locked out
-    $rate_file = dirname(__FILE__) . '/dent2025_study_data/auth_rate_limits.json';
-    if (file_exists($rate_file)) {
-        @unlink($rate_file);
+    $client_ip = dent2025_get_client_ip();
+    $rate_check = dent2025_check_auth_rate_limit($client_ip);
+
+    if (!$rate_check['allowed']) {
+        http_response_code(429);
+        header('Retry-After: ' . $rate_check['retry_after']);
+        echo json_encode([
+            "success" => false,
+            "locked" => true,
+            "retry_after" => $rate_check['retry_after'],
+            "remaining_attempts" => 0,
+            "message" => $rate_check['message']
+        ]);
+        exit;
     }
 
     $entry = dent2025_get_passkey_info($password);
     if ($entry) {
+        dent2025_record_auth_success($client_ip);
         unset($entry['passkey']);
-        echo json_encode(["success" => true, "data" => $entry]);
+        echo json_encode([
+            "success" => true,
+            "data" => $entry
+        ]);
     } else {
+        $fail_status = dent2025_record_auth_failure($client_ip);
+        if (!empty($fail_status['locked'])) {
+            http_response_code(429);
+            header('Retry-After: ' . $fail_status['retry_after']);
+        }
         echo json_encode([
             "success" => false,
-            "message" => "رمز PIN غير صحيح."
+            "locked" => !empty($fail_status['locked']),
+            "remaining_attempts" => $fail_status['remaining_attempts'] ?? 0,
+            "retry_after" => $fail_status['retry_after'] ?? 0,
+            "message" => $fail_status['message']
         ]);
     }
+    exit;
+}
+
+// Guard all subsequent management actions from locked-out IPs
+if (dent2025_is_ip_locked_out()) {
+    $rate_check = dent2025_check_auth_rate_limit();
+    http_response_code(429);
+    header('Retry-After: ' . ($rate_check['retry_after'] ?? 300));
+    echo json_encode([
+        "success" => false,
+        "locked" => true,
+        "retry_after" => $rate_check['retry_after'] ?? 300,
+        "message" => $rate_check['message'] ?: "تم حظر محاولات الدخول مؤقتاً لتكرار المحاولات الخاطئة."
+    ]);
     exit;
 }
 

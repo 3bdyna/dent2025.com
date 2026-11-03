@@ -541,6 +541,62 @@ assert_test("Preserves standard cranial nerve anatomy question", isAdministrativ
 assert_test("Preserves biochemistry pathway question", isAdministrativeOrPlanNonExamQuestion("What is the rate-limiting enzyme of the glycolytic pathway in cellular respiration?") === false);
 
 // -----------------------------------------------------------------------------
+echo "\n11. Testing Brute Force & Auth Rate Limiting Logic...\n";
+require_once __DIR__ . '/../dent2025_rbac.php';
+
+$test_ip = '198.51.100.42'; // Dedicated RFC 5737 test IP
+dent2025_reset_auth_rate_limits($test_ip);
+
+// Test 1: Rate limit check on fresh IP
+$check = dent2025_check_auth_rate_limit($test_ip);
+assert_test("Rate limit allowed on clean IP", $check['allowed'] === true && $check['locked'] === false);
+assert_test("Fresh IP has 5 remaining attempts", $check['remaining_attempts'] === 5);
+
+// Test 2: Record 4 failed attempts
+$f1 = dent2025_record_auth_failure($test_ip);
+assert_test("1st failure: 4 attempts remaining", $f1['remaining_attempts'] === 4 && $f1['locked'] === false);
+
+$f2 = dent2025_record_auth_failure($test_ip);
+assert_test("2nd failure: 3 attempts remaining", $f2['remaining_attempts'] === 3 && $f2['locked'] === false);
+
+$f3 = dent2025_record_auth_failure($test_ip);
+assert_test("3rd failure: 2 attempts remaining", $f3['remaining_attempts'] === 2 && $f3['locked'] === false);
+
+$f4 = dent2025_record_auth_failure($test_ip);
+assert_test("4th failure: 1 attempt remaining", $f4['remaining_attempts'] === 1 && $f4['locked'] === false);
+
+// Test 3: 5th failure triggers Level 1 lockout (300 seconds)
+$f5 = dent2025_record_auth_failure($test_ip);
+assert_test("5th failure triggers lockout", $f5['locked'] === true && $f5['allowed'] === false);
+assert_test("Lockout sets remaining_attempts to 0", $f5['remaining_attempts'] === 0);
+assert_test("Level 1 lockout duration is 300 seconds", $f5['retry_after'] === 300);
+assert_test("dent2025_is_ip_locked_out detects locked IP", dent2025_is_ip_locked_out($test_ip) === true);
+
+// Test 4: Rate limit check reflects active lockout
+$check_locked = dent2025_check_auth_rate_limit($test_ip);
+assert_test("Check on locked IP returns allowed=false", $check_locked['allowed'] === false && $check_locked['locked'] === true);
+assert_test("Check on locked IP returns positive retry_after", $check_locked['retry_after'] > 0);
+
+// Test 5: Simulating request from locked IP denies RBAC permission
+$prev_remote = $_SERVER['REMOTE_ADDR'] ?? null;
+$_SERVER['REMOTE_ADDR'] = $test_ip;
+assert_test("RBAC permission check DENIED when client IP is locked out", dent2025_check_rbac_permission('any_master_key', 'manage_passwords') === false);
+
+// Test 6: Auth success resets rate limits and clears lockout
+dent2025_record_auth_success($test_ip);
+assert_test("Success clears lockout on IP", dent2025_is_ip_locked_out($test_ip) === false);
+$check_restored = dent2025_check_auth_rate_limit($test_ip);
+assert_test("Restored IP has allowed=true and 5 attempts remaining", $check_restored['allowed'] === true && $check_restored['remaining_attempts'] === 5);
+
+// Clean up test IP and restore environment
+dent2025_reset_auth_rate_limits($test_ip);
+if ($prev_remote !== null) {
+    $_SERVER['REMOTE_ADDR'] = $prev_remote;
+} else {
+    unset($_SERVER['REMOTE_ADDR']);
+}
+
+// -----------------------------------------------------------------------------
 // SUMMARY REPORT
 // -----------------------------------------------------------------------------
 echo "\n=======================================================\n";
