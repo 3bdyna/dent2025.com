@@ -2828,11 +2828,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
         document.getElementById('dp-title').innerText = title;
 
         const metaSubClean = (metaSub || '').split(' — ')[0].trim();
-        const shuffleBadgeHTML = isPastExamQuiz
-            ? `<span class="dent-shuffle-badge" style="display:inline-flex; align-items:center; gap:4px; font-size:0.72rem; background:rgba(16,185,129,0.12); color:#6ee7b7; border:1px solid rgba(16,185,129,0.25); padding:2px 8px; border-radius:999px; margin-right:6px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg> خيارات عشوائية • ترتيب الأسئلة ثابت (1..N)</span>`
-            : `<span class="dent-shuffle-badge" style="display:inline-flex; align-items:center; gap:4px; font-size:0.72rem; background:rgba(59,130,246,0.12); color:#93c5fd; border:1px solid rgba(59,130,246,0.25); padding:2px 8px; border-radius:999px; margin-right:6px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg> أسئلة وخيارات عشوائية</span>`;
-
-        document.getElementById('dp-meta-sub').innerHTML = `${escapeHtml(metaSubClean)} ${shuffleBadgeHTML}`;
+        document.getElementById('dp-meta-sub').innerText = metaSubClean;
         document.getElementById('dp-score').style.display = 'none';
 
         let noticeBanner = document.getElementById('dp-notice-banner');
