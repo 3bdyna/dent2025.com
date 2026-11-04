@@ -2728,6 +2728,11 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             return q;
         }
 
+        // Explicit override: do not shuffle options if disabled on question
+        if (q.shuffleOptions === false || q.disableOptionShuffle === true) {
+            return q;
+        }
+
         // True/False or boolean style: do not shuffle True/False semantic order
         const isTrueFalse = q.type === 'tf' || q.type === 'truefalse' ||
             (q.options.length === 2 && (
@@ -2735,6 +2740,16 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                 (q.options.some(o => String(o).trim().toLowerCase() === 'true') && q.options.some(o => String(o).trim().toLowerCase() === 'false'))
             ));
         if (isTrueFalse) {
+            return q;
+        }
+
+        // Positional or relative letter reference check:
+        // Options that refer to previous letters (e.g. "a and c", "both a and b") or relative positions ("all of the above", "none of these", "جميع ما سبق") MUST NOT be shuffled!
+        const hasPositionalOptions = q.options.some(opt => {
+            const text = String(opt || '').trim();
+            return /(?:\b(?:all|none)\s+of\s+(?:the\s+)?(?:above|these|them|options)\b|\b(?:all|none)\s+above\b|\b(?:both|either)\s+[a-e]\s+and\s+[a-e]\b|\b[a-e]\s*,\s*[a-e]\s+and\s+[a-e]\b|\b[a-e]\s+and\s+[a-e]\b|\b(?:above|below)\b|جميع\s+ما\s+سبق|كل\s+ما\s+سبق|لا\s+شيء\s+مما\s+سبق|كلا\s+من\s+[أ-ي]|(?:[أ-ي]\s+و\s+[أ-ي]))/i.test(text);
+        });
+        if (hasPositionalOptions) {
             return q;
         }
 
