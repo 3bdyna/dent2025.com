@@ -148,11 +148,13 @@ function dent2025_study_ratelimit($window = 60, $max = 20, $key_suffix = '') {
     if (!is_dir($dir)) @mkdir($dir, 0777, true);
     $file = $dir . '/ratelimit.json';
     
-    $ip = 'unknown';
-    foreach (array('HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR') as $h) {
-        if (!empty($_SERVER[$h])) {
-            $ip = trim(explode(',', $_SERVER[$h])[0]);
-            if ($ip) break;
+    $ip = function_exists('dent2025_get_client_ip') ? dent2025_get_client_ip() : 'unknown';
+    if ($ip === 'unknown') {
+        foreach (array('HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR') as $h) {
+            if (!empty($_SERVER[$h])) {
+                $ip = trim(explode(',', $_SERVER[$h])[0]);
+                if ($ip) break;
+            }
         }
     }
     $limit_key = $ip . ($key_suffix ? '_' . $key_suffix : '');
