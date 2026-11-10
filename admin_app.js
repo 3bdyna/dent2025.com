@@ -8319,7 +8319,7 @@ window.AdminApp = {
                 const avgTime = row.average_time_formatted || '--';
                 const isCloud = row.source === 'cloudflare';
                 const sourceBadge = isCloud 
-                    ? `<span class="absolute end-full me-2 top-1/2 -translate-y-1/2 text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-gray-400 font-sans border border-white/5 whitespace-nowrap pointer-events-none" title="سجلات سحابية (Cloudflare RUM)">سحابي</span>` 
+                    ? `<span class="absolute end-full me-2 top-1/2 -translate-y-1/2 text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-gray-400 font-sans border border-white/5 whitespace-nowrap pointer-events-none" title="سجلات سحابية (Cloudflare RUM)">Cloudflare</span>` 
                     : '';
                 
                 html += `<tr class="hover:bg-white/[0.02] transition">
