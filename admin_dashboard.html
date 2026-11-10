@@ -385,6 +385,7 @@
     <button onclick="AdminApp.switchTab('gemini')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="gemini">المعالجة الذكية</button>
     <button onclick="AdminApp.switchTab('passwords')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="passwords">الصلاحيات</button>
     <button onclick="AdminApp.switchTab('history')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="history">سجل التغييرات</button>
+    <button onclick="AdminApp.switchTab('analytics')" class="pill-tab-btn whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/5" data-tab="analytics">تحليلات الزوار</button>
   </div>
 
  <!-- Mobile Drawer Overlay -->
@@ -435,6 +436,9 @@
  <button onclick="AdminApp.switchTab('history')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="history">
  سجل التغييرات والاستعادة
  </button>
+ <button onclick="AdminApp.switchTab('analytics')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="analytics">
+ تحليلات الحضور والزوار
+ </button>
  </nav>
  </div>
  <div class="p-4 border-t border-white/10 shrink-0">
@@ -477,6 +481,9 @@
  </button>
  <button onclick="AdminApp.switchTab('history')" class="tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="history">
  سجل التغييرات والاستعادة
+ </button>
+ <button onclick="AdminApp.switchTab('analytics')" class="tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="analytics" title="تحليلات الحضور والتفاعل اليومي للطلاب">
+ تحليلات الحضور والزوار
  </button>
  </nav>
  </div>
@@ -585,6 +592,81 @@
  </div>
  </template>
 
+
+ <template id="tpl-analytics">
+ <div class="space-y-3 sm:space-y-4">
+ <!-- Header with Refresh & Period Controls -->
+ <div class="flex justify-between items-center gap-2 shrink-0">
+ <div>
+ <h2 class="text-base sm:text-2xl font-bold text-white leading-tight">تحليلات الحضور وزوار الدفعة</h2>
+ <p class="text-gray-400 text-xs hidden sm:block mt-0.5">إحصائيات تفاعلية دقيقة مستخرجة مباشرة من متصفحات الطلاب</p>
+ </div>
+ <div class="flex items-center gap-2">
+ <select id="analytics-range" onchange="AdminApp.loadAnalytics()" class="input-field text-xs py-1 px-2 h-8 w-auto">
+ <option value="7">آخر 7 أيام</option>
+ <option value="14" selected>آخر 14 يوم</option>
+ <option value="30">آخر شهر (30 يوم)</option>
+ <option value="60">آخر شهرين (60 يوم)</option>
+ <option value="90">آخر 3 أشهر (90 يوم)</option>
+ <option value="180">الفصل الدراسي كامل (180 يوم)</option>
+ </select>
+ <button onclick="AdminApp.loadAnalytics()" class="btn btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 whitespace-nowrap shrink-0">
+ <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+ <span>تحديث</span>
+ </button>
+ </div>
+ </div>
+
+ <!-- 4 Key Summary Counter Cards (Muted Palette) -->
+ <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 shrink-0">
+ <div class="glass p-3 sm:p-4 rounded-xl border border-white/10 text-center">
+ <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">الطلاب النشطون اليوم</span>
+ <span id="analytics-stat-today" class="text-lg sm:text-2xl font-bold text-white font-mono">0</span>
+ </div>
+ <div class="glass p-3 sm:p-4 rounded-xl border border-white/10 text-center">
+ <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">أعلى حضور يومي</span>
+ <span id="analytics-stat-peak" class="text-lg sm:text-2xl font-bold text-slate-200 font-mono">0 طالب</span>
+ </div>
+ <div class="glass p-3 sm:p-4 rounded-xl border border-white/10 text-center">
+ <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">متوسط البقاء اليومي</span>
+ <span id="analytics-stat-avg-dwell" class="text-lg sm:text-2xl font-bold text-slate-200 font-mono">0s</span>
+ </div>
+ <div class="glass p-3 sm:p-4 rounded-xl border border-white/10 text-center">
+ <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">إجمالي الحضور للفترة</span>
+ <span id="analytics-stat-total-visits" class="text-lg sm:text-2xl font-bold text-slate-200 font-mono">0 طالب</span>
+ </div>
+ </div>
+
+ <!-- Data Table Container -->
+ <div class="glass rounded-xl border border-white/10 overflow-hidden shrink-0">
+ <div class="p-3 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+ <h3 class="font-semibold text-white text-xs sm:text-sm flex items-center gap-1.5">
+ <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+ <span>جدول التفاعل اليومي للمسار الحالي</span>
+ </h3>
+ <span class="text-[11px] text-gray-400 font-mono">تتبع الطرف الأول المباشر (دقة 100%)</span>
+ </div>
+
+ <div class="overflow-x-auto custom-scrollbar">
+ <table class="w-full text-right text-xs min-w-[450px]">
+ <thead class="bg-white/5 text-gray-400 border-b border-white/10 sticky top-0">
+ <tr>
+ <th class="p-3 font-semibold">التاريخ</th>
+ <th class="p-3 font-semibold">اليوم</th>
+ <th class="p-3 font-semibold text-center">الطلاب المتفاعلون (Exact)</th>
+ <th class="p-3 font-semibold text-center">متوسط مدة البقاء</th>
+ </tr>
+ </thead>
+ <tbody id="analytics-table-body" class="divide-y divide-white/5 font-mono">
+ <tr>
+ <td colspan="4" class="p-6 text-center text-gray-500">جاري تحميل بيانات التحليلات...</td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </div>
+ </template>
 
  <template id="tpl-passwords">
  <div class="space-y-3 sm:space-y-4">

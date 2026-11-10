@@ -135,6 +135,104 @@ if ($action === 'track') {
     exit;
 }
 
+if ($action === 'range' || $action === 'report_range') {
+    $days = max(1, min(180, (int)($_GET['days'] ?? 14)));
+    $startDateStr = preg_replace('/[^0-9\-]/', '', (string)($_GET['start'] ?? ''));
+    $endDateStr = preg_replace('/[^0-9\-]/', '', (string)($_GET['end'] ?? gmdate('Y-m-d')));
+
+    $endTs = !empty($endDateStr) ? strtotime($endDateStr . ' 12:00:00 UTC') : time();
+    $startTs = !empty($startDateStr) ? strtotime($startDateStr . ' 12:00:00 UTC') : ($endTs - (($days - 1) * 86400));
+
+    $arabicDays = [
+        'Sunday' => 'الأحد',
+        'Monday' => 'الإثنين',
+        'Tuesday' => 'الثلاثاء',
+        'Wednesday' => 'الأربعاء',
+        'Thursday' => 'الخميس',
+        'Friday' => 'الجمعة',
+        'Saturday' => 'السبت'
+    ];
+
+    $results = [];
+    $totalStudentsSum = 0;
+    $peakStudents = 0;
+    $totalDwellSecSum = 0;
+    $daysWithVisits = 0;
+
+    for ($t = $endTs; $t >= $startTs; $t -= 86400) {
+        $curDate = gmdate('Y-m-d', $t);
+        $curFile = $dataDir . '/sessions_' . $curDate . '.json';
+        $sessions = [];
+        if (file_exists($curFile)) {
+            $raw = file_get_contents($curFile);
+            $sessions = json_decode($raw, true) ?: [];
+        }
+
+        $uniqueUsers = [];
+        $totalDur = 0;
+        $validSessions = 0;
+
+        foreach ($sessions as $s) {
+            $paths = $s['paths'] ?? [];
+            if (!empty($paths)) {
+                $nonOspe = array_filter($paths, function($p) {
+                    return stripos((string)$p, '/ospe') === false;
+                });
+                if (empty($nonOspe)) {
+                    continue;
+                }
+            }
+
+            $uid = $s['anon_id'] ?: $s['sid'];
+            $uniqueUsers[$uid] = true;
+
+            $rawDur = (int)($s['duration_sec'] ?? 0);
+            $dur = min(3600, $rawDur);
+            $totalDur += $dur;
+            $validSessions++;
+        }
+
+        $studentCount = count($uniqueUsers);
+        $avgDuration = $validSessions > 0 ? round($totalDur / $validSessions) : 0;
+        $avgFormatted = $avgDuration >= 60 ? floor($avgDuration / 60) . 'm ' . ($avgDuration % 60) . 's' : $avgDuration . 's';
+
+        $totalStudentsSum += $studentCount;
+        if ($studentCount > $peakStudents) {
+            $peakStudents = $studentCount;
+        }
+        if ($studentCount > 0) {
+            $totalDwellSecSum += $avgDuration;
+            $daysWithVisits++;
+        }
+
+        $dayEn = gmdate('l', $t);
+        $results[] = [
+            'date' => $curDate,
+            'day' => $dayEn,
+            'day_ar' => $arabicDays[$dayEn] ?? $dayEn,
+            'verified_students' => $studentCount,
+            'average_time_stayed_seconds' => $avgDuration,
+            'average_time_formatted' => $avgFormatted
+        ];
+    }
+
+    $overallAvgDwellSec = $daysWithVisits > 0 ? round($totalDwellSecSum / $daysWithVisits) : 0;
+    $overallAvgDwellFormatted = $overallAvgDwellSec >= 60 ? floor($overallAvgDwellSec / 60) . 'm ' . ($overallAvgDwellSec % 60) . 's' : $overallAvgDwellSec . 's';
+
+    echo json_encode([
+        'ok' => true,
+        'days' => count($results),
+        'summary' => [
+            'today_students' => $results[0]['verified_students'] ?? 0,
+            'peak_students' => $peakStudents,
+            'total_attendance' => $totalStudentsSum,
+            'average_daily_dwell' => $overallAvgDwellFormatted
+        ],
+        'data' => $results
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
 if ($action === 'report') {
     $date = preg_replace('/[^0-9\-]/', '', (string)($_GET['date'] ?? gmdate('Y-m-d')));
     $filePath = $dataDir . '/sessions_' . $date . '.json';

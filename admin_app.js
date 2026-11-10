@@ -295,7 +295,7 @@ window.AdminApp = {
 
     applyPermissionsUI() {
         const canManageMaster = !!(this.permissions && this.permissions.manage_passwords);
-        const masterOnlyTabs = ['passwords', 'gemini', 'cache', 'history'];
+        const masterOnlyTabs = ['passwords', 'gemini', 'cache', 'history', 'analytics'];
         masterOnlyTabs.forEach(tabName => {
             document.querySelectorAll(`[data-tab="${tabName}"]`).forEach(el => {
                 if (canManageMaster) {
@@ -371,6 +371,7 @@ window.AdminApp = {
             runTask(() => this.prefetchGemini(), 4000);
             runTask(() => this.prefetchHistory(), 4600);
             runTask(() => this.prefetchCacheStats(), 5200);
+            runTask(() => this.prefetchAnalytics(), 5800);
         }
     },
 
@@ -483,7 +484,7 @@ window.AdminApp = {
     },
 
     switchTab(tabId) {
-        const masterOnlyTabs = ['passwords', 'gemini', 'cache', 'history'];
+        const masterOnlyTabs = ['passwords', 'gemini', 'cache', 'history', 'analytics'];
         if (masterOnlyTabs.includes(tabId)) {
             const canManageMaster = !!(this.permissions && this.permissions.manage_passwords);
             if (!canManageMaster) {
@@ -504,7 +505,8 @@ window.AdminApp = {
             'cache': 'ذاكرة الكاش والتجهيز',
             'gemini': 'مراقبة مفاتيح المعالجة الذكية',
             'passwords': 'الصلاحيات والمفاتيح',
-            'history': 'سجل التغييرات والاستعادة'
+            'history': 'سجل التغييرات والاستعادة',
+            'analytics': 'تحليلات الحضور والزوار'
         };
 
         const badge = document.getElementById('mobile-active-tab-badge');
@@ -608,6 +610,8 @@ window.AdminApp = {
                 this.loadQuizzes();
             } else if (tabId === 'cache') {
                 this.loadCacheStats();
+            } else if (tabId === 'analytics') {
+                this.loadAnalytics();
             }
         } else {
             contentDiv.innerHTML = `<div class="p-8 text-center text-gray-400 glass rounded-2xl">
@@ -8267,6 +8271,82 @@ window.AdminApp = {
         .catch(err => {
             this.showLoading(false);
             this.showToast('خطأ بالاتصال أثناء تفريغ الكاش', true);
+        });
+    },
+
+    prefetchAnalytics() {
+        if (this.analyticsData) return;
+        fetch(`${API_BASE}/analytics_api.php?action=range&days=14&_t=${Date.now()}`)
+        .then(r => r.json())
+        .then(res => {
+            if (res && res.ok && Array.isArray(res.data)) {
+                this.analyticsData = res;
+            }
+        }).catch(() => {});
+    },
+
+    loadAnalytics(days) {
+        const rangeSelect = document.getElementById('analytics-range');
+        const numDays = days || (rangeSelect ? rangeSelect.value : 14);
+        const tbody = document.getElementById('analytics-table-body');
+
+        const renderData = (res) => {
+            if (!res || !res.ok || !Array.isArray(res.data)) {
+                if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500">لا توجد بيانات متاحة حالياً</td></tr>';
+                return;
+            }
+
+            const statToday = document.getElementById('analytics-stat-today');
+            const statPeak = document.getElementById('analytics-stat-peak');
+            const statAvgDwell = document.getElementById('analytics-stat-avg-dwell');
+            const statTotal = document.getElementById('analytics-stat-total-visits');
+
+            if (statToday && res.summary) statToday.innerText = res.summary.today_students ?? 0;
+            if (statPeak && res.summary) statPeak.innerText = (res.summary.peak_students ?? 0) + ' طالب';
+            if (statAvgDwell && res.summary) statAvgDwell.innerText = res.summary.average_daily_dwell || '0s';
+            if (statTotal && res.summary) statTotal.innerText = (res.summary.total_attendance ?? 0) + ' طالب';
+
+            if (!tbody) return;
+            if (res.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500">لا توجد بيانات للفترة المحددة</td></tr>';
+                return;
+            }
+
+            let html = '';
+            res.data.forEach(row => {
+                const dayAr = row.day_ar || row.day || '';
+                const students = row.verified_students ?? 0;
+                const avgTime = row.average_time_formatted || '0s';
+                
+                html += `<tr class="hover:bg-white/[0.02] transition">
+                    <td class="p-3 text-gray-300 font-mono">${row.date}</td>
+                    <td class="p-3 text-gray-400 font-sans">${dayAr}</td>
+                    <td class="p-3 text-center text-white font-bold font-mono">${students}</td>
+                    <td class="p-3 text-center text-slate-300 font-mono">${avgTime}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        };
+
+        if (String(numDays) === '14' && this.analyticsData) {
+            renderData(this.analyticsData);
+        } else if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500">جاري تحميل بيانات التحليلات...</td></tr>';
+        }
+
+        fetch(`${API_BASE}/analytics_api.php?action=range&days=${numDays}&_t=${Date.now()}`)
+        .then(r => r.json())
+        .then(res => {
+            if (String(numDays) === '14') {
+                this.analyticsData = res;
+            }
+            renderData(res);
+        })
+        .catch(err => {
+            console.error('Error fetching analytics:', err);
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-rose-400">تعذر تحميل بيانات التحليلات من الخادم</td></tr>';
+            }
         });
     }
 };
