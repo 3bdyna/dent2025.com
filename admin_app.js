@@ -8319,15 +8319,17 @@ window.AdminApp = {
                 const avgTime = row.average_time_formatted || '--';
                 const isCloud = row.source === 'cloudflare';
                 const sourceBadge = isCloud 
-                    ? `<span class="inline-block text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-gray-400 font-sans mr-1.5 border border-white/5" title="سجلات سحابية (Cloudflare RUM)">سحابي</span>` 
+                    ? `<span class="absolute end-full me-2 top-1/2 -translate-y-1/2 text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-gray-400 font-sans border border-white/5 whitespace-nowrap pointer-events-none" title="سجلات سحابية (Cloudflare RUM)">سحابي</span>` 
                     : '';
                 
                 html += `<tr class="hover:bg-white/[0.02] transition">
                     <td class="p-3 text-gray-300 font-mono">${row.date}</td>
                     <td class="p-3 text-gray-400 font-sans">${dayAr}</td>
-                    <td class="p-3 text-center text-white font-bold font-mono">
-                        ${students}
-                        ${sourceBadge}
+                    <td class="p-3 text-center">
+                        <div class="inline-flex items-center justify-center relative">
+                            <span class="text-white font-bold font-mono">${students}</span>
+                            ${sourceBadge}
+                        </div>
                     </td>
                     <td class="p-3 text-center ${avgTime !== '--' ? 'text-slate-300' : 'text-gray-500'} font-mono">${avgTime}</td>
                 </tr>`;
