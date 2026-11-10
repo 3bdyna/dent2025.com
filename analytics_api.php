@@ -143,6 +143,14 @@ if ($action === 'range' || $action === 'report_range') {
     $endTs = !empty($endDateStr) ? strtotime($endDateStr . ' 12:00:00 UTC') : time();
     $startTs = !empty($startDateStr) ? strtotime($startDateStr . ' 12:00:00 UTC') : ($endTs - (($days - 1) * 86400));
 
+    // Load Cloudflare historical data if available (covers pre-telemetry period prior to Oct 27)
+    $cfHistory = [];
+    $cfHistoryFile = $dataDir . '/cloudflare_history.json';
+    if (file_exists($cfHistoryFile)) {
+        $rawCf = file_get_contents($cfHistoryFile);
+        $cfHistory = json_decode($rawCf, true) ?: [];
+    }
+
     $arabicDays = [
         'Sunday' => 'الأحد',
         'Monday' => 'الإثنين',
@@ -157,66 +165,99 @@ if ($action === 'range' || $action === 'report_range') {
     $totalStudentsSum = 0;
     $peakStudents = 0;
     $totalDwellSecSum = 0;
-    $daysWithVisits = 0;
+    $daysWithDwell = 0;
 
     for ($t = $endTs; $t >= $startTs; $t -= 86400) {
         $curDate = gmdate('Y-m-d', $t);
         $curFile = $dataDir . '/sessions_' . $curDate . '.json';
-        $sessions = [];
+        $dayEn = gmdate('l', $t);
+        $dayAr = $arabicDays[$dayEn] ?? $dayEn;
+
         if (file_exists($curFile)) {
+            // Tier 1: First-party verified telemetry
             $raw = file_get_contents($curFile);
             $sessions = json_decode($raw, true) ?: [];
-        }
 
-        $uniqueUsers = [];
-        $totalDur = 0;
-        $validSessions = 0;
+            $uniqueUsers = [];
+            $totalDur = 0;
+            $validSessions = 0;
 
-        foreach ($sessions as $s) {
-            $paths = $s['paths'] ?? [];
-            if (!empty($paths)) {
-                $nonOspe = array_filter($paths, function($p) {
-                    return stripos((string)$p, '/ospe') === false;
-                });
-                if (empty($nonOspe)) {
-                    continue;
+            foreach ($sessions as $s) {
+                $paths = $s['paths'] ?? [];
+                if (!empty($paths)) {
+                    $nonOspe = array_filter($paths, function($p) {
+                        return stripos((string)$p, '/ospe') === false;
+                    });
+                    if (empty($nonOspe)) {
+                        continue;
+                    }
                 }
+
+                $uid = $s['anon_id'] ?: $s['sid'];
+                $uniqueUsers[$uid] = true;
+
+                $rawDur = (int)($s['duration_sec'] ?? 0);
+                $dur = min(3600, $rawDur);
+                $totalDur += $dur;
+                $validSessions++;
             }
 
-            $uid = $s['anon_id'] ?: $s['sid'];
-            $uniqueUsers[$uid] = true;
+            $studentCount = count($uniqueUsers);
+            $avgDuration = $validSessions > 0 ? round($totalDur / $validSessions) : 0;
+            $avgFormatted = $avgDuration >= 60 ? floor($avgDuration / 60) . 'm ' . ($avgDuration % 60) . 's' : $avgDuration . 's';
 
-            $rawDur = (int)($s['duration_sec'] ?? 0);
-            $dur = min(3600, $rawDur);
-            $totalDur += $dur;
-            $validSessions++;
+            $totalStudentsSum += $studentCount;
+            if ($studentCount > $peakStudents) {
+                $peakStudents = $studentCount;
+            }
+            if ($studentCount > 0) {
+                $totalDwellSecSum += $avgDuration;
+                $daysWithDwell++;
+            }
+
+            $results[] = [
+                'date' => $curDate,
+                'day' => $dayEn,
+                'day_ar' => $dayAr,
+                'verified_students' => $studentCount,
+                'average_time_stayed_seconds' => $avgDuration,
+                'average_time_formatted' => $avgFormatted,
+                'source' => 'telemetry'
+            ];
+        } elseif (isset($cfHistory[$curDate])) {
+            // Tier 2: Cloudflare historical dataset
+            $cf = $cfHistory[$curDate];
+            $studentCount = (int)($cf['estimated_students'] ?? $cf['cf_visits'] ?? 0);
+            $totalStudentsSum += $studentCount;
+            if ($studentCount > $peakStudents) {
+                $peakStudents = $studentCount;
+            }
+
+            $results[] = [
+                'date' => $curDate,
+                'day' => $dayEn,
+                'day_ar' => $dayAr,
+                'verified_students' => $studentCount,
+                'average_time_stayed_seconds' => null,
+                'average_time_formatted' => '--',
+                'page_views' => (int)($cf['page_views'] ?? 0),
+                'source' => 'cloudflare'
+            ];
+        } else {
+            // No activity recorded
+            $results[] = [
+                'date' => $curDate,
+                'day' => $dayEn,
+                'day_ar' => $dayAr,
+                'verified_students' => 0,
+                'average_time_stayed_seconds' => 0,
+                'average_time_formatted' => '--',
+                'source' => 'none'
+            ];
         }
-
-        $studentCount = count($uniqueUsers);
-        $avgDuration = $validSessions > 0 ? round($totalDur / $validSessions) : 0;
-        $avgFormatted = $avgDuration >= 60 ? floor($avgDuration / 60) . 'm ' . ($avgDuration % 60) . 's' : $avgDuration . 's';
-
-        $totalStudentsSum += $studentCount;
-        if ($studentCount > $peakStudents) {
-            $peakStudents = $studentCount;
-        }
-        if ($studentCount > 0) {
-            $totalDwellSecSum += $avgDuration;
-            $daysWithVisits++;
-        }
-
-        $dayEn = gmdate('l', $t);
-        $results[] = [
-            'date' => $curDate,
-            'day' => $dayEn,
-            'day_ar' => $arabicDays[$dayEn] ?? $dayEn,
-            'verified_students' => $studentCount,
-            'average_time_stayed_seconds' => $avgDuration,
-            'average_time_formatted' => $avgFormatted
-        ];
     }
 
-    $overallAvgDwellSec = $daysWithVisits > 0 ? round($totalDwellSecSum / $daysWithVisits) : 0;
+    $overallAvgDwellSec = $daysWithDwell > 0 ? round($totalDwellSecSum / $daysWithDwell) : 0;
     $overallAvgDwellFormatted = $overallAvgDwellSec >= 60 ? floor($overallAvgDwellSec / 60) . 'm ' . ($overallAvgDwellSec % 60) . 's' : $overallAvgDwellSec . 's';
 
     echo json_encode([

@@ -8316,13 +8316,20 @@ window.AdminApp = {
             res.data.forEach(row => {
                 const dayAr = row.day_ar || row.day || '';
                 const students = row.verified_students ?? 0;
-                const avgTime = row.average_time_formatted || '0s';
+                const avgTime = row.average_time_formatted || '--';
+                const isCloud = row.source === 'cloudflare';
+                const sourceBadge = isCloud 
+                    ? `<span class="inline-block text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-gray-400 font-sans mr-1.5 border border-white/5" title="سجلات سحابية (Cloudflare RUM)">سحابي</span>` 
+                    : '';
                 
                 html += `<tr class="hover:bg-white/[0.02] transition">
                     <td class="p-3 text-gray-300 font-mono">${row.date}</td>
                     <td class="p-3 text-gray-400 font-sans">${dayAr}</td>
-                    <td class="p-3 text-center text-white font-bold font-mono">${students}</td>
-                    <td class="p-3 text-center text-slate-300 font-mono">${avgTime}</td>
+                    <td class="p-3 text-center text-white font-bold font-mono">
+                        ${students}
+                        ${sourceBadge}
+                    </td>
+                    <td class="p-3 text-center ${avgTime !== '--' ? 'text-slate-300' : 'text-gray-500'} font-mono">${avgTime}</td>
                 </tr>`;
             });
             tbody.innerHTML = html;
