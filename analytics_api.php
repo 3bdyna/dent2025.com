@@ -152,13 +152,26 @@ if ($action === 'report') {
     $countries = [];
 
     foreach ($sessions as $s) {
+        // Exclude /ospe/ admin testing sessions
+        $paths = $s['paths'] ?? [];
+        if (!empty($paths)) {
+            $nonOspe = array_filter($paths, function($p) {
+                return stripos((string)$p, '/ospe') === false;
+            });
+            if (empty($nonOspe)) {
+                continue;
+            }
+        }
+
         $uid = $s['anon_id'] ?: $s['sid'];
         $uniqueUsers[$uid] = true;
 
         $dev = $s['device'] ?? 'Desktop';
         $devices[$dev] = ($devices[$dev] ?? 0) + 1;
 
-        $dur = (int)($s['duration_sec'] ?? 0);
+        // Cap individual session duration at 3600s (60 min) to eliminate background tab / idle skew
+        $rawDur = (int)($s['duration_sec'] ?? 0);
+        $dur = min(3600, $rawDur);
         $durations[] = $dur;
         $totalDuration += $dur;
 
@@ -166,10 +179,11 @@ if ($action === 'report') {
         $countries[$c] = ($countries[$c] ?? 0) + 1;
     }
 
-    $sessionCount = count($sessions);
+    $sessionCount = count($durations);
     $avgDuration = $sessionCount > 0 ? round($totalDuration / $sessionCount) : 0;
     sort($durations);
     $medianDuration = $sessionCount > 0 ? $durations[(int)floor($sessionCount / 2)] : 0;
+    $medianFormatted = $medianDuration >= 60 ? floor($medianDuration / 60) . 'm ' . ($medianDuration % 60) . 's' : $medianDuration . 's';
 
     // Format recent sessions list (latest 30)
     $recent = array_values(array_slice($sessions, -30));
@@ -194,6 +208,7 @@ if ($action === 'report') {
             'average_time_stayed_seconds' => $avgDuration,
             'average_time_formatted' => $avgDuration >= 60 ? floor($avgDuration / 60) . 'm ' . ($avgDuration % 60) . 's' : $avgDuration . 's',
             'median_time_stayed_seconds' => $medianDuration,
+            'median_time_formatted' => $medianFormatted,
             'devices' => $devices,
             'countries' => $countries
         ],
