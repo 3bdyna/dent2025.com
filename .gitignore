@@ -18,6 +18,7 @@ backend/gemini_keys_data/
 # 2. Runtime Dynamic Data & Server-side JSON Databases
 announcements_data/
 polls_data/
+analytics_data/
 dent2025_study_data/
 history_data/
 quizzes_data/

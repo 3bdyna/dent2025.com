@@ -203,14 +203,21 @@ a:hover, a:focus {
   font-size: 1.1rem !important;
   font-weight: bold !important;
   background: var(--dent-bg-pill, rgba(255, 255, 255, 0.06)) !important;
+  border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.12)) !important;
   width: 36px !important;
   height: 36px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  border-radius: 50% !important;
+  border-radius: 10px !important;
   transition: all 0.2s ease !important;
   flex-shrink: 0 !important;
+}
+
+#resources .wp-block-button__link,
+.wp-block-button__link,
+.wp-element-button {
+  border-radius: 10px !important;
 }
 
 .gpa-banner:hover .gpa-banner-arrow,
