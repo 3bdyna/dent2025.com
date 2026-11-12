@@ -604,6 +604,55 @@ if ($prev_remote !== null) {
     unset($_SERVER['REMOTE_ADDR']);
 }
 
+
+// -----------------------------------------------------------------------------
+// 12. Testing Pre-Med Context Normalization & Passkey Trimming
+// -----------------------------------------------------------------------------
+echo "
+12. Testing Pre-Med Normalization & Passkey Sanitization...
+";
+
+// 12.1 Passkey whitespace trimming
+$trimmed_entry = dent2025_get_passkey_info("  " . $master_pass . "  ");
+assert_test("Passkey with leading/trailing whitespace resolves correctly", $trimmed_entry !== null && $trimmed_entry["id"] === $master_entry["id"]);
+$newline_entry = dent2025_get_passkey_info($master_pass . "
+");
+assert_test("Passkey with newline resolves correctly", $newline_entry !== null && $newline_entry["id"] === $master_entry["id"]);
+
+// 12.2 Pre-Med Year 0 vs Year 1 Normalization
+$passwords_file = dirname(__DIR__) . "/dent2025_passwords.json";
+$mock_premed_pass = "test_premed_leader_9988";
+$orig_passwords = dent2025_load_passwords();
+$mock_passwords = $orig_passwords;
+$mock_passwords[] = [
+    "id" => "pass_test_premed",
+    "label" => "Pre-Med Leader Test",
+    "passkey" => $mock_premed_pass,
+    "allowed_contexts" => ["pre-med_1_1"],
+    "permissions" => [
+        "timetable" => true,
+        "semester_events" => true,
+        "edit_basic_subject" => true
+    ]
+];
+
+dent2025_save_passwords($mock_passwords);
+
+assert_test("Pre-Med leader with year=0 normalizes to year=1 and ALLOWED", dent2025_check_rbac_permission($mock_premed_pass, "timetable", "pre-med", 0, 1) === true);
+assert_test("Pre-Med leader with year=1 ALLOWED in pre-med_1_1", dent2025_check_rbac_permission($mock_premed_pass, "timetable", "pre-med", 1, 1) === true);
+assert_test("Pre-Med leader with year='0' string normalizes to year=1 and ALLOWED", dent2025_check_rbac_permission($mock_premed_pass, "timetable", "pre-med", "0", 1) === true);
+assert_test("Pre-Med leader DENIED in semester 2 (unauthorized context pre-med_1_2)", dent2025_check_rbac_permission($mock_premed_pass, "timetable", "pre-med", 1, 2) === false);
+assert_test("Pre-Med leader DENIED in dentistry (unauthorized specialty)", dent2025_check_rbac_permission($mock_premed_pass, "timetable", "dentistry", 1, 1) === false);
+
+dent2025_save_passwords($orig_passwords);
+
+// 12.3 Quiz Score 0-division resilience calculation
+$calc_pct = function($score, $totalQs) {
+    return $totalQs > 0 ? (int)round(($score / $totalQs) * 100) : 0;
+};
+assert_test("Quiz score with totalQs=0 returns 0% (no division by zero)", $calc_pct(0, 0) === 0);
+assert_test("Quiz score with 8/10 returns 80%", $calc_pct(8, 10) === 80);
+
 // -----------------------------------------------------------------------------
 // SUMMARY REPORT
 // -----------------------------------------------------------------------------

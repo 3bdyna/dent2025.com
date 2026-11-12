@@ -33,6 +33,7 @@ premed-scan.json
 backups/
 .deploy_backups/
 server_backups_dent2025_daily/
+backup_exams_*/
 *.zip
 *.tar
 *.gz
