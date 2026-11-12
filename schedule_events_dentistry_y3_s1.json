@@ -1,54 +1,41 @@
 [
-    {
-        "id": "evt_dent_y3_s1_biom_midterm",
-        "date": "2026-10-29",
-        "hijri": "1448\/05\/18",
-        "title": "ميد بايوماتيريل مع عملي",
-        "type": "custom",
-        "type_label": "اختبار نصفي",
-        "schedule_id": "dentistry_y3_s1",
-        "is_global": false,
-        "specialty": "dentistry",
-        "year": 3,
-        "semester": 1
-    },
-    {
-        "id": "evt_dent_y3_s1_diag_midterm",
-        "date": "2026-11-01",
-        "hijri": "1448\/05\/21",
-        "title": "ميد تشخيص",
-        "type": "midterm",
-        "type_label": "اختبار نصفي",
-        "schedule_id": "dentistry_y3_s1",
-        "is_global": false,
-        "specialty": "dentistry",
-        "year": 3,
-        "semester": 1
-    },
-    {
-        "id": "evt_dent_y3_s1_micro_midterm",
-        "date": "2026-11-05",
-        "hijri": "1448\/05\/25",
-        "title": "ميد مايكرو",
-        "type": "midterm",
-        "type_label": "اختبار نصفي",
-        "schedule_id": "dentistry_y3_s1",
-        "is_global": false,
-        "specialty": "dentistry",
-        "year": 3,
-        "semester": 1
-    },
-    {
-        "id": "evt_dent_y3_s1_patho_midterm",
-        "date": "2026-11-08",
-        "hijri": "1448\/05\/28",
-        "title": "ميد باثولوجي",
-        "type": "midterm",
-        "type_label": "اختبار نصفي",
-        "schedule_id": "dentistry_y3_s1",
-        "is_global": false,
-        "specialty": "dentistry",
-        "year": 3,
-        "semester": 1
-    }
+  {
+    "id": "evt_dent_y3_s1_micro_midterm",
+    "date": "2026-11-05",
+    "hijri": "1448/05/25",
+    "title": "ميد مايكرو",
+    "type": "midterm",
+    "type_label": "اختبار نصفي",
+    "schedule_id": "dentistry_y3_s1",
+    "is_global": false,
+    "specialty": "dentistry",
+    "year": 3,
+    "semester": 1
+  },
+  {
+    "id": "evt_dent_y3_s1_patho_midterm",
+    "date": "2026-11-08",
+    "hijri": "1448/05/28",
+    "title": "ميد باثولوجي",
+    "type": "midterm",
+    "type_label": "اختبار نصفي",
+    "schedule_id": "dentistry_y3_s1",
+    "is_global": false,
+    "specialty": "dentistry",
+    "year": 3,
+    "semester": 1
+  },
+  {
+    "id": "evt_dent_y3_s1_pharma_midterm",
+    "date": "2026-11-15",
+    "hijri": "1448/06/05",
+    "title": "ميد فارما",
+    "type": "midterm",
+    "type_label": "اختبار نصفي",
+    "schedule_id": "dentistry_y3_s1",
+    "is_global": false,
+    "specialty": "dentistry",
+    "year": 3,
+    "semester": 1
+  }
 ]
