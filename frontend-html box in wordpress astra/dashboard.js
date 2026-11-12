@@ -514,6 +514,255 @@ function getAdminButtons(sub) {
     `;
 }
 
+// =========================================================================
+// 📁 NATIVE 1-CLICK FILES ENGINE (Google Drive Scraped Manifest)
+// =========================================================================
+
+window.dentDriveFilesStore = window.dentDriveFilesStore || {};
+
+// Format File Badge based on filename extension
+function dentGetFileBadgeInfo(fileName) {
+    const ext = (fileName || '').split('.').pop().toLowerCase();
+    if (ext === 'pdf') {
+        return { cls: 'badge-pdf', label: 'PDF' };
+    } else if (['ppt', 'pptx', 'pps', 'key'].includes(ext)) {
+        return { cls: 'badge-ppt', label: 'PPT' };
+    } else if (['doc', 'docx', 'rtf', 'txt'].includes(ext)) {
+        return { cls: 'badge-doc', label: 'DOC' };
+    } else if (['mp4', 'mov', 'avi', 'mkv', 'mp3', 'm4a'].includes(ext)) {
+        return { cls: 'badge-video', label: 'MEDIA' };
+    }
+    return { cls: 'badge-generic', label: ext ? ext.slice(0, 4).toUpperCase() : 'FILE' };
+}
+
+// Fetch files from /backend/api_ai_exam.php?action=list_chapters
+async function dentFetchFolderFiles(folderId, forceRefresh = false) {
+    if (!folderId) return [];
+    const cleanId = String(folderId).replace(/^.*folders\//, '').replace(/^.*id=/, '').replace(/[^a-zA-Z0-9_-]/g, '');
+    if (!cleanId) return [];
+    const cacheKey = `dent_files_${cleanId}`;
+
+    if (!forceRefresh) {
+        try {
+            const cached = sessionStorage.getItem(cacheKey);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Date.now() - parsed.timestamp < 1800000 && Array.isArray(parsed.files)) { // 30 mins
+                    return parsed.files;
+                }
+            }
+        } catch (e) {}
+    }
+
+    const refreshParam = forceRefresh ? '&refresh=1' : '';
+    const apiBase = (typeof window.API_BASE !== 'undefined' ? window.API_BASE : '');
+    const url = `${apiBase}/backend/api_ai_exam.php?action=list_chapters&folder_id=${encodeURIComponent(cleanId)}${refreshParam}`;
+
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const files = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+
+        try {
+            sessionStorage.setItem(cacheKey, JSON.stringify({
+                timestamp: Date.now(),
+                files: files
+            }));
+        } catch (e) {}
+
+        return files;
+    } catch (err) {
+        console.warn('Native files fetch failed for folder:', folderId, err);
+        return null; // Signals error/fallback
+    }
+}
+
+// Render native files container content
+window.dentRenderNativeFiles = async function(containerId, folderId, forceRefresh = false) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (!folderId) {
+        container.innerHTML = `
+            <div style="padding: 24px 12px; text-align: center; color: #94a3b8; font-size: 0.85rem;">
+                لم يتم ربط مجلد جوجل درايف لهذه المادة بعد.
+            </div>`;
+        return;
+    }
+
+    // Skeleton loading state
+    container.innerHTML = `
+        <div class="dent-files-toolbar">
+            <div class="dent-files-search-wrap">
+                <input type="text" class="dent-files-search-input" placeholder="جاري تجهيز الملفات..." disabled>
+            </div>
+        </div>
+        <div class="dent-files-list">
+            <div class="dent-file-skeleton"></div>
+            <div class="dent-file-skeleton"></div>
+            <div class="dent-file-skeleton"></div>
+        </div>
+    `;
+
+    const files = await dentFetchFolderFiles(folderId, forceRefresh);
+
+    if (files === null) {
+        // Fallback to Iframe on network error
+        container.innerHTML = `
+            <div style="padding: 20px 12px; text-align: center; color: #94a3b8; font-size: 0.85rem; line-height: 1.6;">
+                تعذر تحميل قائمة الملفات السريعة مباشرة من درايف.<br>
+                <button type="button" class="dent-files-refresh-btn" style="margin-top: 10px;" onclick="dentRenderNativeFiles('${containerId}', '${folderId}', true)">
+                    إعادة المحاولة 🔄
+                </button>
+            </div>`;
+        return;
+    }
+
+    if (files.length === 0) {
+        container.innerHTML = `
+            <div style="padding: 24px 12px; text-align: center; color: #94a3b8; font-size: 0.85rem;">
+                المجلد فارغ حالياً (لا توجد ملفات مرفوعة).
+                <div style="margin-top: 8px;">
+                    <button type="button" class="dent-files-refresh-btn" onclick="dentRenderNativeFiles('${containerId}', '${folderId}', true)">
+                        تحديث من درايف 🔄
+                    </button>
+                </div>
+            </div>`;
+        return;
+    }
+
+    // Store in-memory for live filtering
+    const storeKey = `${containerId}_files`;
+    window.dentDriveFilesStore[storeKey] = files;
+
+    const renderListItems = (items) => {
+        if (items.length === 0) {
+            return '<div style="padding: 16px; text-align: center; color: #64748b; font-size: 0.82rem;">لا توجد ملفات مطابقة للبحث.</div>';
+        }
+        return items.map(f => {
+            const badge = dentGetFileBadgeInfo(f.name);
+            const viewUrl = f.url || `https://drive.google.com/file/d/${f.id}/view`;
+            const downloadUrl = `https://drive.google.com/uc?export=download&id=${f.id}`;
+            return `
+                <div class="dent-file-item">
+                    <div class="dent-file-main">
+                        <div class="dent-file-icon-badge ${badge.cls}">${badge.label}</div>
+                        <div class="dent-file-title" dir="auto" title="${dentEscapeHtml(f.name)}">
+                            ${dentEscapeHtml(f.name)}
+                        </div>
+                    </div>
+                    <div class="dent-file-actions">
+                        <a href="${viewUrl}" target="_blank" rel="noopener noreferrer" class="dent-file-btn dent-file-btn-view" title="معاينة الملف">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            <span>معاينة</span>
+                        </a>
+                        <a href="${downloadUrl}" target="_blank" rel="noopener noreferrer" class="dent-file-btn dent-file-btn-download" title="تحميل مباشر">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            <span>تحميل</span>
+                        </a>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    };
+
+    container.innerHTML = `
+        <div class="dent-files-toolbar">
+            <div class="dent-files-search-wrap">
+                <input type="text" class="dent-files-search-input" id="${containerId}-search" placeholder="ابحث في ملفات ومحاضرات المادة...">
+                <span class="dent-files-search-icon">🔍</span>
+            </div>
+            <div class="dent-files-meta-actions">
+                <span class="dent-files-badge" id="${containerId}-count">${files.length} ملف</span>
+                <button type="button" class="dent-files-refresh-btn" onclick="dentRenderNativeFiles('${containerId}', '${folderId}', true)" title="إعادة جلب الملفات المحدثة من درايف">
+                    <span>تحديث</span> 🔄
+                </button>
+            </div>
+        </div>
+        <div class="dent-files-list" id="${containerId}-list">
+            ${renderListItems(files)}
+        </div>
+    `;
+
+    // Filter event listener
+    const searchInput = document.getElementById(`${containerId}-search`);
+    const listEl = document.getElementById(`${containerId}-list`);
+    const countEl = document.getElementById(`${containerId}-count`);
+    if (searchInput && listEl) {
+        searchInput.addEventListener('input', (e) => {
+            const q = (e.target.value || '').trim().toLowerCase();
+            const filtered = q ? files.filter(item => (item.name || '').toLowerCase().includes(q)) : files;
+            listEl.innerHTML = renderListItems(filtered);
+            if (countEl) countEl.textContent = `${filtered.length} ملف`;
+        });
+    }
+};
+
+// Toggle between Native 1-Click Files List and Classic Iframe
+window.toggleDriveViewMode = function(tabType, subId, btn) {
+    const nativeContainer = document.getElementById(`dent-native-files-${tabType}-${subId}`);
+    const iframeContainer = document.getElementById(`dent-iframe-container-${tabType}-${subId}`);
+    const card = document.getElementById(`dent-subject-card-${subId}`);
+    if (!nativeContainer || !iframeContainer) return;
+
+    const isIframeVisible = iframeContainer.style.display !== 'none';
+
+    if (isIframeVisible) {
+        // Switch back to Native
+        iframeContainer.style.display = 'none';
+        nativeContainer.style.display = 'block';
+        if (btn) {
+            const span = btn.querySelector('span');
+            if (span) span.textContent = 'مستعرض درايف الكلاسيكي';
+        }
+        if (card) {
+            const expBtn = card.querySelector(`#dent-panel-${tabType}-${subId} .dent-expand-toggle-btn`);
+            if (expBtn) expBtn.style.display = 'none';
+        }
+    } else {
+        // Switch to Iframe
+        nativeContainer.style.display = 'none';
+        iframeContainer.style.display = 'block';
+        const iframe = iframeContainer.querySelector('iframe');
+        if (iframe) dentEnsureIframeSrc(iframe);
+        if (btn) {
+            const span = btn.querySelector('span');
+            if (span) span.textContent = 'قائمة الملفات السريعة (Native)';
+        }
+        if (card) {
+            const expBtn = card.querySelector(`#dent-panel-${tabType}-${subId} .dent-expand-toggle-btn`);
+            if (expBtn) expBtn.style.display = 'inline-flex';
+        }
+    }
+};
+
+// Global filter across all subjects and loaded lectures
+window.dentFilterAllSubjects = function(query) {
+    const q = (query || '').trim().toLowerCase();
+    const cards = document.querySelectorAll('.dent-chapter-details');
+    cards.forEach(card => {
+        const titleEl = card.querySelector('.dent-chapter-summary span');
+        const title = titleEl ? titleEl.textContent.toLowerCase() : '';
+        if (!q || title.includes(q)) {
+            card.style.display = '';
+            if (q) card.open = true;
+        } else {
+            const files = card.querySelectorAll('.dent-file-title');
+            let hasMatch = false;
+            files.forEach(f => {
+                if (f.textContent.toLowerCase().includes(q)) hasMatch = true;
+            });
+            if (hasMatch) {
+                card.style.display = '';
+                card.open = true;
+            } else {
+                card.style.display = 'none';
+            }
+        }
+    });
+};
+
 // Global helper for tab switching inside subject cards
 window.switchDentTab = function(subId, tabType, event) {
     if (event) {
@@ -522,7 +771,6 @@ window.switchDentTab = function(subId, tabType, event) {
     }
     const card = document.getElementById(`dent-subject-card-${subId}`);
     if (!card) return;
-
 
     // Toggle button active classes
     const btns = card.querySelectorAll('.dent-tab-btn');
@@ -538,7 +786,18 @@ window.switchDentTab = function(subId, tabType, event) {
     const activePanel = document.getElementById(`dent-panel-${tabType}-${subId}`);
     if (activePanel) {
         activePanel.classList.add('active');
-        dentEnsureIframeSrc(activePanel.querySelector('iframe'));
+
+        // Hydrate Native Files list if not yet loaded
+        const nativeContainer = activePanel.querySelector('.dent-native-files-container');
+        if (nativeContainer && !nativeContainer.dataset.loaded) {
+            nativeContainer.dataset.loaded = 'true';
+            dentRenderNativeFiles(nativeContainer.id, nativeContainer.dataset.folderId);
+        }
+
+        const iframe = activePanel.querySelector('iframe');
+        if (iframe && iframe.closest('.dent-chapter-iframe-container') && iframe.closest('.dent-chapter-iframe-container').style.display !== 'none') {
+            dentEnsureIframeSrc(iframe);
+        }
     }
 };
 
@@ -566,7 +825,11 @@ function renderChapters(subjects) {
     let html = `
     <div class="dent-section-header">
         <h2 class="dent-section-title">المواد الدراسية</h2>
-        <p class="dent-section-subtitle">اختر المادة للوصول إلى الشابترات والمحاضرات والمصادر الإضافية</p>
+        <p class="dent-section-subtitle">اختر المادة للوصول الفوري إلى الشابترات والمحاضرات والمصادر الإضافية</p>
+        <div style="max-width: 460px; margin: 12px auto 0; position: relative;">
+            <input type="text" id="dent-all-subjects-filter" class="dent-files-search-input" style="padding: 9px 14px 9px 36px; font-size: 0.85rem; background: rgba(0,0,0,0.4);" placeholder="🔍 ابحث في أسماء المواد أو المحاضرات..." oninput="dentFilterAllSubjects(this.value)">
+            <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: #64748b; pointer-events: none;">🔍</span>
+        </div>
     </div>
     <div class="dent-chapters-wrapper">`;
 
@@ -581,7 +844,15 @@ function renderChapters(subjects) {
         html += `
         <details class="dent-chapter-details" id="dent-subject-card-${sub.id}" ontoggle="loadSubjectIframes(this)">
             <summary class="dent-chapter-summary">
-                <span style="flex: 1;">${dentEscapeHtml(sub.name)}</span>
+                <span style="flex: 1; display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span>${dentEscapeHtml(sub.name)}</span>
+                    ${sub.chapters_folder_id ? `
+                        <a href="https://drive.google.com/drive/folders/${sub.chapters_folder_id}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="dent-summary-drive-btn" title="فتح مجلد جوجل درايف مباشرة">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            <span>Google Drive</span>
+                        </a>
+                    ` : ''}
+                </span>
             </summary>
             ${infoBox}
 
@@ -598,11 +869,19 @@ function renderChapters(subjects) {
                 <!-- TAB 1: CHAPTERS -->
                 <div id="dent-panel-chapters-${sub.id}" class="dent-tab-panel active">
                     ${sub.chapters_folder_id ? `
-                        <div class="dent-chapter-iframe-container" id="dent-iframe-container-chapters-${sub.id}">
+                        <!-- Native 1-Click Files List -->
+                        <div class="dent-native-files-container" id="dent-native-files-chapters-${sub.id}" data-folder-id="${sub.chapters_folder_id}"></div>
+
+                        <!-- Classic Iframe Container (Hidden by default, toggleable) -->
+                        <div class="dent-chapter-iframe-container" id="dent-iframe-container-chapters-${sub.id}" style="display: none;">
                             <iframe src="about:blank" style="color-scheme: light;" data-src="https://drive.google.com/embeddedfolderview?id=${sub.chapters_folder_id}#list" title="${dentEscapeHtml(sub.name)} Chapters"></iframe>
                         </div>
                         <div class="dent-tab-footer">
-                            <button type="button" class="dent-drive-action-btn dent-expand-toggle-btn" onclick="toggleIframeExpand('dent-iframe-container-chapters-${sub.id}', this)" title="تكبير أو تصغير مساحة العرض">
+                            <button type="button" class="dent-drive-action-btn dent-view-toggle-btn" onclick="toggleDriveViewMode('chapters', ${sub.id}, this)" title="التبديل بين القائمة السريعة ومستعرض درايف">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                                <span>مستعرض درايف الكلاسيكي</span>
+                            </button>
+                            <button type="button" class="dent-drive-action-btn dent-expand-toggle-btn" style="display: none;" onclick="toggleIframeExpand('dent-iframe-container-chapters-${sub.id}', this)" title="تكبير أو تصغير مساحة العرض">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
                                 <span>تكبير العرض</span>
                             </button>
@@ -621,7 +900,11 @@ function renderChapters(subjects) {
                 <!-- TAB 2: MATERIALS & LINKS -->
                 <div id="dent-panel-materials-${sub.id}" class="dent-tab-panel">
                     ${sub.materials_folder_id ? `
-                        <div class="dent-chapter-iframe-container" id="dent-iframe-container-materials-${sub.id}">
+                        <!-- Native 1-Click Files List -->
+                        <div class="dent-native-files-container" id="dent-native-files-materials-${sub.id}" data-folder-id="${sub.materials_folder_id}"></div>
+
+                        <!-- Classic Iframe Container (Hidden by default, toggleable) -->
+                        <div class="dent-chapter-iframe-container" id="dent-iframe-container-materials-${sub.id}" style="display: none;">
                             <iframe src="about:blank" style="color-scheme: light;" data-src="https://drive.google.com/embeddedfolderview?id=${sub.materials_folder_id}#list" title="${dentEscapeHtml(sub.name)} Materials"></iframe>
                         </div>
                     ` : `
@@ -638,7 +921,11 @@ function renderChapters(subjects) {
                     </div>
                     ${sub.materials_folder_id ? `
                         <div class="dent-tab-footer">
-                            <button type="button" class="dent-drive-action-btn dent-expand-toggle-btn" onclick="toggleIframeExpand('dent-iframe-container-materials-${sub.id}', this)" title="تكبير أو تصغير مساحة العرض">
+                            <button type="button" class="dent-drive-action-btn dent-view-toggle-btn" onclick="toggleDriveViewMode('materials', ${sub.id}, this)" title="التبديل بين القائمة السريعة ومستعرض درايف">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                                <span>مستعرض درايف الكلاسيكي</span>
+                            </button>
+                            <button type="button" class="dent-drive-action-btn dent-expand-toggle-btn" style="display: none;" onclick="toggleIframeExpand('dent-iframe-container-materials-${sub.id}', this)" title="تكبير أو تصغير مساحة العرض">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
                                 <span>تكبير العرض</span>
                             </button>
@@ -666,6 +953,10 @@ function renderChapters(subjects) {
     details.forEach((det) => {
         const summary = det.querySelector('.dent-chapter-summary');
         const triggerInstantPreload = () => {
+            const firstNative = det.querySelector('.dent-native-files-container');
+            if (firstNative && firstNative.dataset.folderId) {
+                dentFetchFolderFiles(firstNative.dataset.folderId, false);
+            }
             dentPreloadSubjectIframe(det, false);
         };
         if (summary) {
@@ -675,22 +966,20 @@ function renderChapters(subjects) {
 
         det.addEventListener('toggle', () => {
             if (det.open) {
-
+                const activeNativeContainer = det.querySelector('.dent-tab-panel.active .dent-native-files-container');
+                if (activeNativeContainer && !activeNativeContainer.dataset.loaded) {
+                    activeNativeContainer.dataset.loaded = 'true';
+                    dentRenderNativeFiles(activeNativeContainer.id, activeNativeContainer.dataset.folderId);
+                }
                 dentPreloadSubjectIframe(det, true);
 
                 const nextDet = det.nextElementSibling && det.nextElementSibling.matches('.dent-chapter-details')
                     ? det.nextElementSibling
                     : null;
                 if (nextDet) {
-                    const nextIframe = nextDet.querySelector('.dent-tab-panel.active iframe');
-                    if (dentIsIframeUnloaded(nextIframe)) {
-                        if (!window.dentIframeQueue.includes(nextIframe)) {
-                            window.dentIframeQueue.push(nextIframe);
-                            if (!window.isDentIframeProcessing) {
-                                window.isDentIframeProcessing = true;
-                                setTimeout(processDentIframeQueue, 450);
-                            }
-                        }
+                    const nextNative = nextDet.querySelector('.dent-native-files-container');
+                    if (nextNative && nextNative.dataset.folderId) {
+                        dentFetchFolderFiles(nextNative.dataset.folderId, false);
                     }
                 }
             }
@@ -962,7 +1251,7 @@ function injectPathChanger(selection) {
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
+            border-radius: 8px;
             padding: 6px 14px;
             display: flex;
             align-items: center;

@@ -2452,7 +2452,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             else if (q.difficulty === 'medium') diffBadge = `<span class="dent-bank-tag dent-tag-diff-med">متوسط</span>`;
 
             const isHidden = !!(q.is_hidden || q.hidden);
-            const hiddenBadge = isHidden ? `<span style="background:rgba(245,158,11,0.18); color:#fbbf24; border:1px solid rgba(245,158,11,0.35); padding:1px 6px; border-radius:999px; font-size:0.72rem; font-weight:600; margin-right:4px;">مخفي</span>` : '';
+            const hiddenBadge = isHidden ? `<span style="background:rgba(245,158,11,0.18); color:#fbbf24; border:1px solid rgba(245,158,11,0.35); padding:1px 6px; border-radius:4px; font-size:0.72rem; font-weight:600; margin-right:4px;">مخفي</span>` : '';
 
             const card = document.createElement('div');
             card.className = 'dent-bank-card' + (isHidden ? ' dent-bank-card-hidden' : '');

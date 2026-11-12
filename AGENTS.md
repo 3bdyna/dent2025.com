@@ -417,6 +417,10 @@ All keys are strictly prefixed with `dent2025_`:
    - **Glassmorphism & Micro-animations**: Use subtle backdrop blurs (`backdrop-filter: blur(12px)`), rounded corners (`border-radius: 12px` to `18px`), and smooth micro-interactions (`transition: all 0.25s ease`).
    - **RTL Layout First**: Design all UI components with native Right-to-Left (RTL) Arabic text alignment and clean English technical/medical labels.
 
+4. 📐 **Square-ish Rounded Borders for Badges, Pills & Tabs (NO Pill/Capsule Shapes)**:
+   - **STRICTLY FORBIDDEN**: Using circular capsule / pill borders (`border-radius: 999px`, `border-radius: 20px+`, `border-radius: 50%` on non-circles) on badges, tags, tabs, status chips, or bordered text elements.
+   - **REQUIRED**: Clean, modern squarish rounded rectangles (`border-radius: 8px` to `10px`), matching the portal's iconic `[ ✕ ]` close button (`10px`) and `[ 🔄 رمز السجل: 4004 ]` PIN badge (`8px`). All badges, pills, tabs, datetime tags, mode selectors, and status labels must strictly use `border-radius: 8px` to `10px`.
+
 ### B. ⭐ Master Design Token Theme System (`fonts/fonts.css`)
 To eliminate visual drift and ensure seamless visual harmony across all 5 portal endpoints, Dent2025 uses a **centralized CSS Design Token System** defined in `:root` inside `frontend-html box in wordpress astra/fonts/fonts.css`.
 
