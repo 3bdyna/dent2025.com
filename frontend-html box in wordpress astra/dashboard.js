@@ -599,7 +599,7 @@ window.dentRenderNativeFiles = async function(containerId, folderId, forceRefres
 
     if (!folderId) {
         container.innerHTML = `
-            <div style="padding: 20px 12px; text-align: center; color: #94a3b8; font-size: 0.85rem;">
+            <div style="padding: 20px 12px; text-align: center; color: #a1a1aa; font-size: 0.85rem;">
                 لم يتم ربط مجلد جوجل درايف لهذه المادة بعد.
             </div>`;
         return;
@@ -623,7 +623,7 @@ window.dentRenderNativeFiles = async function(containerId, folderId, forceRefres
         const subIdMatch = containerId.match(/\d+$/);
         const subId = subIdMatch ? subIdMatch[0] : '';
         container.innerHTML = `
-            <div style="padding: 20px 12px; text-align: center; color: #94a3b8; font-size: 0.85rem; line-height: 1.6;">
+            <div style="padding: 20px 12px; text-align: center; color: #a1a1aa; font-size: 0.85rem; line-height: 1.6;">
                 تعذر تحميل قائمة الملفات السريعة مباشرة من درايف.<br>
                 <div style="display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap;">
                     <button type="button" class="dent-files-refresh-btn" onclick="dentRenderNativeFiles('${containerId}', '${folderId}', true)">
@@ -641,7 +641,7 @@ window.dentRenderNativeFiles = async function(containerId, folderId, forceRefres
 
     if (files.length === 0) {
         container.innerHTML = `
-            <div style="padding: 20px 12px; text-align: center; color: #94a3b8; font-size: 0.85rem;">
+            <div style="padding: 20px 12px; text-align: center; color: #a1a1aa; font-size: 0.85rem;">
                 المجلد فارغ حالياً (لا توجد ملفات مرفوعة).
                 <div style="margin-top: 8px;">
                     <button type="button" class="dent-files-refresh-btn" onclick="dentRenderNativeFiles('${containerId}', '${folderId}', true)">
