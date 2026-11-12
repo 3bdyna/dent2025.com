@@ -147,11 +147,10 @@
         user-select: none;
     }
 
-    /* 3-Button Action Grid (Equal Columns, Never Wraps into Staircase) */
-    .dent-absence-actions-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
+    /* Top Action Row */
+    .dent-absence-actions-row {
+        display: flex;
+        justify-content: flex-start;
         margin-bottom: 8px;
     }
     .dent-absence-btn-action {
@@ -168,7 +167,7 @@
         align-items: center;
         justify-content: center;
         gap: 6px;
-        padding: 0 6px;
+        padding: 0 14px;
         white-space: nowrap;
         transition: all 0.18s ease;
         box-sizing: border-box;
@@ -731,9 +730,11 @@
         .dent-absence-meta-dot {
             display: none;
         }
-        .dent-absence-actions-grid {
-            grid-template-columns: 1fr;
-            gap: 6px;
+        .dent-absence-actions-row {
+            width: 100%;
+        }
+        .dent-absence-actions-row .dent-absence-btn-action {
+            width: 100%;
         }
         .dent-absence-tools-bar {
             flex-direction: column;
@@ -778,19 +779,11 @@
             ملاحظة: الحسابات تقريبية واسترشادية، وتظل السجلات الرسمية في بوابة النظام الأكاديمي هي المرجع المعتمد.
         </div>
 
-        <!-- 3-Button Action Grid -->
-        <div class="dent-absence-actions-grid">
+        <!-- Top Action Bar -->
+        <div class="dent-absence-actions-row">
             <button type="button" class="dent-absence-btn-action" onclick="addCustomAbsenceSubject()">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-                <span>إضافة مادة</span>
-            </button>
-            <button type="button" class="dent-absence-btn-action" onclick="importOfficialPortalAbsences()" title="استيراد وتعيين الغيابات المسجلة في البوابة الأكاديمية">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span>استيراد غيابات البوابة</span>
-            </button>
-            <button type="button" class="dent-absence-btn-action" onclick="syncWithOfficialCatalog()" title="مطابقة ساعات ونسب المواد مع بوابة جامعة جازان">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-                <span>مطابقة النسب</span>
+                <span>+ إضافة مادة مخصصة</span>
             </button>
         </div>
 
@@ -892,6 +885,7 @@
 
     function cleanTokens(text) {
         if (!text) return [];
+        const STOP_WORDS = ['and', 'the', 'for', 'with', 'pre', 'clinical', 'general', 'advanced', 'department', 'course', 'oral', 'dental', 'dentistry', 'health', 'public', 'مقرر', 'مادة', 'طب', 'عام', 'متقدم', 'اسنان', 'فم', 'صحة', 'صحه', 'الفم', 'الاسنان'];
         return String(text)
             .toLowerCase()
             .replace(/&/g, ' and ')
@@ -900,7 +894,7 @@
             .replace(/[يى]/g, 'ي')
             .replace(/[^a-z0-9\u0600-\u06FF\s]/g, ' ')
             .split(/\s+/)
-            .filter(t => t.length > 2 && !['and', 'the', 'for', 'with', 'pre', 'clinical', 'general', 'advanced', 'department', 'course', 'مقرر', 'مادة', 'طب', 'عام', 'متقدم'].includes(t));
+            .filter(t => t.length > 2 && !STOP_WORDS.includes(t));
     }
 
     // Official Jazan University Course Contact Hours Catalog (Matches Portal Percentages Exactly)
@@ -909,43 +903,43 @@
         const clean = normAr(subName);
 
         // --- YEARLY COURSES (Run Both Semesters) ---
-        // 1. PRO341 / 341عاض - Pre-clinical Removable Prosthodontics (Total: 54.0 contact hrs -> 1 absence = 1.85%)
+        // 1. PRO341 / 341عاض - Pre-clinical Removable Prosthodontics (Total: 54.0 contact hrs -> 4 absences = 7.41%)
         if (clean.includes('341') || clean.includes('pro341') || clean.includes('عاض') || clean.includes('استعاض') || clean.includes('prostho')) {
             return { weeklySessions: 3, totalSessions: 54.0, isYearly: true };
         }
-        // 2. OPT321 / 321صحح - Pre-clinical Restorative / Operative Dentistry (Total: 44 contact hrs -> 3 absences = 6.82% ≈ 6.8% on portal)
+        // 2. OPT321 / 321صحح - Pre-clinical Restorative / Operative Dentistry (Total: 44.0 contact hrs -> 3 absences = 6.82% ≈ 6.8% on portal)
         if (clean.includes('321') || clean.includes('opt321') || clean.includes('صحح') || clean.includes('اصحاح') || clean.includes('تحفظي') || clean.includes('restor') || clean.includes('operat')) {
-            return { weeklySessions: 3, totalSessions: 44, isYearly: true };
+            return { weeklySessions: 3, totalSessions: 44.0, isYearly: true };
         }
 
         // --- SEMESTER 1 ONLY COURSES (End This Semester) ---
-        // 1. DIG311 / 311شخص - Oral & Maxillofacial Radiology (Total: 19.34 contact hrs -> 1 absence = 5.17%)
+        // 1. DIG311 / 311شخص - Oral & Maxillofacial Radiology (Total: 34.80 contact hrs -> 3 absences = 8.62%)
         if (clean.includes('311') || clean.includes('dig311') || clean.includes('شخص') || clean.includes('اشع') || clean.includes('radio') || clean.includes('radiology')) {
-            return { weeklySessions: 1, totalSessions: 19.34, isYearly: false };
+            return { weeklySessions: 2, totalSessions: 34.80, isYearly: false };
         }
-        // 2. DIG313-2 / 313شخص - Oral Diagnosis (Total: 17.33 contact hrs -> 1 absence = 5.77%)
+        // 2. DIG313-2 / 313شخص - Oral Diagnosis (Total: 26.0 contact hrs -> 2 absences = 7.69%)
         if (clean.includes('313') || clean.includes('dig313') || clean.includes('تشخيص') || clean.includes('diagno') || clean.includes('diagnosis')) {
-            return { weeklySessions: 1, totalSessions: 17.33, isYearly: false };
+            return { weeklySessions: 2, totalSessions: 26.0, isYearly: false };
         }
-        // 3. PRO322 / 322عاض / 331صحح - Advanced Dental Biomaterials (Total: 27.0 contact hrs -> 2 absences = 7.41%)
-        if (clean.includes('322') || clean.includes('pro322') || clean.includes('331') || clean.includes('مواد') || clean.includes('biomat')) {
+        // 3. PRO322 / 322عاض - Advanced Dental Biomaterials (Total: 27.0 contact hrs -> 2 absences = 7.41%)
+        if (clean.includes('322') || clean.includes('pro322') || clean.includes('مواد') || clean.includes('biomat')) {
             return { weeklySessions: 2, totalSessions: 27.0, isYearly: false };
         }
         // 4. DMS351 / 351طبب - General Pathology (Total: 30.0 contact hrs -> 1 absence = 3.33%)
         if (clean.includes('351') || clean.includes('dms351') || clean.includes('امراض') || clean.includes('patho') || clean.includes('pathology')) {
             return { weeklySessions: 2, totalSessions: 30.0, isYearly: false };
         }
-        // 5. DMS352 / 352طبب - Oral Microbiology & Immunology (Total: 23.64 contact hrs -> 1 absence = 4.23%)
+        // 5. DMS352 / 352طبب - Oral Microbiology & Immunology (Total: 25.82 contact hrs -> 4 absences = 15.49%)
         if (clean.includes('352') || clean.includes('dms352') || clean.includes('ميكرو') || clean.includes('احياءدقيق') || clean.includes('microbio') || clean.includes('immunol') || clean.includes('مناع')) {
-            return { weeklySessions: 2, totalSessions: 23.64, isYearly: false };
+            return { weeklySessions: 2, totalSessions: 25.82, isYearly: false };
         }
-        // 6. DMS353 / 353طبب / 361طبب - Pharmacology (Total: 15.0 contact hrs -> 1 absence = 6.67%)
+        // 6. DMS353 / 353طبب / 361طبب - Pharmacology (Total: 15.0 contact hrs -> 2 absences = 13.33%)
         if (clean.includes('353') || clean.includes('dms353') || clean.includes('361') || clean.includes('ادوي') || clean.includes('pharma')) {
             return { weeklySessions: 1, totalSessions: 15.0, isYearly: false };
         }
-        // 7. DPH331 / 331صح / 371طبب - Dental Public Health
-        if (clean.includes('dph') || clean.includes('dph331') || clean.includes('371') || clean.includes('صحه') || clean.includes('صح') || clean.includes('health') || clean.includes('publichealth')) {
-            return { weeklySessions: 2, totalSessions: 34.0, isYearly: false };
+        // 7. DPH331 / 331صح - Dental Public Health (Total: 15.0 contact hrs -> 1 absence = 6.67%)
+        if (clean.includes('dph') || clean.includes('dph331') || clean.includes('331') || clean.includes('صحه') || clean.includes('صح') || clean.includes('health') || clean.includes('publichealth')) {
+            return { weeklySessions: 1, totalSessions: 15.0, isYearly: false };
         }
 
         return null;
@@ -986,18 +980,9 @@
         // 1. Normalized direct match
         const cClean = normAr(cSub.replace(/&/g, ' and '));
         const sClean = normAr(sName.replace(/&/g, ' and '));
-        if (cClean === sClean || cClean.includes(sClean) || sClean.includes(cClean)) return true;
+        if (cClean === sClean) return true;
 
-        // 2. Token overlap
-        const cTokens = cleanTokens(cSub);
-        const sTokens = cleanTokens(sName);
-        for (let ct of cTokens) {
-            for (let st of sTokens) {
-                if (ct === st || (ct.length >= 4 && st.length >= 4 && (ct.includes(st) || st.includes(ct)))) return true;
-            }
-        }
-
-        // 3. Domain dictionary mapping (English <-> Arabic / Key roots)
+        // 2. Domain dictionary mapping (English <-> Arabic / Key roots) - prioritized to prevent generic collisions
         const roots = [
             ['radio', 'اشعه', 'radiology', 'xray', 'maxillofacial'],
             ['microbio', 'احياء', 'ميكرو', 'microbiology', 'immunology', 'مناعه'],
@@ -1016,7 +1001,7 @@
             ['physio', 'وظائف', 'physiology'],
             ['histo', 'انسجه', 'histology'],
             ['biochem', 'كيمياء', 'biochemistry'],
-            ['health', 'صحه', 'publichealth', 'community']
+            ['publichealth', 'صحة عامة', 'صحه عامه', 'public oral health', 'dental public health']
         ];
 
         const cFull = (cSub + ' ' + cClean).toLowerCase();
@@ -1026,6 +1011,16 @@
             const cHas = group.some(r => cFull.includes(r));
             const sHas = group.some(r => sFull.includes(r));
             if (cHas && sHas) return true;
+        }
+
+        // 3. Filtered token overlap (stops words like oral/dental filtered out)
+        const cTokens = cleanTokens(cSub);
+        const sTokens = cleanTokens(sName);
+        for (let ct of cTokens) {
+            for (let st of sTokens) {
+                if (ct === st) return true;
+                if (ct.length >= 5 && st.length >= 5 && (ct.includes(st) || st.includes(ct))) return true;
+            }
         }
 
         return false;
@@ -1134,7 +1129,7 @@
             const subName = String(item.sub.name || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
             const typeLabel = item.sub.isYearly ? 'سنوي' : 'فصلي';
             const addedUnits = item.added || 1;
-            const unitsLabel = addedUnits > 1 ? `+${addedUnits} ساعة` : '+1 ساعة';
+            const unitsLabel = addedUnits > 1 ? `+${addedUnits} غياب` : '+1 غياب';
             itemsHtml += `
                 <div class="dent-fb-chip">
                     <span class="dent-fb-chip-name" title="${subName}">${subName} (${typeLabel})</span>
@@ -1148,7 +1143,7 @@
                 <div class="dent-fb-top">
                     <div class="dent-fb-title">
                         <span class="dent-fb-check">✓</span>
-                        <span>تم تسجيل غياب <strong>(${sessionsCount})</strong> حصص ليوم <strong>${dayName}</strong>:</span>
+                        <span>تم تسجيل غياب <strong>(${sessionsCount})</strong> محاضرات ليوم <strong>${dayName}</strong>:</span>
                     </div>
                     <div class="dent-fb-actions">
                         <button type="button" class="dent-fb-undo-btn" onclick="undoDayAbsence()" title="تراجع عن هذه العملية">تراجع ↺</button>
@@ -1187,15 +1182,9 @@
         showDayFeedback('<span style="color: #94a3b8;">تم التراجع عن تسجيل غياب اليوم بنجاح.</span>');
     }
 
-    // Returns absence units for a class based on its duration (each 50-min slot = 1 absence)
+    // Returns absence units for a class session (each scheduled timetable lecture/lab = 1 absence)
     function getClassAbsenceUnits(c) {
-        const st = (c.start_time || '').split(':');
-        const et = (c.end_time || '').split(':');
-        if (st.length < 2 || et.length < 2) return 1;
-        const diffMin = (parseInt(et[0]) * 60 + parseInt(et[1])) - (parseInt(st[0]) * 60 + parseInt(st[1]));
-        if (diffMin <= 0) return 1;
-        // Round to nearest 50-min slot (1 lecture = 50 min, 2 hrs ≈ 2 slots, 3 hrs practical ≈ 3 slots)
-        return Math.max(1, Math.round(diffMin / 50));
+        return 1;
     }
 
     function applyDayAbsence() {
@@ -1452,10 +1441,10 @@
                 }
             }
 
-            // Auto-heal legacy stale saved state for official catalog courses (e.g. 311, 313, 322, 351, 321, 341, 352)
+            // Auto-heal legacy stale saved state for official catalog courses (e.g. 311, 313, 322, 331, 351, 321, 341, 352, 353)
             if (defaults && defaults.totalSessions) {
-                const isLegacyState = !savedState || savedState.version !== 7;
-                const isStaleTotal = customTotalSessions === 112 || customTotalSessions === 54 || customTotalSessions === 51 || customTotalSessions === 51.55 || customTotalSessions === 44.12 || customTotalSessions === 34 || customTotalSessions === 34.36 || customTotalSessions === null;
+                const isLegacyState = !savedState || savedState.version !== 8;
+                const isStaleTotal = isLegacyState || customTotalSessions === 19.34 || customTotalSessions === 17.33 || customTotalSessions === 23.64 || customTotalSessions === 112 || customTotalSessions === 54 || customTotalSessions === 51 || customTotalSessions === 51.55 || customTotalSessions === 44.12 || customTotalSessions === 34 || customTotalSessions === 34.36 || customTotalSessions === null;
                 const isMismatchedYearly = (defaults.isYearly !== undefined && isYearly !== defaults.isYearly);
                 
                 if (isLegacyState || isStaleTotal || isMismatchedYearly) {
@@ -1703,7 +1692,7 @@
         const yearlySyncKey = getYearlySyncStorageKey();
 
         const state = {
-            version: 7,
+            version: 8,
             weeks: dentAbsenceWeeks,
             subjects: {},
             customSubjects: []
@@ -1738,88 +1727,6 @@
             localStorage.setItem(storageKey, JSON.stringify(state));
             localStorage.setItem(yearlySyncKey, JSON.stringify(yearlySyncData));
         } catch(e){}
-    }
-
-    function syncWithOfficialCatalog() {
-        if (!dentAbsenceSubjects || dentAbsenceSubjects.length === 0) return;
-        dentAbsenceSubjects.forEach(sub => {
-            const defaults = dentAbsenceSelection ? getJazanUniversityCourseDefaults(sub.name, dentAbsenceSelection.specialty, dentAbsenceSelection.year) : null;
-            if (defaults && defaults.totalSessions) {
-                sub.customTotalSessions = defaults.totalSessions;
-                sub.isYearly = defaults.isYearly;
-                if (defaults.weeklySessions) sub.weeklySessions = defaults.weeklySessions;
-            }
-        });
-        saveAbsenceState();
-        renderAbsenceSubjects();
-        showDayFeedback('<span style="color: #10b981; font-weight: bold;">✓ تم مطابقة جميع ساعات ونسب المقررات مع بوابة جامعة جازان بنجاح (100%)!</span>');
-    }
-
-    function importOfficialPortalAbsences() {
-        // Build rows from loaded subjects — prefer live dentAbsenceSubjects, fallback to catalog list
-        const subjectList = dentAbsenceSubjects.length > 0
-            ? dentAbsenceSubjects
-            : [];
-
-        if (subjectList.length === 0) {
-            showDayFeedback('<span style="color: #fbbf24;">⚠ الرجاء فتح الحاسبة أولاً لتحميل المواد قبل الاستيراد.</span>');
-            return;
-        }
-
-        let rowsHtml = subjectList.map((sub, idx) => {
-            const safeName = String(sub.name || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-            return `
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-                    <label style="flex:1; font-size:0.78rem; color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${safeName}">${safeName}</label>
-                    <input type="number" min="0" max="200" value="${sub.absences || 0}"
-                        id="portal-import-${idx}"
-                        style="width:60px; background:#27272a; border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:6px; padding:2px 6px; font-size:0.82rem; text-align:center;">
-                </div>`;
-        }).join('');
-
-        const fb = document.getElementById('dent-day-feedback');
-        if (!fb) return;
-
-        fb.innerHTML = `
-            <div class="dent-fb-card" style="max-height:60vh; overflow-y:auto;">
-                <div class="dent-fb-top">
-                    <div class="dent-fb-title">
-                        <span style="color:#6ee7b7; font-size:0.85rem; font-weight:700;">📥 استيراد الغيابات من البوابة الأكاديمية</span>
-                    </div>
-                    <button type="button" class="dent-fb-close-btn" onclick="hideDayFeedback()">×</button>
-                </div>
-                <div style="font-size:0.72rem; color:#94a3b8; margin-bottom:8px;">
-                    أدخل عدد مرات الغياب لكل مادة كما هو مسجل في البوابة، ثم اضغط تطبيق.
-                </div>
-                <div id="portal-import-rows">${rowsHtml}</div>
-                <div style="display:flex; gap:8px; margin-top:10px;">
-                    <button type="button" onclick="applyPortalImport()" style="flex:1; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#6ee7b7; padding:6px; border-radius:7px; font-size:0.82rem; font-weight:700; cursor:pointer; font-family:inherit;">✓ تطبيق</button>
-                    <button type="button" onclick="hideDayFeedback()" style="background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); color:#94a3b8; padding:6px 12px; border-radius:7px; font-size:0.82rem; cursor:pointer; font-family:inherit;">إلغاء</button>
-                </div>
-            </div>
-        `;
-        fb.style.display = 'block';
-        clearTimeout(window.dentFbTimer);
-        // Keep open until user acts — no auto-close timer
-        window._portalImportSubjectCount = subjectList.length;
-    }
-
-    function applyPortalImport() {
-        const count = window._portalImportSubjectCount || dentAbsenceSubjects.length;
-        let changed = 0;
-        for (let i = 0; i < count; i++) {
-            const input = document.getElementById(`portal-import-${i}`);
-            if (!input || !dentAbsenceSubjects[i]) continue;
-            const val = Math.max(0, parseInt(input.value) || 0);
-            dentAbsenceSubjects[i].absences = val;
-            changed++;
-        }
-        if (changed > 0) {
-            saveAbsenceState();
-            renderAbsenceSubjects();
-            hideDayFeedback();
-            showDayFeedback(`<span style="color:#10b981; font-weight:bold;">✓ تم استيراد غيابات ${changed} مادة من البوابة الأكاديمية بنجاح.</span>`);
-        }
     }
 
     function calculateQuickAbsence() {
