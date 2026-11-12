@@ -599,19 +599,14 @@ window.dentRenderNativeFiles = async function(containerId, folderId, forceRefres
 
     if (!folderId) {
         container.innerHTML = `
-            <div style="padding: 24px 12px; text-align: center; color: #94a3b8; font-size: 0.85rem;">
+            <div style="padding: 20px 12px; text-align: center; color: #94a3b8; font-size: 0.85rem;">
                 لم يتم ربط مجلد جوجل درايف لهذه المادة بعد.
             </div>`;
         return;
     }
 
-    // Skeleton loading state
+    // Minimal skeleton loading state
     container.innerHTML = `
-        <div class="dent-files-toolbar">
-            <div class="dent-files-search-wrap">
-                <input type="text" class="dent-files-search-input" placeholder="جاري تجهيز الملفات..." disabled>
-            </div>
-        </div>
         <div class="dent-files-list">
             <div class="dent-file-skeleton"></div>
             <div class="dent-file-skeleton"></div>
@@ -632,11 +627,11 @@ window.dentRenderNativeFiles = async function(containerId, folderId, forceRefres
                 تعذر تحميل قائمة الملفات السريعة مباشرة من درايف.<br>
                 <div style="display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap;">
                     <button type="button" class="dent-files-refresh-btn" onclick="dentRenderNativeFiles('${containerId}', '${folderId}', true)">
-                        إعادة المحاولة 🔄
+                        إعادة المحاولة
                     </button>
                     ${subId ? `
                         <button type="button" class="dent-files-refresh-btn" onclick="toggleDriveViewMode('${tabType}', ${subId})">
-                            عرض في مستعرض درايف 📂
+                            مستعرض درايف
                         </button>
                     ` : ''}
                 </div>
@@ -646,46 +641,41 @@ window.dentRenderNativeFiles = async function(containerId, folderId, forceRefres
 
     if (files.length === 0) {
         container.innerHTML = `
-            <div style="padding: 24px 12px; text-align: center; color: #94a3b8; font-size: 0.85rem;">
+            <div style="padding: 20px 12px; text-align: center; color: #94a3b8; font-size: 0.85rem;">
                 المجلد فارغ حالياً (لا توجد ملفات مرفوعة).
                 <div style="margin-top: 8px;">
                     <button type="button" class="dent-files-refresh-btn" onclick="dentRenderNativeFiles('${containerId}', '${folderId}', true)">
-                        تحديث من درايف 🔄
+                        تحديث من درايف
                     </button>
                 </div>
             </div>`;
         return;
     }
 
-    // Store in-memory for live filtering
-    const storeKey = `${containerId}_files`;
-    window.dentDriveFilesStore[storeKey] = files;
-
     const renderListItems = (items) => {
-        if (items.length === 0) {
-            return '<div style="padding: 16px; text-align: center; color: #64748b; font-size: 0.82rem;">لا توجد ملفات مطابقة للبحث.</div>';
-        }
         return items.map(f => {
-            const badge = dentGetFileBadgeInfo(f.name);
+            const safeExt = (f.name || '').split('.').pop().replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase();
             const safeFileId = encodeURIComponent(String(f.id || '').replace(/[^a-zA-Z0-9_-]/g, ''));
             const rawViewUrl = f.url || `https://drive.google.com/file/d/${safeFileId}/view`;
             const viewUrl = dentEscapeHtml(dentSafeUrl(rawViewUrl));
             const downloadUrl = dentEscapeHtml(`https://drive.google.com/uc?export=download&id=${safeFileId}`);
+            const extTag = safeExt ? `<span class="dent-file-ext-tag">${safeExt}</span>` : '';
             return `
                 <div class="dent-file-item">
                     <div class="dent-file-main">
-                        <div class="dent-file-icon-badge ${badge.cls}">${badge.label}</div>
+                        <svg class="dent-file-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                         <div class="dent-file-title" dir="auto" title="${dentEscapeHtml(f.name)}">
                             ${dentEscapeHtml(f.name)}
                         </div>
+                        ${extTag}
                     </div>
                     <div class="dent-file-actions">
-                        <a href="${viewUrl}" target="_blank" rel="noopener noreferrer" class="dent-file-btn dent-file-btn-view" title="معاينة الملف">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <a href="${viewUrl}" target="_blank" rel="noopener noreferrer" class="dent-file-btn" title="معاينة">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                             <span>معاينة</span>
                         </a>
-                        <a href="${downloadUrl}" target="_blank" rel="noopener noreferrer" class="dent-file-btn dent-file-btn-download" title="تحميل مباشر">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <a href="${downloadUrl}" target="_blank" rel="noopener noreferrer" class="dent-file-btn" title="تحميل">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                             <span>تحميل</span>
                         </a>
                     </div>
@@ -695,35 +685,17 @@ window.dentRenderNativeFiles = async function(containerId, folderId, forceRefres
     };
 
     container.innerHTML = `
-        <div class="dent-files-toolbar">
-            <div class="dent-files-search-wrap">
-                <input type="text" class="dent-files-search-input" id="${containerId}-search" placeholder="ابحث في ملفات ومحاضرات المادة...">
-                <span class="dent-files-search-icon">🔍</span>
-            </div>
-            <div class="dent-files-meta-actions">
-                <span class="dent-files-badge" id="${containerId}-count">${files.length} ملف</span>
-                <button type="button" class="dent-files-refresh-btn" onclick="dentRenderNativeFiles('${containerId}', '${folderId}', true)" title="إعادة جلب الملفات المحدثة من درايف">
-                    <span>تحديث</span> 🔄
-                </button>
-            </div>
+        <div class="dent-files-header">
+            <span class="dent-files-count">${files.length} ملف</span>
+            <button type="button" class="dent-files-refresh-btn" onclick="dentRenderNativeFiles('${containerId}', '${folderId}', true)" title="تحديث الملفات">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                <span>تحديث</span>
+            </button>
         </div>
-        <div class="dent-files-list" id="${containerId}-list">
+        <div class="dent-files-list">
             ${renderListItems(files)}
         </div>
     `;
-
-    // Filter event listener
-    const searchInput = document.getElementById(`${containerId}-search`);
-    const listEl = document.getElementById(`${containerId}-list`);
-    const countEl = document.getElementById(`${containerId}-count`);
-    if (searchInput && listEl) {
-        searchInput.addEventListener('input', (e) => {
-            const q = (e.target.value || '').trim().toLowerCase();
-            const filtered = q ? files.filter(item => (item.name || '').toLowerCase().includes(q)) : files;
-            listEl.innerHTML = renderListItems(filtered);
-            if (countEl) countEl.textContent = `${filtered.length} ملف`;
-        });
-    }
 };
 
 // Toggle between Native 1-Click Files List and Classic Iframe
@@ -764,49 +736,6 @@ window.toggleDriveViewMode = function(tabType, subId, btn) {
             if (expBtn) expBtn.style.display = 'inline-flex';
         }
     }
-};
-
-// Global filter across all subjects and loaded lectures
-window.dentFilterAllSubjects = function(query) {
-    const q = (query || '').trim().toLowerCase();
-    const cards = document.querySelectorAll('.dent-chapter-details');
-    cards.forEach(card => {
-        const titleEl = card.querySelector('.dent-chapter-summary span');
-        const title = titleEl ? titleEl.textContent.toLowerCase() : '';
-        let hasMatch = !q || title.includes(q);
-
-        if (!hasMatch && q) {
-            // Check cached files in sessionStorage
-            const nativeChap = card.querySelector('.dent-native-files-container');
-            const folderId = nativeChap ? nativeChap.dataset.folderId : '';
-            if (folderId) {
-                const cleanId = String(folderId).replace(/[^a-zA-Z0-9_-]/g, '');
-                try {
-                    const cached = sessionStorage.getItem(`dent_files_${cleanId}`);
-                    if (cached) {
-                        const parsed = JSON.parse(cached);
-                        if (Array.isArray(parsed.files)) {
-                            hasMatch = parsed.files.some(f => (f.name || '').toLowerCase().includes(q));
-                        }
-                    }
-                } catch (e) {}
-            }
-            // Also check currently rendered files
-            if (!hasMatch) {
-                const files = card.querySelectorAll('.dent-file-title');
-                files.forEach(f => {
-                    if (f.textContent.toLowerCase().includes(q)) hasMatch = true;
-                });
-            }
-        }
-
-        if (hasMatch) {
-            card.style.display = '';
-            if (q) card.open = true;
-        } else {
-            card.style.display = 'none';
-        }
-    });
 };
 
 // Global helper for tab switching inside subject cards
@@ -872,10 +801,6 @@ function renderChapters(subjects) {
     <div class="dent-section-header">
         <h2 class="dent-section-title">المواد الدراسية</h2>
         <p class="dent-section-subtitle">اختر المادة للوصول الفوري إلى الشابترات والمحاضرات والمصادر الإضافية</p>
-        <div style="max-width: 460px; margin: 12px auto 0; position: relative;">
-            <input type="text" id="dent-all-subjects-filter" class="dent-files-search-input" style="padding: 9px 14px 9px 36px; font-size: 0.85rem; background: rgba(0,0,0,0.4);" placeholder="🔍 ابحث في أسماء المواد أو المحاضرات..." oninput="dentFilterAllSubjects(this.value)">
-            <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: #64748b; pointer-events: none;">🔍</span>
-        </div>
     </div>
     <div class="dent-chapters-wrapper">`;
 
