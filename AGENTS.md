@@ -88,6 +88,8 @@ my website dent2025/
 │   ├── dent_click.mp3                          # Universal mechanical audio click asset
 │   ├── gpa_calculator_elegant.txt              # Saudi 5.0 scale GPA Calculator widget code
 │   ├── absence_calculator.html                 # Jazan University Absence & Denial Calculator widget
+│   ├── weekly_meme.html                        # Weekly community meme card component ([dent_component file="weekly_meme.html"])
+│   ├── weekly_meme.webp                        # Current weekly community meme image (auto cache-busted)
 │   ├── admin_controls_main.html                # Main page lock trigger (🔒) & admin logout button
 │   ├── admin_controls.html                     # Main Admin Modal panel (Subject CRUD & Google Drive linker)
 │   ├── admin_schedule_lock.html                # Schedule timeline lock trigger & event management modal
@@ -257,7 +259,7 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 | WordPress Page Name | Page Slug | Required Shortcodes / Markup inside WordPress Block | Auto-Loaded Internal Scripts & Injections |
 |---|---|---|---|
 | **1. `landing page`** | `wolcome` | `[dent_component file="landing_page.html"]` | None (standalone track selection wizard) |
-| **2. `الصفحة الرئيسية — Front Page`** | *(static front)* | `[dent_component file="study_timer_banner_widget.html"]`<br>`[dent_component file="gpa_calculator_elegant.txt"]`<br>`[dent_component file="absence_calculator.html"]`<br>`[dent_component file="admin_controls_main.html"]`<br>*(Optional modular: `[dent_component file="calendar_tomorrow_alert.html"]`, `[dent_poll]`)* | `study_timer_banner_widget.html` embeds `<script defer src="/frontend_components/study_timer.js"></script>`.<br>`admin_controls_main.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` and `<script src="/frontend_components/dashboard.js"></script>`.<br>*Sitewide Injections in `wp_footer`:* `kinetic_grid.html` (p:5), `analytics_tracker.js` (p:30). |
+| **2. `الصفحة الرئيسية — Front Page`** | *(static front)* | `[dent_component file="study_timer_banner_widget.html"]`<br>`[dent_component file="gpa_calculator_elegant.txt"]`<br>`[dent_component file="absence_calculator.html"]`<br>`[dent_component file="admin_controls_main.html"]`<br>`[dent_component file="weekly_meme.html"]`<br>*(Optional modular: `[dent_component file="calendar_tomorrow_alert.html"]`, `[dent_poll]`)* | `study_timer_banner_widget.html` embeds `<script defer src="/frontend_components/study_timer.js"></script>`.<br>`admin_controls_main.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` and `<script src="/frontend_components/dashboard.js"></script>`.<br>*Sitewide Injections in `wp_footer`:* `kinetic_grid.html` (p:5), `analytics_tracker.js` (p:30). |
 | **3. `التقويم الدراسي`** | `التقويم-الدراسي` | `[dent_component file="schedule_markup.html"]`<br>`[dent_component file="schedule_script.js"]`<br>`[dent_component file="admin_schedule_lock.html"]` | `admin_schedule_lock.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>`.<br>`study_timer_banner_widget.html` auto-injected into `wp_footer` (p:20). |
 | **4. `المقررات والاختبارات`** | `المقررات-والاختبارات` | `[dent_component file="chapters_dynamic.html"]`<br>`[dent_component file="quiz_app.html"]`<br>`[dent_component file="admin_controls.html"]` | `chapters_dynamic.html` embeds `<script src="/frontend_components/dashboard.js"></script>`.<br>`admin_controls.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>`.<br>`study_timer_banner_widget.html` auto-injected into `wp_footer` (p:20). |
 | **5. `الجدول الدراسي`** | `جدول-الدراسي` | `[dent_component file="admin_classes_lock.html"]`<br>`<div id="dent-classes-target"></div>` | `admin_classes_lock.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` and `<script src="/frontend_components/dashboard.js"></script>`.<br>`study_timer_banner_widget.html` auto-injected into `wp_footer` (p:20). |
@@ -408,6 +410,19 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 - **Arabic/English BiDi Text Shaping**: Formats and sanitizes mixed-direction strings to prevent flipped text or reversed Arabic numbers on canvas exports.
 - **Granular Event Badging & Print Styles**: Dedicated styling for `quiz`, `assessment`, `research`, `homework`, `exam`, `midterm`, `final`, `deadline`, `holiday`, `payment`, `start`, and custom labels.
 - **Hijri Integration**: Gregorian timeline with dynamic Hijri month labels and auto-derivation via `Intl.DateTimeFormat('en-u-ca-islamic-umalqura')`.
+
+### E. Weekly Community Meme System (`weekly_meme.html` & `weekly_meme.webp`)
+- **Location on Site**: Bottom of the Front Page under `#features` ("My *weekly* memes area:").
+- **WordPress Shortcode**: `[dent_component file="weekly_meme.html"]` (replaces hardcoded Gutenberg image block).
+- **Image Source**: `/frontend_components/weekly_meme.webp`.
+- **Automatic Cache-Busting**: `dent2025-loader.php` automatically appends `?v={filemtime}` of `weekly_meme.webp` to prevent browser and LiteSpeed cache staleness.
+- **⭐ INSTANT CHAT UPDATE PROTOCOL**: When the user provides an image in chat or asks to "change the meme", "update the meme", or "new meme":
+  1. Save or convert the incoming image to WebP format at `frontend-html box in wordpress astra/weekly_meme.webp`.
+  2. Deploy immediately via:
+     ```bash
+     python tools/deploy_safe.py --note "Update weekly meme" "frontend-html box in wordpress astra/weekly_meme.webp"
+     ```
+  3. SafeDeploy uploads it in ~1s and flushes LiteSpeed cache. The new meme is live immediately with zero manual WordPress interaction.
 
 ---
 

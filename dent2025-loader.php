@@ -73,9 +73,9 @@ function dent2025_load_component_shortcode($atts) {
     $content = preg_replace('/<\?php\s*add_action.*?\?>/s', '', $content);
     $content = preg_replace('/<\?php\s*\};\s*\?>/s', '', $content);
 
-    // Automatically append ?v={filemtime} to any embedded <script src="..."> or <link href="..."> tags inside HTML blocks
+    // Automatically append ?v={filemtime} to any embedded <script src="...">, <link href="...">, or <img src="..."> tags inside HTML blocks
     $content = preg_replace_callback(
-        '/(src|href)=["\']([^"\']+\.(js|css))["\']/i',
+        '/(src|href)=["\']([^"\']+\.(js|css|webp|png|jpg|jpeg|gif|svg))["\']/i',
         function ($matches) use ($mtime) {
             $attr = $matches[1];
             $url = $matches[2];
