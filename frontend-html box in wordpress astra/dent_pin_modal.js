@@ -717,7 +717,15 @@
         if (submitBtn) submitBtn.disabled = true;
 
         const context = activeModal.opts.context || {};
-        const sel = (context.specialty) ? context : JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        let sel = {};
+        try {
+            sel = (context.specialty) ? context : JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        } catch(e) {
+            sel = {};
+        }
+        if (sel && sel.specialty === 'pre-med' && (sel.year === 0 || sel.year === '0')) {
+            sel.year = 1;
+        }
 
         const payload = {
             password: pin,

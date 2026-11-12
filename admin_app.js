@@ -5883,7 +5883,7 @@ window.AdminApp = {
             }
         });
 
-        const pct = Math.round((score / totalQs) * 100);
+        const pct = totalQs > 0 ? Math.round((score / totalQs) * 100) : 0;
         let badge = 'نتيجة ممتازة!';
         if (pct < 60) badge = 'تحتاج لمراجعة إضافية للمادة';
         else if (pct < 85) badge = 'نتيجة جيدة جداً!';

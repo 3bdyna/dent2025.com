@@ -260,7 +260,7 @@
             return;
         }
 
-        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        let sel = {}; try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
         if (window.dentPromptPin) {
             window.dentPromptPin({
                 title: 'تسجيل دخول المشرف',

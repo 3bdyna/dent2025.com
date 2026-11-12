@@ -50,7 +50,7 @@
             return;
         }
 
-        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        let sel = {}; try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
         if (window.dentPromptPin) {
             window.dentPromptPin({
                 title: 'تسجيل دخول المشرف',
@@ -95,7 +95,7 @@
         document.getElementById('dent-logout-main').style.display = 'block';
         // Refresh dashboard to show the Edit Announcements button
         if (typeof loadDashboardData === 'function') {
-            const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+            let sel = {}; try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
             if (sel.specialty) loadAnnouncements(sel);
         }
         if (typeof window.dentReloadQuizBank === 'function') {
@@ -117,7 +117,7 @@
         document.getElementById('dent-logout-main').style.display = 'none';
         // Refresh dashboard to hide the Edit Announcements button
         if (typeof loadDashboardData === 'function') {
-            const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+            let sel = {}; try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
             if (sel.specialty) loadAnnouncements(sel);
         }
         if (typeof window.dentReloadQuizBank === 'function') {

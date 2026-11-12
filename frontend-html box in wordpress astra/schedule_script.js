@@ -238,8 +238,12 @@ const ScheduleApp = {
             const cacheBuster = '&nocache=1&_t=' + Date.now();
 
             if (cachedData) {
-                this.eventsData = JSON.parse(cachedData);
-                this.render(this.eventsData);
+                try {
+                    this.eventsData = JSON.parse(cachedData);
+                    this.render(this.eventsData);
+                } catch(e) {
+                    try { localStorage.removeItem(cacheKey); } catch(err) {}
+                }
                 // Background fetch to keep cache updated silently
                 fetch(this.apiUrl + '?schedule_id=' + this.scheduleId + cacheBuster)
                     .then(r => r.json())

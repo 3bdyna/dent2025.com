@@ -88,7 +88,13 @@ function dentEnsureIframeSrc(iframe) {
 function dentGetSelection() {
     try {
         const raw = localStorage.getItem('dent2025_selection');
-        return raw ? JSON.parse(raw) : null;
+        if (!raw) return null;
+        const sel = JSON.parse(raw);
+        if (sel && sel.specialty === 'pre-med' && (sel.year === 0 || sel.year === '0')) {
+            sel.year = 1;
+            try { localStorage.setItem('dent2025_selection', JSON.stringify(sel)); } catch(err) {}
+        }
+        return sel;
     } catch(e) {
         return null;
     }

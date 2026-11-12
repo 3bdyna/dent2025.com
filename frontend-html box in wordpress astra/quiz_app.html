@@ -1294,7 +1294,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             return;
         }
 
-        const sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}');
+        let sel = {}; try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
         if (window.dentPromptPin) {
             window.dentPromptPin({
                 title: 'تعديل عنوان الاختبار',
@@ -3149,7 +3149,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             }
         });
 
-        const pct = Math.round((score / totalQs) * 100);
+        const pct = totalQs > 0 ? Math.round((score / totalQs) * 100) : 0;
         let badge = 'نتيجة ممتازة!';
         if (pct < 60) badge = 'تحتاج لمراجعة إضافية للمادة';
         else if (pct < 85) badge = 'نتيجة جيدة جداً!';

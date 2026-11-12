@@ -68,9 +68,9 @@ if ($action === 'track') {
     // Thread-safe update using file lock
     $fpHandle = fopen($filePath, 'c+');
     if ($fpHandle && flock($fpHandle, LOCK_EX)) {
-        $size = filesize($filePath);
-        $content = $size > 0 ? fread($fpHandle, $size) : '';
-        $sessions = json_decode($content, true);
+        rewind($fpHandle);
+        $content = stream_get_contents($fpHandle);
+        $sessions = !empty($content) ? json_decode($content, true) : null;
         if (!is_array($sessions)) {
             $sessions = [];
         }

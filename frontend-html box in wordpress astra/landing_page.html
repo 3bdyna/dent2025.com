@@ -104,7 +104,7 @@
         userSelection.specialty = spec;
         
         if (spec === 'pre-med') {
-            userSelection.year = 0; // Pre-med doesn't have years, skip straight to semester
+            userSelection.year = 1; // Pre-med is foundation Year 1, skip straight to semester
             showStep(3, "اختر الفصل الدراسي");
         } else {
             generateYearButtons(spec, 6);

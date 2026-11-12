@@ -205,8 +205,11 @@
             var raw = localStorage.getItem(selectionKey);
             var selection = raw ? JSON.parse(raw) : null;
 
-            if (!selection || !selection.specialty || !selection.year || !selection.semester) {
+            if (!selection || !selection.specialty || selection.year === undefined || selection.year === null || !selection.semester) {
                 return null;
+            }
+            if (selection.specialty === 'pre-med' && (selection.year === 0 || selection.year === '0')) {
+                selection.year = 1;
             }
 
             return selection;

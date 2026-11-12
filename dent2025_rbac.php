@@ -155,6 +155,7 @@ if (!function_exists('dent2025_get_passkey_info')) {
         if (empty($passkey) || !is_string($passkey)) {
             return null;
         }
+        $passkey = trim($passkey);
         $passwords = dent2025_load_passwords();
         foreach ($passwords as $entry) {
             if (isset($entry['passkey']) && is_string($entry['passkey']) && hash_equals($entry['passkey'], $passkey)) {
@@ -216,6 +217,9 @@ if (!function_exists('dent2025_check_rbac_permission')) {
         }
         if ($specialty === null || $year === null || $semester === null) {
             return false; // Context required for scoped passkeys
+        }
+        if ($specialty === 'pre-med' && ($year === 0 || $year === '0' || $year === 1 || $year === '1')) {
+            $year = 1;
         }
         $target_context = "{$specialty}_{$year}_{$semester}";
         if (!in_array($target_context, $allowed, true)) {

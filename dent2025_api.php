@@ -57,6 +57,7 @@ if ($action === 'data') {
     }
     $specialty = sanitize_text_field($_GET['specialty'] ?? '');
     $year = intval($_GET['year'] ?? 0);
+    if ($specialty === 'pre-med' && ($year === 0 || $year === 1)) { $year = 1; }
     $semester = intval($_GET['semester'] ?? 0);
 
     if (empty($specialty) || empty($semester)) {
@@ -302,7 +303,7 @@ if ($action === 'study_sync_data') {
         "last_synced" => time()
     ];
 
-    file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    dent2025_safe_atomic_save_json($file, $data);
     echo json_encode(["success" => true, "message" => "Study data synced successfully"]);
     exit;
 }
@@ -391,7 +392,7 @@ function dent2025_clear_cache() {
 // --- MANAGE DATA (Add/Edit/Delete/Auth/Passkeys) ---
 $raw_input = file_get_contents("php://input");
 $input = json_decode($raw_input, true) ?: [];
-$password = $input['password'] ?? ($_POST['password'] ?? '');
+$password = trim((string)($input['password'] ?? ($_POST['password'] ?? '')));
 
 if ($action === 'check_auth') {
     $client_ip = dent2025_get_client_ip();
@@ -615,6 +616,7 @@ if ($action === 'delete_password') {
 if ($action === 'save_classes') {
     $specialty = $input['specialty'] ?? null;
     $year = isset($input['year']) ? intval($input['year']) : null;
+    if ($specialty === 'pre-med' && ($year === 0 || $year === 1)) { $year = 1; }
     $semester = isset($input['semester']) ? intval($input['semester']) : null;
 
     if (!dent2025_check_rbac_permission($password, 'timetable', $specialty, $year, $semester)) {
@@ -668,6 +670,7 @@ if ($action === 'save_classes') {
 if ($action === 'add') {
     $specialty = sanitize_text_field($input['specialty'] ?? '');
     $year = isset($input['year']) ? intval($input['year']) : null;
+    if ($specialty === 'pre-med' && ($year === 0 || $year === 1)) { $year = 1; }
     $semester = isset($input['semester']) ? intval($input['semester']) : null;
 
     if (!dent2025_check_rbac_permission($password, 'add_subject', $specialty, $year, $semester)) {
