@@ -1,27 +1,19 @@
 <style>
-/* Center the weekly meme container, heading, and image */
-#features,
-.wp-container-core-group-is-layout-df95c0ba {
-    text-align: center !important;
-}
-
-#features p,
-#features p.wp-block-paragraph,
+/* Keep the section heading text on the left */
 #features p.has-text-align-left {
-    text-align: center !important;
-    margin-left: auto !important;
+    text-align: left !important;
+    margin-left: 0 !important;
     margin-right: auto !important;
 }
 
+/* Center only the meme image container */
 .dent-weekly-meme-outer {
     display: flex !important;
-    flex-direction: column !important;
     justify-content: center !important;
     align-items: center !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 1.5rem auto !important;
-    text-align: center !important;
     clear: both !important;
 }
 
@@ -41,14 +33,19 @@ figure.dent-weekly-meme-figure,
 #features figure.dent-weekly-meme-figure img,
 #features img#dent-weekly-meme-img {
     display: block !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
+    margin: 0 auto !important;
     max-width: 100% !important;
     width: 656px !important;
     height: auto !important;
     border-radius: 16px !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.45), 0 4px 10px rgba(0, 0, 0, 0.25) !important;
+    transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+}
+
+#dent-weekly-meme-img:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.6), 0 6px 14px rgba(0, 0, 0, 0.3) !important;
 }
 </style>
 
