@@ -549,7 +549,7 @@ async function dentFetchFolderFiles(folderId, forceRefresh = false) {
             const cached = sessionStorage.getItem(cacheKey);
             if (cached) {
                 const parsed = JSON.parse(cached);
-                if (Date.now() - parsed.timestamp < 1800000 && Array.isArray(parsed.files)) { // 30 mins
+                if (Date.now() - parsed.timestamp < 180000 && Array.isArray(parsed.files)) { // 3 mins
                     return parsed.files;
                 }
             }
@@ -955,40 +955,6 @@ function renderChapters(subjects) {
             }
         });
     });
-
-    // Device-Aware Idle Background Queue:
-    setTimeout(() => {
-        const allDetails = Array.from(container.querySelectorAll('.dent-chapter-details'));
-        if (allDetails.length === 0) return;
-
-        const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
-
-        const limit = isMobile ? Math.min(2, allDetails.length) : allDetails.length;
-        for (let i = 0; i < limit; i++) {
-            const iframe = allDetails[i].querySelector('.dent-tab-panel[id^="dent-panel-chapters-"] iframe');
-            if (dentIsIframeUnloaded(iframe)) {
-                if (!window.dentIframeQueue.includes(iframe)) {
-                    window.dentIframeQueue.push(iframe);
-                }
-            }
-        }
-
-        if (!isMobile) {
-            allDetails.forEach(det => {
-                const matIframe = det.querySelector('.dent-tab-panel[id^="dent-panel-materials-"] iframe');
-                if (dentIsIframeUnloaded(matIframe)) {
-                    if (!window.dentIframeQueue.includes(matIframe)) {
-                        window.dentIframeQueue.push(matIframe);
-                    }
-                }
-            });
-        }
-
-        if (!window.isDentIframeProcessing && window.dentIframeQueue.length > 0) {
-            window.isDentIframeProcessing = true;
-            setTimeout(processDentIframeQueue, isMobile ? 800 : 1000);
-        }
-    }, 1200);
 }
 
 window.refreshIframe = function(iframeId) {

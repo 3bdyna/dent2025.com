@@ -1419,6 +1419,15 @@ function fetchDriveFolderRecursive($folderId, $prefix = '', $depth = 0) {
     curl_close($ch);
 
     if ($httpCode !== 200 || empty($html)) {
+        // Log rate-limiting or server errors for admin monitoring
+        if ($httpCode === 429 || $httpCode === 403 || $httpCode >= 500) {
+            $errFile = __DIR__ . '/gemini_keys_data/drive_scraper_error.json';
+            @file_put_contents($errFile, json_encode([
+                'timestamp' => date('Y-m-d H:i:s'),
+                'http_code' => $httpCode,
+                'folder_id' => $folderId
+            ], JSON_PRETTY_PRINT));
+        }
         return [];
     }
     
@@ -1461,13 +1470,8 @@ function fetchDriveFolderCached($folderId, $forceRefresh = false) {
     
     $cacheDir = getDriveFolderCacheDir();
     $cacheFile = $cacheDir . '/dfolder_' . preg_replace('/[^a-zA-Z0-9_-]/', '', $folderId) . '.json';
-    $cacheTtl = 1800; // 30 minutes (reduced from 4 hours to ensure fresh content)
+    $cacheTtl = 180; // 3 minutes TTL for fast updates without Google rate limits
     
-    // If explicit refresh requested, delete old cache file immediately
-    if ($forceRefresh && file_exists($cacheFile)) {
-        @unlink($cacheFile);
-    }
-
     // Check if fresh cache exists
     if (!$forceRefresh && file_exists($cacheFile)) {
         $age = time() - filemtime($cacheFile);
@@ -1479,15 +1483,16 @@ function fetchDriveFolderCached($folderId, $forceRefresh = false) {
         }
     }
     
-    // Live scrape
+    // Live scrape from Google Drive
     $files = fetchDriveFolderRecursive($folderId);
     if (!empty($files)) {
         @file_put_contents($cacheFile, json_encode($files, JSON_UNESCAPED_UNICODE));
         return $files;
     }
     
-    // Fallback: If live scrape timed out or failed, but we have ANY older cache file, use it!
-    if (!$forceRefresh && file_exists($cacheFile)) {
+    // Safety Fallback (Stale-on-Error): If live scrape returned 429, timed out, or failed,
+    // preserve and serve the previous cached data so students never experience broken pages!
+    if (file_exists($cacheFile)) {
         $data = json_decode(file_get_contents($cacheFile), true);
         if (is_array($data) && count($data) > 0) {
             return $data;
