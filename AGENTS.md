@@ -34,14 +34,16 @@ my website dent2025/
 ├── deploy_config.json                          # SFTP/SSH credentials (gitignored)
 ├── dent2025_passwords.json                     # ⭐ RBAC passkey store (gitignored)
 ├── passwords.txt                               # Server & Cloudflare secrets (gitignored)
-├── dent2025-loader.php                         # WordPress Component Loader plugin (shortcode [dent_component])
+├── dent2025-loader.php                         # WordPress Component Loader plugin (shortcode [dent_component], [dent_poll])
 ├── purge_cache.php                             # Standalone cache purge diagnostic script
 ├── dent2025_api.php                            # PRIMARY WordPress-Integrated Standalone API ($wpdb)
 ├── announcements_api.php                       # Announcements & Class Tasks Backend API (file-based JSON)
 ├── schedule_backend.php                        # Timeline Schedule Events API (file-based JSON)
+├── analytics_api.php                           # First-party visitor dwell-time & telemetry API (file-based JSON)
+├── polls_api.php                               # Inline student polls & voting Backend API (file-based JSON)
 ├── history_api.php                             # Study timer log & deployment audit history API
 ├── history_helpers.php                         # Shared audit-log / snapshot helper used by multiple APIs
-├── dent2025_rbac.php                           # ⭐ Shared RBAC permission engine (ALL backends use this)
+├── dent2025_rbac.php                           # ⭐ Shared RBAC permission engine & rate-limiting (ALL backends use this)
 ├── admin_app.js                                # Admin Dashboard standalone client-side logic
 ├── admin_dashboard.html                        # Standalone Admin Dashboard HTML page
 ├── dent2025_classes.json                       # Global class timetable groups data
@@ -54,25 +56,36 @@ my website dent2025/
 │   ├── deploy_order.py                         # Deployment priority ordering
 │   ├── deploy_health.py                        # Post-deploy API health probe
 │   ├── deploy_safe.py                          # Full Git-integrated SafeDeploy pipeline CLI
+│   ├── export_quiz_pdfs.js                     # Headless Chrome batch A4 PDF quiz booklets & Drive links generator
 │   ├── sync_cloud_events.py                    # Cloud-first dynamic data sync & smart-merge engine
 │   ├── sync_server_backups.py                  # Local sync engine for VPS database & file backups (14d rolling)
-│   └── test_system_logic.php                   # Comprehensive offline test suite (42/42 tests)
+│   └── test_system_logic.php                   # Comprehensive offline test suite (100/100 tests across 12 modules)
 ├── backend/                                    # Standalone PDO Backend Module
 │   ├── db_connect.php                          # PDO Database Connection, CORS headers, sendResponse()
 │   ├── api_ai_exam.php                         # AI exam generation standalone PDO backend
 │   ├── bin/                                    # Helper binaries (pdftotext)
 │   └── gemini_keys_data/                       # Gemini API key health cache
-├── logos/                                      # Specialty logos & social preview assets (deployed to server)
+├── logos/                                      # Specialty logos & site assets (deployed to server)
 │   ├── dentistry.webp                          # Dentistry specialty logo
 │   ├── medicine.webp                           # Medicine specialty logo
 │   ├── pre-med.webp                            # Pre-Med specialty logo
 │   ├── logo of main page.webp                  # Main Portal Logo asset
-│   └── og_share_preview.jpg                    # Standardized Open Graph social sharing banner (1200x630)
+│   ├── og_share_preview.jpg                    # Standardized Open Graph social sharing banner (1200x630)
+│   ├── apple-touch-icon.png                    # iOS Apple touch icon
+│   ├── apple-touch-icon-precomposed.png        # iOS legacy touch icon
+│   ├── favicon.ico                             # Browser shortcut favicon
+│   └── site_icon_512.png                       # High-resolution 512x512 PWA web app icon
 ├── frontend-html box in wordpress astra/       # Local Source Frontend Components (synced to /frontend_components/)
 │   ├── landing_page.html                       # Year/Specialty/Semester grid selection card template
 │   ├── chapters_dynamic.html                   # Subject chapters container & Google Drive folder embed layout
 │   ├── quiz_app.html                           # Interactive Quiz application (UI + CSS + JS)
-│   ├── study_timer_banner_widget.html          # Study Timer & Tracker widget + floating draggable badge (~75 KB)
+│   ├── study_timer_banner_widget.html          # Study Timer & Tracker banner widget + modal (~36 KB)
+│   ├── study_timer.js                          # Standalone Study Timer & Tracker client engine (~44 KB)
+│   ├── analytics_tracker.js                    # First-party dwell-time & telemetry tracker (~7 KB)
+│   ├── kinetic_grid.html                       # Sitewide interactive kinetic grid background canvas (~48 KB)
+│   ├── poll_widget.html                        # Inline student poll & voting widget (shortcode [dent_poll]) (~17 KB)
+│   ├── vsv_chart.html                          # Verified Student Visits historical chart component (~18 KB)
+│   ├── dent_click.mp3                          # Universal mechanical audio click asset
 │   ├── gpa_calculator_elegant.txt              # Saudi 5.0 scale GPA Calculator widget code
 │   ├── absence_calculator.html                 # Jazan University Absence & Denial Calculator widget
 │   ├── admin_controls_main.html                # Main page lock trigger (🔒) & admin logout button
@@ -80,14 +93,17 @@ my website dent2025/
 │   ├── admin_schedule_lock.html                # Schedule timeline lock trigger & event management modal
 │   ├── admin_classes_lock.html                 # Class schedule lock trigger & group management modal
 │   ├── calendar_tomorrow_alert.html            # Tomorrow's academic event / exam alert component (~10 KB)
-│   ├── dent_pin_modal.js                       # Universal dark-mode 4-digit PIN keypad modal (~25 KB)
+│   ├── dent_pin_modal.js                       # Universal dark-mode 4-digit PIN keypad modal (~35 KB)
 │   ├── schedule_markup.html                    # Academic calendar timeline container template & stats cards
-│   ├── schedule_script.js                      # Academic calendar timeline & A4 export engine (~120 KB)
+│   ├── schedule_script.js                      # Academic calendar timeline & A4 export engine (~156 KB)
 │   ├── fonts/                                  # Self-hosted web fonts (Outfit & Noto Kufi Arabic WOFF2)
-│   └── dashboard.js                            # Core Student Dashboard JS engine (~111 KB)
+│   └── dashboard.js                            # Core Student Dashboard JS engine (~130 KB)
 ├── announcements_data/                         # AUTO-CREATED at runtime by announcements_api.php (gitignored)
+├── polls_data/                                 # AUTO-CREATED at runtime by polls_api.php (gitignored)
+├── analytics_data/                             # AUTO-CREATED at runtime by analytics_api.php (gitignored)
 ├── dent2025_study_data/                        # AUTO-CREATED at runtime by dent2025_api.php (gitignored)
 ├── quizzes_data/                               # AUTO-CREATED at runtime by api_ai_exam.php (gitignored)
+├── quiz_jobs/                                  # AUTO-CREATED at runtime by api_ai_exam.php (gitignored)
 ├── history_data/                               # Runtime audit/deployment history (local + server, gitignored)
 └── server_backups_dent2025_daily/              # ⭐ Local mirror of VPS nightly database & dynamic file backups (14d rolling, gitignored)
 ```
@@ -100,12 +116,26 @@ my website dent2025/
 
 ### A. The Component Loader Plugin (`dent2025-loader.php`)
 Installed on the live WordPress site at `wp-content/plugins/dent2025-loader/dent2025-loader.php`.
-- **Shortcode**: `[dent_component file="filename.ext"]`
+- **Shortcodes**:
+  - `[dent_component file="filename.ext"]`: Dynamically loads frontend components from `/var/www/dent2025/frontend_components/`.
+  - `[dent_poll]`: Renders the inline student poll and interactive voting card (`poll_widget.html`).
 - **Security**: Strictly sanitizes input via `basename()` and regex whitelist `preg_replace('/[^a-zA-Z0-9_.-]/', '', $file)` to completely prevent directory traversal attacks (`../`).
 - **File Location**: Reads components from `ABSPATH . 'frontend_components/' . $safe_file`.
 - **Automatic Cache-Busting**: Appends dynamic `?v={filemtime}` query strings to JavaScript (`.js`), CSS (`.css`), and embedded `<script src="...">` / `<link href="...">` tags inside HTML blocks. When `deploy_safe.py` uploads a new file, the modified timestamp updates instantly, forcing every browser and LiteSpeed Cache to download fresh code without stale cache glitches.
 - **WordPress `wpautop` Protection**: Collapses internal whitespace inside `<style>` and `<script>` blocks and runs a high-priority `the_content` filter (priority 999) to strip `<p>` and `<br>` tags wrapped around CSS/JS, preventing raw code text walls from appearing on screen.
-- **Sitewide Study Timer Injection**: Injects `study_timer_banner_widget.html` into `wp_footer` on all non-welcome pages so the floating draggable timer badge follows students seamlessly across the entire website.
+- **Sitewide Injections in `wp_footer`**:
+  - **Kinetic Grid (`priority 5`)**: Injects `kinetic_grid.html` (interactive monochrome particle/grid canvas background) on all pages.
+  - **Study Timer Banner/Widget (`priority 20`)**: Injects `study_timer_banner_widget.html` into all non-welcome pages.
+  - **First-Party Telemetry Tracker (`priority 30`)**: Injects `analytics_tracker.js` for lightweight visitor dwell-time analytics across all pages.
+- **High-Performance Head Injections (`wp_head`)**:
+  - **Speculation Rules API**: Injects `<script type="speculationrules">` to pre-render the 4 core portal URLs (`/`, `/التقويم-الدراسي/`, `/المقررات-والاختبارات/`, `/جدول-الدراسي/`) with moderate eagerness.
+  - **Instant Hover/Touch Prefetcher (`#dent-instant-nav`)**: Custom lightweight prefetcher for Safari/Firefox that prefetches links on 65ms hover debounce or touchstart.
+  - **Early Logo Swap Script (`#dent-instant-logo`)**: Synchronous head script that reads `dent2025_selection` from `localStorage` and injects CSS rules before the browser paints the Astra logo, completely eliminating specialty logo flash.
+  - **Inlined Portal Mode Config (`#dent-portal-config`)**: Exposes `window.DENT_MULTI_SPECIALTY_MODE` synchronously in `wp_head`, avoiding an initial asynchronous network round-trip.
+  - **Compact Header CSS (`#dent-compact-header-css`)**: Restricts Astra header height to 64px and logo image to 54px max height.
+  - **Google Drive Preconnect / DNS Prefetch**: Preconnects to `drive.google.com` and `docs.google.com`.
+  - **Emoji Neutralization**: Disables WordPress core emoji scripts, styles, and s.w.org DNS prefetch.
+- **Clean Quiz Short URLs (`template_redirect`)**: Automatically rewrites `/quiz/<id>`, `/q/<id>`, `/?quiz=<id>`, and `/?q=<id>` to `/المقررات-والاختبارات/?quiz_id=<id>`.
 - **Self-Hosted Local Fonts Inlining & Preloading**: Strips external `fonts.googleapis.com` / `fonts.gstatic.com` requests to eliminate render-blocking LCP latency. Preloads `notokufiarabic-arabic.woff2` and `outfit-latin.woff2`, and inlines `/frontend_components/fonts/fonts.css`.
 - **Automated Social Open Graph & Twitter Cards**: Injects standardized, cache-busted social preview metadata pointing to `/logos/og_share_preview.jpg` (1200x630) for pristine previews when links are shared on WhatsApp, Telegram, or Twitter.
 - **Critical Script Deferral**: Defers Astra theme's `frontend.min.js`. Google Site Kit's `gtag.js` loads natively via `async` with full `dataLayer` tracking intact.
@@ -131,7 +161,7 @@ python tools/deploy_safe.py --note "Enhance dashboard navigation" "frontend-html
 > ### Modern Git SafeDeploy Workflow:
 > 1. **Deploy with Git Commit**: Run `python tools/deploy_safe.py --note "what changed" <file1> [file2...]`
 >    - **Stage 0**: Smart-merges dynamic runtime data (`schedule_events*.json`, `announcements_data/`) against Azure cloud state to prevent data loss (`sync_cloud_events.py`).
->    - **Stage 1**: Validates PHP/JS/JSON syntax and ensures no secrets or forbidden files are staged (`deploy_guard.py`).
+>    - **Stage 1**: Validates PHP syntax (`php -l`), JavaScript syntax (`node --check` across `.js` and extracted HTML `<script>` blocks), and ensures no secrets or forbidden files (`.deploy_backups`, `polls_data`, `analytics_data`) are staged (`deploy_guard.py`).
 >    - **Stage 2**: Automatically stages files, creates a semantic Git commit (`git commit -m "[SafeDeploy] ..."`), and pushes to GitHub (`origin/main`).
 >    - **Stage 3**: Uploads modified files to `/var/www/dent2025/` in ~1–2 seconds via SFTP/SCP and triggers a LiteSpeed cache purge (`purge_remote_cache`).
 >    - **Stage 4**: Executes post-deployment health probes against live endpoints (`deploy_health.py`).
@@ -139,6 +169,9 @@ python tools/deploy_safe.py --note "Enhance dashboard navigation" "frontend-html
 >    - `python tools/deploy_safe.py --rollback` (reverts `HEAD`, redeploys the clean state to server, and purges cache automatically).
 > 3. **Dry Run**: `python tools/deploy_safe.py --dry-run --note "test" <file1>...`
 > 4. **Check Status**: `python tools/deploy_safe.py --status` (shows Git branch, recent commits, uncommitted diffs, and live API health).
+> 5. **Dedicated Health Check**: `python tools/deploy_safe.py --health-check` (runs standalone live health probe and exits code 0 or 1).
+> 6. **Backup Sync Trigger**: `python tools/deploy_safe.py --sync-backups` (triggers sync of VPS nightly database and dynamic data archives).
+> 7. **Explicit Dynamic Data Deletion**: `python tools/deploy_safe.py --allow-delete --note "purge event" <file>` (creates backup snapshot before allowing cloud event removal).
 
 ### C. GitHub Repository & SSH Configuration
 - **Repository URL (SSH)**: `git@github.com:3bdyna/dent2025.com.git`
@@ -221,13 +254,13 @@ python tools/deploy_safe.py --note "Enhance dashboard navigation" "frontend-html
 
 Below is the definitive reference mapping all 5 WordPress pages to their target components and shortcodes:
 
-| WordPress Page Name | Page Slug | Required Shortcodes / Markup inside WordPress Block | Auto-Loaded Internal Scripts |
+| WordPress Page Name | Page Slug | Required Shortcodes / Markup inside WordPress Block | Auto-Loaded Internal Scripts & Injections |
 |---|---|---|---|
-| **1. `landing page`** | `wolcome` | `[dent_component file="landing_page.html"]` | None |
-| **2. `الصفحة الرئيسية — Front Page`** | *(static front)* | `[dent_component file="study_timer_banner_widget.html"]`<br>`[dent_component file="gpa_calculator_elegant.txt"]`<br>`[dent_component file="absence_calculator.html"]`<br>`[dent_component file="admin_controls_main.html"]`<br>*(Optional modular: `[dent_component file="calendar_tomorrow_alert.html"]`)* | `admin_controls_main.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` and `<script src="/frontend_components/dashboard.js"></script>` |
-| **3. `التقويم الدراسي`** | `التقويم-الدراسي` | `[dent_component file="schedule_markup.html"]`<br>`[dent_component file="schedule_script.js"]`<br>`[dent_component file="admin_schedule_lock.html"]` | `admin_schedule_lock.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` |
-| **4. `المقررات والاختبارات`** | `المقررات-والاختبارات` | `[dent_component file="chapters_dynamic.html"]`<br>`[dent_component file="quiz_app.html"]`<br>`[dent_component file="admin_controls.html"]` | `chapters_dynamic.html` embeds `<script src="/frontend_components/dashboard.js"></script>` |
-| **5. `الجدول الدراسي`** | `جدول-الدراسي` | `[dent_component file="admin_classes_lock.html"]`<br>`<div id="dent-classes-target"></div>` | `admin_classes_lock.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` and `<script src="/frontend_components/dashboard.js"></script>` |
+| **1. `landing page`** | `wolcome` | `[dent_component file="landing_page.html"]` | None (standalone track selection wizard) |
+| **2. `الصفحة الرئيسية — Front Page`** | *(static front)* | `[dent_component file="study_timer_banner_widget.html"]`<br>`[dent_component file="gpa_calculator_elegant.txt"]`<br>`[dent_component file="absence_calculator.html"]`<br>`[dent_component file="admin_controls_main.html"]`<br>*(Optional modular: `[dent_component file="calendar_tomorrow_alert.html"]`, `[dent_poll]`)* | `study_timer_banner_widget.html` embeds `<script defer src="/frontend_components/study_timer.js"></script>`.<br>`admin_controls_main.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` and `<script src="/frontend_components/dashboard.js"></script>`.<br>*Sitewide Injections in `wp_footer`:* `kinetic_grid.html` (p:5), `analytics_tracker.js` (p:30). |
+| **3. `التقويم الدراسي`** | `التقويم-الدراسي` | `[dent_component file="schedule_markup.html"]`<br>`[dent_component file="schedule_script.js"]`<br>`[dent_component file="admin_schedule_lock.html"]` | `admin_schedule_lock.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>`.<br>`study_timer_banner_widget.html` auto-injected into `wp_footer` (p:20). |
+| **4. `المقررات والاختبارات`** | `المقررات-والاختبارات` | `[dent_component file="chapters_dynamic.html"]`<br>`[dent_component file="quiz_app.html"]`<br>`[dent_component file="admin_controls.html"]` | `chapters_dynamic.html` embeds `<script src="/frontend_components/dashboard.js"></script>`.<br>`admin_controls.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>`.<br>`study_timer_banner_widget.html` auto-injected into `wp_footer` (p:20). |
+| **5. `الجدول الدراسي`** | `جدول-الدراسي` | `[dent_component file="admin_classes_lock.html"]`<br>`<div id="dent-classes-target"></div>` | `admin_classes_lock.html` embeds `<script src="/frontend_components/dent_pin_modal.js"></script>` and `<script src="/frontend_components/dashboard.js"></script>`.<br>`study_timer_banner_widget.html` auto-injected into `wp_footer` (p:20). |
 
 ---
 
@@ -240,8 +273,14 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 - **`dent2025_passwords.json`** (~28 entries in populated server cohort DB; baseline entries in local dev repository): Each entry = `{id, label, passkey, allowed_contexts, permissions}`. Passkeys can be 4-digit numeric PINs or alphanumeric strings.
 - **Universal Master Passkeys** (accepted everywhere, `allowed_contexts: ['*']`):
   Configured in untracked `dent2025_passwords.json` (see `dent2025_passwords.example.json`).
-- **Per-Context Leader Passkeys**: JSON entries scoped to `allowed_contexts` strings in `{specialty}_{year}_{semester}` format (e.g. `dentistry_1_1`, `medicine_3_1`, `pre-med_1_1`). These grant limited permissions (`edit_basic_subject`, `semester_events`, `semester_announcements`, `timetable`). There are **no algorithmic context passkeys** — a leader exists only if a JSON entry was explicitly created; check `dent2025_passwords.json` before assuming one exists.
+- **Per-Context Leader Passkeys**: JSON entries scoped to `allowed_contexts` strings in `{specialty}_{year}_{semester}` format (e.g. `dentistry_1_1`, `medicine_3_1`, `pre-med_1_1`). These grant limited permissions (`edit_basic_subject`, `semester_events`, `semester_announcements`, `timetable`). Pre-Med contexts are strictly normalized to `year = 1` (`pre-med_1_1` / `pre-med_1_2`).
 - **Permission names**: `add_subject`, `delete_subject`, `edit_core_subject`, `edit_basic_subject`, `global_events`, `semester_events`, `global_announcements`, `semester_announcements`, `timetable`, `manage_passwords`.
+- **🛡️ Brute-Force Rate Limiting & Lockout Defense**:
+  - **Authentic Client IP Resolution (`dent2025_get_client_ip()`)**: Securely resolves client IP from Cloudflare tunnel (`CF-Connecting-IP`), preventing spoofed `X-Forwarded-For` injection.
+  - **Atomic File-Based State**: Tracks failed authentication attempts in `dent2025_study_data/auth_rate_limits.json` using exclusive file locking (`flock`).
+  - **Progressive Lockout**: After 5 consecutive failed passkey attempts from an IP, the IP is immediately locked out for 300 seconds (Level 1) with progressive exponential backoff.
+  - **Hard Rejection**: While locked out, `dent2025_check_rbac_permission()` returns `false` unconditionally, even if an attacker subsequently guesses a valid master passkey.
+  - **Direct RBAC Failure Recording**: Any unauthorized access attempt or bad passkey immediately consumes an attempt counter.
 - **Client-Side PIN Keypad UX (`dent_pin_modal.js`)**: All administrative lock triggers (`admin_controls_main.html`, `admin_schedule_lock.html`, `admin_classes_lock.html`, `admin_controls.html`) use `window.dentPromptPin()` to present a responsive dark-mode 4-digit PIN keypad with context pills and haptic/audio feedback, completely replacing browser-native `prompt()`. Successful authentication stores session passkeys in `sessionStorage` (`dent2025_admin_pass`, `dent2025_permissions`).
 
 ### A. WordPress-Integrated Backend (`dent2025_api.php`)
@@ -252,7 +291,7 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 - Auth: uses `dent2025_check_rbac_permission()` (master + JSON context passkeys).
 - **GAS Webhook URL**: `https://script.google.com/macros/s/AKfycbyGOFQWRmkBmJJ9ItdpzhzY5CgbEPjjI6joodT0GT_Sq--f287fcomqUBqRw-MxaKie/exec` (follows 302 redirects). Also hosts a study-PIN sync subsystem (`study_check_pin`, `study_get_data`, `study_sync_data`, `study_change_pin` → `dent2025_study_data/study_records.json`).
 
-### B. File-Based PHP APIs (`announcements_api.php`, `schedule_backend.php`, `history_api.php`)
+### B. File-Based Academic APIs (`announcements_api.php`, `schedule_backend.php`, `history_api.php`)
 - Standalone PHP scripts — **no `wp-load.php` dependency**.
 - `announcements_api.php` and `schedule_backend.php` use local JSON file storage exclusively (no DB access).
 - `history_api.php` uses local JSON storage for deployment and timer audit logs, but integrates with MySQL (`$wpdb` or PDO via `backend/db_connect.php`) to capture and restore full database snapshots (`subjects` and `subject_links`) during rollbacks.
@@ -265,6 +304,24 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 - **Unified GAS Webhook**: `dent2025_api.php` hosts the primary Google Apps Script webhook: `https://script.google.com/macros/s/AKfycbyGOFQWRmkBmJJ9ItdpzhzY5CgbEPjjI6joodT0GT_Sq--f287fcomqUBqRw-MxaKie/exec`.
 - `action=add_link` and `action=delete_link` enforce RBAC permissions via the unified backend engine.
 
+### D. First-Party Analytics API (`analytics_api.php`)
+- Standalone PHP script tracking privacy-preserving visitor telemetry and dwell times without third-party tracking scripts.
+- **Endpoints**:
+  - `POST ?action=track`: Ingests lightweight session heartbeats and dwell timestamps (max 60 minutes per session to prevent background-tab skew).
+  - `GET ?action=range` / `action=report_range`: Returns aggregated Verified Student Visits (VSV), unique sessions, and page breakdown for specified date ranges.
+  - `GET ?action=report`: Single-day analytics breakdown for administrative reporting.
+- **Storage**: `analytics_data/sessions_YYYY-MM-DD.json` (daily active sessions) and `analytics_data/cloudflare_history.json` (hybrid pre-telemetry historical visits).
+
+### E. Inline Student Polls API (`polls_api.php`)
+- Standalone REST API powering inline student voting cards (`poll_widget.html` / `[dent_poll]`).
+- **Endpoints**:
+  - `GET ?action=get_active_poll`: Returns the currently active poll for the specified cohort context.
+  - `GET ?action=get_all_polls`: Lists all archived and active polls (admin dashboard).
+  - `POST ?action=vote`: Casts a student vote with client deduplication.
+  - `POST ?action=save_poll`: Creates or edits a poll (requires `semester_announcements` or master permission).
+  - `POST ?action=delete_poll` / `action=set_poll_status`: Admin poll lifecycle management.
+- **Storage**: `polls_data/polls.json`.
+
 ---
 
 ## 6. Database Schema & JSON Storage Systems
@@ -274,7 +331,7 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 |---|---|---|
 | `id` | INT AUTO_INCREMENT | Primary Key |
 | `specialty` | VARCHAR | `'dentistry'`, `'medicine'`, or `'pre-med'` |
-| `year` | INT | Academic year (0 for pre-med, 1–6 for others) |
+| `year` | INT | Academic year (1 for pre-med [normalized], 1–6 for others) |
 | `semester` | INT | `1` or `2` |
 | `name` | VARCHAR | Subject name (English) |
 | `doctor` | VARCHAR | Instructor name |
@@ -299,12 +356,15 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
 2. **Announcements (`announcements_data/`)**: Per-class JSON files `announcements_{spec}_{year}_{sem}.json` + `announcements_backup.json` snapshot.
 3. **Timeline Schedule Events (`schedule_events.json`)**: Global schedule events (`is_global = true`) and per-schedule files (`schedule_events_{schedule_id}.json`).
 4. **Study Timer Records (`dent2025_study_data/study_records.json`)**: Per-student PIN + synced study timer logs (managed by `dent2025_api.php`).
+5. **Auth Rate Limits (`dent2025_study_data/auth_rate_limits.json`)**: Real-time IP lockout counters and retry-after timestamps (managed by `dent2025_rbac.php`).
+6. **Student Polls (`polls_data/polls.json`)**: Cohort poll questions, voting options, and tally objects (managed by `polls_api.php`).
+7. **Telemetry Sessions (`analytics_data/`)**: Daily visitor dwell-time logs `sessions_YYYY-MM-DD.json` + `cloudflare_history.json` (managed by `analytics_api.php`).
 
 ---
 
 ## 7. Frontend Engineering Standards & Key Modules
 
-### A. Main Dashboard Engine (`dashboard.js` — ~111 KB)
+### A. Main Dashboard Engine (`dashboard.js` — ~130 KB)
 - **API Base URL**: `const API_BASE_URL = '/dent2025_api.php'` (with `const API_BASE = ''` site-root relative).
 - **⭐ MULTI-SPECIALTY MASTER SWITCH (`DENT_MULTI_SPECIALTY_MODE`)**:
   - **SERVER-SIDE DYNAMIC SOURCE OF TRUTH**: The multi-specialty mode is persisted in the WordPress database options table (`dent2025_multi_specialty_mode`) via `dent2025_api.php`:
@@ -319,22 +379,29 @@ Below is the definitive reference mapping all 5 WordPress pages to their target 
   - **HOW TO TOGGLE BETWEEN MODES**:
     - **NEVER manually edit `dashboard.js` or rewrite code.**
     - Toggle it via the **Admin Dashboard UI** or execute an authorized POST to `?action=save_portal_settings`.
-- **Sequential iFrame Queue**: `window.dentIframeQueue` loads Google Drive folder iframes sequentially with 1.0s delays to maintain fast browser performance.
+- **🚀 Native Google Drive Fast Files Engine**:
+  - Dynamically fetches file metadata from Google Drive folders via `dentFetchFolderFiles(folderId)`.
+  - Employs **in-flight fetch deduplication** via `window._dentInFlightFolderFetches` to prevent redundant network requests.
+  - Renders fast, interactive native file cards (`dentRenderNativeFiles`) with file icons, direct view/download actions, and instant search, avoiding heavy iframe loading latency.
+  - Includes toggleable fallback to sequential Google Drive iframes (`window.dentIframeQueue`) with 1.0s delays if needed.
 - **Path Changer Pill Bar**: Auto-minimizing pill bar showing current specialty/year/semester; click when expanded resets selection to allow switching tracks. Automatically controlled by `DENT_MULTI_SPECIALTY_MODE`.
 
-### B. Study Timer & Tracker (`study_timer_banner_widget.html` — ~75 KB)
+### B. Study Timer & Tracker (`study_timer_banner_widget.html` — ~36 KB & `study_timer.js` — ~44 KB)
+- **Modular Engine Extraction**: Core timer mechanics and session state synchronization are modularized in `study_timer.js`, while UI markup and modal containers live in `study_timer_banner_widget.html`.
+- **Real-Time Arabic Clock & Date Pill**: Header features an auto-updating real-time Arabic clock (`12-hour AM/PM` with Arabic numerals) and dual Gregorian/Hijri date pill badge.
 - **Singleton Guard**: `if (window.dentTimerScriptLoaded) return; window.dentTimerScriptLoaded = true;` ensures only one script instance executes, avoiding duplicate `setInterval` loops.
 - **Session State Clearing**: `stopTimerEngine()`, `finishTimer()`, and `resetTimer()` cleanly clear `KEY_ACTIVE_SESSION` from `localStorage` without race conditions.
 - **Cross-Tab Synchronization**: Uses `window.addEventListener('storage')` with recursion lock (`isRestoringSession`) to sync active timer states across browser tabs.
-- **Sitewide Floating Badge**: Draggable badge (`.dent-timer-draggable-badge`) injected into `document.body` follows students across all site pages when active.
+- **Banner Trigger & Modal Architecture**: Renders as an accessible banner card on the homepage (`#dent-timer-banner-trigger`) opening the full feature modal (`#dent-timer-modal`) with 4-digit PIN sync, logs, and timer controls.
 
-### C. Universal 4-Digit PIN Modal Keypad (`dent_pin_modal.js` — ~25 KB)
+### C. Universal 4-Digit PIN Modal Keypad (`dent_pin_modal.js` — ~35 KB)
 - **Singleton Guard**: `if (window.DentPinModal) return;`
 - **Modern Keypad UX**: Replaces unsightly browser-native `prompt()` dialogs with a sleek dark-mode keypad styled with Dent2025 dark zinc aesthetics.
 - **Universal API**: Invoked via `window.dentPromptPin({ title, subtitle, context, onSuccess })`.
+- **Haptic & Audio Feedback**: Integrates subtle audio tick (`dent_click.mp3` or Web Audio synthesis) and mobile haptic feedback.
 - **Embedded In**: All administrative triggers (`admin_controls_main.html`, `admin_schedule_lock.html`, `admin_classes_lock.html`, and `admin_controls.html`).
 
-### D. Academic Calendar & Timetable Engine (`schedule_script.js` — ~120 KB)
+### D. Academic Calendar & Timetable Engine (`schedule_script.js` — ~156 KB)
 - **API Base URL**: `apiUrl: window.location.origin + '/schedule_backend.php'`.
 - **Schedule ID Derivation**: `${specialty}_y${year}_s${semester}`. Falls back cleanly to primary portal cohort `dentistry_y3_s1`.
 - **Direct A4 Canvas & PDF/PNG Export**: Renders a dedicated 860px A4 canvas layout with 2.0x rasterization speed. Directly exports to PDF and PNG with native mobile sharing sheet (`navigator.share` / Web Share API), completely bypassing clumsy browser print dialogs.
@@ -429,28 +496,41 @@ To eliminate visual drift and ensure seamless visual harmony across all 5 portal
 #### Core Token Registry:
 - **Surface & Backgrounds**:
   - `--dent-bg-page`: `#121212` (Base page canvas)
-  - `--dent-bg-card`: `#1e1e1e` (Primary cards & containers)
-  - `--dent-bg-card-hover`: `#262626` (Card hover state)
-  - `--dent-bg-modal`: `#18181b` (Modals, drawers & dialogs)
-  - `--dent-bg-input`: `#121212` (Form inputs & dropdowns)
-  - `--dent-bg-button`: `#27272a` (Secondary / utility buttons)
-  - `--dent-bg-pill`: `rgba(255, 255, 255, 0.05)` (Pills, badges & tags)
   - `--dent-bg-canvas-subtle`: `rgba(255, 255, 255, 0.03)` (Subtle section fills)
+  - `--dent-bg-card`: `#1e1e1e` (Primary cards & containers)
+  - `--dent-bg-card-hover`: `rgba(255, 255, 255, 0.06)` (Card hover surface)
+  - `--dent-bg-card-subtle`: `rgba(0, 0, 0, 0.35)` (Secondary inset containers)
+  - `--dent-bg-modal`: `#181818` (Modals, drawers & dialogs)
+  - `--dent-bg-overlay`: `rgba(0, 0, 0, 0.85)` (Modal backdrops)
+  - `--dent-bg-input`: `#121212` (Form inputs & dropdowns)
+  - `--dent-bg-input-subtle`: `rgba(0, 0, 0, 0.45)` (Secondary inputs)
+  - `--dent-bg-button`: `#262626` (Secondary / utility buttons)
+  - `--dent-bg-button-hover`: `#333333` (Button hover state)
+  - `--dent-bg-button-active`: `#3f3f46` (Button pressed state)
+  - `--dent-bg-pill`: `rgba(255, 255, 255, 0.06)` (Pills, badges & tags)
+  - `--dent-bg-pill-hover`: `rgba(255, 255, 255, 0.12)` (Pill hover state)
+  - `--dent-bg-pill-active`: `rgba(255, 255, 255, 0.18)` (Pill active state)
 - **Typography & Foreground Text**:
-  - `--dent-text-primary`: `#f8fafc` (Headings & high-emphasis text)
-  - `--dent-text-secondary`: `#94a3b8` (Body text, subheadings & labels)
-  - `--dent-text-muted`: `#64748b` (Timestamps, notes & disabled states)
+  - `--dent-text-primary`: `#f4f4f5` (Headings & high-emphasis text)
+  - `--dent-text-secondary`: `#a1a1aa` (Body text, subheadings & labels)
+  - `--dent-text-muted`: `#71717a` (Timestamps, notes & disabled states)
+  - `--dent-text-dim`: `#52525b` (Tertiary captions & subtle indicators)
   - `--dent-text-light`: `#ffffff` (Pure white accent text)
 - **Borders & Dividers**:
-  - `--dent-border-subtle`: `rgba(255, 255, 255, 0.08)` (Subtle separators)
-  - `--dent-border-card`: `rgba(255, 255, 255, 0.10)` (Card & modal outlines)
-  - `--dent-border-hover`: `rgba(255, 255, 255, 0.22)` (Card & button hover outline)
+  - `--dent-border-subtle`: `rgba(255, 255, 255, 0.05)` (Subtle separators)
+  - `--dent-border-card`: `rgba(255, 255, 255, 0.06)` (Card & modal outlines)
+  - `--dent-border-hover`: `rgba(255, 255, 255, 0.18)` (Card & button hover outline)
   - `--dent-border-focus`: `rgba(255, 255, 255, 0.35)` (Input active focus ring)
+  - `--dent-border-dashed`: `rgba(255, 255, 255, 0.14)` (Dropzone & dashed separators)
 - **Semantic Accents & Statuses**:
-  - Primary / Brand: `--dent-accent-primary` (`#3b82f6`), `--dent-accent-primary-bright` (`#60a5fa`), `--dent-accent-primary-bg` (`rgba(59, 130, 246, 0.12)`), `--dent-accent-primary-border` (`rgba(59, 130, 246, 0.30)`)
-  - Success / Active: `--dent-accent-success` (`#10b981`), `--dent-accent-success-bright` (`#34d399`), `--dent-accent-success-bg` (`rgba(16, 185, 129, 0.12)`), `--dent-accent-success-border` (`rgba(16, 185, 129, 0.30)`)
-  - Warning / Alert: `--dent-accent-warning` (`#f59e0b`), `--dent-accent-warning-bright` (`#fbbf24`), `--dent-accent-warning-bg` (`rgba(245, 158, 11, 0.12)`), `--dent-accent-warning-border` (`rgba(245, 158, 11, 0.30)`)
-  - Danger / Delete: `--dent-accent-danger` (`#ef4444`), `--dent-accent-danger-bright` (`#f87171`), `--dent-accent-danger-bg` (`rgba(239, 68, 68, 0.12)`), `--dent-accent-danger-border` (`rgba(239, 68, 68, 0.30)`)
+  - Primary / Brand (Pure Neutral Monochrome & Glass): `--dent-accent-primary` (`#ffffff`), `--dent-accent-primary-hover` (`#e4e4e7`), `--dent-accent-primary-bg` (`rgba(255, 255, 255, 0.08)`), `--dent-accent-primary-border` (`rgba(255, 255, 255, 0.20)`)
+  - Success / Active: `--dent-accent-success` (`#10b981`), `--dent-accent-success-bright` (`#34d399`), `--dent-accent-success-bg` (`rgba(16, 185, 129, 0.14)`), `--dent-accent-success-border` (`rgba(16, 185, 129, 0.35)`)
+  - Warning / Alert: `--dent-accent-warning` (`#f59e0b`), `--dent-accent-warning-bright` (`#fbbf24`), `--dent-accent-warning-bg` (`rgba(245, 158, 11, 0.14)`), `--dent-accent-warning-border` (`rgba(245, 158, 11, 0.35)`)
+  - Danger / Delete: `--dent-accent-danger` (`#ef4444`), `--dent-accent-danger-bright` (`#f87171`), `--dent-accent-danger-bg` (`rgba(239, 68, 68, 0.14)`), `--dent-accent-danger-border` (`rgba(239, 68, 68, 0.35)`)
+- **Shadows & Backdrops**:
+  - `--dent-shadow-card`: `0 6px 20px rgba(0, 0, 0, 0.35)`
+  - `--dent-shadow-modal`: `0 25px 60px rgba(0, 0, 0, 0.85)`
+  - `--dent-backdrop-blur`: `blur(12px)`
 
 ---
 
