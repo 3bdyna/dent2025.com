@@ -34,6 +34,9 @@ echo "=======================================================\n\n";
 // -----------------------------------------------------------------------------
 // SUITE 1: RBAC Authentication & Permission Resolution
 // -----------------------------------------------------------------------------
+if (function_exists('dent2025_reset_auth_rate_limits')) {
+    dent2025_reset_auth_rate_limits('127.0.0.1');
+}
 echo "1. Testing RBAC & Authentication Core...\n";
 
 // 1.1 Master Passkey Wildcard Access
