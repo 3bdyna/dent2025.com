@@ -1,9 +1,15 @@
 <style>
-/* Keep the section heading text on the left */
+/* Remove Astra block group padding on #features so text aligns flush left with footer */
+#features,
+.wp-block-group#features {
+    padding-left: 0 !important;
+}
+
 #features p.has-text-align-left {
     text-align: left !important;
     margin-left: 0 !important;
     margin-right: auto !important;
+    padding-left: 0 !important;
 }
 
 /* Center only the meme image container */
@@ -29,6 +35,7 @@ figure.dent-weekly-meme-figure,
     clear: both !important;
 }
 
+/* Distinct border shadow & ambient halo around all edges for dark mode */
 #dent-weekly-meme-img,
 #features figure.dent-weekly-meme-figure img,
 #features img#dent-weekly-meme-img {
@@ -38,14 +45,22 @@ figure.dent-weekly-meme-figure,
     width: 656px !important;
     height: auto !important;
     border-radius: 16px !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.45), 0 4px 10px rgba(0, 0, 0, 0.25) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.15),
+        0 0 25px 4px rgba(255, 255, 255, 0.12),
+        0 15px 35px rgba(0, 0, 0, 0.9),
+        0 5px 15px rgba(0, 0, 0, 0.7) !important;
     transition: transform 0.25s ease, box-shadow 0.25s ease !important;
 }
 
 #dent-weekly-meme-img:hover {
     transform: translateY(-2px) !important;
-    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.6), 0 6px 14px rgba(0, 0, 0, 0.3) !important;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.28),
+        0 0 35px 8px rgba(255, 255, 255, 0.20),
+        0 20px 45px rgba(0, 0, 0, 0.95),
+        0 8px 20px rgba(0, 0, 0, 0.8) !important;
 }
 </style>
 
