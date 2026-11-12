@@ -218,6 +218,7 @@ document.addEventListener('click', function(e) {
         btnStart: $('dent-btn-start'), 
         pinBadge: $('dent-pin-badge'),
         clockDigits: $('dent-clock-digits'), 
+        currentDateTimeText: $('dent-current-datetime-text'),
         btnFinish: $('dent-btn-finish'), 
         btnReset: $('dent-btn-reset'),
         subjectInput: $('dent-subject-input'),
@@ -275,6 +276,55 @@ document.addEventListener('click', function(e) {
     var m = String(dateObj.getMonth() + 1).padStart(2, '0');
     var day = String(dateObj.getDate()).padStart(2, '0');
     return y + '-' + m + '-' + day;
+  }
+
+  /* --------------------------------------------------
+     REAL-TIME CURRENT CLOCK & DATE ENGINE
+     Updates date and time continuously so 5:00 turns into 5:01 instantly
+     -------------------------------------------------- */
+  var realTimeClockInterval = null;
+
+  function updateRealTimeClock() {
+    var txtEl = $('dent-current-datetime-text');
+    if (!txtEl) return;
+
+    var now = new Date();
+    
+    // Arabic Weekdays & Gregorian Months (Standardized across all browsers)
+    var days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    var months = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ];
+
+    var dayName = days[now.getDay()];
+    var dayNum = now.getDate();
+    var monthName = months[now.getMonth()];
+
+    // 12-Hour format (hours & minutes)
+    var rawHours = now.getHours();
+    var minutes = now.getMinutes();
+    var isPM = rawHours >= 12;
+    var period = isPM ? 'م' : 'ص';
+    var hours12 = rawHours % 12;
+    if (hours12 === 0) hours12 = 12;
+
+    var formattedHours = hours12 < 10 ? '0' + hours12 : '' + hours12;
+    var formattedMinutes = minutes < 10 ? '0' + minutes : '' + minutes;
+
+    var timeStr = formattedHours + ':' + formattedMinutes + ' ' + period;
+    var dateStr = dayName + '، ' + dayNum + ' ' + monthName;
+
+    txtEl.innerHTML = dateStr + ' <span class="dent-datetime-sep">•</span> ' + timeStr;
+  }
+
+  function initRealTimeClock() {
+    updateRealTimeClock();
+    if (realTimeClockInterval) {
+      clearInterval(realTimeClockInterval);
+    }
+    // Update every second so minutes transition without lag
+    realTimeClockInterval = setInterval(updateRealTimeClock, 1000);
   }
 
   function saveActiveSessionState() {
@@ -455,6 +505,7 @@ document.addEventListener('click', function(e) {
   window.dentRefreshTimerUI = function() {
     cleanupDuplicates();
     init();
+    updateRealTimeClock();
     var pin = getPersistedPin();
     if (pin) {
       state.pin = pin;
@@ -593,6 +644,9 @@ document.addEventListener('click', function(e) {
 
     // Always restore active session regardless of PIN status
     restoreActiveSessionState();
+
+    // Start auto-updating real-time clock & date
+    initRealTimeClock();
   }
 
   /* --------------------------------------------------

@@ -336,6 +336,42 @@
     padding: 24px 0 !important;
   }
 
+  .dent-current-datetime-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 7px !important;
+    padding: 5px 14px !important;
+    margin-bottom: 14px !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    font-size: 0.84rem !important;
+    color: #94a3b8 !important;
+    font-family: var(--dent-timer-font) !important;
+    font-variant-numeric: tabular-nums !important;
+    user-select: none !important;
+    letter-spacing: 0.2px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    transition: border-color 0.2s ease, background 0.2s ease !important;
+  }
+
+  .dent-current-datetime-pill:hover {
+    background: rgba(255, 255, 255, 0.07) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+  }
+
+  .dent-current-datetime-pill .dent-clock-icon {
+    opacity: 0.75 !important;
+    flex-shrink: 0 !important;
+    color: #94a3b8 !important;
+  }
+
+  .dent-current-datetime-pill .dent-datetime-sep {
+    opacity: 0.3 !important;
+    margin: 0 4px !important;
+  }
+
   .dent-study-clock-time {
     font-size: clamp(4rem, 12vw, 7.5rem) !important;
     font-weight: 700 !important;
@@ -564,6 +600,13 @@
       padding: 20px 14px !important;
     }
 
+    .dent-current-datetime-pill {
+      font-size: 0.76rem !important;
+      padding: 3px 10px !important;
+      margin-bottom: 10px !important;
+      gap: 5px !important;
+    }
+
     .dent-study-clock-time {
       font-size: clamp(2.8rem, 14vw, 4.2rem) !important;
       margin-bottom: 14px !important;
@@ -738,6 +781,14 @@
         <div class="dent-study-tab-pane dent-tab-active" id="dent-tab-timer">
           
           <div class="dent-study-timer-display">
+            <div class="dent-current-datetime-pill" id="dent-current-datetime-pill" title="الوقت والتاريخ الحالي">
+              <svg class="dent-clock-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span id="dent-current-datetime-text">--:--</span>
+            </div>
+
             <div class="dent-study-clock-time" id="dent-clock-digits">00:00:00</div>
             
             <div style="max-width: 500px; margin: 0 auto 20px auto;">
