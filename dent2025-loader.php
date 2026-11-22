@@ -67,6 +67,13 @@ function dent2025_load_component_shortcode($atts) {
 
     if ($safe_file === 'study_timer_banner_widget.html') {
         $GLOBALS['dent2025_timer_rendered'] = true;
+        $timer_js = $components_dir . 'study_timer.js';
+        $js_mtime = file_exists($timer_js) ? filemtime($timer_js) : $mtime;
+        $content = str_replace("'/frontend_components/study_timer.js'", "'/frontend_components/study_timer.js?v=" . $js_mtime . "'", $content);
+    } elseif ($safe_file === 'admin_controls_main.html') {
+        $pin_js = $components_dir . 'dent_pin_modal.js';
+        $pin_mtime = file_exists($pin_js) ? filemtime($pin_js) : $mtime;
+        $content = str_replace("'/frontend_components/dent_pin_modal.js'", "'/frontend_components/dent_pin_modal.js?v=" . $pin_mtime . "'", $content);
     }
 
     // Strip legacy PHP snippet wrapper tags if any exist in the source file
