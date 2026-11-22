@@ -327,8 +327,11 @@
             }, 800);
         }
 
-        // Background media prefetch: loads GIF & MP3 when browser is idle without impacting LCP/TBT
+        // Load Easter-egg GIF & MP3 only on user intent (hover/touch/click) instead of initial page load
+        let starPrefetchStarted = false;
         function startStarPrefetch() {
+            if (starPrefetchStarted) return;
+            starPrefetchStarted = true;
             fetch(gifUrl)
                 .then(res => {
                     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -356,12 +359,8 @@
         // Star appears smoothly after 1.2s
         setTimeout(triggerStarEntry, 1200);
 
-        // Media prefetch starts quietly during idle time after initial load
-        if (typeof window.requestIdleCallback === 'function') {
-            window.requestIdleCallback(startStarPrefetch, { timeout: 5000 });
-        } else {
-            setTimeout(startStarPrefetch, 3500);
-        }
+        starBtn.addEventListener('pointerenter', startStarPrefetch, { passive: true, once: true });
+        starBtn.addEventListener('touchstart', startStarPrefetch, { passive: true, once: true });
 
         starBtn.addEventListener('click', function(e) {
             e.preventDefault();

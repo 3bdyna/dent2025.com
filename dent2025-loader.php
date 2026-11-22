@@ -74,6 +74,8 @@ function dent2025_load_component_shortcode($atts) {
         $pin_js = $components_dir . 'dent_pin_modal.js';
         $pin_mtime = file_exists($pin_js) ? filemtime($pin_js) : $mtime;
         $content = str_replace("'/frontend_components/dent_pin_modal.js'", "'/frontend_components/dent_pin_modal.js?v=" . $pin_mtime . "'", $content);
+    } elseif ($safe_file === 'calendar_tomorrow_alert.html') {
+        $content = dent2025_prerender_tomorrow_alert($content);
     }
 
     // Strip legacy PHP snippet wrapper tags if any exist in the source file
@@ -146,6 +148,94 @@ add_filter('the_content', function($content) {
     }
     return $content;
 }, 999);
+
+// Server-side pre-render of tomorrow's calendar alert for default cohort to eliminate CLS
+function dent2025_prerender_tomorrow_alert($html) {
+    try {
+        $tz = new DateTimeZone('Asia/Riyadh');
+        $tomorrow = new DateTime('tomorrow', $tz);
+        $tomorrowYmd = $tomorrow->format('Y-m-d');
+
+        $events = [];
+        foreach (['schedule_events.json', 'schedule_events_dentistry_y3_s1.json'] as $fname) {
+            $fpath = ABSPATH . $fname;
+            if (!file_exists($fpath)) continue;
+            $decoded = json_decode((string) @file_get_contents($fpath), true);
+            if (!is_array($decoded)) continue;
+            foreach ($decoded as $ev) {
+                if (!is_array($ev) || empty($ev['date'])) continue;
+                $start = substr((string) $ev['date'], 0, 10);
+                $end = !empty($ev['end_date']) ? substr((string) $ev['end_date'], 0, 10) : $start;
+                if ($tomorrowYmd >= $start && $tomorrowYmd <= $end) {
+                    $events[] = $ev;
+                }
+            }
+        }
+        if (empty($events)) return $html;
+
+        usort($events, function($a, $b) {
+            return strcmp((string) ($a['date'] ?? ''), (string) ($b['date'] ?? ''));
+        });
+
+        $count = count($events);
+        if ($count === 1) $label = 'حدث غداً في التقويم الدراسي';
+        elseif ($count === 2) $label = 'لديك حدثان غداً';
+        elseif ($count >= 3 && $count <= 10) $label = 'لديك ' . $count . ' أحداث غداً';
+        else $label = 'لديك ' . $count . ' حدثاً غداً';
+
+        $title = esc_html((string) ($events[0]['title'] ?? 'حدث دراسي'));
+        $meta = $count > 1 ? 'يوجد أكثر من حدث في هذا اليوم' : '';
+
+        $arDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+        $enDigits = ['0','1','2','3','4','5','6','7','8','9'];
+        $dayStr = str_replace($enDigits, $arDigits, $tomorrow->format('j'));
+        $arMonths = [
+            1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
+            5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
+            9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'
+        ];
+        $monthStr = $arMonths[(int) $tomorrow->format('n')] ?? '';
+
+        // Remove `hidden` attribute on the alert section and populate initial content
+        $html = preg_replace(
+            '/(<section\b[^>]*id="dent-tomorrow-calendar-alert"[^>]*?)\s+hidden(\s*>)/is',
+            '$1$2',
+            $html,
+            1
+        );
+        $html = str_replace(
+            '<strong id="dent-tomorrow-calendar-date-day" class="dent-tomorrow-calendar-date-day"></strong>',
+            '<strong id="dent-tomorrow-calendar-date-day" class="dent-tomorrow-calendar-date-day">' . esc_html($dayStr) . '</strong>',
+            $html
+        );
+        $html = str_replace(
+            '<span id="dent-tomorrow-calendar-date-month" class="dent-tomorrow-calendar-date-month"></span>',
+            '<span id="dent-tomorrow-calendar-date-month" class="dent-tomorrow-calendar-date-month">' . esc_html($monthStr) . '</span>',
+            $html
+        );
+        $html = str_replace(
+            '<span id="dent-tomorrow-calendar-label" class="dent-tomorrow-calendar-label"></span>',
+            '<span id="dent-tomorrow-calendar-label" class="dent-tomorrow-calendar-label">' . esc_html($label) . '</span>',
+            $html
+        );
+        $html = str_replace(
+            '<h2 id="dent-tomorrow-calendar-title" class="dent-tomorrow-calendar-title"></h2>',
+            '<h2 id="dent-tomorrow-calendar-title" class="dent-tomorrow-calendar-title">' . $title . '</h2>',
+            $html
+        );
+        $metaTag = $meta !== ''
+            ? '<p id="dent-tomorrow-calendar-meta" class="dent-tomorrow-calendar-meta">' . esc_html($meta) . '</p>'
+            : '<p id="dent-tomorrow-calendar-meta" class="dent-tomorrow-calendar-meta" hidden></p>';
+        $html = str_replace(
+            '<p id="dent-tomorrow-calendar-meta" class="dent-tomorrow-calendar-meta"></p>',
+            $metaTag,
+            $html
+        );
+    } catch (Exception $e) {
+        return $html;
+    }
+    return $html;
+}
 
 // Split kinetic_grid.html into <style> (for <head>, zero CLS) and <body> (<canvas> + <script>)
 function dent2025_get_kinetic_grid_parts() {
@@ -377,11 +467,13 @@ if (dent2025_is_frontend_head()) {
 }
 </style>' . "\n";
 
-        // Accelerate Google Drive iframe embed connection (DNS + TCP + TLS early warmup)
-        $head .= '<link rel="preconnect" href="https://drive.google.com" crossorigin>' . "\n" .
-            '<link rel="preconnect" href="https://docs.google.com" crossorigin>' . "\n" .
-            '<link rel="dns-prefetch" href="https://drive.google.com">' . "\n" .
-            '<link rel="dns-prefetch" href="https://docs.google.com">' . "\n";
+        // Accelerate Google Drive iframe embed connection on subpages only (avoids unused preconnect on homepage)
+        if (!function_exists('is_front_page') || !is_front_page()) {
+            $head .= '<link rel="preconnect" href="https://drive.google.com" crossorigin>' . "\n" .
+                '<link rel="preconnect" href="https://docs.google.com" crossorigin>' . "\n" .
+                '<link rel="dns-prefetch" href="https://drive.google.com">' . "\n" .
+                '<link rel="dns-prefetch" href="https://docs.google.com">' . "\n";
+        }
 
         // Modern Speculation Rules API for instant pre-rendering of core academic portal pages
         $speculation_rules = [

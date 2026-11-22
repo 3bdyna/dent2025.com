@@ -1310,13 +1310,16 @@ function injectPathChanger(selection) {
 // ---------------------------------------------------------
 function renderLogo(selection) {
     let logoPath = '/logos/dent2025.png';
-    if (selection.specialty === 'dentistry') logoPath = '/logos/dentistry-sm.webp?v=20261123';
-    else if (selection.specialty === 'medicine') logoPath = '/logos/medicine-sm.webp?v=20261123';
-    else if (selection.specialty === 'pre-med') logoPath = '/logos/pre-med-sm.webp?v=20261123';
+    let logoW = 40, logoH = 54;
+    if (selection.specialty === 'dentistry') { logoPath = '/logos/dentistry-sm.webp?v=20261123'; logoW = 40; logoH = 54; }
+    else if (selection.specialty === 'medicine') { logoPath = '/logos/medicine-sm.webp?v=20261123'; logoW = 46; logoH = 54; }
+    else if (selection.specialty === 'pre-med') { logoPath = '/logos/pre-med-sm.webp?v=20261123'; logoW = 46; logoH = 54; }
     
     const siteLogos = document.querySelectorAll('.site-logo img, .custom-logo');
     siteLogos.forEach(img => {
         img.src = logoPath;
+        img.width = logoW;
+        img.height = logoH;
         img.removeAttribute('srcset');
     });
 
