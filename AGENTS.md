@@ -223,7 +223,14 @@ python tools/deploy_safe.py --note "Enhance dashboard navigation" "frontend-html
 
 #### 2. Server-Side Infrastructure Protections in Place
 - **`safe-rm` Active on VPS**: `/usr/local/bin/rm` is symlinked to `safe-rm` with `/etc/safe-rm.conf` actively protecting `/`, `/var/www`, `/var/www/dent2025`, `/etc`, and `/home`. Any attempted recursive wipe is rejected automatically (`safe-rm: Skipping /var/www/dent2025.`).
-- **Automated Nightly Server Backups**: `/usr/local/bin/dent2025_backup.sh` runs every night at 03:30 UTC via root crontab, backing up the MySQL `wordpress` database (`db_wordpress_*.sql.gz`) and dynamic JSON files (`data_*.tar.gz`) into `/var/backups/dent2025_daily/` with a rolling 14-day retention.
+- **Automated Nightly Server Backups**: `/usr/local/bin/dent2025_backup.sh` runs every night at **03:30 UTC (06:30 AM AST)** via root crontab:
+  - Dumps the MySQL `wordpress` database (`db_wordpress_*.sql.gz` — subjects, links, WordPress) and archives **100% of dynamic runtime data** (`data_*.tar.gz` — `wp-config.php`, `dent2025_passwords.json`, `dent2025_classes.json`, `schedule_events*.json`, `announcements_data`, `dent2025_study_data`, `quizzes_data`, `polls_data`, `analytics_data`, `history_data`) into `/var/backups/dent2025_daily/` (14-day rolling retention).
+  - Uploads both `.gz` archives automatically to **Google Drive** via `/etc/dent2025_gdrive_webhook.env` (`chmod 600`, root-only).
+  - Writes `/var/www/dent2025/history_data/backup_status.json`, displayed live in the Admin Dashboard **History** tab (`history_api.php?action=backup_status`).
+- **Unified Google Drive Off-Site Backup (`My Drive > dent2025 backups/`)**:
+  - Managed by a single Google Apps Script project (`gas_content_backup_engine`, local source: `google app scripts runing now/Dent2025 Master Backup Engine.js`, requires Drive API `v2` advanced service):
+    - **`subjects pdfs/`**: Runs daily at **01:15 AM AST**, backing up all Google Drive lecture PDFs & study materials with 4-week rolling retention (14 daily + Week 3 + Week 4).
+    - **`website server backups/`**: Receives nightly **06:30 AM AST** VPS DB + site data `.gz` archives grouped into dated folders (`YYYY-MM-DD hh:mm AM [Daily]`) with **15-day** automatic retention.
 - **Azure Hypervisor Disk Snapshots**: VM OS disk snapshots in Azure Resource Group `BB-BOT-PL-RG` (baseline: `snapshot-baseline-safe-rm-20260921`) provide 1-click total disaster recovery without relying on server OS integrity.
 
 #### 3. Local Machine Backup Mirror (`server_backups_dent2025_daily/`)
