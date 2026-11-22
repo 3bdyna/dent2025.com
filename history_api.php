@@ -164,6 +164,160 @@ function dent2025_restore_db_tables($subjects, $links) {
     }
 }
 
+/**
+ * Collects live telemetry across server archives, in-app snapshots, local backups, and safety protections.
+ */
+function dent2025_collect_backups_overview($history_dir, $snapshots_dir) {
+    // 1. VPS /var/backups/dent2025_daily/*.gz
+    $vps_dir = '/var/backups/dent2025_daily';
+    $vps_archives = [
+        'readable' => false,
+        'count' => 0,
+        'db_count' => 0,
+        'data_count' => 0,
+        'total_bytes' => 0,
+        'newest_unix' => null,
+        'oldest_unix' => null,
+        'runs' => []
+    ];
+
+    if (@is_dir($vps_dir) && @is_readable($vps_dir)) {
+        $gz_files = @glob($vps_dir . '/*.gz');
+        if (is_array($gz_files)) {
+            $vps_archives['readable'] = true;
+            $runs_map = [];
+            foreach ($gz_files as $fpath) {
+                if (!@is_file($fpath)) continue;
+                $fname = basename($fpath);
+                $sz = (int)@filesize($fpath);
+                $mt = (int)@filemtime($fpath);
+                $vps_archives['count']++;
+                $vps_archives['total_bytes'] += $sz;
+                if ($vps_archives['newest_unix'] === null || $mt > $vps_archives['newest_unix']) {
+                    $vps_archives['newest_unix'] = $mt;
+                }
+                if ($vps_archives['oldest_unix'] === null || $mt < $vps_archives['oldest_unix']) {
+                    $vps_archives['oldest_unix'] = $mt;
+                }
+
+                $is_db = strpos($fname, 'db_wordpress_') === 0;
+                $is_data = strpos($fname, 'data_') === 0;
+                if ($is_db) $vps_archives['db_count']++;
+                elseif ($is_data) $vps_archives['data_count']++;
+
+                if (preg_match('/(\d{8}_\d{6})/', $fname, $m)) {
+                    $key = $m[1];
+                } else {
+                    $key = gmdate('Ymd_His', $mt);
+                }
+                if (!isset($runs_map[$key])) {
+                    $runs_map[$key] = [
+                        'timestamp_key' => $key,
+                        'mtime_unix' => $mt,
+                        'db_file' => null,
+                        'db_size_bytes' => 0,
+                        'data_file' => null,
+                        'data_size_bytes' => 0,
+                        'total_bytes' => 0
+                    ];
+                }
+                if ($mt > $runs_map[$key]['mtime_unix']) {
+                    $runs_map[$key]['mtime_unix'] = $mt;
+                }
+                if ($is_db) {
+                    $runs_map[$key]['db_file'] = $fname;
+                    $runs_map[$key]['db_size_bytes'] = $sz;
+                } elseif ($is_data) {
+                    $runs_map[$key]['data_file'] = $fname;
+                    $runs_map[$key]['data_size_bytes'] = $sz;
+                }
+                $runs_map[$key]['total_bytes'] += $sz;
+            }
+            uksort($runs_map, function($a, $b) { return strcmp($b, $a); });
+            $vps_archives['runs'] = array_slice(array_values($runs_map), 0, 12);
+        }
+    }
+
+    // 2. In-app snapshots & audit history
+    $snap_stats = [
+        'snapshots_count' => 0,
+        'total_bytes' => 0,
+        'newest_unix' => null,
+        'oldest_unix' => null,
+        'audit_entries_count' => 0,
+        'manual_count' => 0,
+        'safety_count' => 0
+    ];
+    if (is_dir($snapshots_dir)) {
+        $sfiles = @glob($snapshots_dir . '/*.json');
+        if (is_array($sfiles)) {
+            foreach ($sfiles as $sf) {
+                if (!@is_file($sf)) continue;
+                $snap_stats['snapshots_count']++;
+                $snap_stats['total_bytes'] += (int)@filesize($sf);
+                $mt = (int)@filemtime($sf);
+                if ($snap_stats['newest_unix'] === null || $mt > $snap_stats['newest_unix']) {
+                    $snap_stats['newest_unix'] = $mt;
+                }
+                if ($snap_stats['oldest_unix'] === null || $mt < $snap_stats['oldest_unix']) {
+                    $snap_stats['oldest_unix'] = $mt;
+                }
+            }
+        }
+    }
+    $audit_file = "{$history_dir}/audit_log.json";
+    if (file_exists($audit_file)) {
+        $logs = json_decode(@file_get_contents($audit_file), true);
+        if (is_array($logs)) {
+            $snap_stats['audit_entries_count'] = count($logs);
+            foreach ($logs as $entry) {
+                $at = $entry['action_type'] ?? '';
+                if ($at === 'manual_save') $snap_stats['manual_count']++;
+                elseif ($at === 'safety_backup') $snap_stats['safety_count']++;
+            }
+        }
+    }
+
+    // 3. Announcements pre-change local backup
+    $ann_backup_file = __DIR__ . '/announcements_data/announcements_backup.json';
+    $ann_backup = [
+        'exists' => file_exists($ann_backup_file),
+        'size_bytes' => file_exists($ann_backup_file) ? (int)@filesize($ann_backup_file) : 0,
+        'mtime_unix' => file_exists($ann_backup_file) ? (int)@filemtime($ann_backup_file) : null
+    ];
+
+    // 4. Server infrastructure protections
+    $infra = [
+        'safe_rm_active' => (@is_link('/usr/local/bin/rm') && @file_exists('/etc/safe-rm.conf')),
+        'backup_script_exists' => @file_exists('/usr/local/bin/dent2025_backup.sh'),
+        'azure_baseline_snapshot' => 'snapshot-baseline-safe-rm-20260921',
+        'azure_resource_group' => 'BB-BOT-PL-RG',
+        'github_repo' => '3bdyna/dent2025.com'
+    ];
+
+    // 5. External systems telemetry (PC mirror, GAS PDFs backup)
+    $telemetry_file = "{$history_dir}/backup_systems_telemetry.json";
+    $telemetry = [];
+    if (file_exists($telemetry_file)) {
+        $parsed_tel = json_decode(@file_get_contents($telemetry_file), true);
+        if (is_array($parsed_tel)) {
+            $telemetry = $parsed_tel;
+        }
+    }
+
+    return [
+        'server_time_unix' => time(),
+        'vps_archives' => $vps_archives,
+        'in_app_snapshots' => $snap_stats,
+        'announcements_backup' => $ann_backup,
+        'infra' => $infra,
+        'telemetry' => [
+            'local_pc_sync' => $telemetry['local_pc_sync'] ?? null,
+            'pdfs_backup' => $telemetry['pdfs_backup'] ?? null
+        ]
+    ];
+}
+
 // 1. GET Requests
 if ($method === 'GET') {
     $action = $_GET['action'] ?? 'get_history';
@@ -191,13 +345,20 @@ if ($method === 'GET') {
 
     if ($action === 'backup_status') {
         $status_file = "{$history_dir}/backup_status.json";
-        if (!file_exists($status_file)) {
-            echo json_encode(['success' => true, 'data' => null]);
-            exit;
+        $decoded = null;
+        if (file_exists($status_file)) {
+            $raw = @file_get_contents($status_file);
+            $parsed = $raw ? json_decode($raw, true) : null;
+            if (is_array($parsed)) {
+                $decoded = $parsed;
+            }
         }
-        $raw = @file_get_contents($status_file);
-        $decoded = $raw ? json_decode($raw, true) : null;
-        echo json_encode(['success' => true, 'data' => is_array($decoded) ? $decoded : null], JSON_UNESCAPED_UNICODE);
+        $overview = dent2025_collect_backups_overview($history_dir, $snapshots_dir);
+        echo json_encode([
+            'success' => true,
+            'data' => $decoded,
+            'overview' => $overview
+        ], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
@@ -406,6 +567,53 @@ if ($method === 'POST') {
     if (!$is_auth) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Unauthorized: Full admin permission required.']);
+        exit;
+    }
+
+    if ($action === 'report_backup_ping') {
+        $system = $input['system'] ?? '';
+        if (!in_array($system, ['local_pc_sync', 'pdfs_backup'], true)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid backup system identifier']);
+            exit;
+        }
+
+        $telemetry_file = "{$history_dir}/backup_systems_telemetry.json";
+        $telemetry = [];
+        if (file_exists($telemetry_file)) {
+            $parsed = json_decode(@file_get_contents($telemetry_file), true);
+            if (is_array($parsed)) {
+                $telemetry = $parsed;
+            }
+        }
+
+        $now = time();
+        $entry = [
+            'reported_unix' => $now,
+            'reported_iso' => gmdate('Y-m-d\TH:i:s\Z', $now),
+            'status' => substr(strip_tags((string)($input['status'] ?? 'ok')), 0, 40)
+        ];
+
+        if ($system === 'local_pc_sync') {
+            $entry['archive_count'] = max(0, (int)($input['archive_count'] ?? 0));
+            $entry['total_bytes'] = max(0, (int)($input['total_bytes'] ?? 0));
+            $entry['downloaded_now'] = max(0, (int)($input['downloaded_now'] ?? 0));
+            $entry['pruned_now'] = max(0, (int)($input['pruned_now'] ?? 0));
+            $entry['retention_days'] = max(1, (int)($input['retention_days'] ?? 14));
+            $entry['latest_file'] = substr(strip_tags((string)($input['latest_file'] ?? '')), 0, 120);
+            $entry['host'] = substr(strip_tags((string)($input['host'] ?? '')), 0, 80);
+        } elseif ($system === 'pdfs_backup') {
+            $entry['files_count'] = max(0, (int)($input['files_count'] ?? 0));
+            $entry['folders_count'] = max(0, (int)($input['folders_count'] ?? 0));
+            $entry['elapsed_sec'] = max(0, (float)($input['elapsed_sec'] ?? 0));
+            $entry['snapshot_name'] = substr(strip_tags((string)($input['snapshot_name'] ?? '')), 0, 120);
+            $url = (string)($input['snapshot_url'] ?? '');
+            $entry['snapshot_url'] = (strpos($url, 'https://drive.google.com/') === 0) ? substr($url, 0, 220) : '';
+        }
+
+        $telemetry[$system] = $entry;
+        dent2025_safe_atomic_save_json($telemetry_file, $telemetry);
+
+        echo json_encode(['success' => true, 'system' => $system, 'data' => $entry], JSON_UNESCAPED_UNICODE);
         exit;
     }
 

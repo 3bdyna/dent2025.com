@@ -26,6 +26,7 @@ window.AdminApp = {
     quizzesData: [],
     geminiData: null,
     cacheStatsData: null,
+    backupsOverviewData: null,
     _classesCohort: null,
     _quillLoadingPromise: null,
     _prefetchScheduled: false,
@@ -295,7 +296,7 @@ window.AdminApp = {
 
     applyPermissionsUI() {
         const canManageMaster = !!(this.permissions && this.permissions.manage_passwords);
-        const masterOnlyTabs = ['passwords', 'gemini', 'cache', 'history', 'analytics'];
+        const masterOnlyTabs = ['passwords', 'gemini', 'cache', 'history', 'backups', 'analytics'];
         masterOnlyTabs.forEach(tabName => {
             document.querySelectorAll(`[data-tab="${tabName}"]`).forEach(el => {
                 if (canManageMaster) {
@@ -371,6 +372,7 @@ window.AdminApp = {
             runTask(() => this.prefetchGemini(), 4000);
             runTask(() => this.prefetchHistory(), 4600);
             runTask(() => this.prefetchCacheStats(), 5200);
+            runTask(() => this.prefetchBackupsOverview(), 5500);
             runTask(() => this.prefetchAnalytics(), 5800);
         }
     },
@@ -484,7 +486,7 @@ window.AdminApp = {
     },
 
     switchTab(tabId) {
-        const masterOnlyTabs = ['passwords', 'gemini', 'cache', 'history', 'analytics'];
+        const masterOnlyTabs = ['passwords', 'gemini', 'cache', 'history', 'backups', 'analytics'];
         if (masterOnlyTabs.includes(tabId)) {
             const canManageMaster = !!(this.permissions && this.permissions.manage_passwords);
             if (!canManageMaster) {
@@ -506,6 +508,7 @@ window.AdminApp = {
             'gemini': 'مراقبة مفاتيح المعالجة الذكية',
             'passwords': 'الصلاحيات والمفاتيح',
             'history': 'سجل التغييرات والاستعادة',
+            'backups': 'أنظمة النسخ الاحتياطي',
             'analytics': 'تحليلات الحضور والزوار'
         };
 
@@ -604,6 +607,8 @@ window.AdminApp = {
             } else if (tabId === 'history') {
                 this.loadHistory();
                 this.loadManualSnapshots();
+            } else if (tabId === 'backups') {
+                this.loadBackupsDashboard();
             } else if (tabId === 'gemini') {
                 this.loadGeminiStatus();
             } else if (tabId === 'quizzes') {
@@ -3291,6 +3296,9 @@ window.AdminApp = {
         fetch(API_BASE + '/history_api.php?action=backup_status', { headers: { 'X-Admin-Pass': this.pass || '' } })
             .then(r => r.json())
             .then(res => {
+                if (res && res.success) {
+                    this.backupsOverviewData = res;
+                }
                 const d = res && res.success ? res.data : null;
                 if (!d || !d.last_backup_unix) {
                     badge.textContent = 'لا توجد بيانات بعد';
@@ -3327,6 +3335,283 @@ window.AdminApp = {
             .catch(() => {
                 badge.textContent = 'تعذر الفحص';
             });
+    },
+
+    prefetchBackupsOverview() {
+        if (this.backupsOverviewData) return;
+        fetch(`${API_BASE}/history_api.php?action=backup_status&_t=${Date.now()}`, {
+            headers: { 'X-Admin-Pass': this.pass || '' }
+        })
+            .then(r => r.json())
+            .then(res => {
+                if (res && res.success) {
+                    this.backupsOverviewData = res;
+                }
+            })
+            .catch(() => {});
+    },
+
+    loadBackupsDashboard(force = false) {
+        const grid = document.getElementById('bk-systems-grid');
+        if (!grid) return;
+
+        if (!force && this.backupsOverviewData) {
+            this.renderBackupsDashboard(this.backupsOverviewData);
+        }
+
+        fetch(`${API_BASE}/history_api.php?action=backup_status&_t=${Date.now()}`, {
+            headers: { 'X-Admin-Pass': this.pass || '' }
+        })
+            .then(r => r.json())
+            .then(res => {
+                if (res && res.success) {
+                    this.backupsOverviewData = res;
+                    this.renderBackupsDashboard(res);
+                } else if (!this.backupsOverviewData) {
+                    grid.innerHTML = '<div class="glass p-6 rounded-xl border border-white/10 text-center text-rose-400 text-xs md:col-span-2 xl:col-span-3">تعذر تحميل بيانات النسخ الاحتياطي</div>';
+                }
+            })
+            .catch(() => {
+                if (!this.backupsOverviewData) {
+                    grid.innerHTML = '<div class="glass p-6 rounded-xl border border-white/10 text-center text-rose-400 text-xs md:col-span-2 xl:col-span-3">خطأ في الاتصال بالخادم</div>';
+                }
+            });
+    },
+
+    renderBackupsDashboard(res) {
+        const grid = document.getElementById('bk-systems-grid');
+        const tbody = document.getElementById('bk-archives-tbody');
+        if (!grid) return;
+
+        const d = (res && res.data) || {};
+        const ov = (res && res.overview) || {};
+        const vps = ov.vps_archives || {};
+        const snaps = ov.in_app_snapshots || {};
+        const annBak = ov.announcements_backup || {};
+        const infra = ov.infra || {};
+        const tel = ov.telemetry || {};
+        const pcSync = tel.local_pc_sync || null;
+        const pdfsBak = tel.pdfs_backup || null;
+
+        const fmtBytes = (bytes) => {
+            const b = Number(bytes) || 0;
+            if (b <= 0) return '0 B';
+            if (b >= 1024 * 1024 * 1024) return `${(b / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+            if (b >= 1024 * 1024) return `${(b / (1024 * 1024)).toFixed(2)} MB`;
+            return `${Math.round(b / 1024)} KB`;
+        };
+
+        const fmtDate = (unixSec) => {
+            if (!unixSec) return '--';
+            return new Date(unixSec * 1000).toLocaleString('ar-SA', {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+        };
+
+        const fmtAge = (unixSec) => {
+            if (!unixSec) return '';
+            const hrs = Math.max(0, (Date.now() / 1000 - unixSec) / 3600);
+            if (hrs < 1) return `منذ ${Math.max(1, Math.round(hrs * 60))} د`;
+            if (hrs < 48) return `منذ ${Math.round(hrs)} س`;
+            return `منذ ${Math.round(hrs / 24)} يوم`;
+        };
+
+        const badge = (text, tone) => {
+            const cls = {
+                ok: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+                warn: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+                err: 'bg-rose-500/15 text-rose-400 border-rose-500/30',
+                info: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+                neutral: 'bg-white/5 text-gray-300 border-white/10'
+            }[tone] || 'bg-white/5 text-gray-300 border-white/10';
+            return `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-medium border whitespace-nowrap ${cls}">${this.escapeHtml(text)}</span>`;
+        };
+
+        const renderCard = ({ title, subtitle, statusText, statusTone, rows, footerHtml = '' }) => {
+            const rowsHtml = rows.map(([k, v]) => `
+                <div class="p-2 rounded-lg bg-white/[0.03] border border-white/5 min-w-0">
+                    <div class="text-[10px] text-gray-400 mb-0.5 truncate">${this.escapeHtml(k)}</div>
+                    <div class="text-xs text-white font-medium truncate" title="${this.escapeHtml(String(v))}">${this.escapeHtml(String(v))}</div>
+                </div>
+            `).join('');
+            return `
+                <div class="glass p-3.5 sm:p-4 rounded-xl border border-white/10 flex flex-col justify-between gap-3">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0">
+                            <h3 class="font-bold text-white text-xs sm:text-sm leading-snug">${this.escapeHtml(title)}</h3>
+                            <p class="text-[11px] text-gray-400 mt-0.5 truncate">${this.escapeHtml(subtitle)}</p>
+                        </div>
+                        ${badge(statusText, statusTone)}
+                    </div>
+                    <div class="grid grid-cols-2 gap-1.5">${rowsHtml}</div>
+                    ${footerHtml ? `<div class="pt-2 border-t border-white/5 text-[11px] text-gray-400 flex items-center justify-between gap-2 flex-wrap">${footerHtml}</div>` : ''}
+                </div>
+            `;
+        };
+
+        // 1. VPS Nightly Backup
+        const vpsUnix = d.last_backup_unix || vps.newest_unix || null;
+        const vpsAgeH = vpsUnix ? (Date.now() / 1000 - vpsUnix) / 3600 : null;
+        const vpsTone = vpsAgeH === null ? 'neutral' : (vpsAgeH <= 26 ? 'ok' : 'warn');
+        const vpsStatus = vpsAgeH === null ? 'بانتظار البيانات' : (vpsAgeH <= 26 ? 'محدّث وسليم' : `متأخر (${Math.round(vpsAgeH)} س)`);
+        const latestVpsSize = ((d.db_size_bytes || 0) + (d.data_size_bytes || 0));
+        const vpsCount = vps.readable ? vps.count : (d.total_archives || 0);
+        const vpsTotalSize = vps.readable ? vps.total_bytes : latestVpsSize;
+
+        // 2. Google Drive Server Backup
+        const gdStatusRaw = d.gdrive_status || 'not_configured';
+        const gdUnix = d.gdrive_last_sync_iso ? Math.floor(Date.parse(d.gdrive_last_sync_iso) / 1000) : null;
+        const gdTone = gdStatusRaw === 'synced' ? 'ok' : (gdStatusRaw === 'failed' ? 'err' : 'warn');
+        const gdStatus = gdStatusRaw === 'synced' ? 'متصل ومزامن' : (gdStatusRaw === 'failed' ? 'فشل آخر رفع' : 'بانتظار الربط');
+
+        // 3. Google Drive Subjects PDFs Backup (GAS)
+        const pdfUnix = pdfsBak && pdfsBak.reported_unix ? pdfsBak.reported_unix : null;
+        const pdfAgeH = pdfUnix ? (Date.now() / 1000 - pdfUnix) / 3600 : null;
+        const pdfTone = pdfAgeH === null ? 'info' : (pdfAgeH <= 26 ? 'ok' : 'warn');
+        const pdfStatus = pdfAgeH === null ? 'مجدول (GAS)' : (pdfAgeH <= 26 ? 'مكتمل وسليم' : `متأخر (${Math.round(pdfAgeH)} س)`);
+
+        // 4. Windows PC Local Mirror
+        const pcUnix = pcSync && pcSync.reported_unix ? pcSync.reported_unix : null;
+        const pcAgeH = pcUnix ? (Date.now() / 1000 - pcUnix) / 3600 : null;
+        const pcTone = !pcSync ? 'neutral' : (pcSync.status !== 'ok' ? 'warn' : (pcAgeH <= 36 ? 'ok' : 'warn'));
+        const pcStatus = !pcSync ? 'بانتظار أول مزامنة' : (pcSync.status !== 'ok' ? 'تعذر الاتصال بالخادم' : (pcAgeH <= 36 ? 'متزامن محلياً' : `منذ ${Math.round(pcAgeH)} س`));
+
+        // 5. In-App Snapshots & Audit Log
+        const snapCount = snaps.snapshots_count || 0;
+        const snapTone = snapCount > 0 ? 'ok' : 'neutral';
+        const snapStatus = snapCount > 0 ? 'نشط وجاهز' : 'لا توجد لقطات';
+
+        // 6. Infra & GitHub SafeDeploy
+        const safeRmOk = !!infra.safe_rm_active;
+        const infraTone = safeRmOk ? 'ok' : 'warn';
+        const infraStatus = safeRmOk ? 'محمي ونشط' : 'مراجعة مطلوبة';
+
+        // Top 4 KPIs
+        const activeHealthy = [vpsTone, gdTone, snapTone, infraTone, pcTone].filter(t => t === 'ok').length;
+        const kpiHealth = document.getElementById('bk-kpi-health');
+        const kpiLastVps = document.getElementById('bk-kpi-last-vps');
+        const kpiCount = document.getElementById('bk-kpi-total-count');
+        const kpiSize = document.getElementById('bk-kpi-total-size');
+
+        if (kpiHealth) {
+            kpiHealth.textContent = vpsTone === 'ok' && gdTone === 'ok' ? `سليمة (${activeHealthy}/5 نشط)` : `${activeHealthy}/5 نشط`;
+            kpiHealth.className = `text-sm sm:text-lg font-bold ${vpsTone === 'ok' ? 'text-emerald-300' : 'text-amber-300'}`;
+        }
+        if (kpiLastVps) kpiLastVps.textContent = vpsUnix ? `${fmtDate(vpsUnix)}` : '--';
+        if (kpiCount) kpiCount.textContent = `${vpsCount} أرشيف + ${snapCount} لقطة`;
+        if (kpiSize) kpiSize.textContent = fmtBytes((vpsTotalSize || 0) + (snaps.total_bytes || 0));
+
+        const pdfFooterLink = pdfsBak && pdfsBak.snapshot_url
+            ? `<a href="${this.sanitizeUrl(pdfsBak.snapshot_url)}" target="_blank" rel="noopener noreferrer" class="text-sky-300 hover:text-white underline">فتح مجلد النسخة</a>`
+            : '<span>المصدر: مجلد المواد الأكاديمية</span>';
+
+        grid.innerHTML = [
+            renderCard({
+                title: '1. النسخ الليلي للخادم (VPS)',
+                subtitle: 'dent2025_backup.sh · يومياً 06:30 ص (AST)',
+                statusText: vpsStatus,
+                statusTone: vpsTone,
+                rows: [
+                    ['آخر نسخة', vpsUnix ? `${fmtDate(vpsUnix)} (${fmtAge(vpsUnix)})` : '--'],
+                    ['حجم آخر نسخة', latestVpsSize > 0 ? `${fmtBytes(latestVpsSize)} (DB ${fmtBytes(d.db_size_bytes)})` : '--'],
+                    ['الأرشيفات بالخادم', `${vpsCount} ملف (${fmtBytes(vpsTotalSize)})`],
+                    ['فترة الاحتفاظ', `${d.retention_days || 14} يوم`]
+                ],
+                footerHtml: '<span>يشمل: MySQL، الاختبارات، التقويم، الإعلانات، الاستطلاعات، الإحصائيات، الصلاحيات.</span>'
+            }),
+            renderCard({
+                title: '2. مزامنة Google Drive (الخادم)',
+                subtitle: 'dent2025 backups / website server backups',
+                statusText: gdStatus,
+                statusTone: gdTone,
+                rows: [
+                    ['آخر مزامنة', gdUnix ? `${fmtDate(gdUnix)} (${fmtAge(gdUnix)})` : '--'],
+                    ['نوع النسخة', 'DB (.sql.gz) + Data (.tar.gz)'],
+                    ['فترة الاحتفاظ', '15 يوم تلقائياً'],
+                    ['التشغيل', 'مباشرة بعد النسخ الليلي']
+                ],
+                footerHtml: '<span>مرسل تلقائياً عبر GAS Webhook المحمي</span>'
+            }),
+            renderCard({
+                title: '3. نسخ ملفات المواد PDF (Drive)',
+                subtitle: 'dent2025 backups / subjects pdfs',
+                statusText: pdfStatus,
+                statusTone: pdfTone,
+                rows: [
+                    ['آخر تشغيل مُبلّغ', pdfUnix ? `${fmtDate(pdfUnix)} (${fmtAge(pdfUnix)})` : 'مجدول 01:15 ص يومياً'],
+                    ['الملفات / المجلدات', pdfsBak ? `${pdfsBak.files_count || 0} ملف / ${pdfsBak.folders_count || 0} مجلد` : 'مزامنة Drive-to-Drive'],
+                    ['فترة الاحتفاظ', '4 أسابيع (14 يوم + أسبوع 3 و 4)'],
+                    ['المدة / اللقطة', pdfsBak ? `${pdfsBak.elapsed_sec || 0}s` : 'دعم الاستكمال التلقائي']
+                ],
+                footerHtml: `${pdfFooterLink}<span>GAS: Master Backup Engine</span>`
+            }),
+            renderCard({
+                title: '4. المزامنة المحلية (Windows PC)',
+                subtitle: 'Task: Dent2025 Daily Backup Sync · 07:00 ص',
+                statusText: pcStatus,
+                statusTone: pcTone,
+                rows: [
+                    ['آخر مزامنة', pcUnix ? `${fmtDate(pcUnix)} (${fmtAge(pcUnix)})` : 'لم تُرسل إشارة بعد'],
+                    ['الأرشيفات المحلية', pcSync ? `${pcSync.archive_count || 0} ملف (${fmtBytes(pcSync.total_bytes)})` : '--'],
+                    ['فترة الاحتفاظ', `${(pcSync && pcSync.retention_days) || 14} يوم`],
+                    ['أحدث ملف محلي', (pcSync && pcSync.latest_file) ? pcSync.latest_file : 'server_backups_dent2025_daily/']
+                ],
+                footerHtml: `<span>تشغيل فوري عند فتح الجهاز</span>${pcSync && pcSync.host ? `<span class="font-mono">${this.escapeHtml(pcSync.host)}</span>` : ''}`
+            }),
+            renderCard({
+                title: '5. لقطات الاستعادة الفورية (In-App)',
+                subtitle: 'history_api.php · تغييرات الإدارة والإعلانات',
+                statusText: snapStatus,
+                statusTone: snapTone,
+                rows: [
+                    ['اللقطات المحفوظة', `${snapCount} لقطة (${fmtBytes(snaps.total_bytes)})`],
+                    ['نقاط يدوية / أمان', `${snaps.manual_count || 0} يدوية · ${snaps.safety_count || 0} أمان`],
+                    ['آخر لقطة', snaps.newest_unix ? `${fmtDate(snaps.newest_unix)}` : '--'],
+                    ['نسخة الإعلانات', annBak.exists ? `متوفرة (${fmtBytes(annBak.size_bytes)})` : 'غير موجودة بعد']
+                ],
+                footerHtml: `<span>سجل التدقيق: ${snaps.audit_entries_count || 0} عملية</span><button type="button" onclick="AdminApp.switchTab('history')" class="text-sky-300 hover:text-white underline">فتح سجل الاستعادة</button>`
+            }),
+            renderCard({
+                title: '6. حماية البنية والكود والـ VM',
+                subtitle: 'SafeDeploy + GitHub + Azure + safe-rm',
+                statusText: infraStatus,
+                statusTone: infraTone,
+                rows: [
+                    ['حماية الحذف safe-rm', safeRmOk ? 'مفعّلة (/etc/safe-rm.conf)' : 'غير مفعّلة'],
+                    ['سكربت النسخ بالخادم', infra.backup_script_exists ? 'مثبّت (/usr/local/bin)' : 'غير موجود'],
+                    ['مستودع الكود', infra.github_repo || '3bdyna/dent2025.com'],
+                    ['لقطة Azure VM', infra.azure_baseline_snapshot || 'BB-BOT-PL-RG']
+                ],
+                footerHtml: '<span>تراجع الكود الفوري: deploy_safe.py --rollback</span>'
+            })
+        ].join('');
+
+        // Populate Latest VPS Archives Table
+        if (!tbody) return;
+        const runs = Array.isArray(vps.runs) ? vps.runs : [];
+        const summaryEl = document.getElementById('bk-archives-summary');
+        if (summaryEl) {
+            summaryEl.textContent = vps.readable
+                ? `عرض أحدث ${runs.length} تشغيلات من أصل ${vps.count || 0} ملف (${fmtBytes(vps.total_bytes)})`
+                : 'مجلد الأرشيف غير قابل للقراءة من PHP';
+        }
+
+        if (runs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500 font-sans">لا توجد أرشيفات متاحة للعرض حالياً</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = runs.map(r => `
+            <tr class="hover:bg-white/[0.02] transition">
+                <td class="p-3 text-gray-200">
+                    <div>${this.escapeHtml(fmtDate(r.mtime_unix))}</div>
+                    <div class="text-[10px] text-gray-500">${this.escapeHtml(r.timestamp_key || '')}</div>
+                </td>
+                <td class="p-3 text-center text-gray-300">${r.db_file ? fmtBytes(r.db_size_bytes) : '--'}</td>
+                <td class="p-3 text-center text-gray-300">${r.data_file ? fmtBytes(r.data_size_bytes) : '--'}</td>
+                <td class="p-3 text-center text-white font-semibold">${fmtBytes(r.total_bytes)}</td>
+            </tr>
+        `).join('');
     },
 
     loadHistory() {
