@@ -11,6 +11,7 @@ txt stuff to save/passwords.txt
 .env*
 wp-config.php
 backend/gemini_keys_data/
+docs/google_apps_scripts/
 *.pem
 *.key
 *.cert
