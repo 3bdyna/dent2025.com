@@ -41,10 +41,30 @@ function dent_load_polls_data($pollsFile) {
     return is_array($decoded) && isset($decoded['polls']) ? $decoded : ['polls' => []];
 }
 
-// Helper to save polls atomically
+// Helper to save polls atomically (prevents half-written/corrupted JSON)
 function dent_save_polls_data($pollsFile, $data) {
+    if (function_exists('dent2025_safe_atomic_save_json')) {
+        return dent2025_safe_atomic_save_json($pollsFile, $data);
+    }
     $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     return file_put_contents($pollsFile, $json, LOCK_EX) !== false;
+}
+
+// Exclusive lock wrapper for safe concurrent read-modify-write on polls.json
+function dent_with_polls_lock($pollsFile, $callback) {
+    $lockFile = dirname($pollsFile) . '/polls.lock';
+    $lockFp = @fopen($lockFile, 'c+');
+    if ($lockFp) {
+        flock($lockFp, LOCK_EX);
+    }
+    try {
+        return $callback();
+    } finally {
+        if ($lockFp) {
+            flock($lockFp, LOCK_UN);
+            fclose($lockFp);
+        }
+    }
 }
 
 // Passkey extractor from request body, query, or standard headers
@@ -59,11 +79,20 @@ function dent_get_auth_pass($body = []) {
     return '';
 }
 
-// Check if passkey belongs to Master or a Cohort Leader, and get allowed contexts
+// Check if passkey belongs to Master or a Cohort Leader, enforcing RBAC brute-force lockout
 function dent_get_caller_auth_scope($pass) {
+    if (function_exists('dent2025_is_ip_locked_out') && dent2025_is_ip_locked_out()) {
+        return null;
+    }
     if (empty($pass)) return null;
+
     $info = dent2025_get_passkey_info($pass);
-    if (!$info) return null;
+    if (!$info) {
+        if (function_exists('dent2025_record_auth_failure')) {
+            dent2025_record_auth_failure();
+        }
+        return null;
+    }
 
     $perms = $info['permissions'] ?? [];
     $allowed = $info['allowed_contexts'] ?? [];
@@ -71,7 +100,12 @@ function dent_get_caller_auth_scope($pass) {
     $isMaster = !empty($perms['manage_passwords']) || !empty($perms['global_announcements']) || in_array('*', $allowed, true);
     $isLeader = !empty($perms['semester_announcements']) || !empty($perms['edit_basic_subject']);
 
-    if (!$isMaster && !$isLeader) return null;
+    if (!$isMaster && !$isLeader) {
+        if (function_exists('dent2025_record_auth_failure')) {
+            dent2025_record_auth_failure();
+        }
+        return null;
+    }
 
     return [
         'is_master' => $isMaster,
@@ -79,14 +113,10 @@ function dent_get_caller_auth_scope($pass) {
     ];
 }
 
-// Client IP resolver
+// Client IP resolver (delegates to hardened Cloudflare-aware resolver in dent2025_rbac.php)
 function dent_get_client_ip() {
-    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
-        return $_SERVER['HTTP_CF_CONNECTING_IP'];
-    }
-    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-        return trim($ips[0]);
+    if (function_exists('dent2025_get_client_ip')) {
+        return dent2025_get_client_ip();
     }
     return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 }
@@ -271,66 +301,68 @@ if ($method === 'POST') {
             exit;
         }
 
-        $data = dent_load_polls_data($pollsFile);
-        if (!isset($data['polls'][$pollId])) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Poll not found'], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
+        $result = dent_with_polls_lock($pollsFile, function() use ($pollsFile, $pollId, $optIdx, $voterHash) {
+            $data = dent_load_polls_data($pollsFile);
+            if (!isset($data['polls'][$pollId])) {
+                return ['code' => 404, 'payload' => ['success' => false, 'error' => 'Poll not found']];
+            }
 
-        $poll = &$data['polls'][$pollId];
+            $poll = &$data['polls'][$pollId];
 
-        // Status check
-        if (($poll['status'] ?? '') === 'archived') {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'هذا الاستطلاع مغلق حالياً'], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
+            // Status check
+            if (($poll['status'] ?? '') === 'archived') {
+                return ['code' => 400, 'payload' => ['success' => false, 'error' => 'هذا الاستطلاع مغلق حالياً']];
+            }
 
-        // Expiry check
-        if (!empty($poll['expires_at']) && time() > (int)$poll['expires_at']) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'انتهى وقت التصويت لهذا الاستطلاع'], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
+            // Expiry check
+            if (!empty($poll['expires_at']) && time() > (int)$poll['expires_at']) {
+                return ['code' => 400, 'payload' => ['success' => false, 'error' => 'انتهى وقت التصويت لهذا الاستطلاع']];
+            }
 
-        // Check if option index exists
-        if (!isset($poll['options'][$optIdx])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Invalid option index'], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
+            // Check if option index exists
+            if (!isset($poll['options'][$optIdx])) {
+                return ['code' => 400, 'payload' => ['success' => false, 'error' => 'Invalid option index']];
+            }
 
-        // Duplicate vote check via fingerprint hash
-        if (!isset($poll['voter_hashes']) || !is_array($poll['voter_hashes'])) {
-            $poll['voter_hashes'] = [];
-        }
+            // Duplicate vote check via fingerprint hash
+            if (!isset($poll['voter_hashes']) || !is_array($poll['voter_hashes'])) {
+                $poll['voter_hashes'] = [];
+            }
 
-        if (in_array($voterHash, $poll['voter_hashes'], true)) {
-            echo json_encode([
-                'success' => false,
-                'already_voted' => true,
-                'error' => 'لقد قمت بالتصويت مسبقاً في هذا الاستطلاع',
-                'data' => dent_format_public_poll($poll, $voterHash)
-            ], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
+            if (in_array($voterHash, $poll['voter_hashes'], true)) {
+                return [
+                    'code' => 200,
+                    'payload' => [
+                        'success' => false,
+                        'already_voted' => true,
+                        'error' => 'لقد قمت بالتصويت مسبقاً في هذا الاستطلاع',
+                        'data' => dent_format_public_poll($poll, $voterHash)
+                    ]
+                ];
+            }
 
-        // Record vote
-        if (!isset($poll['votes'][$optIdx])) {
-            $poll['votes'][$optIdx] = 0;
-        }
-        $poll['votes'][$optIdx]++;
-        $poll['total_votes'] = (int)($poll['total_votes'] ?? 0) + 1;
-        $poll['voter_hashes'][] = $voterHash;
+            // Record vote
+            if (!isset($poll['votes'][$optIdx])) {
+                $poll['votes'][$optIdx] = 0;
+            }
+            $poll['votes'][$optIdx]++;
+            $poll['total_votes'] = (int)($poll['total_votes'] ?? 0) + 1;
+            $poll['voter_hashes'][] = $voterHash;
 
-        dent_save_polls_data($pollsFile, $data);
+            dent_save_polls_data($pollsFile, $data);
 
-        echo json_encode([
-            'success' => true,
-            'message' => 'تم تسجيل تصويتك بنجاح',
-            'data' => dent_format_public_poll($poll, $voterHash)
-        ], JSON_UNESCAPED_UNICODE);
+            return [
+                'code' => 200,
+                'payload' => [
+                    'success' => true,
+                    'message' => 'تم تسجيل تصويتك بنجاح',
+                    'data' => dent_format_public_poll($poll, $voterHash)
+                ]
+            ];
+        });
+
+        http_response_code($result['code']);
+        echo json_encode($result['payload'], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
@@ -384,41 +416,44 @@ if ($method === 'POST') {
 
         $status = in_array($body['status'] ?? '', ['testing', 'published', 'archived'], true) ? $body['status'] : 'testing';
 
-        $data = dent_load_polls_data($pollsFile);
+        $savedPoll = dent_with_polls_lock($pollsFile, function() use ($pollsFile, $pollId, $question, $body, $cleanOptions, $specialty, $year, $semester, $status, $expiresAt) {
+            $data = dent_load_polls_data($pollsFile);
 
-        $existing = $data['polls'][$pollId] ?? null;
-        $votes = $existing ? ($existing['votes'] ?? []) : array_fill(0, count($cleanOptions), 0);
-        $voterHashes = $existing ? ($existing['voter_hashes'] ?? []) : [];
-        $totalVotes = $existing ? ($existing['total_votes'] ?? 0) : 0;
+            $existing = $data['polls'][$pollId] ?? null;
+            $votes = $existing ? ($existing['votes'] ?? []) : array_fill(0, count($cleanOptions), 0);
+            $voterHashes = $existing ? ($existing['voter_hashes'] ?? []) : [];
+            $totalVotes = $existing ? ($existing['total_votes'] ?? 0) : 0;
 
-        // Ensure vote array matches new option count
-        if (count($votes) !== count($cleanOptions)) {
-            $votes = array_pad(array_slice($votes, 0, count($cleanOptions)), count($cleanOptions), 0);
-        }
+            // Ensure vote array matches new option count
+            if (count($votes) !== count($cleanOptions)) {
+                $votes = array_pad(array_slice($votes, 0, count($cleanOptions)), count($cleanOptions), 0);
+            }
 
-        $data['polls'][$pollId] = [
-            'id' => $pollId,
-            'question' => $question,
-            'badge' => trim((string)($body['badge'] ?? '')),
-            'sub_badge' => trim((string)($body['sub_badge'] ?? '')),
-            'options' => $cleanOptions,
-            'votes' => $votes,
-            'total_votes' => $totalVotes,
-            'voter_hashes' => $voterHashes,
-            'specialty' => $specialty,
-            'year' => $year,
-            'semester' => $semester,
-            'status' => $status,
-            'created_at' => $existing['created_at'] ?? time(),
-            'expires_at' => $expiresAt
-        ];
+            $data['polls'][$pollId] = [
+                'id' => $pollId,
+                'question' => $question,
+                'badge' => trim((string)($body['badge'] ?? '')),
+                'sub_badge' => trim((string)($body['sub_badge'] ?? '')),
+                'options' => $cleanOptions,
+                'votes' => $votes,
+                'total_votes' => $totalVotes,
+                'voter_hashes' => $voterHashes,
+                'specialty' => $specialty,
+                'year' => $year,
+                'semester' => $semester,
+                'status' => $status,
+                'created_at' => $existing['created_at'] ?? time(),
+                'expires_at' => $expiresAt
+            ];
 
-        dent_save_polls_data($pollsFile, $data);
+            dent_save_polls_data($pollsFile, $data);
+            return $data['polls'][$pollId];
+        });
 
         echo json_encode([
             'success' => true,
             'message' => 'تم حفظ الاستطلاع بنجاح (' . ($status === 'testing' ? 'وضع التجربة' : 'منشور') . ')',
-            'data' => $data['polls'][$pollId]
+            'data' => $savedPoll
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }
@@ -435,24 +470,25 @@ if ($method === 'POST') {
             exit;
         }
 
-        $data = dent_load_polls_data($pollsFile);
-        if (!isset($data['polls'][$pollId])) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'الاستطلاع غير موجود'], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
+        $result = dent_with_polls_lock($pollsFile, function() use ($pollsFile, $pollId, $authScope) {
+            $data = dent_load_polls_data($pollsFile);
+            if (!isset($data['polls'][$pollId])) {
+                return ['code' => 404, 'payload' => ['success' => false, 'error' => 'الاستطلاع غير موجود']];
+            }
 
-        $poll = $data['polls'][$pollId];
-        $pollContext = ($poll['specialty'] ?? '') . '_' . ($poll['year'] ?? 0) . '_' . ($poll['semester'] ?? 1);
-        if (!$authScope['is_master'] && !in_array('*', $authScope['allowed_contexts'], true) && !in_array($pollContext, $authScope['allowed_contexts'], true)) {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'error' => 'لا يمكنك حذف استطلاع تابع لدفعة أخرى'], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
+            $poll = $data['polls'][$pollId];
+            $pollContext = ($poll['specialty'] ?? '') . '_' . ($poll['year'] ?? 0) . '_' . ($poll['semester'] ?? 1);
+            if (!$authScope['is_master'] && !in_array('*', $authScope['allowed_contexts'], true) && !in_array($pollContext, $authScope['allowed_contexts'], true)) {
+                return ['code' => 403, 'payload' => ['success' => false, 'error' => 'لا يمكنك حذف استطلاع تابع لدفعة أخرى']];
+            }
 
-        unset($data['polls'][$pollId]);
-        dent_save_polls_data($pollsFile, $data);
-        echo json_encode(['success' => true, 'message' => 'تم حذف الاستطلاع بنجاح'], JSON_UNESCAPED_UNICODE);
+            unset($data['polls'][$pollId]);
+            dent_save_polls_data($pollsFile, $data);
+            return ['code' => 200, 'payload' => ['success' => true, 'message' => 'تم حذف الاستطلاع بنجاح']];
+        });
+
+        http_response_code($result['code']);
+        echo json_encode($result['payload'], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
@@ -475,28 +511,32 @@ if ($method === 'POST') {
             exit;
         }
 
-        $data = dent_load_polls_data($pollsFile);
-        if (!isset($data['polls'][$pollId])) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'الاستطلاع غير موجود'], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
+        $result = dent_with_polls_lock($pollsFile, function() use ($pollsFile, $pollId, $newStatus, $authScope) {
+            $data = dent_load_polls_data($pollsFile);
+            if (!isset($data['polls'][$pollId])) {
+                return ['code' => 404, 'payload' => ['success' => false, 'error' => 'الاستطلاع غير موجود']];
+            }
 
-        $poll = $data['polls'][$pollId];
-        $pollContext = ($poll['specialty'] ?? '') . '_' . ($poll['year'] ?? 0) . '_' . ($poll['semester'] ?? 1);
-        if (!$authScope['is_master'] && !in_array('*', $authScope['allowed_contexts'], true) && !in_array($pollContext, $authScope['allowed_contexts'], true)) {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'error' => 'لا يمكنك تعديل استطلاع تابع لدفعة أخرى'], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
+            $poll = $data['polls'][$pollId];
+            $pollContext = ($poll['specialty'] ?? '') . '_' . ($poll['year'] ?? 0) . '_' . ($poll['semester'] ?? 1);
+            if (!$authScope['is_master'] && !in_array('*', $authScope['allowed_contexts'], true) && !in_array($pollContext, $authScope['allowed_contexts'], true)) {
+                return ['code' => 403, 'payload' => ['success' => false, 'error' => 'لا يمكنك تعديل استطلاع تابع لدفعة أخرى']];
+            }
 
-        $data['polls'][$pollId]['status'] = $newStatus;
-        dent_save_polls_data($pollsFile, $data);
-        echo json_encode([
-            'success' => true,
-            'message' => 'تم تغيير حالة الاستطلاع إلى ' . ($newStatus === 'published' ? 'منشور للطلاب' : ($newStatus === 'testing' ? 'وضع التجربة' : 'مؤرشف')),
-            'data' => $data['polls'][$pollId]
-        ], JSON_UNESCAPED_UNICODE);
+            $data['polls'][$pollId]['status'] = $newStatus;
+            dent_save_polls_data($pollsFile, $data);
+            return [
+                'code' => 200,
+                'payload' => [
+                    'success' => true,
+                    'message' => 'تم تغيير حالة الاستطلاع إلى ' . ($newStatus === 'published' ? 'منشور للطلاب' : ($newStatus === 'testing' ? 'وضع التجربة' : 'مؤرشف')),
+                    'data' => $data['polls'][$pollId]
+                ]
+            ];
+        });
+
+        http_response_code($result['code']);
+        echo json_encode($result['payload'], JSON_UNESCAPED_UNICODE);
         exit;
     }
 }
