@@ -22,14 +22,14 @@ textarea.dent-quiz-input { height: auto !important; min-height: 60px !important;
 .dent-quiz-input:focus { border-color: var(--dent-border-focus, rgba(255, 255, 255, 0.35)) !important; outline: none !important; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05) !important; }
 
 /* Sub-Segmented Control (Folder Switching) */
-.dent-sub-tabs { display: flex; background: var(--dent-bg-input-subtle, rgba(0, 0, 0, 0.3)); border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08)); border-radius: 6px; padding: 3px; gap: 3px; margin-bottom: 8px; }
-.dent-sub-tab-btn { flex: 1; padding: 5px 8px; background: transparent; border: 1px solid transparent; border-radius: 5px; color: var(--dent-text-secondary, #94a3b8); font-size: 0.78rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; text-align: center; }
+.dent-sub-tabs { display: flex; background: var(--dent-bg-input-subtle, rgba(0, 0, 0, 0.3)); border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08)); border-radius: 8px; padding: 4px; gap: 4px; margin-bottom: 10px; }
+.dent-sub-tab-btn { flex: 1; min-height: 38px; padding: 8px 12px; background: transparent; border: 1px solid transparent; border-radius: 6px; color: var(--dent-text-secondary, #94a3b8); font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; text-align: center; display: inline-flex; align-items: center; justify-content: center; }
 .dent-sub-tab-btn:hover { background: var(--dent-bg-card-hover, rgba(255, 255, 255, 0.04)); color: var(--dent-text-primary, #e2e8f0); }
 .dent-sub-tab-btn.active { background: var(--dent-bg-pill, rgba(255, 255, 255, 0.08)); border-color: var(--dent-border-subtle, rgba(255, 255, 255, 0.12)); color: var(--dent-text-light, #ffffff); font-weight: 600; }
 
 /* Difficulty Selector */
-.dent-difficulty-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 3px; }
-.dent-diff-btn { padding: 7px 6px; background: var(--dent-bg-input, #121212); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1)); border-radius: 6px; color: var(--dent-text-secondary, #94a3b8); font-size: 0.78rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; }
+.dent-difficulty-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; }
+.dent-diff-btn { min-height: 44px; padding: 10px 8px; background: var(--dent-bg-input, #121212); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1)); border-radius: 8px; color: var(--dent-text-secondary, #94a3b8); font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; font-family: inherit; text-align: center; display: inline-flex; align-items: center; justify-content: center; }
 .dent-diff-btn:hover { background: var(--dent-bg-card-hover, rgba(255, 255, 255, 0.05)); color: var(--dent-text-secondary, #cbd5e1); }
 .dent-diff-btn.active { background: var(--dent-bg-pill, rgba(255, 255, 255, 0.08)); border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.2)); color: var(--dent-text-light, #ffffff); font-weight: 600; }
 .dent-diff-btn.active[data-diff="easy"] { border-color: var(--dent-accent-success-border, rgba(34, 197, 94, 0.35)); color: var(--dent-accent-success-bright, #a7f3d0); }
@@ -37,23 +37,23 @@ textarea.dent-quiz-input { height: auto !important; min-height: 60px !important;
 .dent-diff-btn.active[data-diff="hard"] { border-color: var(--dent-accent-danger-border, rgba(239, 68, 68, 0.35)); color: var(--dent-accent-danger-bright, #fecaca); }
 
 /* Upload Dropzone */
-.dent-upload-zone { border: 1px dashed var(--dent-border-dashed, rgba(255, 255, 255, 0.15)); background: var(--dent-bg-card-subtle, rgba(0, 0, 0, 0.2)); border-radius: 6px; padding: 9px 12px; text-align: center; cursor: pointer; transition: all 0.2s ease; position: relative; }
+.dent-upload-zone { border: 1px dashed var(--dent-border-dashed, rgba(255, 255, 255, 0.15)); background: var(--dent-bg-card-subtle, rgba(0, 0, 0, 0.2)); border-radius: 8px; padding: 14px 12px; text-align: center; cursor: pointer; transition: all 0.2s ease; position: relative; }
 .dent-upload-zone:hover, .dent-upload-zone.dragover { border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.3)); background: var(--dent-bg-canvas-subtle, rgba(255, 255, 255, 0.03)); }
-.dent-upload-title { font-weight: 600; font-size: 0.82rem; color: var(--dent-text-primary, #e2e8f0); margin-bottom: 2px; }
-.dent-upload-sub { font-size: 0.72rem; color: var(--dent-text-muted, #64748b); }
+.dent-upload-title { font-weight: 600; font-size: 0.84rem; color: var(--dent-text-primary, #e2e8f0); margin-bottom: 3px; }
+.dent-upload-sub { font-size: 0.74rem; color: var(--dent-text-muted, #64748b); }
 .dent-uploaded-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
 .dent-file-chip { display: flex; align-items: center; gap: 6px; background: var(--dent-bg-input, #121212); border: 1px solid var(--dent-border-card, rgba(255, 255, 255, 0.1)); padding: 4px 8px; border-radius: 5px; font-size: 0.74rem; color: var(--dent-text-secondary, #cbd5e1); max-width: 100%; word-break: break-all; }
 .dent-chip-remove { cursor: pointer; color: var(--dent-text-secondary, #94a3b8); font-weight: bold; font-size: 0.85rem; line-height: 1; padding: 0 2px; }
 .dent-chip-remove:hover { color: var(--dent-accent-danger-bright, #f87171); }
 
 /* Checkbox Grid: 2 columns on all devices! */
-.dent-quiz-checkbox-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: transparent; padding: 0; border: none; }
-.dent-quiz-checkbox-label { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; cursor: pointer; color: var(--dent-text-secondary, #cbd5e1); background: var(--dent-bg-input, #121212); padding: 6px 9px; border-radius: 6px; border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08)); transition: all 0.2s; user-select: none; box-sizing: border-box; margin: 0; }
+.dent-quiz-checkbox-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; background: transparent; padding: 0; border: none; }
+.dent-quiz-checkbox-label { display: flex; align-items: center; gap: 8px; min-height: 42px; font-size: 0.82rem; cursor: pointer; color: var(--dent-text-secondary, #cbd5e1); background: var(--dent-bg-input, #121212); padding: 9px 12px; border-radius: 8px; border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08)); transition: all 0.2s; user-select: none; box-sizing: border-box; margin: 0; }
 .dent-quiz-checkbox-label:hover { border-color: var(--dent-border-hover, rgba(255, 255, 255, 0.2)); background: var(--dent-bg-canvas-subtle, rgba(255, 255, 255, 0.03)); }
-.dent-quiz-checkbox-label input { width: 14px; height: 14px; accent-color: var(--dent-text-secondary, #94a3b8); cursor: pointer; margin: 0; flex-shrink: 0; }
+.dent-quiz-checkbox-label input { width: 15px; height: 15px; accent-color: var(--dent-text-secondary, #94a3b8); cursor: pointer; margin: 0; flex-shrink: 0; }
 
 /* Standard Site Buttons */
-.dent-quiz-btn { width: 100%; height: 40px; padding: 0 14px; background: #262626 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.14) !important; border-radius: 8px; font-size: 0.9rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s ease; margin-top: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
+.dent-quiz-btn { width: 100%; height: 46px; min-height: 46px; padding: 0 16px; background: #262626 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.14) !important; border-radius: 8px; font-size: 0.92rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s ease; margin-top: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
 .dent-quiz-btn:hover { background: #333333 !important; border-color: rgba(255, 255, 255, 0.25) !important; color: #ffffff !important; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
 .dent-quiz-btn:active { transform: translateY(0); }
 .dent-quiz-btn:disabled { opacity: 0.45 !important; cursor: not-allowed !important; transform: none !important; box-shadow: none !important; }
@@ -70,7 +70,8 @@ button.export-btn,
     color: var(--dent-text-secondary, #cbd5e1) !important;
     border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.12)) !important;
     height: auto;
-    padding: 6px 10px;
+    min-height: 38px;
+    padding: 8px 12px;
     box-shadow: none !important;
 }
 .dent-btn-secondary:hover,
@@ -96,7 +97,7 @@ button.export-btn:hover,
 /* Player Area */
 .dent-player-area { display: none; }
 .dent-player-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-.dent-player-controls button { flex: 1; min-width: 140px; padding: 9px 12px; font-size: 0.85rem; }
+.dent-player-controls button { flex: 1; min-width: 140px; min-height: 44px; padding: 10px 14px; font-size: 0.86rem; }
 
 .dent-q-block { background: var(--dent-bg-card-subtle, rgba(0, 0, 0, 0.2)); padding: 16px; border-radius: 8px; margin-bottom: 14px; border: 1px solid var(--dent-border-subtle, rgba(255,255,255,0.06)); }
 .dent-q-text { font-size: 0.96rem; font-weight: 600; margin-bottom: 12px; color: var(--dent-text-primary, #f8fafc); line-height: 1.55; }
@@ -171,7 +172,7 @@ button.export-btn:hover,
 
 .dent-bank-meta { display: flex; align-items: center; justify-content: space-between; font-size: 0.74rem; color: var(--dent-text-muted, #64748b); margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--dent-border-subtle, rgba(255,255,255,0.04)); }
 .dent-bank-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-.dent-bank-actions button { padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; }
+.dent-bank-actions button { min-height: 40px; padding: 9px 12px; font-size: 0.82rem; border-radius: 7px; }
 
 /* Enhanced Chapters Dropdown Trigger */
 details.dent-chapters-details { margin-top: auto; margin-bottom: 4px; background: var(--dent-bg-modal, #18181b); border: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.08)); border-radius: 6px; overflow: hidden; }
@@ -230,17 +231,17 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
 .dent-summary-key { color: var(--dent-text-secondary, #94a3b8); }
 .dent-summary-val { color: var(--dent-text-light, #ffffff); font-weight: 600; text-align: left; }
 
-.dent-wizard-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.06)); }
-.dent-wizard-actions .dent-btn-prev { flex: 1; max-width: 130px; height: 38px; margin-top: 0; }
-.dent-wizard-actions .dent-btn-next { flex: 2; height: 38px; margin-top: 0; }
+.dent-wizard-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--dent-border-subtle, rgba(255, 255, 255, 0.06)); }
+.dent-wizard-actions .dent-btn-prev { flex: 1; max-width: 140px; height: 46px; min-height: 46px; margin-top: 0; }
+.dent-wizard-actions .dent-btn-next { flex: 2; height: 46px; min-height: 46px; margin-top: 0; }
 
 @media (max-width: 650px) {
     .dent-quiz-card { padding: 14px 10px; }
     .dent-quiz-header { font-size: 1.15rem; margin-bottom: 12px; padding-bottom: 8px; }
     .dent-quiz-card .dent-tab-switcher, .dent-tab-switcher { gap: 4px; padding: 3px; flex-direction: row; }
-    .dent-quiz-card .dent-tab-btn, .dent-tab-btn { width: auto; flex: 1 1 50%; padding: 7px 6px; font-size: 0.78rem; }
-    .dent-quiz-checkbox-group { grid-template-columns: 1fr 1fr; gap: 5px; }
-    .dent-diff-btn { padding: 7px 4px; font-size: 0.75rem; }
+    .dent-quiz-card .dent-tab-btn, .dent-tab-btn { width: auto; flex: 1 1 50%; padding: 9px 6px; font-size: 0.78rem; }
+    .dent-quiz-checkbox-group { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .dent-diff-btn { min-height: 42px; padding: 9px 6px; font-size: 0.76rem; }
     .dent-bank-filters { flex-direction: column; gap: 6px; }
     .dent-step-label { font-size: 0.68rem; }
     .dent-step-circle { width: 24px; height: 24px; font-size: 0.72rem; }
@@ -308,13 +309,13 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                     <div style="background: #121212; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 6px; flex-wrap: wrap;">
                             <span id="dq-selection-summary" style="font-size: 0.8rem; color: #94a3b8;">لم يتم تحديد أي ملفات بعد</span>
-                            <div style="display: flex; gap: 5px; align-items: center;">
-                                <button type="button" id="dq-refresh-drive-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem; display: inline-flex; align-items: center; gap: 4px;" title="مزامنة وجلب أحدث الملفات من Google Drive مباشرة">
+                            <div style="display: flex; gap: 6px; align-items: center;">
+                                <button type="button" id="dq-refresh-drive-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; min-height: 36px; padding: 6px 11px; font-size: 0.76rem; display: inline-flex; align-items: center; gap: 5px;" title="مزامنة وجلب أحدث الملفات من Google Drive مباشرة">
                                     <svg id="dq-refresh-drive-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
                                     <span>تحديث الملفات</span>
                                 </button>
-                                <button type="button" id="dq-select-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem;" disabled>تحديد المعروض</button>
-                                <button type="button" id="dq-clear-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; padding: 4px 8px; font-size: 0.74rem;" disabled>إلغاء التحديد</button>
+                                <button type="button" id="dq-select-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; min-height: 36px; padding: 6px 11px; font-size: 0.76rem;" disabled>تحديد المعروض</button>
+                                <button type="button" id="dq-clear-all-btn" class="dent-quiz-btn dent-btn-secondary" style="margin-top: 0; min-height: 36px; padding: 6px 11px; font-size: 0.76rem;" disabled>إلغاء التحديد</button>
                             </div>
                         </div>
                         <div id="dq-chapters-container" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-left: 2px;">
@@ -449,7 +450,7 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
             <button type="button" class="dent-quiz-btn dent-btn-next" id="dq-btn-next">
                 <span>المتابعة للخطوة التالية</span>
             </button>
-            <button type="button" id="dq-generate-btn" class="dent-quiz-btn" style="display: none; flex: 2; height: 38px; margin-top: 0;">
+            <button type="button" id="dq-generate-btn" class="dent-quiz-btn" style="display: none; flex: 2; height: 46px; min-height: 46px; margin-top: 0;">
                 <span>إنشاء وتجهيز الاختبار</span>
             </button>
         </div>
@@ -2355,12 +2356,12 @@ details.dent-chapters-details summary::-webkit-details-marker { display: none; }
                         <span>${escapeHtml(q.types_summary || 'متعدد')}</span>
                     </div>
                     <div class="dent-bank-actions">
-                        <button class="dent-quiz-btn start-btn" style="margin-top:0; padding:7px 12px; font-size:0.82rem;">ابدأ الاختبار</button>
-                        <button class="dent-quiz-btn dent-btn-secondary export-btn" style="margin-top:0; padding:7px 9px; font-size:0.82rem; display:inline-flex; align-items:center; gap:4px; background:rgba(255,255,255,0.05) !important; color:#cbd5e1 !important; border:1px solid rgba(255,255,255,0.12) !important;" title="تصدير الاختبار (PDF / طباعة)">
+                        <button class="dent-quiz-btn start-btn" style="margin-top:0; height:40px; min-height:40px; padding:9px 14px; font-size:0.84rem;">ابدأ الاختبار</button>
+                        <button class="dent-quiz-btn dent-btn-secondary export-btn" style="margin-top:0; min-height:40px; padding:9px 11px; font-size:0.82rem; display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,0.05) !important; color:#cbd5e1 !important; border:1px solid rgba(255,255,255,0.12) !important;" title="تصدير الاختبار (PDF / طباعة)">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                             تصدير
                         </button>
-                        <button class="dent-quiz-btn dent-btn-secondary share-btn" style="margin-top:0; padding:7px 9px; font-size:0.82rem; display:inline-flex; align-items:center; gap:4px; background:rgba(255,255,255,0.05) !important; color:#cbd5e1 !important; border:1px solid rgba(255,255,255,0.12) !important;" title="مشاركة رابط الاختبار المباشر (قصير وأنيق)">
+                        <button class="dent-quiz-btn dent-btn-secondary share-btn" style="margin-top:0; min-height:40px; padding:9px 11px; font-size:0.82rem; display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,0.05) !important; color:#cbd5e1 !important; border:1px solid rgba(255,255,255,0.12) !important;" title="مشاركة رابط الاختبار المباشر (قصير وأنيق)">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
                             مشاركة الرابط
                         </button>
