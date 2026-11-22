@@ -770,6 +770,10 @@
     // Smoothly unwind & fade out warp when cursor leaves window or tab loses focus
     function handlePointerLeave() {
         targetStrength = 0.0;
+        if (!rafId && !document.hidden && mouseStrength > 0.0005) {
+            isDirty = true;
+            rafId = requestAnimationFrame(draw);
+        }
     }
 
     document.addEventListener('mouseleave', handlePointerLeave);

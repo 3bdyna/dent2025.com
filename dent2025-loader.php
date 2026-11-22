@@ -269,8 +269,9 @@ if (dent2025_is_frontend_head()) {
             }
         }
         if (function_exists('is_front_page') && is_front_page()) {
-            // Preload only the 5.6KB hero LCP card image instead of 156KB variable fonts (fonts use font-display:swap)
-            $head .= '<link rel="preload" as="image" href="/wp-content/uploads/2026/07/semester-e1783891637311.webp" imagesrcset="/wp-content/uploads/2026/07/semester-e1783891637311.webp 682w, /wp-content/uploads/2026/07/semester-e1783891637311-300x229.webp 300w" imagesizes="(max-width: 682px) 100vw, 682px" fetchpriority="high">' . "\n";
+            // Preload only the 5.6KB hero LCP card image (exact URL match) instead of 156KB variable fonts
+            $lcp_base = rtrim(function_exists('home_url') ? home_url('/') : 'https://dent2025.com/', '/');
+            $head .= '<link rel="preload" as="image" href="' . esc_url($lcp_base . '/wp-content/uploads/2026/07/semester-e1783891637311.webp') . '" imagesrcset="' . esc_url($lcp_base . '/wp-content/uploads/2026/07/semester-e1783891637311.webp') . ' 682w, ' . esc_url($lcp_base . '/wp-content/uploads/2026/07/semester-e1783891637311-300x229.webp') . ' 300w" imagesizes="(max-width: 682px) 100vw, 682px" fetchpriority="high">' . "\n";
         }
 
         // Strip legacy or duplicate Open Graph and Twitter Card tags from <head>
@@ -376,11 +377,6 @@ if (dent2025_is_frontend_head()) {
 }
 </style>' . "\n";
 
-        $kg_parts = dent2025_get_kinetic_grid_parts();
-        if (!empty($kg_parts['style'])) {
-            $head .= $kg_parts['style'] . "\n";
-        }
-
         // Accelerate Google Drive iframe embed connection (DNS + TCP + TLS early warmup)
         $head .= '<link rel="preconnect" href="https://drive.google.com" crossorigin>' . "\n" .
             '<link rel="preconnect" href="https://docs.google.com" crossorigin>' . "\n" .
@@ -459,6 +455,14 @@ if (dent2025_is_frontend_head()) {
         echo $head;
     }, 99);
 
+    // Output kinetic grid <style> at priority 999 in <head> (AFTER wp-custom-css at 101 so transparent body overrides #121212, with zero CLS)
+    add_action('wp_head', function() {
+        $kg_parts = dent2025_get_kinetic_grid_parts();
+        if (!empty($kg_parts['style'])) {
+            echo $kg_parts['style'] . "\n";
+        }
+    }, 999);
+
     // Defer the Astra frontend JS
     add_filter('script_loader_tag', function($tag, $handle, $src) {
         if ($handle === 'astra-theme-js' && $src && strpos($src, 'frontend.min.js') !== false) {
@@ -469,11 +473,16 @@ if (dent2025_is_frontend_head()) {
         return $tag;
     }, 20, 3);
 
-    // Load Astra's main.min.css asynchronously on the frontend (critical layout rules are already in astra-theme-css-inline-css)
+    // Inline Astra's main.min.css directly in <head> (compresses to ~7KB via Brotli HTML, eliminating both the render-blocking request and FOUC/CLS)
     add_filter('style_loader_tag', function($tag, $handle, $href, $media) {
-        if ($handle === 'astra-theme-css' && strpos($tag, "media='all'") !== false) {
-            $async_tag = str_replace("media='all'", "media='print' onload=\"this.onload=null;this.media='all'\"", $tag);
-            return $async_tag . '<noscript>' . $tag . '</noscript>';
+        if ($handle === 'astra-theme-css') {
+            $css_path = ABSPATH . 'wp-content/themes/astra/assets/css/minified/main.min.css';
+            if (file_exists($css_path)) {
+                $css = @file_get_contents($css_path);
+                if ($css !== false && trim($css) !== '') {
+                    return '<style id="astra-theme-css-css">' . trim($css) . '</style>' . "\n";
+                }
+            }
         }
         return $tag;
     }, 20, 4);
