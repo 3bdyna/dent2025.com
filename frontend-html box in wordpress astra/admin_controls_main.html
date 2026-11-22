@@ -42,8 +42,28 @@
     <button class="dent-logout-main" id="dent-logout-main" onclick="logoutAdminMain()">خروج (Logout)</button>
 </div>
 
-<script src="/frontend_components/dent_pin_modal.js"></script>
 <script>
+    function dentLoadPinModal(cb) {
+        if (window.dentPromptPin) return cb(true);
+        if (window._dentPinModalLoading) {
+            window._dentPinModalQueue = window._dentPinModalQueue || [];
+            window._dentPinModalQueue.push(cb);
+            return;
+        }
+        window._dentPinModalLoading = true;
+        window._dentPinModalQueue = [cb];
+        const s = document.createElement('script');
+        s.src = '/frontend_components/dent_pin_modal.js';
+        s.onload = s.onerror = function() {
+            window._dentPinModalLoading = false;
+            const ok = !!window.dentPromptPin;
+            const q = window._dentPinModalQueue || [];
+            window._dentPinModalQueue = [];
+            q.forEach(fn => { try { fn(ok); } catch(e) {} });
+        };
+        document.head.appendChild(s);
+    }
+
     function promptAdminLoginMain() {
         if (sessionStorage.getItem('dent2025_admin_pass')) {
             activateAdminModeMain();
@@ -51,43 +71,51 @@
         }
 
         let sel = {}; try { sel = JSON.parse(localStorage.getItem('dent2025_selection') || '{}'); } catch(e) {}
-        if (window.dentPromptPin) {
-            window.dentPromptPin({
-                title: 'تسجيل دخول المشرف',
-                subtitle: 'أدخل رمز PIN لإدارة الإعلانات والمحتوى',
-                context: sel,
-                onSuccess: function() {
-                    activateAdminModeMain();
-                }
-            });
-            return;
-        }
-
-        // Fallback if modal script is still loading
-        const pass = prompt("أدخل رمز PIN للمشرف:");
-        if (!pass) return;
-
-        const apiBase = '';
-        fetch(apiBase + '/dent2025_api.php?action=check_auth', {
-            method: 'POST',
-            body: JSON.stringify({ password: pass, specialty: sel.specialty, year: sel.year, semester: sel.semester })
-        })
-        .then(r => r.json())
-        .then(res => {
-            if (res.success) {
-                sessionStorage.setItem('dent2025_admin_pass', pass);
-                sessionStorage.setItem('dent2025_schedule_admin_pass', pass);
-                const perms = (res.data && res.data.permissions) ? res.data.permissions : {};
-                sessionStorage.setItem('dent2025_permissions', JSON.stringify(perms));
-                activateAdminModeMain();
-            } else {
-                alert(res.message || "رمز PIN غير صحيح.");
+        const openPinOrFallback = () => {
+            if (window.dentPromptPin) {
+                window.dentPromptPin({
+                    title: 'تسجيل دخول المشرف',
+                    subtitle: 'أدخل رمز PIN لإدارة الإعلانات والمحتوى',
+                    context: sel,
+                    onSuccess: function() {
+                        activateAdminModeMain();
+                    }
+                });
+                return;
             }
-        })
-        .catch(err => {
-            console.error('Main login error:', err);
-            alert("حدث خطأ في الاتصال بالخادم أثناء تسجيل الدخول.");
-        });
+
+            // Fallback if modal script failed to load
+            const pass = prompt("أدخل رمز PIN للمشرف:");
+            if (!pass) return;
+
+            const apiBase = '';
+            fetch(apiBase + '/dent2025_api.php?action=check_auth', {
+                method: 'POST',
+                body: JSON.stringify({ password: pass, specialty: sel.specialty, year: sel.year, semester: sel.semester })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    sessionStorage.setItem('dent2025_admin_pass', pass);
+                    sessionStorage.setItem('dent2025_schedule_admin_pass', pass);
+                    const perms = (res.data && res.data.permissions) ? res.data.permissions : {};
+                    sessionStorage.setItem('dent2025_permissions', JSON.stringify(perms));
+                    activateAdminModeMain();
+                } else {
+                    alert(res.message || "رمز PIN غير صحيح.");
+                }
+            })
+            .catch(err => {
+                console.error('Main login error:', err);
+                alert("حدث خطأ في الاتصال بالخادم أثناء تسجيل الدخول.");
+            });
+        };
+
+        if (window.dentPromptPin) {
+            openPinOrFallback();
+        } else {
+            dentLoadPinModal(openPinOrFallback);
+        }
     }
 
     function activateAdminModeMain() {
@@ -138,7 +166,7 @@
 </script>
 
 <!-- Automatically load dashboard.js for Main Page -->
-<script src="/frontend_components/dashboard.js"></script>
+<script defer src="/frontend_components/dashboard.js"></script>
 
 <!-- ========================================== -->
 <!-- OIIA SPINNING CAT (STAR EASTER EGG) -->
@@ -205,14 +233,14 @@
 }
 
 @keyframes flyInLeft {
-    0% { transform: translateX(-100vw) rotate(-360deg); opacity: 0; pointer-events: none; }
+    0% { transform: translateX(-100vw) rotate(-360deg); opacity: 0; }
     50% { opacity: 1; }
-    100% { transform: translateX(0px) rotate(0deg); opacity: 1; pointer-events: auto; }
+    100% { transform: translateX(0px) rotate(0deg); opacity: 1; }
 }
 @keyframes flyInRight {
-    0% { transform: translateX(100vw) rotate(360deg); opacity: 0; pointer-events: none; }
+    0% { transform: translateX(100vw) rotate(360deg); opacity: 0; }
     50% { opacity: 1; }
-    100% { transform: translateX(0px) rotate(0deg); opacity: 1; pointer-events: auto; }
+    100% { transform: translateX(0px) rotate(0deg); opacity: 1; }
 }
 @keyframes wanderAndSpin {
     0%   { transform: translate(0px, 0px) rotate(0deg); }
@@ -222,8 +250,8 @@
     100% { transform: translate(-20px, -10px) rotate(-5deg); }
 }
 @keyframes pulseGlow {
-    from { filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5)); }
-    to { filter: drop-shadow(0 0 15px rgba(255, 215, 0, 1)); }
+    from { opacity: 0.78; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1.06); }
 }
 
 #magic-overlay {
@@ -289,7 +317,9 @@
             const side = Math.random() > 0.5 ? 'left' : 'right';
             const originalOverflow = document.body.style.overflowX;
             document.body.style.overflowX = 'hidden';
+            starBtn.style.pointerEvents = 'auto';
             starBtn.classList.add(`star-entering-${side}`);
+            try { window.dispatchEvent(new Event('dent:star-wake')); } catch(e) {}
             setTimeout(() => {
                 starBtn.classList.remove(`star-entering-${side}`);
                 starBtn.classList.add('star-floating');
@@ -297,7 +327,7 @@
             }, 800);
         }
 
-        // Background media prefetch: loads GIF & MP3 without delaying star entry or initial paint
+        // Background media prefetch: loads GIF & MP3 when browser is idle without impacting LCP/TBT
         function startStarPrefetch() {
             fetch(gifUrl)
                 .then(res => {
@@ -326,8 +356,12 @@
         // Star appears smoothly after 1.2s
         setTimeout(triggerStarEntry, 1200);
 
-        // Media prefetch starts quietly in background after 600ms
-        setTimeout(startStarPrefetch, 600);
+        // Media prefetch starts quietly during idle time after initial load
+        if (typeof window.requestIdleCallback === 'function') {
+            window.requestIdleCallback(startStarPrefetch, { timeout: 5000 });
+        } else {
+            setTimeout(startStarPrefetch, 3500);
+        }
 
         starBtn.addEventListener('click', function(e) {
             e.preventDefault();

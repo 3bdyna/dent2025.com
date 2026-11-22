@@ -127,18 +127,29 @@ add_filter('the_content', function($content) {
     return $content;
 }, 999);
 
-// Automatically load Interactive Monochrome White Kinetic Grid background sitewide
-add_action('wp_footer', function() {
+// Split kinetic_grid.html into <style> (for <head>, zero CLS) and <body> (<canvas> + <script>)
+function dent2025_get_kinetic_grid_parts() {
+    static $parts = null;
+    if ($parts !== null) return $parts;
+    $parts = ['style' => '', 'body' => ''];
     $grid_file = ABSPATH . 'frontend_components/kinetic_grid.html';
-    if (file_exists($grid_file)) {
-        $content = file_get_contents($grid_file);
-        if ($content !== false) {
-            $content = preg_replace('/<\?php.*?\?>/s', '', $content);
-            $content = preg_replace_callback('/<style\b[^>]*>(.*?)<\/style>/is', function($m) {
-                return '<style>' . preg_replace('/\s+/', ' ', $m[1]) . '</style>';
-            }, $content);
-            echo $content;
-        }
+    if (!file_exists($grid_file)) return $parts;
+    $content = @file_get_contents($grid_file);
+    if ($content === false) return $parts;
+    $content = preg_replace('/<\?php.*?\?>/s', '', $content);
+    if (preg_match('/<style\b[^>]*>(.*?)<\/style>/is', $content, $m)) {
+        $parts['style'] = '<style id="dent-kinetic-grid-style">' . trim(preg_replace('/\s+/', ' ', $m[1])) . '</style>';
+        $content = preg_replace('/<style\b[^>]*>.*?<\/style>/is', '', $content, 1);
+    }
+    $parts['body'] = trim($content);
+    return $parts;
+}
+
+// Automatically load Interactive Monochrome White Kinetic Grid background sitewide (markup + canvas script)
+add_action('wp_footer', function() {
+    $parts = dent2025_get_kinetic_grid_parts();
+    if (!empty($parts['body'])) {
+        echo $parts['body'];
     }
 }, 5);
 
@@ -273,7 +284,9 @@ if (dent2025_is_frontend_head()) {
         $head .= "\n" . '<script id="dent-portal-config">window.DENT_MULTI_SPECIALTY_MODE = ' . ($multi_specialty_mode ? 'true' : 'false') . ';</script>' . "\n";
 
         // Instant early logo swap before first paint to prevent logo flicker/reversion
-        $dent_logo_v = file_exists(ABSPATH . 'logos/dentistry.webp') ? filemtime(ABSPATH . 'logos/dentistry.webp') : 1;
+        $dent_logo_v = file_exists(ABSPATH . 'logos/dentistry-sm.webp') ? filemtime(ABSPATH . 'logos/dentistry-sm.webp') : 1;
+        $med_logo_v = file_exists(ABSPATH . 'logos/medicine-sm.webp') ? filemtime(ABSPATH . 'logos/medicine-sm.webp') : 1;
+        $pre_logo_v = file_exists(ABSPATH . 'logos/pre-med-sm.webp') ? filemtime(ABSPATH . 'logos/pre-med-sm.webp') : 1;
         $head .= '<script id="dent-instant-logo">
 (function() {
     if (window.location.pathname.indexOf("/wolcome") !== -1) return;
@@ -282,9 +295,9 @@ if (dent2025_is_frontend_head()) {
         if (!raw) return;
         var sel = JSON.parse(raw);
         var path = "";
-        if (sel.specialty === "dentistry") path = "/logos/dentistry.webp?v=' . $dent_logo_v . '";
-        else if (sel.specialty === "medicine") path = "/logos/medicine.webp";
-        else if (sel.specialty === "pre-med") path = "/logos/pre-med.webp";
+        if (sel.specialty === "dentistry") path = "/logos/dentistry-sm.webp?v=' . $dent_logo_v . '";
+        else if (sel.specialty === "medicine") path = "/logos/medicine-sm.webp?v=' . $med_logo_v . '";
+        else if (sel.specialty === "pre-med") path = "/logos/pre-med-sm.webp?v=' . $pre_logo_v . '";
         if (path) {
             var s = document.createElement("style");
             s.id = "dent-instant-logo-css";
@@ -328,6 +341,7 @@ if (dent2025_is_frontend_head()) {
     display: flex !important;
     align-items: center !important;
     height: 100% !important;
+    min-width: 40px;
 }
 .custom-logo-link img,
 .custom-logo {
@@ -335,7 +349,15 @@ if (dent2025_is_frontend_head()) {
     width: auto !important;
     height: auto !important;
 }
+#dynamic-announcements-container {
+    min-height: 118px;
+}
 </style>' . "\n";
+
+        $kg_parts = dent2025_get_kinetic_grid_parts();
+        if (!empty($kg_parts['style'])) {
+            $head .= $kg_parts['style'] . "\n";
+        }
 
         // Accelerate Google Drive iframe embed connection (DNS + TCP + TLS early warmup)
         $head .= '<link rel="preconnect" href="https://drive.google.com" crossorigin>' . "\n" .

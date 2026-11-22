@@ -515,6 +515,7 @@
     let lastObstacleUpdate = 0;
     let rafId = 0;
     let isDirty = true; // High-efficiency render flag (0% idle CPU without ever freezing)
+    let lastStarDraw = 0;
 
     // Star tracking state (Cosmic Wake)
     let starElem = null;
@@ -525,6 +526,13 @@
         strength: 0,
         pulse: 1
     };
+
+    window.addEventListener('dent:star-wake', function() {
+        isDirty = true;
+        if (!rafId && !document.hidden) {
+            rafId = requestAnimationFrame(draw);
+        }
+    }, { passive: true });
 
     window.addEventListener('dent:star-burst', function(e) {
         if (e.detail && typeof e.detail.x === 'number') {
@@ -537,6 +545,9 @@
                 born: performance.now()
             });
             isDirty = true;
+            if (!rafId && !document.hidden) {
+                rafId = requestAnimationFrame(draw);
+            }
         }
     }, { passive: true });
 
@@ -554,16 +565,16 @@
     }
 
     function wakeLoop() {
+        isDirty = true;
         checkResize();
-        draw(performance.now());
         if (!rafId && !document.hidden) {
             rafId = requestAnimationFrame(draw);
         }
     }
 
     function resize() {
+        isDirty = true;
         checkResize();
-        draw(performance.now());
         if (!rafId && !document.hidden) {
             rafId = requestAnimationFrame(draw);
         }
@@ -727,6 +738,7 @@
         targetMouse.x = clientX;
         targetMouse.y = clientY;
         targetStrength = 1.0;
+        isDirty = true;
         if (!rafId && !document.hidden) {
             rafId = requestAnimationFrame(draw);
         }
@@ -749,6 +761,7 @@
     }, { passive: true });
 
     window.addEventListener('scroll', function() {
+        isDirty = true;
         if (!rafId && !document.hidden) {
             rafId = requestAnimationFrame(draw);
         }
@@ -789,6 +802,7 @@
             born: performance.now(),
             struckObstacles: {}
         });
+        isDirty = true;
         if (!rafId && !document.hidden) {
             rafId = requestAnimationFrame(draw);
         }
@@ -888,7 +902,7 @@
 
     let isDrawing = false;
 
-    // Main 60 FPS Continuous Render Loop
+    // Main Render Loop (runs on demand; 0% CPU when completely idle)
     function draw(now) {
         if (!ctx || (ctx.isContextLost && ctx.isContextLost())) {
             ctx = canvas.getContext('2d');
@@ -897,9 +911,11 @@
                 return;
             }
         }
-        checkResize();
+        if (checkResize()) {
+            isDirty = true;
+        }
 
-        // Track live star position (Cosmic Wake)
+        // Track live star position (Cosmic Wake) without reading layout unless star is active
         if (!starElem || !starElem.isConnected) {
             starElem = document.getElementById('magic-star-btn');
         }
@@ -907,18 +923,22 @@
             const isFloating = starElem.classList.contains('star-floating');
             const isEntering = starElem.classList.contains('star-entering-left') || starElem.classList.contains('star-entering-right');
             const isStarActive = isFloating || isEntering;
-            const rect = starElem.getBoundingClientRect();
-            if (isStarActive && rect.width > 0 && rect.bottom > 0 && rect.top < H && rect.right > 0 && rect.left < W) {
-                starState.x = rect.left + rect.width / 2;
-                starState.y = rect.top + rect.height / 2;
-                starState.active = true;
-                starState.strength = isEntering ? 1.0 : lerp(starState.strength, 1.0, 0.08);
-                starState.pulse = 1.0 + 0.18 * Math.sin(now * 0.0035);
-                isDirty = true;
-            } else {
+            if (isStarActive) {
+                const rect = starElem.getBoundingClientRect();
+                if (rect.width > 0 && rect.bottom > 0 && rect.top < H && rect.right > 0 && rect.left < W) {
+                    starState.x = rect.left + rect.width / 2;
+                    starState.y = rect.top + rect.height / 2;
+                    starState.active = true;
+                    starState.strength = isEntering ? 1.0 : lerp(starState.strength, 1.0, 0.08);
+                    starState.pulse = 1.0 + 0.18 * Math.sin(now * 0.0035);
+                } else {
+                    starState.active = false;
+                    starState.strength = lerp(starState.strength, 0, 0.1);
+                }
+            } else if (starState.active || starState.strength > 0) {
                 starState.active = false;
                 starState.strength = lerp(starState.strength, 0, 0.1);
-                if (starState.strength > 0.001) isDirty = true;
+                if (starState.strength <= 0.001) starState.strength = 0;
             }
         }
 
@@ -939,11 +959,17 @@
         const isStarMoving = starState.active && starState.strength > 0.01;
         const hasCardWaves = cardShockwaves.length > 0;
 
-        if (isConverging || isFading || hasRipples || isStarMoving || hasCardWaves) {
-            isDirty = true;
+        const hasActivePointerOrWave = isDirty || isConverging || isFading || hasRipples || hasCardWaves;
+        if (!hasActivePointerOrWave && isStarMoving && (now - lastStarDraw < 32)) {
+            rafId = !document.hidden ? requestAnimationFrame(draw) : 0;
+            return;
         }
-
-        // Continuously draw while visible so buffer is never lost after fullscreen/glitches
+        if (!hasActivePointerOrWave && !isStarMoving) {
+            rafId = 0;
+            return;
+        }
+        isDirty = false;
+        if (isStarMoving) lastStarDraw = now;
 
         ctx.clearRect(0, 0, W, H);
         ctx.fillStyle = THEME.bg;
@@ -1121,17 +1147,17 @@
             ctx.restore();
         }
 
-        if (!document.hidden) {
+        if (!document.hidden && (isDirty || isConverging || isFading || hasRipples || isStarMoving || hasCardWaves || starState.strength > 0.001)) {
             rafId = requestAnimationFrame(draw);
         } else {
             rafId = 0;
         }
     }
 
-    // Failsafe heartbeat every 1.5s: if browser dropped GPU buffer or window restored silently
+    // Failsafe heartbeat every 1.5s: only redraw if viewport size changed
     setInterval(function() {
-        if (!document.hidden) {
-            checkResize();
+        if (!document.hidden && checkResize()) {
+            isDirty = true;
             if (!rafId) {
                 rafId = requestAnimationFrame(draw);
             }
@@ -1139,6 +1165,5 @@
     }, 1500);
 
     resize();
-    rafId = requestAnimationFrame(draw);
 })();
 </script>

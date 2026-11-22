@@ -1310,9 +1310,9 @@ function injectPathChanger(selection) {
 // ---------------------------------------------------------
 function renderLogo(selection) {
     let logoPath = '/logos/dent2025.png';
-    if (selection.specialty === 'dentistry') logoPath = '/logos/dentistry.webp?v=20261016';
-    else if (selection.specialty === 'medicine') logoPath = '/logos/medicine.webp';
-    else if (selection.specialty === 'pre-med') logoPath = '/logos/pre-med.webp';
+    if (selection.specialty === 'dentistry') logoPath = '/logos/dentistry-sm.webp?v=20261123';
+    else if (selection.specialty === 'medicine') logoPath = '/logos/medicine-sm.webp?v=20261123';
+    else if (selection.specialty === 'pre-med') logoPath = '/logos/pre-med-sm.webp?v=20261123';
     
     const siteLogos = document.querySelectorAll('.site-logo img, .custom-logo');
     siteLogos.forEach(img => {
@@ -1329,17 +1329,31 @@ function renderLogo(selection) {
 function loadAnnouncements(selection) {
     let container = document.getElementById('dynamic-announcements-container');
     if (!container) return;
-    
-    container.innerHTML = `<div style="text-align:center; color:#94a3b8; margin-top: 24px; margin-bottom: 20px;">جاري تحميل المهام...</div>`;
+
+    const cacheKey = `dent_ann_cache_${selection.specialty}_${selection.year}_${selection.semester}`;
+    let hasCached = false;
+    try {
+        const cachedRaw = sessionStorage.getItem(cacheKey);
+        if (cachedRaw) {
+            renderAnnouncements(JSON.parse(cachedRaw), selection);
+            hasCached = true;
+        }
+    } catch (e) {}
+
+    if (!hasCached) {
+        container.innerHTML = `<div style="text-align:center; color:#94a3b8; margin-top: 24px; margin-bottom: 20px;">جاري تحميل المهام...</div>`;
+    }
     
     fetch(`/announcements_api.php?specialty=${selection.specialty}&year=${selection.year}&semester=${selection.semester}&_t=${Date.now()}`)
         .then(res => res.json())
         .then(data => {
-            renderAnnouncements(data.success ? (data.data || {}) : {}, selection);
+            const payload = data.success ? (data.data || {}) : {};
+            try { sessionStorage.setItem(cacheKey, JSON.stringify(payload)); } catch (e) {}
+            renderAnnouncements(payload, selection);
         })
         .catch(err => {
             console.error("Announcements Error:", err);
-            renderAnnouncements({}, selection);
+            if (!hasCached) renderAnnouncements({}, selection);
         });
 }
 
