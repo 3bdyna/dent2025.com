@@ -895,4 +895,46 @@
   <span id="dent-mini-subject" style="color:#a1a1aa; font-weight:400; font-size:0.8rem; display:none;"></span>
 </div>
 
-<script defer src="/frontend_components/study_timer.js"></script>
+<script>
+(function() {
+  var src = '/frontend_components/study_timer.js';
+  var loading = false;
+  var queue = [];
+  function loadTimer(cb) {
+    if (window.dentTimerScriptLoaded) {
+      if (cb) cb();
+      return;
+    }
+    if (cb) queue.push(cb);
+    if (loading) return;
+    loading = true;
+    var s = document.createElement('script');
+    s.src = src;
+    s.onload = function() {
+      loading = false;
+      var q = queue;
+      queue = [];
+      for (var i = 0; i < q.length; i++) {
+        try { q[i](); } catch (e) {}
+      }
+    };
+    document.head.appendChild(s);
+  }
+  window.openDentTimerModal = function() {
+    loadTimer(function() {
+      if (window.dentTimerScriptLoaded && typeof window.openDentTimerModal === 'function') {
+        window.openDentTimerModal();
+      }
+    });
+  };
+  var hasActive = false;
+  try { hasActive = !!localStorage.getItem('dent2025_timer_active_session'); } catch (e) {}
+  if (hasActive) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() { loadTimer(); }, { once: true });
+    } else {
+      loadTimer();
+    }
+  }
+})();
+</script>

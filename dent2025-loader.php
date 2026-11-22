@@ -120,10 +120,23 @@ add_shortcode('dent_poll', function($atts) {
 });
 
 // Filter the_content to remove any <p> or <br> wrappers inserted around <style> and <script> tags
+// and deprioritize below-LCP homepage card images on mobile
 add_filter('the_content', function($content) {
     $content = preg_replace('/<p>\s*(<style\b[^>]*>.*?<\/style>)\s*<\/p>/is', '$1', $content);
     $content = preg_replace('/<p>\s*(<script\b[^>]*>.*?<\/script>)\s*<\/p>/is', '$1', $content);
     $content = preg_replace('/<br\s*\/?>\s*(<style\b[^>]*>.*?<\/style>)/is', '$1', $content);
+    if (function_exists('is_front_page') && is_front_page()) {
+        $content = preg_replace_callback('/<img\b[^>]*class=["\'][^"\']*wp-image-(553|942)[^"\']*["\'][^>]*>/i', function($m) {
+            $tag = $m[0];
+            if (stripos($tag, 'fetchpriority=') === false) {
+                $tag = preg_replace('/<img\b/i', '<img fetchpriority="low"', $tag, 1);
+            }
+            if ($m[1] === '942' && stripos($tag, 'loading=') === false) {
+                $tag = preg_replace('/<img\b/i', '<img loading="lazy"', $tag, 1);
+            }
+            return $tag;
+        }, $content);
+    }
     return $content;
 }, 999);
 
@@ -183,7 +196,7 @@ add_action('wp_footer', function() {
     $tracker_file = ABSPATH . 'frontend_components/analytics_tracker.js';
     if (file_exists($tracker_file)) {
         $v = filemtime($tracker_file);
-        echo '<script src="/frontend_components/analytics_tracker.js?v=' . $v . '" defer></script>' . "\n";
+        echo '<script src="/frontend_components/analytics_tracker.js?v=' . $v . '" defer fetchpriority="low"></script>' . "\n";
     }
 }, 30);
 
@@ -248,8 +261,10 @@ if (dent2025_is_frontend_head()) {
                 $head .= '<link rel="stylesheet" id="dent-local-fonts-css" href="/frontend_components/fonts/fonts.css?v=' . esc_attr($version) . '">';
             }
         }
-        $head .= '<link rel="preload" as="font" type="font/woff2" href="/frontend_components/fonts/notokufiarabic-arabic.woff2" crossorigin>';
-        $head .= '<link rel="preload" as="font" type="font/woff2" href="/frontend_components/fonts/outfit-latin.woff2" crossorigin>';
+        if (function_exists('is_front_page') && is_front_page()) {
+            // Preload only the 5.6KB hero LCP card image instead of 156KB variable fonts (fonts use font-display:swap)
+            $head .= '<link rel="preload" as="image" href="/wp-content/uploads/2026/07/semester-e1783891637311.webp" imagesrcset="/wp-content/uploads/2026/07/semester-e1783891637311.webp 682w, /wp-content/uploads/2026/07/semester-e1783891637311-300x229.webp 300w" imagesizes="(max-width: 682px) 100vw, 682px" fetchpriority="high">' . "\n";
+        }
 
         // Strip legacy or duplicate Open Graph and Twitter Card tags from <head>
         $head = preg_replace('~<!--\s*(?:Open Graph Meta Tags|Twitter Card Tags).*?-->\s*~is', '', $head);
@@ -446,6 +461,15 @@ if (dent2025_is_frontend_head()) {
         }
         return $tag;
     }, 20, 3);
+
+    // Load Astra's main.min.css asynchronously on the frontend (critical layout rules are already in astra-theme-css-inline-css)
+    add_filter('style_loader_tag', function($tag, $handle, $href, $media) {
+        if ($handle === 'astra-theme-css' && strpos($tag, "media='all'") !== false) {
+            $async_tag = str_replace("media='all'", "media='print' onload=\"this.onload=null;this.media='all'\"", $tag);
+            return $async_tag . '<noscript>' . $tag . '</noscript>';
+        }
+        return $tag;
+    }, 20, 4);
 }
 
 // --- Disable core WordPress emojis to eliminate render blocking scripts & external s.w.org requests ---
