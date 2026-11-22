@@ -28,7 +28,7 @@ my website dent2025/
 ├── docs/                                       # Project documentation and specifications
 │   ├── DEPLOYMENT_GUIDE.md                     # Complete Git SafeDeploy documentation
 │   ├── MAIN_PAGE_DESIGN_SPEC.md                # Homepage UI/UX specifications & layout guide
-│   └── google_apps_scripts/                    # Active Google Apps Script backups & Drive automation sources
+│   └── google_apps_scripts/                    # Active Google Apps Script backups & Drive automation sources (gitignored)
 ├── .gitignore                                  # Git exclusion rules for secrets, caches & local dumps
 ├── deploy_config.example.json                  # Template SFTP/SSH configuration
 ├── dent2025_passwords.example.json             # Template RBAC passkeys
@@ -229,7 +229,7 @@ python tools/deploy_safe.py --note "Enhance dashboard navigation" "frontend-html
   - Uploads both `.gz` archives automatically to **Google Drive** via `/etc/dent2025_gdrive_webhook.env` (`chmod 600`, root-only).
   - Writes `/var/www/dent2025/history_data/backup_status.json`, displayed live in the Admin Dashboard **History** tab (`history_api.php?action=backup_status`).
 - **Unified Google Drive Off-Site Backup (`My Drive > dent2025 backups/`)**:
-  - Managed by a single Google Apps Script project (`gas_content_backup_engine`, local source: `docs/google_apps_scripts/Dent2025 Master Backup Engine.js`, requires Drive API `v2` advanced service):
+  - Managed by a single Google Apps Script project (`gas_content_backup_engine`, local source: `docs/google_apps_scripts/Dent2025 Master Backup Engine.js` [gitignored], requires Drive API `v2` advanced service):
     - **`subjects pdfs/`**: Runs daily at **01:15 AM AST**, backing up all Google Drive lecture PDFs & study materials with 4-week rolling retention (14 daily + Week 3 + Week 4).
     - **`website server backups/`**: Receives nightly **06:30 AM AST** VPS DB + site data `.gz` archives grouped into dated folders (`YYYY-MM-DD hh:mm AM [Daily]`) with **15-day** automatic retention.
 - **Azure Hypervisor Disk Snapshots**: VM OS disk snapshots in Azure Resource Group `BB-BOT-PL-RG` (baseline: `snapshot-baseline-safe-rm-20260921`) provide 1-click total disaster recovery without relying on server OS integrity.
