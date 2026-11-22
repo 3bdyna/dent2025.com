@@ -170,15 +170,35 @@ if ($method === 'GET') {
 
     // Sensitive read actions (snapshots contain full system state incl. passkeys;
     // history leaks audit trails) require a valid admin passkey.
-    $AUTH_GET_ACTIONS = ['get_history', 'get_snapshot', 'get_manual_snapshots'];
+    $AUTH_GET_ACTIONS = ['get_history', 'get_snapshot', 'get_manual_snapshots', 'backup_status'];
     if (in_array($action, $AUTH_GET_ACTIONS, true)) {
-        $get_pass = $_GET['password'] ?? ($_SERVER['HTTP_X_ADMIN_PASS'] ?? '');
-        $get_info = !empty($get_pass) ? dent2025_get_passkey_info($get_pass) : null;
-        if (!$get_info) {
+        if (function_exists('dent2025_is_ip_locked_out') && dent2025_is_ip_locked_out()) {
             http_response_code(403);
             echo json_encode(['success' => false, 'message' => 'Unauthorized']);
             exit;
         }
+        $get_pass = $_GET['password'] ?? ($_SERVER['HTTP_X_ADMIN_PASS'] ?? '');
+        $get_info = !empty($get_pass) ? dent2025_get_passkey_info($get_pass) : null;
+        if (!$get_info) {
+            if (!empty($get_pass) && function_exists('dent2025_record_auth_failure')) {
+                dent2025_record_auth_failure();
+            }
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+    }
+
+    if ($action === 'backup_status') {
+        $status_file = "{$history_dir}/backup_status.json";
+        if (!file_exists($status_file)) {
+            echo json_encode(['success' => true, 'data' => null]);
+            exit;
+        }
+        $raw = @file_get_contents($status_file);
+        $decoded = $raw ? json_decode($raw, true) : null;
+        echo json_encode(['success' => true, 'data' => is_array($decoded) ? $decoded : null], JSON_UNESCAPED_UNICODE);
+        exit;
     }
 
     if ($action === 'get_history') {

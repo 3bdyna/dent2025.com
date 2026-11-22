@@ -896,6 +896,36 @@
  <!-- 6. HISTORY & ROLLBACK TAB -->
  <template id="tpl-history">
  <div class="space-y-3 sm:space-y-4">
+ <!-- Live Backup Status Card -->
+ <div id="backup-status-card" class="glass p-3 sm:p-4 rounded-xl border border-white/10 space-y-3 shrink-0">
+ <div class="flex items-center justify-between gap-2 flex-wrap">
+ <div class="flex items-center gap-2">
+ <h3 class="font-semibold text-white text-xs sm:text-sm">حالة النسخ الاحتياطي للموقع</h3>
+ <span id="backup-health-badge" class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-medium bg-white/5 text-gray-400 border border-white/10">جاري الفحص...</span>
+ </div>
+ <button onclick="AdminApp.loadBackupStatus()" class="text-xs text-gray-300 hover:text-white px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition">تحديث</button>
+ </div>
+ <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
+ <div class="p-2.5 rounded-lg bg-white/[0.03] border border-white/5">
+ <div class="text-[10px] text-gray-400 mb-0.5">آخر نسخة احتياطية</div>
+ <div id="backup-last-time" class="font-mono text-white text-xs">--</div>
+ </div>
+ <div class="p-2.5 rounded-lg bg-white/[0.03] border border-white/5">
+ <div class="text-[10px] text-gray-400 mb-0.5">حجم النسخة الكاملة</div>
+ <div id="backup-total-size" class="font-mono text-white text-xs">--</div>
+ </div>
+ <div class="p-2.5 rounded-lg bg-white/[0.03] border border-white/5">
+ <div class="text-[10px] text-gray-400 mb-0.5">النسخ المحفوظة بالخادم</div>
+ <div id="backup-archive-count" class="font-mono text-white text-xs">--</div>
+ </div>
+ <div class="p-2.5 rounded-lg bg-white/[0.03] border border-white/5">
+ <div class="text-[10px] text-gray-400 mb-0.5">نسخة Google Drive</div>
+ <div id="backup-gdrive-status" class="text-white text-xs">--</div>
+ </div>
+ </div>
+ <div id="backup-included-summary" class="text-[11px] text-gray-400">يشمل: قاعدة البيانات والمواد، الاختبارات، التقويم، الإعلانات، الاستطلاعات، الإحصائيات، مؤقت الدراسة، والصلاحيات.</div>
+ </div>
+
  <!-- Top row: Save Checkpoint + Undo button -->
  <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3.5 shrink-0">
  <!-- Save Named Checkpoint box -->

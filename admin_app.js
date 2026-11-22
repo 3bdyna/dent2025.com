@@ -3280,7 +3280,57 @@ window.AdminApp = {
         document.body.removeChild(ta);
     },
 
+    loadBackupStatus() {
+        const badge = document.getElementById('backup-health-badge');
+        const timeEl = document.getElementById('backup-last-time');
+        const sizeEl = document.getElementById('backup-total-size');
+        const countEl = document.getElementById('backup-archive-count');
+        const gdriveEl = document.getElementById('backup-gdrive-status');
+        if (!badge || !timeEl) return;
+
+        fetch(API_BASE + '/history_api.php?action=backup_status', { headers: { 'X-Admin-Pass': this.pass || '' } })
+            .then(r => r.json())
+            .then(res => {
+                const d = res && res.success ? res.data : null;
+                if (!d || !d.last_backup_unix) {
+                    badge.textContent = 'لا توجد بيانات بعد';
+                    badge.className = 'inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-medium bg-white/5 text-gray-400 border border-white/10';
+                    return;
+                }
+
+                const ageHours = Math.max(0, (Date.now() / 1000 - d.last_backup_unix) / 3600);
+                if (ageHours <= 26) {
+                    badge.textContent = 'محدّث وسليم';
+                    badge.className = 'inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+                } else {
+                    badge.textContent = `متأخر (${Math.round(ageHours)} ساعة)`;
+                    badge.className = 'inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30';
+                }
+
+                const dt = new Date(d.last_backup_unix * 1000);
+                timeEl.textContent = dt.toLocaleString('ar-SA', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+                const totalMB = (((d.db_size_bytes || 0) + (d.data_size_bytes || 0)) / (1024 * 1024)).toFixed(2);
+                const dbKB = Math.round((d.db_size_bytes || 0) / 1024);
+                sizeEl.textContent = `${totalMB} MB (DB ${dbKB} KB)`;
+
+                countEl.textContent = `${d.total_archives || 0} ملف (${d.retention_days || 14} يوم)`;
+
+                if (d.gdrive_status === 'synced') {
+                    gdriveEl.innerHTML = '<span class="text-emerald-300 font-medium">متصل ومزامن</span>';
+                } else if (d.gdrive_status === 'failed') {
+                    gdriveEl.innerHTML = '<span class="text-red-400 font-medium">فشل آخر رفع</span>';
+                } else {
+                    gdriveEl.innerHTML = '<span class="text-amber-300 font-medium">بانتظار الربط</span>';
+                }
+            })
+            .catch(() => {
+                badge.textContent = 'تعذر الفحص';
+            });
+    },
+
     loadHistory() {
+        this.loadBackupStatus();
         const hasCached = Array.isArray(this.historyData) && this.historyData.length > 0;
         if (hasCached) {
             const hasRollback = this.historyData.some(h => h.action_type === 'safety_backup' || h.action_type === 'rollback');
