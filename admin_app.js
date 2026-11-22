@@ -5025,28 +5025,48 @@ window.AdminApp = {
             const cohortStr = formatCohort(p.specialty, p.year, p.semester);
             const statusBadge = getStatusBadge(p.status, p.expires_at);
             const expiryStr = formatExpiry(p.expires_at);
+            const safeId = esc(p.id).replace(/[^a-zA-Z0-9_-]/g, '_');
+            const createdDate = p.created_at ? new Date(p.created_at * 1000).toLocaleDateString('ar-SA') : '';
             const optionsSummary = Array.isArray(p.options) ? p.options.map((opt, i) => {
                 const count = (p.votes && p.votes[i]) ? p.votes[i] : 0;
                 const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                 return `${esc(opt)}: ${count} (${pct}%)`;
             }).join(' | ') : '';
 
+            const optionsBarsHtml = Array.isArray(p.options) ? p.options.map((opt, i) => {
+                const count = (p.votes && p.votes[i]) ? p.votes[i] : 0;
+                const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                return `
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between gap-2 text-xs">
+                    <span class="text-gray-200">${esc(opt)}</span>
+                    <span class="font-mono text-gray-300 shrink-0">${count} صوت (${pct}%)</span>
+                  </div>
+                  <div class="w-full h-2 rounded-md bg-white/5 overflow-hidden border border-white/10">
+                    <div class="h-full bg-white/30 rounded-md transition-all" style="width: ${pct}%"></div>
+                  </div>
+                </div>`;
+            }).join('') : '';
+
             desktopHtml += `
-            <tr class="hover:bg-white/[0.02] transition border-b border-white/5">
+            <tr class="hover:bg-white/[0.03] transition border-b border-white/5 cursor-pointer" onclick="AdminApp.toggleAdminPollDetails('${safeId}')">
               <td class="p-3">
                 <div class="font-semibold text-white max-w-[280px] truncate" title="${esc(p.question)}">${esc(p.question)}</div>
                 <div class="text-[10px] text-gray-400 mt-0.5 max-w-[280px] truncate" title="${esc(optionsSummary)}">${esc(optionsSummary)}</div>
               </td>
               <td class="p-3 text-center text-gray-300 font-mono text-[11px]">${esc(cohortStr)}</td>
               <td class="p-3 text-center">
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white font-mono text-xs">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs">
                   ${total}
                 </span>
               </td>
               <td class="p-3 text-center">${statusBadge}</td>
               <td class="p-3 text-center text-gray-400 text-[11px] font-mono">${expiryStr}</td>
-              <td class="p-3 text-center">
+              <td class="p-3 text-center" onclick="event.stopPropagation()">
                 <div class="inline-flex items-center gap-1.5 justify-center">
+                  <button type="button" onclick="AdminApp.toggleAdminPollDetails('${safeId}')" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-200 border border-white/10 transition text-[11px]" title="عرض تفاصيل النتائج">
+                    النتائج
+                  </button>
                   <button type="button" onclick="AdminApp.toggleAdminPollStatus('${p.id}', '${p.status || 'published'}')" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px]" title="تبديل الحالة بين منشور ومخفي">
                     ${p.status === 'testing' ? 'تفعيل للطلاب' : 'جعله تجريبي'}
                   </button>
@@ -5055,15 +5075,28 @@ window.AdminApp = {
                   </button>
                 </div>
               </td>
+            </tr>
+            <tr id="poll-details-desktop-${safeId}" class="hidden bg-white/[0.02] border-b border-white/10">
+              <td colspan="6" class="p-4">
+                <div class="max-w-2xl space-y-3">
+                  <div class="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
+                    <div class="font-semibold text-white text-sm">${esc(p.question)}</div>
+                    ${createdDate ? `<span class="text-[11px] text-gray-400 font-mono shrink-0">${esc(createdDate)}</span>` : ''}
+                  </div>
+                  <div class="space-y-2.5">${optionsBarsHtml}</div>
+                </div>
+              </td>
             </tr>`;
 
             mobileHtml += `
             <div class="glass p-3 rounded-xl border border-white/10 space-y-2">
-              <div class="flex items-start justify-between gap-2">
+              <div class="flex items-start justify-between gap-2 cursor-pointer" onclick="AdminApp.toggleAdminPollDetails('${safeId}')">
                 <div class="font-semibold text-white text-xs">${esc(p.question)}</div>
                 ${statusBadge}
               </div>
-              <div class="text-[11px] text-gray-400">${esc(optionsSummary)}</div>
+              <div id="poll-details-mobile-${safeId}" class="hidden pt-2 border-t border-white/5 space-y-2">
+                ${optionsBarsHtml}
+              </div>
               <div class="flex items-center justify-between text-[11px] text-gray-300 pt-2 border-t border-white/5">
                 <span>${esc(cohortStr)}</span>
                 <span class="font-mono text-white">${total} أصوات</span>
@@ -5071,10 +5104,13 @@ window.AdminApp = {
               <div class="flex items-center justify-between gap-2 pt-1">
                 <span class="text-[10px] text-gray-400 font-mono">${expiryStr}</span>
                 <div class="flex items-center gap-1.5">
-                  <button type="button" onclick="AdminApp.toggleAdminPollStatus('${p.id}', '${p.status || 'published'}')" class="text-xs px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition">
+                  <button type="button" onclick="AdminApp.toggleAdminPollDetails('${safeId}')" class="text-xs px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-gray-200 border border-white/10 transition">
+                    النتائج
+                  </button>
+                  <button type="button" onclick="AdminApp.toggleAdminPollStatus('${p.id}', '${p.status || 'published'}')" class="text-xs px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 transition">
                     ${p.status === 'testing' ? 'تفعيل للطلاب' : 'جعله تجريبي'}
                   </button>
-                  <button type="button" onclick="AdminApp.deleteAdminPoll('${p.id}', '${esc(p.question)}')" class="text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition">
+                  <button type="button" onclick="AdminApp.deleteAdminPoll('${p.id}', '${esc(p.question)}')" class="text-xs px-2 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition">
                     حذف
                   </button>
                 </div>
@@ -5084,6 +5120,13 @@ window.AdminApp = {
 
         tbody.innerHTML = desktopHtml;
         mobileContainer.innerHTML = mobileHtml;
+    },
+
+    toggleAdminPollDetails(safeId) {
+        const desktopRow = document.getElementById(`poll-details-desktop-${safeId}`);
+        const mobileBox = document.getElementById(`poll-details-mobile-${safeId}`);
+        if (desktopRow) desktopRow.classList.toggle('hidden');
+        if (mobileBox) mobileBox.classList.toggle('hidden');
     },
 
     deleteAdminPoll(pollId, question) {
