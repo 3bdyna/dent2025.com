@@ -67,9 +67,12 @@ my website dent2025/
 │   ├── bin/                                    # Helper binaries (pdftotext)
 │   └── gemini_keys_data/                       # Gemini API key health cache
 ├── logos/                                      # Specialty logos & site assets (deployed to server)
-│   ├── dentistry.webp                          # Dentistry specialty logo
-│   ├── medicine.webp                           # Medicine specialty logo
-│   ├── pre-med.webp                            # Pre-Med specialty logo
+│   ├── dentistry.webp                          # Dentistry specialty logo (full-res source)
+│   ├── dentistry-sm.webp                       # Dentistry 2x retina navbar logo (80x108, ~2.5 KB) — used by loader & dashboard.js
+│   ├── medicine.webp                           # Medicine specialty logo (full-res source)
+│   ├── medicine-sm.webp                        # Medicine 2x retina navbar logo (92x108, ~5.6 KB) — used by loader & dashboard.js
+│   ├── pre-med.webp                            # Pre-Med specialty logo (full-res source)
+│   ├── pre-med-sm.webp                         # Pre-Med 2x retina navbar logo (92x108, ~5.6 KB) — used by loader & dashboard.js
 │   ├── logo of main page.webp                  # Main Portal Logo asset
 │   ├── og_share_preview.jpg                    # Standardized Open Graph social sharing banner (1200x630)
 │   ├── apple-touch-icon.png                    # iOS Apple touch icon
@@ -124,24 +127,26 @@ Installed on the live WordPress site at `wp-content/plugins/dent2025-loader/dent
   - `[dent_poll]`: Renders the inline student poll and interactive voting card (`poll_widget.html`).
 - **Security**: Strictly sanitizes input via `basename()` and regex whitelist `preg_replace('/[^a-zA-Z0-9_.-]/', '', $file)` to completely prevent directory traversal attacks (`../`).
 - **File Location**: Reads components from `ABSPATH . 'frontend_components/' . $safe_file`.
-- **Automatic Cache-Busting**: Appends dynamic `?v={filemtime}` query strings to JavaScript (`.js`), CSS (`.css`), and embedded `<script src="...">` / `<link href="...">` tags inside HTML blocks. When `deploy_safe.py` uploads a new file, the modified timestamp updates instantly, forcing every browser and LiteSpeed Cache to download fresh code without stale cache glitches.
-- **WordPress `wpautop` Protection**: Collapses internal whitespace inside `<style>` and `<script>` blocks and runs a high-priority `the_content` filter (priority 999) to strip `<p>` and `<br>` tags wrapped around CSS/JS, preventing raw code text walls from appearing on screen.
+- **Automatic Cache-Busting**: Appends dynamic `?v={filemtime}` query strings to JavaScript (`.js`), CSS (`.css`), embedded `<script src="...">` / `<link href="...">` tags, and the lazy-loaded script URLs for `study_timer.js` and `dent_pin_modal.js`. When `deploy_safe.py` uploads a new file, the modified timestamp updates instantly, forcing every browser and LiteSpeed Cache to download fresh code without stale cache glitches.
+- **WordPress `wpautop` Protection & Homepage Image Priority**: Collapses internal whitespace inside `<style>` and `<script>` blocks, runs a high-priority `the_content` filter (priority 999) to strip `<p>` and `<br>` tags wrapped around CSS/JS, and adds `fetchpriority="low"` / `loading="lazy"` to below-LCP homepage card images (`wp-image-553`, `wp-image-942`).
+- **SSR Tomorrow Calendar Alert (`dent2025_prerender_tomorrow_alert`)**: Pre-renders `calendar_tomorrow_alert.html` server-side for the default cohort (`schedule_events.json` + `schedule_events_dentistry_y3_s1.json` in `Asia/Riyadh`) so Frame 1 already reserves and displays tomorrow's alert with zero CLS while client JS still refreshes for other cohorts/timezones.
 - **Sitewide Injections in `wp_footer`**:
-  - **Kinetic Grid (`priority 5`)**: Injects `kinetic_grid.html` (interactive monochrome particle/grid canvas background) on all pages.
-  - **Study Timer Banner/Widget (`priority 20`)**: Injects `study_timer_banner_widget.html` into all non-welcome pages.
-  - **First-Party Telemetry Tracker (`priority 30`)**: Injects `analytics_tracker.js` for lightweight visitor dwell-time analytics across all pages.
+  - **Kinetic Grid (`priority 5`)**: Injects `<canvas>` + idle-gated `<script>` from `kinetic_grid.html` (its `<style id="dent-kinetic-grid-style">` is split into `wp_head` at `priority 999` — after WordPress `wp-custom-css` at `101` — so transparent body overrides `#121212 !important` with zero footer CLS).
+  - **Study Timer Banner/Widget (`priority 20`)**: Injects `study_timer_banner_widget.html` into all non-welcome pages; `study_timer.js` is lazy-loaded on banner click unless an active session (`dent2025_timer_active_session`) exists in `localStorage`.
+  - **First-Party Telemetry Tracker (`priority 30`)**: Injects `analytics_tracker.js` (`defer fetchpriority="low"`) for lightweight visitor dwell-time analytics across all pages.
 - **High-Performance Head Injections (`wp_head`)**:
   - **Speculation Rules API**: Injects `<script type="speculationrules">` to pre-render the 4 core portal URLs (`/`, `/التقويم-الدراسي/`, `/المقررات-والاختبارات/`, `/جدول-الدراسي/`) with moderate eagerness.
   - **Instant Hover/Touch Prefetcher (`#dent-instant-nav`)**: Custom lightweight prefetcher for Safari/Firefox that prefetches links on 65ms hover debounce or touchstart.
-  - **Early Logo Swap Script (`#dent-instant-logo`)**: Synchronous head script that reads `dent2025_selection` from `localStorage` and injects CSS rules before the browser paints the Astra logo, completely eliminating specialty logo flash.
+  - **Early Logo Swap Script (`#dent-instant-logo`)**: Synchronous head script that reads `dent2025_selection` from `localStorage` and swaps to the 2× retina `*-sm.webp` navbar logos before first paint, eliminating logo flash and oversized downloads.
   - **Inlined Portal Mode Config (`#dent-portal-config`)**: Exposes `window.DENT_MULTI_SPECIALTY_MODE` synchronously in `wp_head`, avoiding an initial asynchronous network round-trip.
-  - **Compact Header CSS (`#dent-compact-header-css`)**: Restricts Astra header height to 64px and logo image to 54px max height.
-  - **Google Drive Preconnect / DNS Prefetch**: Preconnects to `drive.google.com` and `docs.google.com`.
+  - **Compact Header & CLS Guard CSS (`#dent-compact-header-css`)**: Restricts Astra header height to 64px, logo image to 54px max height (`min-width: 40px` on `.custom-logo-link`), and reserves `min-height: 118px` for `#dynamic-announcements-container`.
+  - **Inlined Astra Base CSS (`style_loader_tag`)**: Inlines `wp-content/themes/astra/assets/css/minified/main.min.css` directly into `<head>` (Brotli-compressed with HTML, eliminating the last render-blocking stylesheet without FOUC/CLS).
+  - **Google Drive Preconnect / DNS Prefetch**: Preconnects to `drive.google.com` and `docs.google.com` on subpages only (`!is_front_page()`).
   - **Emoji Neutralization**: Disables WordPress core emoji scripts, styles, and s.w.org DNS prefetch.
 - **Clean Quiz Short URLs (`template_redirect`)**: Automatically rewrites `/quiz/<id>`, `/q/<id>`, `/?quiz=<id>`, and `/?q=<id>` to `/المقررات-والاختبارات/?quiz_id=<id>`.
-- **Self-Hosted Local Fonts Inlining & Preloading**: Strips external `fonts.googleapis.com` / `fonts.gstatic.com` requests to eliminate render-blocking LCP latency. Preloads `notokufiarabic-arabic.woff2` and `outfit-latin.woff2`, and inlines `/frontend_components/fonts/fonts.css`.
+- **Self-Hosted Local Fonts & Homepage LCP Preload**: Strips external `fonts.googleapis.com` / `fonts.gstatic.com` requests and inlines `/frontend_components/fonts/fonts.css` (`font-display: swap`). Does **not** preload the heavy variable font `.woff2` files (avoids starving Slow 4G); instead preloads only the homepage hero LCP image (`semester-e1783891637311.webp`, `fetchpriority="high"`).
 - **Automated Social Open Graph & Twitter Cards**: Injects standardized, cache-busted social preview metadata pointing to `/logos/og_share_preview.jpg` (1200x630) for pristine previews when links are shared on WhatsApp, Telegram, or Twitter.
-- **Critical Script Deferral**: Defers Astra theme's `frontend.min.js`. Google Site Kit's `gtag.js` loads natively via `async` with full `dataLayer` tracking intact.
+- **Critical Script Deferral & Lazy Loading**: Defers Astra theme's `frontend.min.js` and `dashboard.js` (`defer fetchpriority="low"`), lazy-loads `dent_pin_modal.js` on admin lock click, and loads the `#magic-star-btn` Easter-egg GIF/MP3 only on hover/touch/click. Google Site Kit's `gtag.js` loads natively via `async` with full `dataLayer` tracking intact.
 - **Daily Cache Cron Sync**: Registers a daily WordPress cron schedule `dent2025_daily_noon` (at 12:00 PM AST / 09:00 UTC) that triggers `action=cron_sync` against `backend/api_ai_exam.php` to keep AI exam question caches warm.
 - **Cache Purging**: Listens for `?purge=1` or `?nocache=1` query parameters with an authorized admin token to execute `do_action('litespeed_purge_all')` and clear WordPress transients.
 
