@@ -187,15 +187,13 @@ function getAiExamSubjectLinksTable($pdo) {
 }
 
 
-// Primary and fallback Gemini models (starting with flagship 3.8-flash and cascading down)
+// Primary and fallback Gemini models (proven 200 OK free-tier Flash-Lite models first for high RPD + fast response)
 $GEMINI_MODELS = [
-    'gemini-3.8-flash',
-    'gemini-3.7-flash',
-    'gemini-3.6-flash',
-    'gemini-3.5-flash',
-    'gemini-flash-latest',
     'gemini-3.5-flash-lite',
-    'gemini-flash-lite-latest'
+    'gemini-3.1-flash-lite',
+    'gemini-flash-lite-latest',
+    'gemini-3-flash-preview',
+    'gemini-3.8-flash'
 ];
 
 /**
@@ -1715,7 +1713,7 @@ function isAdministrativeOrPlanNonExamQuestion($questionText, $options = [], $ex
 function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches = 1) {
     global $GEMINI_MODELS;
     $hasFileUri = !empty($data['gemini_file_uri']);
-    $modelsToTry = !empty($GEMINI_MODELS) ? $GEMINI_MODELS : ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];
+    $modelsToTry = !empty($GEMINI_MODELS) ? $GEMINI_MODELS : ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-flash-lite-latest', 'gemini-3-flash-preview', 'gemini-3.8-flash'];
 
     $mode = $data['mode'] ?? 'ai_generation';
     $isPastExamFilter = ($mode === 'past_exam_filter');
@@ -1942,49 +1940,20 @@ function performGeminiSingleBatch($data, $API_KEYS, $batchNum = 1, $totalBatches
         ],
         "generationConfig" => [
             "temperature" => ($difficulty === 'hard') ? 0.45 : 0.3,
-            "maxOutputTokens" => 8192,
-            "responseMimeType" => "application/json"
+            "maxOutputTokens" => 16384,
+            "responseMimeType" => "application/json",
+            "thinkingConfig" => [
+                "thinkingLevel" => "medium"
+            ]
         ]
     ]);
 
-    $response = false;
-    $httpCode = 0;
-    $usedKeyIndex = -1;
-    $usedApiKey = '';
-    $latencyMs = 0;
-    $lastErrorMsg = '';
+    $cascade = callGeminiCascade($payload, $API_KEYS, $modelsToTry, $numQuestions, 60);
+    $response = $cascade['response'];
+    $httpCode = $cascade['http_code'];
+    $lastErrorMsg = $cascade['error'];
 
-    foreach ($modelsToTry as $modelName) {
-        foreach ($API_KEYS as $index => $apiKey) {
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($modelName) . ":generateContent?key=" . $apiKey;
-            $reqResult = postGeminiRequest($url, $payload, 100);
-            $response = $reqResult['response'];
-            $httpCode = $reqResult['http_code'];
-            $latencyMs = $reqResult['latency_ms'];
-            $usedKeyIndex = $index;
-            $usedApiKey = $apiKey;
-
-            if ($httpCode === 200 && !empty($response)) {
-                $jsonRes = json_decode($response, true);
-                if (!isset($jsonRes['error'])) {
-                    recordGeminiUsage($index, $apiKey, 200, $response, $latencyMs, $numQuestions, $modelName);
-                    break 2;
-                } else {
-                    $lastErrorMsg = $jsonRes['error']['message'] ?? 'Unknown API Error';
-                    recordGeminiUsage($index, $apiKey, 200, $response, $latencyMs, 0, $modelName);
-                }
-            } else {
-                $lastErrorMsg = "HTTP $httpCode: " . substr(strval($response), 0, 150);
-                recordGeminiUsage($index, $apiKey, $httpCode, $response, $latencyMs, 0, $modelName);
-                if ($httpCode === 503 || $httpCode === 429) {
-                    usleep(500000);
-                    break;
-                }
-            }
-        }
-    }
-
-    if ($httpCode !== 200 || empty($response)) {
+    if (!$cascade['success'] || $httpCode !== 200 || empty($response)) {
         return ['success' => false, 'message' => "حدث خطأ في خدمة المعالجة الذكية: " . $lastErrorMsg];
     }
 
@@ -2348,8 +2317,11 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         ],
         "generationConfig" => [
             "temperature" => 0.1,
-            "maxOutputTokens" => 8192,
-            "responseMimeType" => "application/json"
+            "maxOutputTokens" => 16384,
+            "responseMimeType" => "application/json",
+            "thinkingConfig" => [
+                "thinkingLevel" => "low"
+            ]
         ]
     ]);
 
@@ -2357,38 +2329,10 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
         $jobFileCallback(1, 2, 0);
     }
 
-    $modelsToTry = !empty($GEMINI_MODELS) ? $GEMINI_MODELS : ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];
-    $stage1Res = null;
-    $lastErrorMsg = '';
-
-    foreach ($modelsToTry as $modelName) {
-        foreach ($API_KEYS as $index => $apiKey) {
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($modelName) . ":generateContent?key=" . $apiKey;
-            $req = postGeminiRequest($url, $stage1Payload, 120);
-            $httpCode = $req['http_code'];
-            $latencyMs = $req['latency_ms'] ?? 0;
-            $respText = $req['response'] ?? '';
-
-            if ($httpCode === 200 && !empty($respText)) {
-                $j = json_decode($respText, true);
-                if (!isset($j['error'])) {
-                    $stage1Res = $j;
-                    recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, 0, $modelName);
-                    break 2;
-                } else {
-                    $lastErrorMsg = $j['error']['message'] ?? 'API error';
-                    recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, 0, $modelName);
-                }
-            } else {
-                $lastErrorMsg = "HTTP {$httpCode}: " . substr(strval($respText), 0, 150);
-                recordGeminiUsage($index, $apiKey, $httpCode, $respText, $latencyMs, 0, $modelName);
-                if ($httpCode === 503 || $httpCode === 429) {
-                    usleep(500000);
-                    break;
-                }
-            }
-        }
-    }
+    $modelsToTry = !empty($GEMINI_MODELS) ? $GEMINI_MODELS : ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-flash-lite-latest', 'gemini-3-flash-preview', 'gemini-3.8-flash'];
+    $cascade1 = callGeminiCascade($stage1Payload, $API_KEYS, $modelsToTry, 0, 90);
+    $stage1Res = $cascade1['json'];
+    $lastErrorMsg = $cascade1['error'];
 
     if (!$stage1Res) {
         return ['success' => false, 'message' => "فشل استخراج الأسئلة من أوراق الاختبار: " . $lastErrorMsg];
@@ -2526,48 +2470,21 @@ function performPastExamExtractionPipeline($data, $API_KEYS, $jobFileCallback = 
             ],
             "generationConfig" => [
                 "temperature" => 0.25,
-                "maxOutputTokens" => 8192,
-                "responseMimeType" => "application/json"
+                "maxOutputTokens" => 16384,
+                "responseMimeType" => "application/json",
+                "thinkingConfig" => [
+                    "thinkingLevel" => "medium"
+                ]
             ]
         ]);
 
-        $stage2Res = null;
-        $usedKeyIndex2 = -1;
-        $usedApiKey2 = '';
-        $usedLatencyMs2 = 0;
-        $usedRespText2 = '';
-        $usedModel2 = 'gemini-3.8-flash';
-
-        foreach ($modelsToTry as $modelName) {
-            foreach ($API_KEYS as $index => $apiKey) {
-                $url = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($modelName) . ":generateContent?key=" . $apiKey;
-                $req = postGeminiRequest($url, $stage2Payload, 90);
-                $httpCode = $req['http_code'];
-                $latencyMs = $req['latency_ms'] ?? 0;
-                $respText = $req['response'] ?? '';
-
-                if ($httpCode === 200 && !empty($respText)) {
-                    $j = json_decode($respText, true);
-                    if (!isset($j['error'])) {
-                        $stage2Res = $j;
-                        $usedKeyIndex2 = $index;
-                        $usedApiKey2 = $apiKey;
-                        $usedLatencyMs2 = $latencyMs;
-                        $usedRespText2 = $respText;
-                        $usedModel2 = $modelName;
-                        break 2;
-                    } else {
-                        recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, 0, $modelName);
-                    }
-                } else {
-                    recordGeminiUsage($index, $apiKey, $httpCode, $respText, $latencyMs, 0, $modelName);
-                    if ($httpCode === 503 || $httpCode === 429) {
-                        usleep(500000);
-                        break;
-                    }
-                }
-            }
-        }
+        $cascade2 = callGeminiCascade($stage2Payload, $API_KEYS, $modelsToTry, 0, 60, false);
+        $stage2Res = $cascade2['json'];
+        $usedKeyIndex2 = $cascade2['key_index'];
+        $usedApiKey2 = $cascade2['api_key'];
+        $usedLatencyMs2 = $cascade2['latency_ms'];
+        $usedRespText2 = $cascade2['response'];
+        $usedModel2 = $cascade2['model'] ?: 'gemini-3.5-flash-lite';
 
         $prevCount = count($finalQuestions);
         if ($stage2Res) {
@@ -2769,7 +2686,7 @@ if ($action === 'generate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // --- RECORD GEMINI USAGE HELPER ---
-function recordGeminiUsage($keyIndex, $apiKey, $httpCode, $response, $latencyMs, $numQuestions = 0, $modelName = 'gemini-3.8-flash') {
+function recordGeminiUsage($keyIndex, $apiKey, $httpCode, $response, $latencyMs, $numQuestions = 0, $modelName = 'gemini-3.5-flash-lite') {
     $dataDir = __DIR__ . '/gemini_keys_data';
     if (!is_dir($dataDir)) {
         @mkdir($dataDir, 0777, true);
@@ -2849,7 +2766,7 @@ function recordGeminiUsage($keyIndex, $apiKey, $httpCode, $response, $latencyMs,
         'id' => 'log_' . uniqid(),
         'timestamp' => date('Y-m-d H:i:s'),
         'date' => $today,
-        'model' => !empty($modelName) ? strval($modelName) : 'gemini-3.8-flash',
+        'model' => !empty($modelName) ? strval($modelName) : 'gemini-3.5-flash-lite',
         'key_index' => $keyIndex,
         'key_masked' => $maskedKey,
         'http_code' => $httpCode,
@@ -2930,7 +2847,7 @@ if ($action === 'gemini_status') {
             'status' => $status,
             'requests_today' => $keyStats['requests'],
             'tokens_today' => $keyStats['total_tokens'],
-            'rpd_limit' => 1500,
+            'rpd_limit' => 500,
             'latency_ms' => $latency,
             'last_tested' => $lastTested,
             'created_at' => $entry['created_at'] ?? ''
@@ -3286,6 +3203,82 @@ function postGeminiRequest($url, $payload, $timeout = 15) {
         'response' => $response,
         'http_code' => $httpCode,
         'latency_ms' => $latencyMs
+    ];
+}
+
+/**
+ * Shared fast-fail Gemini cascade across models and API keys.
+ * - Rotates through all API keys on per-account HTTP 429 (quota) errors.
+ * - Immediately fails over to the next model on 404, limit:0, timeouts (0), or non-lite 503s.
+ * - Caps congested non-lite fallback models to a 20s timeout so generation never hangs.
+ */
+function callGeminiCascade($payload, $API_KEYS, $modelsToTry, $numQuestionsForLog = 0, $defaultTimeout = 60, $logSuccess = true) {
+    $lastError = '';
+    $lastHttpCode = 0;
+
+    foreach ($modelsToTry as $modelName) {
+        $isLite = (stripos($modelName, 'lite') !== false);
+        $timeout = $isLite ? $defaultTimeout : min($defaultTimeout, 20);
+
+        foreach ($API_KEYS as $index => $apiKey) {
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($modelName) . ":generateContent?key=" . $apiKey;
+            $req = postGeminiRequest($url, $payload, $timeout);
+            $respText = $req['response'];
+            $httpCode = (int)($req['http_code'] ?? 0);
+            $latencyMs = (int)($req['latency_ms'] ?? 0);
+            $lastHttpCode = $httpCode;
+
+            if ($httpCode === 200 && !empty($respText)) {
+                $jsonRes = json_decode($respText, true);
+                if (is_array($jsonRes) && !isset($jsonRes['error'])) {
+                    if ($logSuccess) {
+                        recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, $numQuestionsForLog, $modelName);
+                    }
+                    return [
+                        'success' => true,
+                        'response' => $respText,
+                        'json' => $jsonRes,
+                        'http_code' => 200,
+                        'latency_ms' => $latencyMs,
+                        'key_index' => $index,
+                        'api_key' => $apiKey,
+                        'model' => $modelName,
+                        'error' => ''
+                    ];
+                }
+                $lastError = $jsonRes['error']['message'] ?? 'Unknown API Error';
+                recordGeminiUsage($index, $apiKey, 200, $respText, $latencyMs, 0, $modelName);
+                continue;
+            }
+
+            $respStr = strval($respText);
+            $lastError = "HTTP {$httpCode}: " . substr($respStr, 0, 150);
+            recordGeminiUsage($index, $apiKey, $httpCode, $respText, $latencyMs, 0, $modelName);
+
+            // Model-wide failures: jump straight to the next model without wasting time on remaining keys
+            if ($httpCode === 404 || $httpCode === 0) {
+                break;
+            }
+            if ($httpCode === 429 && stripos($respStr, 'limit: 0') !== false) {
+                break;
+            }
+            if ($httpCode === 503 && !$isLite) {
+                break;
+            }
+            // Otherwise (per-account 429, transient lite 503, or invalid key 400/403): rotate to next API key
+        }
+    }
+
+    return [
+        'success' => false,
+        'response' => false,
+        'json' => null,
+        'http_code' => $lastHttpCode,
+        'latency_ms' => 0,
+        'key_index' => -1,
+        'api_key' => '',
+        'model' => '',
+        'error' => $lastError
     ];
 }
 

@@ -4176,7 +4176,7 @@ window.AdminApp = {
                         statusTag = `<span class="text-red-400">${log.http_code} Error</span>`;
                     }
 
-                    const modelName = log.model || 'gemini-3.8-flash';
+                    const modelName = log.model || 'gemini-3.5-flash-lite';
                     return `
                         <tr class="hover:bg-white/5 transition">
                             <td class="p-3 font-mono text-xs text-gray-300">${log.timestamp}</td>
