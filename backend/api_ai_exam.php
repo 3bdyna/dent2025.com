@@ -214,23 +214,17 @@ function getGeminiKeyEntries() {
         }
     }
     
-    // Default seed keys (using verified active keys)
-    $defaultEntries = [
-        [
-            'id' => 'gem_key_1',
-            'label' => 'مفتاح المعالجة الذكية الأساسي #1',
-            'key' => 'AIzaSyDap8UYkbp71Z0C51UI5md8QwozKRmsHtw',
+    // Optional environment fallback (keeps real keys out of source control)
+    $envKey = trim((string) (getenv('GEMINI_API_KEY') ?: ''));
+    if ($envKey !== '') {
+        return [[
+            'id' => 'gem_env_1',
+            'label' => 'Environment Gemini Key',
+            'key' => $envKey,
             'created_at' => date('Y-m-d H:i:s')
-        ],
-        [
-            'id' => 'gem_key_2',
-            'label' => 'مفتاح المعالجة الذكية الاحتياطي #2',
-            'key' => 'AIzaSyCAlmt06IIVQkMlnDmm7X4m-PK3ighhGvY',
-            'created_at' => date('Y-m-d H:i:s')
-        ]
-    ];
-    @file_put_contents($keysFile, json_encode($defaultEntries, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    return $defaultEntries;
+        ]];
+    }
+    return [];
 }
 
 function saveGeminiKeyEntries($entries) {
@@ -253,7 +247,7 @@ function getGeminiRawApiKeys() {
             $rawKeys[] = trim($e['key']);
         }
     }
-    return !empty($rawKeys) ? $rawKeys : ['AIzaSyDap8UYkbp71Z0C51UI5md8QwozKRmsHtw'];
+    return $rawKeys;
 }
 
 $API_KEYS = getGeminiRawApiKeys();
