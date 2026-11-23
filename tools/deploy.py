@@ -71,8 +71,7 @@ def create_deployment_tar(file_paths, root_dir, custom_src_dir=None):
 
 def purge_remote_cache(config=None):
     """Purges remote LiteSpeed cache and transients via SSH CLI or fallback HTTP."""
-    ssh_host = 'ssh.dent2025.com'
-    ssh_user = 'azureuser'
+    ssh_user, ssh_host = _toolkit.get_ssh_target(config)
     
     # Fast path: invoke purge_cache.php directly via SSH CLI on localhost
     try:
@@ -109,8 +108,7 @@ def purge_remote_cache(config=None):
 def stream_deploy_via_ssh(file_paths, config=None, custom_src_dir=None):
     """Ultra-fast deployment engine: streams an in-memory tar over a single SSH connection in ~1.8s."""
     root_dir = PROJECT_ROOT
-    ssh_host = config.get('ssh_host', 'ssh.dent2025.com') if isinstance(config, dict) else 'ssh.dent2025.com'
-    ssh_user = config.get('user', 'azureuser') if isinstance(config, dict) else 'azureuser'
+    ssh_user, ssh_host = _toolkit.get_ssh_target(config)
     remote_base = (config.get('remote_dir') if isinstance(config, dict) else None) or '/var/www/dent2025'
 
     tar_bytes, processed = create_deployment_tar(file_paths, root_dir, custom_src_dir=custom_src_dir)
@@ -172,8 +170,7 @@ def get_ftp_connection(config=None):
         with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
 
-    host = config.get('host', 'ssh.dent2025.com')
-    user = config.get('user', 'azureuser')
+    user, host = _toolkit.get_ssh_target(config)
     password = config.get('password')
     ssh_key = config.get('ssh_key')
 
@@ -268,7 +265,7 @@ def upload_files(file_paths, ftp=None, config=None):
 def _upload_via_openssh_legacy(file_paths, config):
     """Legacy OpenSSH per-file fallback if tar streaming and Paramiko are both unavailable."""
     root_dir = PROJECT_ROOT
-    ssh_host = 'ssh.dent2025.com'
+    ssh_user, ssh_host = _toolkit.get_ssh_target(config)
     base_remote_dir = config.get('remote_dir', '/var/www/dent2025')
 
     for input_path in file_paths:
@@ -283,9 +280,9 @@ def _upload_via_openssh_legacy(file_paths, config):
         dir_name, file_name = get_remote_destination(rel_path)
         target_dir = f"{base_remote_dir}/{dir_name}" if (dir_name and dir_name != '.') else base_remote_dir
 
-        subprocess.run(['ssh', '-o', 'BatchMode=yes', f"azureuser@{ssh_host}", f"mkdir -p '{target_dir}'"],
+        subprocess.run(['ssh', '-o', 'BatchMode=yes', f"{ssh_user}@{ssh_host}", f"mkdir -p '{target_dir}'"],
                        stdin=subprocess.DEVNULL, capture_output=True, timeout=15)
-        remote_dest = f"azureuser@{ssh_host}:{target_dir}/{file_name}"
+        remote_dest = f"{ssh_user}@{ssh_host}:{target_dir}/{file_name}"
         res = subprocess.run(['scp', '-O', '-o', 'BatchMode=yes', abs_path, remote_dest],
                              stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=60)
         if res.returncode != 0:

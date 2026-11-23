@@ -24,7 +24,7 @@ python tools/deploy_safe.py --note "Detailed description of what changed" "path/
    - Creates a clean, semantic Git commit tagged with your change note.
    - Automatically pushes to your private GitHub repository (`origin/main`).
 4. **High-Speed Single-Connection SSH Streaming & Instant Cache Purge**:
-   - Packages all target files into an in-memory gzipped stream and transfers them over **one single SSH connection** via Cloudflare Tunnel (`ssh.dent2025.com`).
+   - Packages all target files into an in-memory gzipped stream and transfers them over **one single SSH connection** via Cloudflare Tunnel (configured in gitignored `deploy_config.json`).
    - Uploads and extracts files in ~1.8–2.3 seconds directly to `/var/www/dent2025/`.
    - Triggers LiteSpeed cache purge and Dent2025 transient purge via server CLI in the same connection without WAF blocks.
 5. **Post-flight Health Inspection (`tools/deploy_health.py`)**:

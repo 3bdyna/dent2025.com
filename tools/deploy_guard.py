@@ -1,7 +1,10 @@
 import sys
 import os
+import re
 import json
 import subprocess
+
+import _toolkit
 
 FORBIDDEN_FILES = [
     'deploy_config.json',
@@ -11,6 +14,44 @@ FORBIDDEN_FILES = [
     '.git',
     'wp-config.php'
 ]
+
+SECRET_PATTERNS = [
+    ('Google API Key', re.compile(r'AIza[0-9A-Za-z_-]{35}')),
+    ('Secret API Key (sk-)', re.compile(r'\bsk-[0-9A-Za-z]{20,}\b')),
+    ('GitHub Token', re.compile(r'\b(?:ghp_[0-9A-Za-z]{36}|github_pat_[0-9A-Za-z_]{20,})\b')),
+    ('AWS Access Key', re.compile(r'\bAKIA[0-9A-Z]{16}\b')),
+    ('Private Key Block', re.compile(r'-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----')),
+    ('Hardcoded SSH Host/User', re.compile(r'azureuser@|ssh\.dent2025\.com', re.IGNORECASE)),
+]
+
+SECRET_SCAN_SKIP_EXTS = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.ico', '.mp3', '.woff', '.woff2', '.pdf', '.gz', '.zip', '.tar'}
+SECRET_SCAN_SKIP_FILES = {'deploy_guard.py', 'test_system_logic.php'}
+
+
+def check_secrets(file_path):
+    """Scans a text file for accidentally hardcoded API keys, tokens, private keys, or SSH hosts."""
+    abs_path = os.path.abspath(file_path)
+    if not os.path.exists(abs_path) or os.path.isdir(abs_path):
+        return True, "OK"
+
+    base = os.path.basename(abs_path)
+    ext = os.path.splitext(base)[1].lower()
+    if ext in SECRET_SCAN_SKIP_EXTS or base in SECRET_SCAN_SKIP_FILES or base.endswith('.example.json'):
+        return True, "OK"
+
+    try:
+        with open(abs_path, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+    except OSError:
+        return True, "OK"
+
+    for label, pattern in SECRET_PATTERNS:
+        m = pattern.search(content)
+        if m:
+            line_no = content.count('\n', 0, m.start()) + 1
+            return False, f"Secret Leak Blocked: {label} detected in '{file_path}' (line {line_no}). Store secrets in gitignored config files instead."
+
+    return True, "OK"
 
 def check_syntax(file_path):
     """Checks syntax of PHP, JSON, or JS files before deployment."""
@@ -120,7 +161,8 @@ def check_dynamic_data_safety(file_path, allow_delete=False):
 
     # Query cloud via fast SSH cat
     try:
-        ssh_cmd = ['ssh', '-n', '-o', 'BatchMode=yes', 'azureuser@ssh.dent2025.com', f'cat {remote_path}']
+        ssh_user, ssh_host = _toolkit.get_ssh_target()
+        ssh_cmd = ['ssh', '-n', '-o', 'BatchMode=yes', f'{ssh_user}@{ssh_host}', f'cat {remote_path}']
         res = subprocess.run(
             ssh_cmd,
             stdin=subprocess.DEVNULL,
@@ -175,6 +217,11 @@ def validate_deployment(file_paths, note, allow_delete=False):
         if is_forbidden_path(path):
             errors.append(f"Security Alert: Deploying protected/secret file '{path}' is strictly forbidden!")
             continue
+
+        secrets_ok, secret_msg = check_secrets(path)
+        if not secrets_ok:
+            errors.append(secret_msg)
+            continue
             
         is_valid, msg = check_syntax(path)
         if not is_valid:
@@ -187,7 +234,39 @@ def validate_deployment(file_paths, note, allow_delete=False):
             
     return len(errors) == 0, errors
 
+
+def check_staged_git_files():
+    """Validates all staged Git files against forbidden paths and hardcoded secrets (used by .git/hooks/pre-commit)."""
+    res = subprocess.run(
+        ['git', 'diff', '--cached', '--name-only', '--diff-filter=ACMR'],
+        capture_output=True, text=True, cwd=_toolkit.PROJECT_ROOT, timeout=10
+    )
+    if res.returncode != 0:
+        return True, []
+
+    staged = [line.strip() for line in res.stdout.splitlines() if line.strip()]
+    errors = []
+    for rel_path in staged:
+        if is_forbidden_path(rel_path):
+            errors.append(f"Secret File Blocked: '{rel_path}' must never be committed to Git.")
+            continue
+        abs_path = os.path.join(_toolkit.PROJECT_ROOT, rel_path)
+        ok, msg = check_secrets(abs_path)
+        if not ok:
+            errors.append(msg)
+    return len(errors) == 0, errors
+
+
 if __name__ == '__main__':
+    if len(sys.argv) >= 2 and sys.argv[1] == '--check-staged':
+        ok, errs = check_staged_git_files()
+        if ok:
+            sys.exit(0)
+        print("Git pre-commit secret guard FAILED:")
+        for err in errs:
+            print(f"  - {err}")
+        sys.exit(1)
+
     if len(sys.argv) < 3:
         print("Usage: python deploy_guard.py --note \"description\" <file1> [file2...]")
         sys.exit(1)

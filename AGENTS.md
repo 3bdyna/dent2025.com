@@ -151,7 +151,7 @@ Installed on the live WordPress site at `wp-content/plugins/dent2025-loader/dent
 - **Cache Purging**: Listens for `?purge=1` or `?nocache=1` query parameters with an authorized admin token to execute `do_action('litespeed_purge_all')` and clear WordPress transients.
 
 ### B. Deployment Automation Script (`tools/deploy.py` & `tools/deploy_safe.py`)
-Run from terminal to sync any file to the live Azure server (`/var/www/dent2025/`) in ~1–2 seconds via SFTP (with OpenSSH SCP fallback via `azureuser@ssh.dent2025.com`):
+Run from terminal to sync any file to the live Azure server (`/var/www/dent2025/`) in ~1–2 seconds via SFTP/SSH (target host/user loaded from gitignored `deploy_config.json`):
 
 ```bash
 # Deploy a single frontend component with SafeDeploy:
@@ -261,7 +261,7 @@ python tools/deploy_safe.py --note "Enhance dashboard navigation" "frontend-html
   If the live database or JSON data is ever accidentally corrupted or deleted:
   1. Pick the desired timestamp from `server_backups_dent2025_daily/`.
   2. Extract dynamic data: `tar -xzf data_<TIMESTAMP>.tar.gz`
-  3. Restore database on server: `zcat db_wordpress_<TIMESTAMP>.sql.gz | ssh azureuser@ssh.dent2025.com "sudo mysql wordpress"`
+  3. Restore database on server: `zcat db_wordpress_<TIMESTAMP>.sql.gz | ssh <ssh_user>@<ssh_host> "sudo mysql wordpress"`
 
 ---
 
@@ -564,42 +564,8 @@ To eliminate visual drift and ensure seamless visual harmony across all 5 portal
 
 ## 12. Hosting Infrastructure & Server Architecture (Azure + Cloudflare Tunnel)
 
-### A. Hosting Architecture & Cost Optimization (As of Sept 13, 2026)
-The website and Telegram Blackboard scraper bot run on an Azure Virtual Machine (`bb-bot-vm`) in **Poland Central** (`polandcentral`) with **24/7 continuous uptime** and **zero Azure Public IP costs**.
-
-**Current Architecture (Cloudflare Tunnel + 24/7 Azure VM)**
-- **Operating System & Stack**: Nginx, PHP 8.3-FPM, MariaDB running on Ubuntu 24.04 LTS.
-- **VM Specs**: `Standard_B2ts_v2` (2 vCPUs, 1GB RAM, 32GB Standard SSD).
-- **DNS & CDN**: **Cloudflare** (`brady.ns.cloudflare.com`, `jasmine.ns.cloudflare.com`). Zone ID: `932a3c299ea8a7a5e0d27488ffa5f60e`.
-- **Cloudflare Tunnel (`dent2025-tunnel`)**:
-  - Tunnel ID: `9f371b67-9d95-40f4-b2b9-7fd0496d4019`
-  - Runs as an active systemd service on the VM (`cloudflared`) connecting outbound to Cloudflare's edge.
-  - Ingress routes: `dent2025.com` and `www.dent2025.com` ➔ `https://localhost:443` (No TLS Verify).
-- **Zero Public IP / Security**:
-  - The previous Azure Static Public IP (`74.248.34.9`) was **permanently deleted** to eliminate the \$3.60/month (\$0.12/day) Azure fee.
-  - The VM has **no open inbound public IP ports**. All web traffic arrives through the encrypted Cloudflare Tunnel.
-- **24/7 Continuous Operation**:
-  - Automated shutdown and startup Logic Apps (`bb-bot-auto-stop` and `bb-bot-auto-start`) have been **Disabled**.
-  - The server runs non-stop 24 hours a day, 7 days a week.
-- **Financial & Runway Status**:
-  - Net Daily Burn: **~$0.350 / day** (~**$10.50 / month**).
-  - Student Credit: Covers ~244 days (runway to **mid-May 2027**), easily surpassing the official **April 2, 2027** Azure for Students expiration date by +43 days with \$0 out-of-pocket.
-- **Deployment & Server Management**:
-  - Server commands and diagnostics can be executed directly via Azure CLI (`az vm run-command invoke`) or Cloudflare Zero Trust.
-  - Shared credentials and Cloudflare API tokens are securely persisted in untracked `passwords.txt` (gitignored).
-
-### B. Essential Server Paths & Local Configurations
-- **VM Name**: `bb-bot-vm` (Resource Group: `bb-bot-pl-rg`)
-- **VM Private IP**: `10.0.0.4` (Internal VNet)
-- **Web Root**: `/var/www/dent2025/`
-- **Nginx Config**: `/etc/nginx/sites-available/dent2025`
-- **Database Name**: `wordpress`
-- **Database User**: `wpuser` (password: `wp_dent2025_sec!`)
-- **Gitignored Secrets**: `passwords.txt`, `deploy_config.json`, `dent2025_passwords.json`
-
-### C. Important System Changes
-1. **File Ownership**: The WordPress files in `/var/www/dent2025/` are owned by `www-data:www-data`. The `azureuser` is part of the `www-data` group.
-2. **FS_METHOD**: The `wp-config.php` has `define('FS_METHOD', 'direct');` forced to bypass FTP permission prompts when installing plugins.
-3. **Upload Limits**: `php.ini` and `nginx.conf` are configured to allow 2GB file uploads to facilitate large site imports.
-4. **Cloudflare Tunnel Routing**: Traffic to `dent2025.com` is proxied via Cloudflare edge ➔ Cloudflare Tunnel ➔ local Nginx port 443 with TLS.
+- **Stack**: Nginx, PHP 8.3-FPM, MariaDB on Ubuntu 24.04 LTS behind **Cloudflare Tunnel** (no open inbound public IP ports).
+- **Web Root**: `/var/www/dent2025/` (owned by `www-data:www-data`; deploy SSH user is in the `www-data` group).
+- **Secrets & Credentials**: All SSH hosts/users, DB credentials, Cloudflare tokens, and Gemini API keys are stored strictly in gitignored local/server files (`deploy_config.json`, `dent2025_passwords.json`, `passwords.txt`, `wp-config.php`, `backend/gemini_keys_data/gemini_keys.json`). Never commit secrets or infrastructure IDs to source control.
+- **WordPress / Server Config**: `FS_METHOD` is set to `'direct'` in `wp-config.php`; Nginx/PHP upload limits allow large site archives; traffic is proxied via Cloudflare edge ➔ Cloudflare Tunnel ➔ local Nginx TLS.
 

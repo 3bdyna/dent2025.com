@@ -28,8 +28,7 @@ if hasattr(sys.stdout, 'reconfigure'):
 import _toolkit
 PROJECT_ROOT = _toolkit.PROJECT_ROOT
 
-SSH_USER = 'azureuser'
-SSH_HOST = 'ssh.dent2025.com'
+SSH_USER, SSH_HOST = _toolkit.get_ssh_target()
 REMOTE_BASE = '/var/www/dent2025'
 
 def run_ssh_cmd(cmd_str, timeout=15):

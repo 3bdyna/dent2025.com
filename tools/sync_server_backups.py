@@ -33,8 +33,7 @@ PROJECT_ROOT = _toolkit.PROJECT_ROOT
 
 LOCAL_BACKUP_DIR = os.path.join(PROJECT_ROOT, "server_backups_dent2025_daily")
 REMOTE_BACKUP_DIR = "/var/backups/dent2025_daily"
-SSH_USER = "azureuser"
-SSH_HOST = "ssh.dent2025.com"
+SSH_USER, SSH_HOST = _toolkit.get_ssh_target()
 RETENTION_DAYS = 14
 
 def log(msg):
