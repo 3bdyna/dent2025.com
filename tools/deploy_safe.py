@@ -140,6 +140,33 @@ def rollback_git(target_ref=None):
         print("WARNING: Health probe flagged issues after rollback.")
         return False
 
+def report_deploy_telemetry(commit_hash, branch, note, github_pushed, files_count):
+    """Best-effort live telemetry ping to Admin Dashboard after SafeDeploy."""
+    passkey = deploy_health._load_health_passkey()
+    if not passkey:
+        return
+    payload = json.dumps({
+        "action": "report_backup_ping",
+        "password": passkey,
+        "system": "code_deploy",
+        "status": "ok" if github_pushed else "local_only",
+        "commit_hash": commit_hash or "",
+        "branch": branch or "main",
+        "note": note or "",
+        "github_pushed": bool(github_pushed),
+        "files_count": int(files_count or 0)
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://dent2025.com/history_api.php",
+        data=payload,
+        headers={"Content-Type": "application/json", "User-Agent": "Dent2025-SafeDeploy/1.0"},
+        method="POST"
+    )
+    try:
+        urllib.request.urlopen(req, timeout=6).read()
+    except Exception:
+        pass
+
 def show_status():
     """Displays current repository branch, recent commit history, and system health."""
     print("\n=== DENT2025 DEPLOYMENT & GIT STATUS ===")
@@ -231,7 +258,7 @@ def run_safe_deployment(files, note, dry_run=False, allow_delete=False):
     if not commit_ok:
         print("[ERROR] Git versioning failed. Aborting deployment for safety.")
         sys.exit(1)
-    push_to_github()
+    github_pushed = push_to_github()
     print(f"Git stage completed ({time.time() - t2:.2f}s).")
 
     # Stage 4: FTP Live Sync & Remote Cache Purge
@@ -243,6 +270,8 @@ def run_safe_deployment(files, note, dry_run=False, allow_delete=False):
     except Exception as upload_err:
         print(f"Upload encountered an error: {str(upload_err)}")
         sys.exit(1)
+
+    report_deploy_telemetry(commit_ref, get_current_branch(), note, github_pushed, len(ordered_files))
 
     # Stage 5: Concurrent Health Probe
     t4 = time.time()
