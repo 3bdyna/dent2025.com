@@ -438,7 +438,7 @@
  سجل التغييرات والاستعادة
  </button>
  <button onclick="AdminApp.switchTab('backups')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="backups">
- أنظمة النسخ الاحتياطي
+ النسخ الاحتياطي
  </button>
  <button onclick="AdminApp.switchTab('analytics')" class="mobile-tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="analytics">
  تحليلات الحضور والزوار
@@ -486,8 +486,8 @@
  <button onclick="AdminApp.switchTab('history')" class="tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="history">
  سجل التغييرات والاستعادة
  </button>
- <button onclick="AdminApp.switchTab('backups')" class="tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="backups" title="متابعة جميع أنظمة النسخ الاحتياطي والحماية">
- أنظمة النسخ الاحتياطي
+ <button onclick="AdminApp.switchTab('backups')" class="tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="backups" title="متابعة جميع النسخ الاحتياطية للموقع">
+ النسخ الاحتياطي
  </button>
  <button onclick="AdminApp.switchTab('analytics')" class="tab-btn w-full text-right p-3 rounded-xl transition flex items-center gap-3 text-gray-400 hover:bg-white/5" data-tab="analytics" title="تحليلات الحضور والتفاعل اليومي للطلاب">
  تحليلات الحضور والزوار
@@ -679,8 +679,8 @@
  <!-- Header -->
  <div class="flex justify-between items-center gap-2 shrink-0">
  <div>
- <h2 class="text-base sm:text-2xl font-bold text-white leading-tight">أنظمة النسخ الاحتياطي والحماية</h2>
- <p class="text-gray-400 text-xs hidden sm:block mt-0.5">متابعة موحدة ومباشرة لجميع نسخ الموقع، قاعدة البيانات، ملفات المواد، والنسخ السحابية والمحلية</p>
+ <h2 class="text-base sm:text-2xl font-bold text-white leading-tight">النسخ الاحتياطي للموقع</h2>
+ <p class="text-gray-400 text-xs hidden sm:block mt-0.5">ملخص بسيط لحالة جميع نسخ الموقع والبيانات والملفات</p>
  </div>
  <button onclick="AdminApp.loadBackupsDashboard(true)" class="btn btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 whitespace-nowrap shrink-0">
  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
@@ -691,19 +691,19 @@
  <!-- Top 4 Summary Cards -->
  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 shrink-0">
  <div class="glass p-3 sm:p-4 rounded-xl border border-white/10 text-center">
- <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">حالة المنظومة</span>
+ <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">الحالة العامة</span>
  <span id="bk-kpi-health" class="text-sm sm:text-lg font-bold text-white">--</span>
  </div>
  <div class="glass p-3 sm:p-4 rounded-xl border border-white/10 text-center">
- <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">آخر نسخة للخادم</span>
+ <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">آخر نسخة للموقع</span>
  <span id="bk-kpi-last-vps" class="text-sm sm:text-lg font-bold text-slate-200 font-mono">--</span>
  </div>
  <div class="glass p-3 sm:p-4 rounded-xl border border-white/10 text-center">
- <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">النسخ واللقطات المحفوظة</span>
+ <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">إجمالي النسخ</span>
  <span id="bk-kpi-total-count" class="text-sm sm:text-lg font-bold text-slate-200 font-mono">--</span>
  </div>
  <div class="glass p-3 sm:p-4 rounded-xl border border-white/10 text-center">
- <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">إجمالي المساحة</span>
+ <span class="text-[11px] sm:text-xs text-gray-400 block mb-1">المساحة المستخدمة</span>
  <span id="bk-kpi-total-size" class="text-sm sm:text-lg font-bold text-slate-200 font-mono">--</span>
  </div>
  </div>
@@ -711,7 +711,7 @@
  <!-- 6 Backup Systems Grid -->
  <div id="bk-systems-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
  <div class="glass p-6 rounded-xl border border-white/10 text-center text-gray-400 text-xs md:col-span-2 xl:col-span-3">
- جاري فحص أنظمة النسخ الاحتياطي...
+ جاري فحص النسخ الاحتياطية...
  </div>
  </div>
 
@@ -719,8 +719,8 @@
  <div class="glass rounded-xl border border-white/10 overflow-hidden shrink-0">
  <div class="p-3 border-b border-white/5 flex justify-between items-center bg-white/[0.02] gap-2 flex-wrap">
  <div>
- <h3 class="font-semibold text-white text-xs sm:text-sm">أحدث أرشيفات الخادم اليومية</h3>
- <p class="text-[11px] text-gray-400">المسار على الخادم: <code class="text-gray-300 font-mono">/var/backups/dent2025_daily/</code></p>
+ <h3 class="font-semibold text-white text-xs sm:text-sm">أحدث النسخ اليومية على السيرفر</h3>
+ <p class="text-[11px] text-gray-400">سجل آخر النسخ المحفوظة تلقائياً للموقع</p>
  </div>
  <span id="bk-archives-summary" class="text-[11px] text-gray-400 font-mono">--</span>
  </div>
@@ -729,14 +729,14 @@
  <thead class="bg-white/5 text-gray-400 border-b border-white/10">
  <tr>
  <th class="p-3 font-semibold">التاريخ والوقت</th>
- <th class="p-3 font-semibold text-center">قاعدة البيانات (SQL)</th>
- <th class="p-3 font-semibold text-center">ملفات البيانات (TAR)</th>
+ <th class="p-3 font-semibold text-center">قاعدة البيانات</th>
+ <th class="p-3 font-semibold text-center">ملفات الموقع</th>
  <th class="p-3 font-semibold text-center">الإجمالي</th>
  </tr>
  </thead>
  <tbody id="bk-archives-tbody" class="divide-y divide-white/5 font-mono">
  <tr>
- <td colspan="4" class="p-6 text-center text-gray-500 font-sans">جاري تحميل قائمة الأرشيفات...</td>
+ <td colspan="4" class="p-6 text-center text-gray-500 font-sans">جاري تحميل قائمة النسخ...</td>
  </tr>
  </tbody>
  </table>

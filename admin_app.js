@@ -508,7 +508,7 @@ window.AdminApp = {
             'gemini': 'مراقبة مفاتيح المعالجة الذكية',
             'passwords': 'الصلاحيات والمفاتيح',
             'history': 'سجل التغييرات والاستعادة',
-            'backups': 'أنظمة النسخ الاحتياطي',
+            'backups': 'النسخ الاحتياطي',
             'analytics': 'تحليلات الحضور والزوار'
         };
 
@@ -3453,7 +3453,7 @@ window.AdminApp = {
         const vpsUnix = d.last_backup_unix || vps.newest_unix || null;
         const vpsAgeH = vpsUnix ? (Date.now() / 1000 - vpsUnix) / 3600 : null;
         const vpsTone = vpsAgeH === null ? 'neutral' : (vpsAgeH <= 26 ? 'ok' : 'warn');
-        const vpsStatus = vpsAgeH === null ? 'بانتظار البيانات' : (vpsAgeH <= 26 ? 'محدّث وسليم' : `متأخر (${Math.round(vpsAgeH)} س)`);
+        const vpsStatus = vpsAgeH === null ? 'لا توجد بيانات' : (vpsAgeH <= 26 ? 'محدّثة وسليمة' : `متأخرة (${Math.round(vpsAgeH)} س)`);
         const latestVpsSize = ((d.db_size_bytes || 0) + (d.data_size_bytes || 0));
         const vpsCount = vps.readable ? vps.count : (d.total_archives || 0);
         const vpsTotalSize = vps.readable ? vps.total_bytes : latestVpsSize;
@@ -3462,29 +3462,29 @@ window.AdminApp = {
         const gdStatusRaw = d.gdrive_status || 'not_configured';
         const gdUnix = d.gdrive_last_sync_iso ? Math.floor(Date.parse(d.gdrive_last_sync_iso) / 1000) : null;
         const gdTone = gdStatusRaw === 'synced' ? 'ok' : (gdStatusRaw === 'failed' ? 'err' : 'warn');
-        const gdStatus = gdStatusRaw === 'synced' ? 'متصل ومزامن' : (gdStatusRaw === 'failed' ? 'فشل آخر رفع' : 'بانتظار الربط');
+        const gdStatus = gdStatusRaw === 'synced' ? 'مرفوعة وسليمة' : (gdStatusRaw === 'failed' ? 'فشل آخر رفع' : 'غير مربوط');
 
         // 3. Google Drive Subjects PDFs Backup (GAS)
         const pdfUnix = pdfsBak && pdfsBak.reported_unix ? pdfsBak.reported_unix : null;
         const pdfAgeH = pdfUnix ? (Date.now() / 1000 - pdfUnix) / 3600 : null;
         const pdfTone = pdfAgeH === null ? 'info' : (pdfAgeH <= 26 ? 'ok' : 'warn');
-        const pdfStatus = pdfAgeH === null ? 'مجدول (GAS)' : (pdfAgeH <= 26 ? 'مكتمل وسليم' : `متأخر (${Math.round(pdfAgeH)} س)`);
+        const pdfStatus = pdfAgeH === null ? 'تعمل تلقائياً' : (pdfAgeH <= 26 ? 'مكتملة وسليمة' : `متأخرة (${Math.round(pdfAgeH)} س)`);
 
         // 4. Windows PC Local Mirror
         const pcUnix = pcSync && pcSync.reported_unix ? pcSync.reported_unix : null;
         const pcAgeH = pcUnix ? (Date.now() / 1000 - pcUnix) / 3600 : null;
         const pcTone = !pcSync ? 'neutral' : (pcSync.status !== 'ok' ? 'warn' : (pcAgeH <= 36 ? 'ok' : 'warn'));
-        const pcStatus = !pcSync ? 'بانتظار أول مزامنة' : (pcSync.status !== 'ok' ? 'تعذر الاتصال بالخادم' : (pcAgeH <= 36 ? 'متزامن محلياً' : `منذ ${Math.round(pcAgeH)} س`));
+        const pcStatus = !pcSync ? 'بانتظار أول مزامنة' : (pcSync.status !== 'ok' ? 'تعذر الاتصال' : (pcAgeH <= 36 ? 'محفوظة بجهازك' : `منذ ${Math.round(pcAgeH)} س`));
 
         // 5. In-App Snapshots & Audit Log
         const snapCount = snaps.snapshots_count || 0;
         const snapTone = snapCount > 0 ? 'ok' : 'neutral';
-        const snapStatus = snapCount > 0 ? 'نشط وجاهز' : 'لا توجد لقطات';
+        const snapStatus = snapCount > 0 ? 'جاهزة للاستعادة' : 'لا توجد نقاط';
 
         // 6. Infra & GitHub SafeDeploy
         const safeRmOk = !!infra.safe_rm_active;
         const infraTone = safeRmOk ? 'ok' : 'warn';
-        const infraStatus = safeRmOk ? 'محمي ونشط' : 'مراجعة مطلوبة';
+        const infraStatus = safeRmOk ? 'محمي ونشط' : 'يحتاج مراجعة';
 
         // Top 4 KPIs
         const activeHealthy = [vpsTone, gdTone, snapTone, infraTone, pcTone].filter(t => t === 'ok').length;
@@ -3494,95 +3494,95 @@ window.AdminApp = {
         const kpiSize = document.getElementById('bk-kpi-total-size');
 
         if (kpiHealth) {
-            kpiHealth.textContent = vpsTone === 'ok' && gdTone === 'ok' ? `سليمة (${activeHealthy}/5 نشط)` : `${activeHealthy}/5 نشط`;
+            kpiHealth.textContent = vpsTone === 'ok' && gdTone === 'ok' ? `ممتازة (${activeHealthy}/5 تعمل)` : `${activeHealthy}/5 تعمل`;
             kpiHealth.className = `text-sm sm:text-lg font-bold ${vpsTone === 'ok' ? 'text-emerald-300' : 'text-amber-300'}`;
         }
         if (kpiLastVps) kpiLastVps.textContent = vpsUnix ? `${fmtDate(vpsUnix)}` : '--';
-        if (kpiCount) kpiCount.textContent = `${vpsCount} أرشيف + ${snapCount} لقطة`;
+        if (kpiCount) kpiCount.textContent = `${vpsCount} ملف + ${snapCount} نقطة`;
         if (kpiSize) kpiSize.textContent = fmtBytes((vpsTotalSize || 0) + (snaps.total_bytes || 0));
 
         const pdfFooterLink = pdfsBak && pdfsBak.snapshot_url
             ? `<a href="${this.sanitizeUrl(pdfsBak.snapshot_url)}" target="_blank" rel="noopener noreferrer" class="text-sky-300 hover:text-white underline">فتح مجلد النسخة</a>`
-            : '<span>المصدر: مجلد المواد الأكاديمية</span>';
+            : '<span>المجلد: dent2025 backups / subjects pdfs</span>';
 
         grid.innerHTML = [
             renderCard({
-                title: '1. النسخ الليلي للخادم (VPS)',
-                subtitle: 'dent2025_backup.sh · يومياً 06:30 ص (AST)',
+                title: '1. نسخة السيرفر اليومية',
+                subtitle: 'تُحفظ تلقائياً كل يوم 06:30 صباحاً',
                 statusText: vpsStatus,
                 statusTone: vpsTone,
                 rows: [
                     ['آخر نسخة', vpsUnix ? `${fmtDate(vpsUnix)} (${fmtAge(vpsUnix)})` : '--'],
-                    ['حجم آخر نسخة', latestVpsSize > 0 ? `${fmtBytes(latestVpsSize)} (DB ${fmtBytes(d.db_size_bytes)})` : '--'],
-                    ['الأرشيفات بالخادم', `${vpsCount} ملف (${fmtBytes(vpsTotalSize)})`],
-                    ['فترة الاحتفاظ', `${d.retention_days || 14} يوم`]
+                    ['حجم آخر نسخة', latestVpsSize > 0 ? `${fmtBytes(latestVpsSize)} (قاعدة ${fmtBytes(d.db_size_bytes)})` : '--'],
+                    ['الملفات المحفوظة', `${vpsCount} ملف (${fmtBytes(vpsTotalSize)})`],
+                    ['مدة الحفظ', `${d.retention_days || 14} يوم`]
                 ],
-                footerHtml: '<span>يشمل: MySQL، الاختبارات، التقويم، الإعلانات، الاستطلاعات، الإحصائيات، الصلاحيات.</span>'
+                footerHtml: '<span>تشمل: قاعدة البيانات، المواد، الاختبارات، التقويم، الإعلانات، الاستطلاعات، الإحصائيات، والصلاحيات.</span>'
             }),
             renderCard({
-                title: '2. مزامنة Google Drive (الخادم)',
-                subtitle: 'dent2025 backups / website server backups',
+                title: '2. نسخة Google Drive للموقع',
+                subtitle: 'نسخة سحابية خارج السيرفر',
                 statusText: gdStatus,
                 statusTone: gdTone,
                 rows: [
-                    ['آخر مزامنة', gdUnix ? `${fmtDate(gdUnix)} (${fmtAge(gdUnix)})` : '--'],
-                    ['نوع النسخة', 'DB (.sql.gz) + Data (.tar.gz)'],
-                    ['فترة الاحتفاظ', '15 يوم تلقائياً'],
-                    ['التشغيل', 'مباشرة بعد النسخ الليلي']
+                    ['آخر رفع', gdUnix ? `${fmtDate(gdUnix)} (${fmtAge(gdUnix)})` : '--'],
+                    ['المحتوى', 'قاعدة البيانات + ملفات الموقع'],
+                    ['مدة الحفظ', '15 يوم تلقائياً'],
+                    ['التوقيت', 'مباشرة بعد نسخة السيرفر']
                 ],
-                footerHtml: '<span>مرسل تلقائياً عبر GAS Webhook المحمي</span>'
+                footerHtml: '<span>المجلد: dent2025 backups / website server backups</span>'
             }),
             renderCard({
-                title: '3. نسخ ملفات المواد PDF (Drive)',
-                subtitle: 'dent2025 backups / subjects pdfs',
+                title: '3. نسخة ملفات المواد (PDF)',
+                subtitle: 'نسخة يومية لملفات Drive',
                 statusText: pdfStatus,
                 statusTone: pdfTone,
                 rows: [
-                    ['آخر تشغيل مُبلّغ', pdfUnix ? `${fmtDate(pdfUnix)} (${fmtAge(pdfUnix)})` : 'مجدول 01:15 ص يومياً'],
-                    ['الملفات / المجلدات', pdfsBak ? `${pdfsBak.files_count || 0} ملف / ${pdfsBak.folders_count || 0} مجلد` : 'مزامنة Drive-to-Drive'],
-                    ['فترة الاحتفاظ', '4 أسابيع (14 يوم + أسبوع 3 و 4)'],
-                    ['المدة / اللقطة', pdfsBak ? `${pdfsBak.elapsed_sec || 0}s` : 'دعم الاستكمال التلقائي']
+                    ['آخر تشغيل', pdfUnix ? `${fmtDate(pdfUnix)} (${fmtAge(pdfUnix)})` : 'يومياً 01:15 صباحاً'],
+                    ['الملفات والمجلدات', pdfsBak ? `${pdfsBak.files_count || 0} ملف / ${pdfsBak.folders_count || 0} مجلد` : 'نسخ تلقائي داخل Drive'],
+                    ['مدة الحفظ', '4 أسابيع (14 يوم + أسبوعين)'],
+                    ['المدة', pdfsBak ? `${pdfsBak.elapsed_sec || 0} ثانية` : 'يعمل من Google تلقائياً']
                 ],
-                footerHtml: `${pdfFooterLink}<span>GAS: Master Backup Engine</span>`
+                footerHtml: pdfFooterLink
             }),
             renderCard({
-                title: '4. المزامنة المحلية (Windows PC)',
-                subtitle: 'Task: Dent2025 Daily Backup Sync · 07:00 ص',
+                title: '4. نسخة جهازك الشخصي',
+                subtitle: 'تُحمَّل على الكمبيوتر يومياً 07:00 صباحاً',
                 statusText: pcStatus,
                 statusTone: pcTone,
                 rows: [
-                    ['آخر مزامنة', pcUnix ? `${fmtDate(pcUnix)} (${fmtAge(pcUnix)})` : 'لم تُرسل إشارة بعد'],
-                    ['الأرشيفات المحلية', pcSync ? `${pcSync.archive_count || 0} ملف (${fmtBytes(pcSync.total_bytes)})` : '--'],
-                    ['فترة الاحتفاظ', `${(pcSync && pcSync.retention_days) || 14} يوم`],
-                    ['أحدث ملف محلي', (pcSync && pcSync.latest_file) ? pcSync.latest_file : 'server_backups_dent2025_daily/']
+                    ['آخر مزامنة', pcUnix ? `${fmtDate(pcUnix)} (${fmtAge(pcUnix)})` : 'لم تصل إشارة بعد'],
+                    ['الملفات بجهازك', pcSync ? `${pcSync.archive_count || 0} ملف (${fmtBytes(pcSync.total_bytes)})` : '--'],
+                    ['مدة الحفظ', `${(pcSync && pcSync.retention_days) || 14} يوم`],
+                    ['أحدث ملف', (pcSync && pcSync.latest_file) ? pcSync.latest_file : '--']
                 ],
-                footerHtml: `<span>تشغيل فوري عند فتح الجهاز</span>${pcSync && pcSync.host ? `<span class="font-mono">${this.escapeHtml(pcSync.host)}</span>` : ''}`
+                footerHtml: `<span>تعمل تلقائياً عند تشغيل الجهاز</span>${pcSync && pcSync.host ? `<span class="font-mono">${this.escapeHtml(pcSync.host)}</span>` : ''}`
             }),
             renderCard({
-                title: '5. لقطات الاستعادة الفورية (In-App)',
-                subtitle: 'history_api.php · تغييرات الإدارة والإعلانات',
+                title: '5. نقاط الاستعادة السريعة',
+                subtitle: 'تُحفظ تلقائياً قبل أي تعديل في الإدارة',
                 statusText: snapStatus,
                 statusTone: snapTone,
                 rows: [
-                    ['اللقطات المحفوظة', `${snapCount} لقطة (${fmtBytes(snaps.total_bytes)})`],
-                    ['نقاط يدوية / أمان', `${snaps.manual_count || 0} يدوية · ${snaps.safety_count || 0} أمان`],
-                    ['آخر لقطة', snaps.newest_unix ? `${fmtDate(snaps.newest_unix)}` : '--'],
-                    ['نسخة الإعلانات', annBak.exists ? `متوفرة (${fmtBytes(annBak.size_bytes)})` : 'غير موجودة بعد']
+                    ['النقاط المحفوظة', `${snapCount} نقطة (${fmtBytes(snaps.total_bytes)})`],
+                    ['يدوية / أمان', `${snaps.manual_count || 0} يدوية · ${snaps.safety_count || 0} أمان`],
+                    ['آخر نقطة', snaps.newest_unix ? `${fmtDate(snaps.newest_unix)}` : '--'],
+                    ['احتياطي الإعلانات', annBak.exists ? `متوفر (${fmtBytes(annBak.size_bytes)})` : 'غير موجود بعد']
                 ],
-                footerHtml: `<span>سجل التدقيق: ${snaps.audit_entries_count || 0} عملية</span><button type="button" onclick="AdminApp.switchTab('history')" class="text-sky-300 hover:text-white underline">فتح سجل الاستعادة</button>`
+                footerHtml: `<span>سجل العمليات: ${snaps.audit_entries_count || 0}</span><button type="button" onclick="AdminApp.switchTab('history')" class="text-sky-300 hover:text-white underline">فتح سجل الاستعادة</button>`
             }),
             renderCard({
-                title: '6. حماية البنية والكود والـ VM',
-                subtitle: 'SafeDeploy + GitHub + Azure + safe-rm',
+                title: '6. حماية الموقع والكود',
+                subtitle: 'منع الحذف + حفظ الكود + نسخة النظام',
                 statusText: infraStatus,
                 statusTone: infraTone,
                 rows: [
-                    ['حماية الحذف safe-rm', safeRmOk ? 'مفعّلة (/etc/safe-rm.conf)' : 'غير مفعّلة'],
-                    ['سكربت النسخ بالخادم', infra.backup_script_exists ? 'مثبّت (/usr/local/bin)' : 'غير موجود'],
-                    ['مستودع الكود', infra.github_repo || '3bdyna/dent2025.com'],
-                    ['لقطة Azure VM', infra.azure_baseline_snapshot || 'BB-BOT-PL-RG']
+                    ['حماية منع الحذف', safeRmOk ? 'مفعّلة على السيرفر' : 'غير مفعّلة'],
+                    ['سكربت النسخ الليلي', infra.backup_script_exists ? 'مثبّت وجاهز' : 'غير موجود'],
+                    ['حفظ الكود', 'GitHub (مع تراجع فوري)'],
+                    ['نسخة نظام السيرفر', 'Azure Snapshot محفوظة']
                 ],
-                footerHtml: '<span>تراجع الكود الفوري: deploy_safe.py --rollback</span>'
+                footerHtml: '<span>حماية كاملة ضد الحذف الخاطئ وتحديثات الكود</span>'
             })
         ].join('');
 
@@ -3592,8 +3592,8 @@ window.AdminApp = {
         const summaryEl = document.getElementById('bk-archives-summary');
         if (summaryEl) {
             summaryEl.textContent = vps.readable
-                ? `عرض أحدث ${runs.length} تشغيلات من أصل ${vps.count || 0} ملف (${fmtBytes(vps.total_bytes)})`
-                : 'مجلد الأرشيف غير قابل للقراءة من PHP';
+                ? `آخر ${runs.length} نسخ من أصل ${vps.count || 0} ملف (${fmtBytes(vps.total_bytes)})`
+                : 'تعذر قراءة مجلد النسخ';
         }
 
         if (runs.length === 0) {
