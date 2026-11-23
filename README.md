@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="logos/og_share_preview.jpg" alt="Dent2025 Academic Portal" width="760" />
-
 # Dent2025 — Medical & Dental Academic Portal
 
 **A high-performance academic hub for university Pre-Med, Medicine, and Dentistry students — built with a live dual-mode portal switcher, dynamic component loading, AI practice exams, interactive Hijri/Gregorian timelines, and automated SafeDeploy DevOps.**
@@ -37,13 +35,9 @@ Dent2025 is architected with a **live, zero-downtime Master Mode Switch** (`mult
 | **Navbar Branding** | Dentistry identity by default | Instant pre-paint 2× retina logo swap per selected track |
 | **Best Used For** | Streamlined, zero-click launch for the 3rd-year 1st-semester Dentistry batch | Full campus-wide academic portal spanning all colleges & levels |
 
-<div align="center">
-
-| <img src="logos/pre-med-sm.webp" height="52" alt="Pre-Med" /><br/>**Pre-Med** | <img src="logos/medicine-sm.webp" height="52" alt="Medicine" /><br/>**Medicine** | <img src="logos/dentistry-sm.webp" height="52" alt="Dentistry" /><br/>**Dentistry** |
+| **Pre-Med** | **Medicine** | **Dentistry** |
 | :---: | :---: | :---: |
 | Year 1 · Semesters 1 & 2 | Years 2–6 · Semesters 1 & 2 | Years 2–6 · Semesters 1 & 2 |
-
-</div>
 
 ### How Mode Switching Works Under the Hood
 - **Master Admin Toggle**: Authorized Master admins switch modes live from the top bar (desktop & mobile) in [`admin_dashboard.html`](admin_dashboard.html), calling `dent2025_api.php?action=save_portal_settings`. Every change is persisted in the WordPress option `dent2025_multi_specialty_mode` and recorded in the audit trail.
