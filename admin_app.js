@@ -3392,6 +3392,7 @@ window.AdminApp = {
         const tel = ov.telemetry || {};
         const pcSync = tel.local_pc_sync || null;
         const pdfsBak = tel.pdfs_backup || null;
+        const codeDep = tel.code_deploy || null;
 
         const fmtBytes = (bytes) => {
             const b = Number(bytes) || 0;
@@ -3410,179 +3411,191 @@ window.AdminApp = {
 
         const fmtAge = (unixSec) => {
             if (!unixSec) return '';
-            const hrs = Math.max(0, (Date.now() / 1000 - unixSec) / 3600);
-            if (hrs < 1) return `منذ ${Math.max(1, Math.round(hrs * 60))} د`;
-            if (hrs < 48) return `منذ ${Math.round(hrs)} س`;
+            const mins = Math.max(1, Math.round((Date.now() / 1000 - unixSec) / 60));
+            if (mins < 60) return `منذ ${mins} دقيقة`;
+            const hrs = Math.round(mins / 60);
+            if (hrs < 48) return `منذ ${hrs} ساعة`;
             return `منذ ${Math.round(hrs / 24)} يوم`;
         };
 
         const badge = (text, tone) => {
-            const cls = {
-                ok: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-                warn: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-                err: 'bg-rose-500/15 text-rose-400 border-rose-500/30',
-                info: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
-                neutral: 'bg-white/5 text-gray-300 border-white/10'
-            }[tone] || 'bg-white/5 text-gray-300 border-white/10';
-            return `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-medium border whitespace-nowrap ${cls}">${this.escapeHtml(text)}</span>`;
+            const map = {
+                ok: { pill: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30', dot: 'bg-emerald-400' },
+                warn: { pill: 'bg-amber-500/15 text-amber-300 border-amber-500/30', dot: 'bg-amber-400' },
+                err: { pill: 'bg-rose-500/15 text-rose-400 border-rose-500/30', dot: 'bg-rose-400' },
+                info: { pill: 'bg-sky-500/15 text-sky-300 border-sky-500/30', dot: 'bg-sky-400' },
+                neutral: { pill: 'bg-white/5 text-gray-300 border-white/10', dot: 'bg-gray-400' }
+            };
+            const st = map[tone] || map.neutral;
+            return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border whitespace-nowrap ${st.pill}"><span class="w-1.5 h-1.5 rounded-full ${st.dot}"></span>${this.escapeHtml(text)}</span>`;
         };
 
-        const renderCard = ({ title, subtitle, statusText, statusTone, rows, footerHtml = '' }) => {
-            const rowsHtml = rows.map(([k, v]) => `
-                <div class="p-2 rounded-lg bg-white/[0.03] border border-white/5 min-w-0">
-                    <div class="text-[10px] text-gray-400 mb-0.5 truncate">${this.escapeHtml(k)}</div>
-                    <div class="text-xs text-white font-medium truncate" title="${this.escapeHtml(String(v))}">${this.escapeHtml(String(v))}</div>
+        const renderCard = ({ title, where, saves, statusText, statusTone, rows, footerHtml = '' }) => {
+            const rowsHtml = rows.map(([k, v], idx) => `
+                <div class="flex items-center justify-between gap-3 py-2 ${idx < rows.length - 1 ? 'border-b border-white/5' : ''}">
+                    <span class="text-xs text-gray-400 shrink-0">${this.escapeHtml(k)}</span>
+                    <span class="text-xs text-white font-medium text-left">${this.escapeHtml(String(v))}</span>
                 </div>
             `).join('');
             return `
-                <div class="glass p-3.5 sm:p-4 rounded-xl border border-white/10 flex flex-col justify-between gap-3">
-                    <div class="flex items-start justify-between gap-2">
+                <div class="glass p-4 sm:p-5 rounded-2xl border border-white/10 flex flex-col justify-between gap-3.5">
+                    <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
-                            <h3 class="font-bold text-white text-xs sm:text-sm leading-snug">${this.escapeHtml(title)}</h3>
-                            <p class="text-[11px] text-gray-400 mt-0.5 truncate">${this.escapeHtml(subtitle)}</p>
+                            <h3 class="font-bold text-white text-sm sm:text-base leading-snug">${this.escapeHtml(title)}</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">${this.escapeHtml(where)}</p>
                         </div>
                         ${badge(statusText, statusTone)}
                     </div>
-                    <div class="grid grid-cols-2 gap-1.5">${rowsHtml}</div>
-                    ${footerHtml ? `<div class="pt-2 border-t border-white/5 text-[11px] text-gray-400 flex items-center justify-between gap-2 flex-wrap">${footerHtml}</div>` : ''}
+
+                    <div class="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                        <div class="text-[11px] font-semibold text-gray-400 mb-1">ماذا يحفظ؟</div>
+                        <p class="text-xs text-gray-200 leading-relaxed">${this.escapeHtml(saves)}</p>
+                    </div>
+
+                    <div class="px-1">${rowsHtml}</div>
+
+                    ${footerHtml ? `<div class="pt-2.5 border-t border-white/5 text-xs text-gray-400 flex items-center justify-between gap-2 flex-wrap">${footerHtml}</div>` : ''}
                 </div>
             `;
         };
 
-        // 1. VPS Nightly Backup
+        // 1. Server Daily Backup
         const vpsUnix = d.last_backup_unix || vps.newest_unix || null;
         const vpsAgeH = vpsUnix ? (Date.now() / 1000 - vpsUnix) / 3600 : null;
         const vpsTone = vpsAgeH === null ? 'neutral' : (vpsAgeH <= 26 ? 'ok' : 'warn');
-        const vpsStatus = vpsAgeH === null ? 'لا توجد بيانات' : (vpsAgeH <= 26 ? 'محدّثة وسليمة' : `متأخرة (${Math.round(vpsAgeH)} س)`);
+        const vpsStatus = vpsAgeH === null ? 'لا توجد بيانات' : (vpsAgeH <= 26 ? 'يعمل ومحدّث' : `متأخر (${Math.round(vpsAgeH)} س)`);
         const latestVpsSize = ((d.db_size_bytes || 0) + (d.data_size_bytes || 0));
         const vpsCount = vps.readable ? vps.count : (d.total_archives || 0);
         const vpsTotalSize = vps.readable ? vps.total_bytes : latestVpsSize;
 
-        // 2. Google Drive Server Backup
+        // 2. Google Drive Website Backup
         const gdStatusRaw = d.gdrive_status || 'not_configured';
         const gdUnix = d.gdrive_last_sync_iso ? Math.floor(Date.parse(d.gdrive_last_sync_iso) / 1000) : null;
         const gdTone = gdStatusRaw === 'synced' ? 'ok' : (gdStatusRaw === 'failed' ? 'err' : 'warn');
-        const gdStatus = gdStatusRaw === 'synced' ? 'مرفوعة وسليمة' : (gdStatusRaw === 'failed' ? 'فشل آخر رفع' : 'غير مربوط');
+        const gdStatus = gdStatusRaw === 'synced' ? 'يعمل ومرفوع' : (gdStatusRaw === 'failed' ? 'فشل آخر رفع' : 'غير مربوط');
 
-        // 3. Google Drive Subjects PDFs Backup (GAS)
+        // 3. Google Drive Subjects PDFs Backup
         const pdfUnix = pdfsBak && pdfsBak.reported_unix ? pdfsBak.reported_unix : null;
         const pdfAgeH = pdfUnix ? (Date.now() / 1000 - pdfUnix) / 3600 : null;
         const pdfTone = pdfAgeH === null ? 'info' : (pdfAgeH <= 26 ? 'ok' : 'warn');
-        const pdfStatus = pdfAgeH === null ? 'تعمل تلقائياً' : (pdfAgeH <= 26 ? 'مكتملة وسليمة' : `متأخرة (${Math.round(pdfAgeH)} س)`);
+        const pdfStatus = pdfAgeH === null ? 'بانتظار ربط التقرير' : (pdfAgeH <= 26 ? 'يعمل ومكتمل' : `متأخر (${Math.round(pdfAgeH)} س)`);
 
-        // 4. Windows PC Local Mirror
+        // 4. Windows PC Mirror
         const pcUnix = pcSync && pcSync.reported_unix ? pcSync.reported_unix : null;
         const pcAgeH = pcUnix ? (Date.now() / 1000 - pcUnix) / 3600 : null;
         const pcTone = !pcSync ? 'neutral' : (pcSync.status !== 'ok' ? 'warn' : (pcAgeH <= 36 ? 'ok' : 'warn'));
-        const pcStatus = !pcSync ? 'بانتظار أول مزامنة' : (pcSync.status !== 'ok' ? 'تعذر الاتصال' : (pcAgeH <= 36 ? 'محفوظة بجهازك' : `منذ ${Math.round(pcAgeH)} س`));
+        const pcStatus = !pcSync ? 'بانتظار أول مزامنة' : (pcSync.status !== 'ok' ? 'تعذر الاتصال' : (pcAgeH <= 36 ? 'يعمل ومحدّث' : `منذ ${Math.round(pcAgeH)} س`));
 
-        // 5. In-App Snapshots & Audit Log
+        // 5. In-App Undo Snapshots
         const snapCount = snaps.snapshots_count || 0;
         const snapTone = snapCount > 0 ? 'ok' : 'neutral';
-        const snapStatus = snapCount > 0 ? 'جاهزة للاستعادة' : 'لا توجد نقاط';
+        const snapStatus = snapCount > 0 ? 'يعمل وجاهز' : 'لا توجد نقاط';
 
-        // 6. Infra & GitHub SafeDeploy
+        // 6. Code & Server Protection
         const safeRmOk = !!infra.safe_rm_active;
+        const depUnix = codeDep && codeDep.reported_unix ? codeDep.reported_unix : null;
         const infraTone = safeRmOk ? 'ok' : 'warn';
-        const infraStatus = safeRmOk ? 'محمي ونشط' : 'يحتاج مراجعة';
+        const infraStatus = safeRmOk ? 'نشط ومحمي' : 'يحتاج مراجعة';
 
         // Top 4 KPIs
-        const activeHealthy = [vpsTone, gdTone, snapTone, infraTone, pcTone].filter(t => t === 'ok').length;
+        const liveHealthy = [vpsTone, gdTone, pdfTone, pcTone, snapTone, infraTone].filter(t => t === 'ok').length;
         const kpiHealth = document.getElementById('bk-kpi-health');
         const kpiLastVps = document.getElementById('bk-kpi-last-vps');
         const kpiCount = document.getElementById('bk-kpi-total-count');
         const kpiSize = document.getElementById('bk-kpi-total-size');
 
         if (kpiHealth) {
-            kpiHealth.textContent = vpsTone === 'ok' && gdTone === 'ok' ? `ممتازة (${activeHealthy}/5 تعمل)` : `${activeHealthy}/5 تعمل`;
-            kpiHealth.className = `text-sm sm:text-lg font-bold ${vpsTone === 'ok' ? 'text-emerald-300' : 'text-amber-300'}`;
+            kpiHealth.textContent = `${liveHealthy} من 6 تعمل مباشرة`;
+            kpiHealth.className = `text-sm sm:text-lg font-bold ${liveHealthy >= 5 ? 'text-emerald-300' : 'text-amber-300'}`;
         }
-        if (kpiLastVps) kpiLastVps.textContent = vpsUnix ? `${fmtDate(vpsUnix)}` : '--';
+        if (kpiLastVps) kpiLastVps.textContent = vpsUnix ? fmtDate(vpsUnix) : '--';
         if (kpiCount) kpiCount.textContent = `${vpsCount} ملف + ${snapCount} نقطة`;
         if (kpiSize) kpiSize.textContent = fmtBytes((vpsTotalSize || 0) + (snaps.total_bytes || 0));
 
         const pdfFooterLink = pdfsBak && pdfsBak.snapshot_url
-            ? `<a href="${this.sanitizeUrl(pdfsBak.snapshot_url)}" target="_blank" rel="noopener noreferrer" class="text-sky-300 hover:text-white underline">فتح مجلد النسخة</a>`
-            : '<span>المجلد: dent2025 backups / subjects pdfs</span>';
+            ? `<a href="${this.sanitizeUrl(pdfsBak.snapshot_url)}" target="_blank" rel="noopener noreferrer" class="text-sky-300 hover:text-white underline">فتح مجلد النسخة في Drive</a>`
+            : '<span>يحتاج تفعيل إشعار الحالة من Google Apps Script</span>';
 
         grid.innerHTML = [
             renderCard({
-                title: '1. نسخة السيرفر اليومية',
-                subtitle: 'تُحفظ تلقائياً كل يوم 06:30 صباحاً',
+                title: 'نسخة السيرفر اليومية',
+                where: 'محفوظة داخل سيرفر الموقع نفسه',
+                saves: 'كل بيانات الموقع بالكامل: قاعدة البيانات، المواد والروابط، الاختبارات، الجداول، التقويم، الإعلانات، الاستطلاعات، الإحصائيات، وكلمات المرور.',
                 statusText: vpsStatus,
                 statusTone: vpsTone,
                 rows: [
                     ['آخر نسخة', vpsUnix ? `${fmtDate(vpsUnix)} (${fmtAge(vpsUnix)})` : '--'],
-                    ['حجم آخر نسخة', latestVpsSize > 0 ? `${fmtBytes(latestVpsSize)} (قاعدة ${fmtBytes(d.db_size_bytes)})` : '--'],
-                    ['الملفات المحفوظة', `${vpsCount} ملف (${fmtBytes(vpsTotalSize)})`],
-                    ['مدة الحفظ', `${d.retention_days || 14} يوم`]
+                    ['المحفوظ حالياً', `${vpsCount} ملف (${fmtBytes(vpsTotalSize)}) · آخر نسخة ${fmtBytes(latestVpsSize)}`],
+                    ['التكرار ومدة الحفظ', `يومياً 06:30 صباحاً · يحفظ آخر ${d.retention_days || 14} يوم`]
                 ],
-                footerHtml: '<span>تشمل: قاعدة البيانات، المواد، الاختبارات، التقويم، الإعلانات، الاستطلاعات، الإحصائيات، والصلاحيات.</span>'
+                footerHtml: '<span>فحص مباشر من مجلد السيرفر</span>'
             }),
             renderCard({
-                title: '2. نسخة Google Drive للموقع',
-                subtitle: 'نسخة سحابية خارج السيرفر',
+                title: 'نسخة Google Drive للموقع',
+                where: 'محفوظة في سحابة Google Drive',
+                saves: 'نسخة خارجية من نفس بيانات الموقع الكاملة (قاعدة البيانات + جميع ملفات البيانات) للرجوع لها لو تعطل السيرفر.',
                 statusText: gdStatus,
                 statusTone: gdTone,
                 rows: [
                     ['آخر رفع', gdUnix ? `${fmtDate(gdUnix)} (${fmtAge(gdUnix)})` : '--'],
-                    ['المحتوى', 'قاعدة البيانات + ملفات الموقع'],
-                    ['مدة الحفظ', '15 يوم تلقائياً'],
-                    ['التوقيت', 'مباشرة بعد نسخة السيرفر']
+                    ['المجلد في Drive', 'dent2025 backups / website server backups'],
+                    ['التكرار ومدة الحفظ', 'تلقائياً كل صباح · يحفظ آخر 15 يوم']
                 ],
-                footerHtml: '<span>المجلد: dent2025 backups / website server backups</span>'
+                footerHtml: '<span>حالة مباشرة من نتيجة آخر رفع</span>'
             }),
             renderCard({
-                title: '3. نسخة ملفات المواد (PDF)',
-                subtitle: 'نسخة يومية لملفات Drive',
+                title: 'نسخة ملفات المواد (PDF)',
+                where: 'محفوظة داخل Google Drive',
+                saves: 'جميع ملفات ومجلدات المحاضرات والـ PDF الدراسية الخاصة بالطلاب (الموجودة في Drive وليست على السيرفر).',
                 statusText: pdfStatus,
                 statusTone: pdfTone,
                 rows: [
-                    ['آخر تشغيل', pdfUnix ? `${fmtDate(pdfUnix)} (${fmtAge(pdfUnix)})` : 'يومياً 01:15 صباحاً'],
-                    ['الملفات والمجلدات', pdfsBak ? `${pdfsBak.files_count || 0} ملف / ${pdfsBak.folders_count || 0} مجلد` : 'نسخ تلقائي داخل Drive'],
-                    ['مدة الحفظ', '4 أسابيع (14 يوم + أسبوعين)'],
-                    ['المدة', pdfsBak ? `${pdfsBak.elapsed_sec || 0} ثانية` : 'يعمل من Google تلقائياً']
+                    ['آخر تشغيل', pdfUnix ? `${fmtDate(pdfUnix)} (${fmtAge(pdfUnix)})` : 'بانتظار أول تقرير مباشر'],
+                    ['المحفوظ في آخر نسخة', pdfsBak ? `${pdfsBak.files_count || 0} ملف و ${pdfsBak.folders_count || 0} مجلد (${pdfsBak.elapsed_sec || 0} ث)` : 'مجلد المحاضرات بالكامل'],
+                    ['التكرار ومدة الحفظ', 'يومياً 01:15 صباحاً · يحفظ 4 أسابيع']
                 ],
                 footerHtml: pdfFooterLink
             }),
             renderCard({
-                title: '4. نسخة جهازك الشخصي',
-                subtitle: 'تُحمَّل على الكمبيوتر يومياً 07:00 صباحاً',
+                title: 'نسخة جهازك الشخصي',
+                where: 'محفوظة على كمبيوترك الخاص',
+                saves: 'نسخة كاملة من قاعدة البيانات وملفات الموقع تُحمَّل تلقائياً على جهازك لتكون معك حتى بدون إنترنت.',
                 statusText: pcStatus,
                 statusTone: pcTone,
                 rows: [
                     ['آخر مزامنة', pcUnix ? `${fmtDate(pcUnix)} (${fmtAge(pcUnix)})` : 'لم تصل إشارة بعد'],
-                    ['الملفات بجهازك', pcSync ? `${pcSync.archive_count || 0} ملف (${fmtBytes(pcSync.total_bytes)})` : '--'],
-                    ['مدة الحفظ', `${(pcSync && pcSync.retention_days) || 14} يوم`],
-                    ['أحدث ملف', (pcSync && pcSync.latest_file) ? pcSync.latest_file : '--']
+                    ['المحفوظ بجهازك', pcSync ? `${pcSync.archive_count || 0} ملف (${fmtBytes(pcSync.total_bytes)})` : '--'],
+                    ['التكرار ومدة الحفظ', `يومياً 07:00 صباحاً (أو عند فتح الجهاز) · ${pcSync ? (pcSync.retention_days || 14) : 14} يوم`]
                 ],
-                footerHtml: `<span>تعمل تلقائياً عند تشغيل الجهاز</span>${pcSync && pcSync.host ? `<span class="font-mono">${this.escapeHtml(pcSync.host)}</span>` : ''}`
+                footerHtml: `<span>تقرير مباشر من جهازك</span>${pcSync && pcSync.host ? `<span class="font-mono">${this.escapeHtml(pcSync.host)}</span>` : ''}`
             }),
             renderCard({
-                title: '5. نقاط الاستعادة السريعة',
-                subtitle: 'تُحفظ تلقائياً قبل أي تعديل في الإدارة',
+                title: 'نقاط التراجع السريع',
+                where: 'داخل لوحة التحكم نفسها',
+                saves: 'لقطة سريعة قبل أي تعديل على المواد أو الجداول أو الإعلانات أو الصلاحيات، للتراجع عن أي خطأ بضغطة زر.',
                 statusText: snapStatus,
                 statusTone: snapTone,
                 rows: [
-                    ['النقاط المحفوظة', `${snapCount} نقطة (${fmtBytes(snaps.total_bytes)})`],
-                    ['يدوية / أمان', `${snaps.manual_count || 0} يدوية · ${snaps.safety_count || 0} أمان`],
-                    ['آخر نقطة', snaps.newest_unix ? `${fmtDate(snaps.newest_unix)}` : '--'],
-                    ['احتياطي الإعلانات', annBak.exists ? `متوفر (${fmtBytes(annBak.size_bytes)})` : 'غير موجود بعد']
+                    ['آخر نقطة محفوظة', snaps.newest_unix ? `${fmtDate(snaps.newest_unix)} (${fmtAge(snaps.newest_unix)})` : '--'],
+                    ['المحفوظ حالياً', `${snapCount} نقطة (${fmtBytes(snaps.total_bytes)}) · ${snaps.manual_count || 0} يدوية`],
+                    ['احتياطي الإعلانات', annBak.exists ? `متوفر (${fmtBytes(annBak.size_bytes)})` : 'يُنشأ عند أول تعديل']
                 ],
-                footerHtml: `<span>سجل العمليات: ${snaps.audit_entries_count || 0}</span><button type="button" onclick="AdminApp.switchTab('history')" class="text-sky-300 hover:text-white underline">فتح سجل الاستعادة</button>`
+                footerHtml: `<span>فحص مباشر من السيرفر</span><button type="button" onclick="AdminApp.switchTab('history')" class="text-sky-300 hover:text-white underline">فتح الاستعادة</button>`
             }),
             renderCard({
-                title: '6. حماية الموقع والكود',
-                subtitle: 'منع الحذف + حفظ الكود + نسخة النظام',
+                title: 'حفظ الكود وحماية السيرفر',
+                where: 'GitHub + حماية السيرفر + Azure',
+                saves: 'يحفظ كود الموقع وتحديثاته على GitHub (مع تراجع فوري)، ويمنع الحذف الخاطئ لملفات السيرفر.',
                 statusText: infraStatus,
                 statusTone: infraTone,
                 rows: [
-                    ['حماية منع الحذف', safeRmOk ? 'مفعّلة على السيرفر' : 'غير مفعّلة'],
-                    ['سكربت النسخ الليلي', infra.backup_script_exists ? 'مثبّت وجاهز' : 'غير موجود'],
-                    ['حفظ الكود', 'GitHub (مع تراجع فوري)'],
-                    ['نسخة نظام السيرفر', 'Azure Snapshot محفوظة']
+                    ['آخر حفظ للكود (GitHub)', depUnix ? `${fmtDate(depUnix)} (${fmtAge(depUnix)}) · #${codeDep.commit_hash || ''}` : 'يتحدث مع أول رفع جديد'],
+                    ['حماية منع الحذف', safeRmOk ? 'مفعّلة ومفحوصة مباشرة على السيرفر' : 'غير مفعّلة'],
+                    ['نسخة نظام السيرفر', 'نسخة Azure أساسية محفوظة']
                 ],
-                footerHtml: '<span>حماية كاملة ضد الحذف الخاطئ وتحديثات الكود</span>'
+                footerHtml: depUnix && codeDep.note
+                    ? `<span>آخر تحديث: ${this.escapeHtml(codeDep.note)}</span>`
+                    : '<span>فحص مباشر لحماية السيرفر + تقارير التحديث</span>'
             })
         ].join('');
 

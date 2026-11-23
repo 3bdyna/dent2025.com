@@ -313,7 +313,8 @@ function dent2025_collect_backups_overview($history_dir, $snapshots_dir) {
         'infra' => $infra,
         'telemetry' => [
             'local_pc_sync' => $telemetry['local_pc_sync'] ?? null,
-            'pdfs_backup' => $telemetry['pdfs_backup'] ?? null
+            'pdfs_backup' => $telemetry['pdfs_backup'] ?? null,
+            'code_deploy' => $telemetry['code_deploy'] ?? null
         ]
     ];
 }
@@ -572,7 +573,7 @@ if ($method === 'POST') {
 
     if ($action === 'report_backup_ping') {
         $system = $input['system'] ?? '';
-        if (!in_array($system, ['local_pc_sync', 'pdfs_backup'], true)) {
+        if (!in_array($system, ['local_pc_sync', 'pdfs_backup', 'code_deploy'], true)) {
             echo json_encode(['success' => false, 'message' => 'Invalid backup system identifier']);
             exit;
         }
@@ -608,6 +609,12 @@ if ($method === 'POST') {
             $entry['snapshot_name'] = substr(strip_tags((string)($input['snapshot_name'] ?? '')), 0, 120);
             $url = (string)($input['snapshot_url'] ?? '');
             $entry['snapshot_url'] = (strpos($url, 'https://drive.google.com/') === 0) ? substr($url, 0, 220) : '';
+        } elseif ($system === 'code_deploy') {
+            $entry['commit_hash'] = substr(preg_replace('/[^a-fA-F0-9]/', '', (string)($input['commit_hash'] ?? '')), 0, 16);
+            $entry['branch'] = substr(strip_tags((string)($input['branch'] ?? 'main')), 0, 40);
+            $entry['note'] = substr(strip_tags((string)($input['note'] ?? '')), 0, 160);
+            $entry['github_pushed'] = !empty($input['github_pushed']);
+            $entry['files_count'] = max(0, (int)($input['files_count'] ?? 0));
         }
 
         $telemetry[$system] = $entry;
