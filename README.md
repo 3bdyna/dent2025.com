@@ -1,175 +1,247 @@
+<div align="center">
+
+<img src="logos/og_share_preview.jpg" alt="Dent2025 Academic Portal" width="760" />
+
 # Dent2025 — Medical & Dental Academic Portal
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-WordPress%20%7C%20PHP%208.2%20%7C%20Vanilla%20ES6%2B-success)](#)
-[![Cloud Infrastructure](https://img.shields.io/badge/Cloud-Azure%20VPS%20%7C%20Cloudflare%20Tunnel-blueviolet)](#)
-[![Deployment Pipeline](https://img.shields.io/badge/Deploy-Git%20SafeDeploy%20%2B%20SFTP%20Sync-orange)](#)
-[![Test Suite](https://img.shields.io/badge/Tests-48%2F48%20Passing-brightgreen)](#)
+**A high-performance academic hub for university Pre-Med, Medicine, and Dentistry students — built with a live dual-mode portal switcher, dynamic component loading, AI practice exams, interactive Hijri/Gregorian timelines, and automated SafeDeploy DevOps.**
 
-**[Dent2025](https://dent2025.com)** is a high-performance academic web portal tailored specifically for university medical and dental students. The platform centralizes academic tracks, course materials, dynamic Google Drive embeds, automated Hijri/Gregorian timelines, interactive A4 calendar export, class timetables, AI-driven practice exams, a sitewide floating study timer, academic calculators, and granular role-based administration.
+[![Live Portal](https://img.shields.io/badge/Live%20Portal-dent2025.com-111827?style=flat-square&logo=googlechrome&logoColor=white)](https://dent2025.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-2563eb?style=flat-square)](LICENSE)
+[![Stack](https://img.shields.io/badge/Stack-WordPress%20%7C%20PHP%208.2%20%7C%20Vanilla%20ES6%2B-16a34a?style=flat-square)](#architecture--codebase-structure)
+[![Infrastructure](https://img.shields.io/badge/Cloud-Azure%20VPS%20%7C%20Cloudflare%20Tunnel-7c3aed?style=flat-square)](#safedeploy-pipeline--devops)
+[![Deploy](https://img.shields.io/badge/Deploy-Git%20SafeDeploy%20%2B%20SFTP-ea580c?style=flat-square)](#safedeploy-pipeline--devops)
+[![Test Suite](https://img.shields.io/badge/Tests-100%2F100%20Passing-22c55e?style=flat-square)](#testing--validation)
 
----
+[Dual Display Modes](#dual-portal-display-modes) ·
+[Key Features](#key-features) ·
+[Architecture](#architecture--codebase-structure) ·
+[SafeDeploy](#safedeploy-pipeline--devops) ·
+[Testing](#testing--validation) ·
+[Local Setup](#local-setup--development)
 
-## 🌟 Key Features
-
-### 🎓 Academic Tracks & Context Routing
-- **Comprehensive Cohort Coverage**: Pre-Med (Year 1, Semesters 1 & 2), Medicine (Years 2–6, Semesters 1 & 2), and Dentistry (Years 2–6, Semesters 1 & 2).
-- **Context Preservation**: Client-side track switching with cohort state saved in `localStorage`.
-
-### 🧩 Dynamic Component Loader (`dent2025-loader.php`)
-- **Zero-Friction Shortcode Loading**: WordPress pages load local frontend components dynamically using `[dent_component file="..."]`.
-- **Automatic Cache-Busting**: Appends dynamic `?v={filemtime}` query strings to JavaScript and CSS assets, ensuring instant cache invalidation upon deployment.
-- **WordPress `wpautop` Clean-up**: Strips disruptive `<p>` and `<br>` tags wrapped around styles and scripts to preserve clean markup.
-- **Sitewide Timer Injection**: Automatically injects the floating study timer into `wp_footer` across all active academic subpages.
-- **Font & Asset Optimization**: Inlines self-hosted WOFF2 fonts (*Outfit* & *Noto Kufi Arabic*) to eliminate render-blocking external Google Fonts requests.
-
-### 📅 Interactive Academic Schedule & Timetables
-- **Dual Calendar Integration**: Full Gregorian and Hijri calendar support with automated date calculations.
-- **Filterable Event Feeds**: Instant filtering across Exams, Assignments, Practical Sessions, Lectures, and Holidays.
-- **Tomorrow Alert Widget**: Highlights upcoming exams and academic events due the next day.
-- **High-Fidelity A4 Export Engine**: Printable multi-page PDF/table export configured for Saudi academic schedules with cohort/group selection.
-- **Per-Event Privacy & Display Controls**: Admin toggles to show/hide specific entries with client-side state preservation.
-
-### ⏱️ Sitewide Study Timer & Tracking Widget
-- **Floating Draggable Badge**: Compact, non-intrusive floating study timer that persists seamlessly across navigation.
-- **Session Logging & Audit History**: Records focused study sessions locally and syncs logs through the history backend (`history_api.php`).
-
-### 🧮 Built-In Academic Calculators
-- **Saudi 5.0 GPA Calculator**: Supports cumulative and semester GPA projections, custom credit hour weighting, and grade scales.
-- **Jazan University Absence & Denial Calculator**: Calculates attendance percentages against contact hours, alerting students before reaching the 25% denial threshold.
-
-### 🤖 AI Exam & Quiz Practice Engine (`backend/api_ai_exam.php`)
-- **PDF-to-Exam Pipeline**: Extracts lecture materials (`pdftotext`) and generates structured practice questions via Google Gemini API.
-- **Question Cache & Cron Sync**: Caches generated questions and runs scheduled syncs to maintain responsive load times.
-
-### 🔐 Unified Role-Based Access Control (RBAC)
-- **Shared Authentication Layer**: Powered by `dent2025_rbac.php` and `dent2025_passwords.json`.
-- **Tiered Permissions**: Supports universal master administrators alongside context-scoped cohort leaders (e.g., `dentistry_3_1`).
-- **Touch-Friendly PIN Keypad**: Universal 4-digit numeric PIN modal (`dent_pin_modal.js`) for quick on-page admin authentication.
-- **Standalone Admin Dashboard (`admin_dashboard.html`)**: Web-based administration panel to manage subjects, events, and announcements without entering the WordPress admin.
+</div>
 
 ---
 
-## 🏗️ Architecture & Codebase Structure
+## Dual Portal Display Modes
 
+Dent2025 is architected with a **live, zero-downtime Master Mode Switch** (`multi_specialty_mode`) that lets administrators toggle the entire portal between a **single focused cohort** and a **full multi-specialty university hub** — instantly from the Admin Dashboard with no code edits or redeployment.
+
+| Capability | Mode 1: Focused Cohort Mode (`OFF`) | Mode 2: Full Multi-Specialty Mode (`ON`) |
+| :--- | :--- | :--- |
+| **Scope Shown** | **Dentistry — Year 3, Semester 1 only** | **All 3 Specialties, All Years & All Semesters** |
+| **Available Tracks** | Locked to `dentistry` · Year `3` · Semester `1` | **Pre-Med** (Y1 S1–S2) · **Medicine** (Y2–Y6 S1–S2) · **Dentistry** (Y2–Y6 S1–S2) |
+| **Onboarding (`/wolcome/`)** | Bypassed — visitors are redirected directly to `/` | Active — first-time visitors pick Specialty, Year & Semester |
+| **Student Context** | Automatically enforced in `localStorage` | Persisted per student in `localStorage` (`dent2025_selection`) |
+| **Navbar Branding** | Dentistry identity by default | Instant pre-paint 2× retina logo swap per selected track |
+| **Best Used For** | Streamlined, zero-click launch for the 3rd-year 1st-semester Dentistry batch | Full campus-wide academic portal spanning all colleges & levels |
+
+<div align="center">
+
+| <img src="logos/pre-med-sm.webp" height="52" alt="Pre-Med" /><br/>**Pre-Med** | <img src="logos/medicine-sm.webp" height="52" alt="Medicine" /><br/>**Medicine** | <img src="logos/dentistry-sm.webp" height="52" alt="Dentistry" /><br/>**Dentistry** |
+| :---: | :---: | :---: |
+| Year 1 · Semesters 1 & 2 | Years 2–6 · Semesters 1 & 2 | Years 2–6 · Semesters 1 & 2 |
+
+</div>
+
+### How Mode Switching Works Under the Hood
+- **Master Admin Toggle**: Authorized Master admins switch modes live from the top bar (desktop & mobile) in [`admin_dashboard.html`](admin_dashboard.html), calling `dent2025_api.php?action=save_portal_settings`. Every change is persisted in the WordPress option `dent2025_multi_specialty_mode` and recorded in the audit trail.
+- **Zero-Flicker Hydration**: [`dent2025-loader.php`](dent2025-loader.php) injects `window.DENT_MULTI_SPECIALTY_MODE` synchronously into `<head>`, allowing [`dashboard.js`](frontend-html%20box%20in%20wordpress%20astra/dashboard.js) to resolve routing before first paint without an extra blocking network round-trip (with `sessionStorage` and `?action=portal_settings` fallback).
+
+---
+
+## Key Features
+
+### ⚡ Dynamic Component Loader & Performance Engineering (`dent2025-loader.php`)
+- **Shortcode-Driven Architecture**: WordPress pages mount local frontend modules via `[dent_component file="..."]` and `[dent_poll]` with strict filename sanitization against path traversal.
+- **Automatic Cache-Busting**: Appends dynamic `?v={filemtime}` query strings to `.js`, `.css`, embedded assets, and lazy-loaded modules (`study_timer.js`, `dent_pin_modal.js`) so updates go live immediately.
+- **Core Web Vitals Optimizations**:
+  - **Zero Mobile CLS**: Server-side pre-rendering of tomorrow's calendar alert (`dent2025_prerender_tomorrow_alert`), reserved container heights, and explicit logo dimensions.
+  - **Instant Navigation**: Speculation Rules API prerendering for core portal routes plus a lightweight hover/touch prefetcher for Safari & Firefox.
+  - **Eliminated Render-Blocking Assets**: Inlined Astra base CSS (`main.min.css`), self-hosted WOFF2 fonts (*Outfit* & *Noto Kufi Arabic*), 2× retina `*-sm.webp` instant navbar logo swap, deferred non-critical scripts, and homepage LCP hero preloading.
+- **Clean Quiz Short URLs**: Automatically routes `/quiz/<id>`, `/q/<id>`, `/?quiz=<id>`, and `/?q=<id>` to the interactive quiz player.
+
+### 📅 Interactive Academic Schedule, Timetables & A4 Export
+- **Dual Hijri & Gregorian Calendar**: Automated date conversion with instant filtering across Exams, Assignments, Practicals, Lectures, and Holidays.
+- **Tomorrow Alert Banner**: Highlights upcoming next-day exams and academic deadlines (SSR-rendered for default cohort, dynamically updated client-side for all cohorts).
+- **Printable A4 Schedule & Quiz Booklets**: High-fidelity multi-page A4 calendar table export in [`schedule_script.js`](frontend-html%20box%20in%20wordpress%20astra/schedule_script.js), paired with a headless Chrome batch A4 quiz booklet PDF exporter ([`tools/export_quiz_pdfs.js`](tools/export_quiz_pdfs.js)).
+- **Class Timetable Manager**: Group-aware weekly schedules with per-event visibility controls.
+
+### 🤖 AI Exam & Interactive Quiz Engine (`backend/api_ai_exam.php`)
+- **PDF-to-Quiz Pipeline**: Extracts lecture content using `pdftotext` and generates structured practice exams via Google Gemini API with multi-key health rotation.
+- **Dual Quiz Player Views**: Students can switch between a full-list exam view and a focused one-question-at-a-time study view inside [`quiz_app.html`](frontend-html%20box%20in%20wordpress%20astra/quiz_app.html).
+- **Daily Cache Cron Sync**: Scheduled WordPress cron (`dent2025_daily_noon`, 12:00 PM AST) pre-warms AI exam caches for fast student load times.
+
+### ⏱️ Student Productivity & Community Widgets
+- **Sitewide Floating Study Timer**: Draggable, session-persistent tracker (`study_timer.js` + `study_timer_banner_widget.html`) with history logging via [`history_api.php`](history_api.php); lazy-loaded unless an active session is running.
+- **Saudi 5.0 GPA Calculator**: Cumulative and semester GPA simulator with customizable credit weights and grade scales ([`gpa_calculator_elegant.txt`](frontend-html%20box%20in%20wordpress%20astra/gpa_calculator_elegant.txt)).
+- **Jazan University Absence & Denial Calculator**: Tracks attendance against contact hours and alerts students approaching the 25% denial threshold ([`absence_calculator.html`](frontend-html%20box%20in%20wordpress%20astra/absence_calculator.html)).
+- **Inline Student Polls & Community Cards**: Real-time polls (`[dent_poll]` backed by [`polls_api.php`](polls_api.php)), an interactive monochrome kinetic grid canvas (`kinetic_grid.html`), and a weekly community meme card (`weekly_meme.html`).
+
+### 📊 First-Party Analytics & Unified RBAC Admin Suite
+- **Privacy-First Visitor Telemetry**: Lightweight dwell-time and Verified Student Visits (VSV) tracking via [`analytics_api.php`](analytics_api.php), [`analytics_tracker.js`](frontend-html%20box%20in%20wordpress%20astra/analytics_tracker.js), and [`vsv_chart.html`](frontend-html%20box%20in%20wordpress%20astra/vsv_chart.html).
+- **Unified Role-Based Access Control (`dent2025_rbac.php`)**: Supports Master administrators and context-scoped cohort leaders (e.g., `dentistry_3_1`, `pre-med_1_1`) with built-in authentication rate limiting.
+- **Touch-Friendly 4-Digit PIN Modal**: Universal dark-mode numeric keypad (`dent_pin_modal.js`) for quick on-page admin unlocks.
+- **Standalone Admin Dashboard (`admin_dashboard.html`)**: Manage subjects, Drive links, announcements, schedules, quizzes, polls, Dual-Mode portal switching, RBAC keys, and live **Unified Backup Systems Telemetry** without entering `wp-admin`.
+
+---
+
+## Architecture & Codebase Structure
+
+```mermaid
+flowchart LR
+    Student["Student Browser<br/>(Desktop / Mobile)"]
+    Loader["dent2025-loader.php<br/>Shortcodes · Head Mode Flag · SSR Alert · Cache Bust"]
+    FE["frontend_components/<br/>dashboard.js · schedule_script.js · quiz_app.html · widgets"]
+    APIs["Core PHP APIs + RBAC<br/>dent2025_api · schedule_backend · announcements · polls · analytics · history"]
+    AI["backend/api_ai_exam.php<br/>pdftotext + Google Gemini"]
+    Store["Storage Layer<br/>WordPress MySQL ($wpdb) · Cloud-First JSON Stores"]
+
+    Student --> Loader --> FE
+    FE --> APIs --> Store
+    FE --> AI --> Store
 ```
+
+```text
 my website dent2025/
-├── dent2025-loader.php                         # WordPress Component Loader plugin ([dent_component])
-├── dent2025_api.php                            # Primary WordPress-integrated backend API ($wpdb)
-├── dent2025_rbac.php                           # Shared RBAC authentication & authorization engine
-├── announcements_api.php                       # File-based JSON announcements & tasks API
-├── schedule_backend.php                        # File-based JSON schedule events API
-├── history_api.php                             # Study timer audit & session log API
-├── history_helpers.php                         # Reusable snapshot & audit logging utilities
-├── admin_dashboard.html                        # Standalone admin dashboard interface
-├── admin_app.js                                # Standalone admin dashboard client logic
-├── backend/                                    # Standalone PDO Backend Module
-│   ├── db_connect.php                          # PDO MySQL connection & CORS response helper
-│   ├── api_ai_exam.php                         # Gemini AI exam generation backend
-│   └── bin/                                    # CLI helper utilities (pdftotext)
-├── frontend-html box in wordpress astra/       # Local source frontend components
-│   ├── landing_page.html                       # Academic track & semester selection grid
-│   ├── chapters_dynamic.html                   # Dynamic course view & Google Drive container
-│   ├── quiz_app.html                           # Interactive quiz & practice exam application
-│   ├── study_timer_banner_widget.html          # Sitewide floating study timer & tracker
+├── dent2025-loader.php                         # WordPress loader plugin ([dent_component], [dent_poll], perf, SSR)
+├── dent2025_api.php                            # Primary WordPress-integrated API ($wpdb) & portal mode settings
+├── dent2025_rbac.php                           # Shared RBAC authorization & rate-limiting engine
+├── announcements_api.php                       # Cohort announcements & tasks API (JSON store)
+├── schedule_backend.php                        # Academic timeline events API (JSON store)
+├── polls_api.php                               # Inline student polls & voting API (JSON store)
+├── analytics_api.php                           # First-party dwell-time & VSV telemetry API (JSON store)
+├── history_api.php                             # Study timer logs, backup telemetry & audit history API
+├── history_helpers.php                         # Shared snapshot & audit logging utilities
+├── purge_cache.php                             # Standalone LiteSpeed cache purge diagnostic script
+├── admin_dashboard.html                        # Standalone Admin Dashboard UI (includes Dual-Mode switch)
+├── admin_app.js                                # Standalone Admin Dashboard client logic
+├── backend/                                    # Standalone PDO & AI Exam module
+│   ├── db_connect.php                          # PDO MySQL connection, CORS & JSON response helper
+│   ├── api_ai_exam.php                         # Gemini AI exam generation, key rotation & cron sync
+│   └── bin/                                    # CLI helper binaries (pdftotext)
+├── frontend-html box in wordpress astra/       # Local frontend components (synced to /frontend_components/)
+│   ├── dashboard.js                            # Core student dashboard & dual-mode routing engine
+│   ├── landing_page.html                       # Multi-specialty track, year & semester selector (/wolcome/)
+│   ├── chapters_dynamic.html                   # Subject chapters & Google Drive folder embed container
+│   ├── quiz_app.html                           # Interactive quiz & AI practice exam player
+│   ├── schedule_markup.html                    # Academic calendar timeline layout & stat cards
+│   ├── schedule_script.js                      # Hijri/Gregorian timeline engine & A4 PDF exporter
+│   ├── calendar_tomorrow_alert.html            # Tomorrow's exam/event banner (SSR + client refresh)
+│   ├── study_timer_banner_widget.html          # Floating study timer banner & modal markup
+│   ├── study_timer.js                          # Lazy-loaded study timer & session tracker engine
+│   ├── poll_widget.html                        # Inline student poll component ([dent_poll])
+│   ├── vsv_chart.html                          # Verified Student Visits historical chart
+│   ├── analytics_tracker.js                    # Lightweight first-party dwell-time tracker
+│   ├── kinetic_grid.html                       # Interactive monochrome kinetic grid background canvas
 │   ├── gpa_calculator_elegant.txt              # Saudi 5.0 scale GPA calculator widget
 │   ├── absence_calculator.html                 # Jazan University Absence & Denial calculator
-│   ├── calendar_tomorrow_alert.html            # Next-day academic alert component
-│   ├── schedule_markup.html                    # Academic calendar timeline container & stats
-│   ├── schedule_script.js                      # Calendar timeline engine & A4 PDF export
-│   ├── dent_pin_modal.js                       # Universal 4-digit PIN keypad modal
-│   ├── dashboard.js                            # Core student dashboard engine
-│   └── fonts/                                  # Self-hosted WOFF2 fonts (Outfit & Noto Kufi)
-├── tools/                                      # SafeDeploy pipeline & sync toolchain
-│   ├── deploy_safe.py                          # Full Git-integrated SafeDeploy CLI runner
-│   ├── deploy.py                               # Core SFTP & OpenSSH upload engine
-│   ├── deploy_guard.py                         # Pre-flight syntax validation & secret checker
-│   ├── deploy_health.py                        # Post-deployment live endpoint health probes
-│   ├── deploy_order.py                         # File deployment dependency ordering
-│   ├── sync_cloud_events.py                    # Cloud-first dynamic data sync & smart-merge
-│   ├── sync_server_backups.py                  # Local sync engine for VPS database & file backups
-│   └── test_system_logic.php                   # Offline test suite (42/42 tests)
-├── logos/                                      # High-resolution logos & OpenGraph banners
-└── docs/                                       # Project documentation
+│   ├── weekly_meme.html                        # Weekly community meme card component
+│   ├── dent_pin_modal.js                       # Touch-friendly 4-digit admin PIN keypad
+│   ├── admin_*.html                            # On-page admin lock & modal controls
+│   └── fonts/                                  # Self-hosted WOFF2 fonts (Outfit & Noto Kufi Arabic)
+├── tools/                                      # SafeDeploy pipeline, sync & offline test toolchain
+│   ├── deploy_safe.py                          # Full 5-stage Git-integrated SafeDeploy CLI
+│   ├── deploy.py                               # SFTP & OpenSSH SCP uploader / rollback engine
+│   ├── deploy_guard.py                         # Pre-flight PHP/JS/JSON syntax & secret guard
+│   ├── deploy_health.py                        # Post-deployment live API health probes
+│   ├── deploy_order.py                         # Dependency-aware file deployment ordering
+│   ├── sync_cloud_events.py                    # Cloud-first dynamic data pull & smart-merge engine
+│   ├── sync_server_backups.py                  # Off-server rolling backup mirror (14-day retention)
+│   ├── export_quiz_pdfs.js                     # Headless Chrome batch A4 quiz PDF booklet exporter
+│   ├── test_system_logic.php                   # Offline test suite (100/100 assertions across 12 modules)
+│   └── _toolkit.py                             # Shared workspace bootstrap helper
+├── logos/                                      # Specialty icons (full + 2× retina *-sm.webp) & OG banner
+└── docs/                                       # Architecture & deployment specifications
     ├── DEPLOYMENT_GUIDE.md                     # Detailed SafeDeploy & server configuration guide
     └── MAIN_PAGE_DESIGN_SPEC.md                # Homepage UX/UI layout specifications
 ```
 
 ---
 
-## 🚀 SafeDeploy Pipeline & DevOps
+## SafeDeploy Pipeline & DevOps
 
-Dent2025 utilizes a specialized **SafeDeploy** pipeline that automates testing, version control, cloud synchronization, and cache clearing in a single command.
+All live website updates flow through **SafeDeploy**, a 5-stage automated pipeline that protects cloud data, validates syntax, commits to Git, uploads in 1–2 seconds, purges caches, and verifies production health:
 
+```mermaid
+flowchart LR
+    S0["Stage 0<br/>Cloud Sync &<br/>Smart Merge"] --> S1["Stage 1<br/>Pre-Flight Guard<br/>(PHP/JS/JSON + Secrets)"]
+    S1 --> S2["Stage 2<br/>Git Commit &<br/>Push to main"]
+    S2 --> S3["Stage 3<br/>SFTP Upload &<br/>LiteSpeed Purge"]
+    S3 --> S4["Stage 4<br/>Live API Health<br/>Probes"]
 ```
-Local Code Edit ──► Stage 0: Cloud Sync ──► Stage 1: Pre-Flight Guard ──► Stage 2: Git Commit & Push ──► Stage 3: SFTP Upload & Purge ──► Stage 4: Health Probe
-```
 
-### SafeDeploy Workflow
-1. **Stage 0 (Cloud Sync & Smart Merge)**: Verifies dynamic runtime data (`schedule_events*.json`, `announcements_data/`) against the live Azure server via `sync_cloud_events.py` to prevent overwriting student modifications.
-2. **Stage 1 (Pre-Flight Guard)**: Runs `deploy_guard.py` to validate PHP/JS/JSON syntax and block sensitive credentials or forbidden files from being deployed.
-3. **Stage 2 (Git Commit & Push)**: Creates a standardized semantic commit (`[SafeDeploy] ...`) and pushes changes to GitHub (`origin/main`).
-4. **Stage 3 (SFTP Upload & Purge)**: Uploads files to `/var/www/dent2025/` in 1–2 seconds via SFTP (with OpenSSH fallback) and triggers a remote LiteSpeed Cache purge.
-5. **Stage 4 (Health Probes)**: Executes automated probes via `deploy_health.py` against live API endpoints to verify server integrity.
-
-### Common Deployment Commands
+### Common Commands
 
 ```bash
-# Deploy single or multiple files with SafeDeploy:
+# Deploy modified files with automatic cloud merge, syntax check, Git commit, upload & cache purge
 python tools/deploy_safe.py --note "Refine calendar table layout" "frontend-html box in wordpress astra/schedule_script.js"
 
-# Dry run (verify syntax, staging, and routing without uploading):
-python tools/deploy_safe.py --dry-run --note "Test dry run" "dent2025_api.php"
+# Dry run (validate syntax, cloud state, and routing without deploying)
+python tools/deploy_safe.py --dry-run --note "Verify API changes" "dent2025_api.php"
 
-# Instant one-command rollback (reverts Git HEAD and redeploys clean state):
+# Instant one-command rollback (reverts Git HEAD, redeploys clean state & purges cache)
 python tools/deploy_safe.py --rollback
 
-# Inspect repository status, uncommitted diffs, and server health:
+# Inspect Git status, recent deploys, and live server health
 python tools/deploy_safe.py --status
+
+# Run standalone live endpoint health check
+python tools/deploy_safe.py --health-check
 ```
 
 ---
 
-## 🛡️ Cloud-First Source of Truth & Backup Safety
+## Cloud-First Data Integrity & Multi-Tier Backups
 
-- **Dynamic Data Preservation**: The live cloud (`/var/www/dent2025/`) acts as the absolute Source of Truth for timeline events, announcements, and timetable files. Guardrails prevent manual deletion without creating a server snapshot.
-- **Server-Side Protection (`safe-rm`)**: The Azure VPS runs `safe-rm` to mechanically prevent catastrophic recursive file deletion across core system and web root paths.
-- **Automated Nightly Server Backups**: VPS cron runs nightly at 03:30 UTC, creating compressed MySQL dumps (`db_wordpress_*.sql.gz`) and file archives (`data_*.tar.gz`) stored in `/var/backups/dent2025_daily/` with a rolling 14-day retention.
-- **Local Mirroring via Windows Task Scheduler**: An automated background task runs daily at 07:00 AM AST (`sync_server_backups.py`), maintaining an off-server copy in `server_backups_dent2025_daily/`.
+- **Cloud-First Source of Truth**: The live Azure server (`/var/www/dent2025/`) is authoritative for dynamic runtime data (`schedule_events*.json`, `announcements_data/`, `dent2025_classes.json`). Stage 0 automatically smart-merges cloud updates and blocks accidental deletions unless `--allow-delete` is explicitly passed after snapshotting.
+- **Server-Side Guardrails (`safe-rm`)**: Mechanically blocks destructive recursive deletions across web root and system paths on the VPS.
+- **Automated Nightly VPS Backups**: Cron runs nightly at `03:30 UTC`, producing compressed MySQL dumps (`db_wordpress_*.sql.gz`) and dynamic data archives (`data_*.tar.gz`) with a rolling 14-day retention policy.
+- **Off-Server Local Mirror & Live Telemetry**: Daily Windows Task Scheduler runs `tools/sync_server_backups.py` to mirror VPS archives locally, while `admin_dashboard.html` reports real-time status across all backup layers and live SafeDeploy commits.
 
 ---
 
-## 🧪 Testing & Validation
+## Testing & Validation
 
-The offline test suite validates RBAC rules, response contracts, CORS headers, and component integrity without requiring live database access:
+Run the zero-dependency offline test suite to verify RBAC authorization, Pre-Med/cohort normalization, rate limiting, passkey sanitization, response contracts, and edge cases across **12 subsystems**:
 
 ```bash
-# Run comprehensive offline test suite (48 tests):
 php tools/test_system_logic.php
+# Expected: Passed 100 / 100 — ALL SUBSYSTEM LOGIC CHECKS PASSED PERFECTLY!
 ```
 
 ---
 
-## 💻 Local Setup & Development
+## Local Setup & Development
 
 ### 1. Prerequisites
 - **PHP 8.2+** with `pdo_mysql`, `curl`, and `json` extensions enabled.
-- **Python 3.9+** with `paramiko` installed for deployment automation (`pip install paramiko`).
-- **Git** with SSH key authentication configured.
+- **Python 3.9+** with `paramiko` installed (`pip install paramiko`) for SafeDeploy automation.
+- **Node.js 18+** (optional, used by `deploy_guard.py` for JS syntax validation and `tools/export_quiz_pdfs.js` for PDF booklet generation).
+- **Git** configured with SSH authentication.
 
-### 2. Configuration Setup
-Create local configuration files from the provided templates (both files are gitignored for security):
+### 2. Configuration
+Copy the example templates into local gitignored config files:
 
 ```bash
 cp deploy_config.example.json deploy_config.json
 cp dent2025_passwords.example.json dent2025_passwords.json
 ```
 
-- In `deploy_config.json`, configure your SFTP/SSH host, port, credentials, and remote web root (`/var/www/dent2025/`).
-- In `dent2025_passwords.json`, configure administrative passkeys and role permissions.
+- **`deploy_config.json`**: Set your SFTP/SSH host, port, credentials, and remote web root (`/var/www/dent2025/`).
+- **`dent2025_passwords.json`**: Configure Master and cohort-leader RBAC passkeys and granular permissions.
 
 ---
 
-## 📄 License
+## Additional Documentation
+
+- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) — SafeDeploy stages, server routing rules, and recovery playbooks.
+- [Main Page Design Spec](docs/MAIN_PAGE_DESIGN_SPEC.md) — Homepage UI/UX layout and styling guidelines.
+- [Architecture & Agent Guidelines](AGENTS.md) — Comprehensive system architecture reference.
+
+---
+
+## License
 
 This project is open-source and licensed under the [MIT License](LICENSE).
