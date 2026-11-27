@@ -8,27 +8,11 @@ Medical & Dental academic portal (**Pre-Med Y1**, **Medicine Y2–6**, **Dentist
 
 ---
 
-## 1. Deployment & Verification (MANDATORY)
-Every live website update **MUST** go through SafeDeploy (auto-merges cloud data, checks `php -l` / `node --check`, commits & pushes `[SafeDeploy]` to `origin/main`, uploads via SFTP/SCP, purges LiteSpeed cache, and probes health):
-```powershell
-python tools/deploy_safe.py --note "what changed" <file1> [file2...]
-python tools/deploy_safe.py --dry-run --note "test" <file1>
-python tools/deploy_safe.py --rollback
-python tools/deploy_safe.py --status
-python tools/deploy_safe.py --health-check
-python tools/deploy_safe.py --sync-backups
-```
-- **Server path routing (`tools/deploy.py`):** `frontend-html box in wordpress astra/` → `/var/www/dent2025/frontend_components/` · `dent2025-loader.php` → `/var/www/dent2025/wp-content/plugins/dent2025-loader/` · `backend/*` → `/var/www/dent2025/backend/` · root PHP/JSON → `/var/www/dent2025/`.
-- **Smart testing:** SafeDeploy Stage 1 already runs `php -l` and `node --check` on touched files. For quick UI/frontend edits, that targeted check is enough; run the full offline suite (`php tools/test_system_logic.php`, 100 tests) before major/critical backend, RBAC, or loader changes.
-- **LiteSpeed Cache rule:** If a deployed fix still shows old behavior live, purge LiteSpeed cache first (`?purge=1&token=<admin_passkey>` or `purge_cache.php`) before editing code.
-
----
-
-## 2. Cloud-First Dynamic Data Protocol (Zero Cloud Data Loss)
-Live Azure (`/var/www/dent2025/`) is the **absolute Source of Truth** for `schedule_events*.json`, `announcements_data/*.json`, and `dent2025_classes.json`. Never overwrite or delete cloud events from stale local files:
-1. Run `python tools/sync_cloud_events.py --pull` before editing any local event file.
-2. Apply the requested edit locally.
-3. Deploy via `python tools/deploy_safe.py --note "..." <file>` (Stage 0 auto-merges cloud state). Only pass `--allow-delete` when intentionally deleting cloud events.
+## 1. Deployment & Cloud Data (MANDATORY)
+- Every live update **MUST** go through `python tools/deploy_safe.py --note "<msg>" <files...>` (never raw SSH/SCP overwrites).
+- Live Azure is Source of Truth for `schedule_events*.json`, `announcements_data/*.json`, and `dent2025_classes.json` — pull first (`sync_cloud_events.py --pull`) before editing.
+- **Full deploy/rollback/sync/cache-purge/weekly-meme runbook:** Load the on-demand `safedeploy-and-sync` skill (`.agents/skills/safedeploy-and-sync/SKILL.md`).
+- **Smart testing:** SafeDeploy Stage 1 runs `php -l` / `node --check` on touched files (enough for quick UI edits); run `php tools/test_system_logic.php` before major backend/RBAC/loader changes.
 
 ---
 
@@ -47,7 +31,6 @@ Live Azure (`/var/www/dent2025/`) is the **absolute Source of Truth** for `sched
   - Page `943` → `جدول-الدراسي` (Weekly timetable)
 - **Shared RBAC Auth (`dent2025_rbac.php` + `dent2025_passwords.json`):** ALL backends (`dent2025_api.php`, `announcements_api.php`, `schedule_backend.php`, `history_api.php`, `polls_api.php`, `backend/api_ai_exam.php`) share this RBAC engine + Cloudflare-aware IP brute-force lockout (`CF-Connecting-IP`, 5-fail lockout). Always use `window.dentPromptPin()` (`dent_pin_modal.js`) instead of browser `prompt()`.
 - **Multi-Specialty Switch (`DENT_MULTI_SPECIALTY_MODE`):** Persisted in WordPress options via `dent2025_api.php` (`?action=portal_settings` / `?action=save_portal_settings`). **Never** edit `dashboard.js` to toggle modes—use the Admin Dashboard UI or API.
-- **Weekly Meme Chat Protocol:** When asked to update the meme, save/convert the image to `frontend-html box in wordpress astra/weekly_meme.webp` and run `python tools/deploy_safe.py --note "Update weekly meme" "frontend-html box in wordpress astra/weekly_meme.webp"`.
 - **Storage Prefix:** All `localStorage`/`sessionStorage` keys must use the `dent2025_` prefix (root key: `dent2025_selection`).
 
 ---
